@@ -25,7 +25,7 @@ pub use wit_world_audit::{
 mod component_command;
 pub use component_command::{ValidatedCommandComponent, emit_command_self_check};
 mod scalar_component;
-pub use scalar_component::{ValidatedScalarComponent, emit_scalar_component};
+pub use scalar_component::{ScalarExport, ValidatedScalarComponent, emit_scalar_component};
 const MAX_CONTROL_FLOW_WEBASSEMBLY_BYTES: usize = 32 * 1024 * 1024;
 /// Emits deterministic, import-free core WebAssembly from the current `I32V1` profile.
 /// Raw Universal IR cannot enter this boundary:

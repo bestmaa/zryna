@@ -15,7 +15,8 @@ use render::{render_cli_failure, render_failure, render_success};
 use std::{ffi::OsString, path::PathBuf, process::ExitCode};
 
 use clap::error::ErrorKind;
-use clap::{CommandFactory, FromArgMatches, Parser, Subcommand, ValueEnum};
+use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
+use profile::{CliProfile, CliTarget};
 use zryna_abi::ScalarValue;
 use zryna_diagnostics::Diagnostic;
 use zryna_driver::{
@@ -105,36 +106,6 @@ struct RunOptions {
     /// Ordered canonical typed argument, for example --arg=i32:42.
     #[arg(long = "arg", value_parser = profile::parse_scalar_argument)]
     arguments: Vec<ScalarValue>,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
-enum CliProfile {
-    #[value(name = "control-flow-v1")]
-    ControlFlowV1,
-    #[value(name = "data-ownership-v1")]
-    DataOwnershipV1,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
-#[value(rename_all = "lower")]
-enum CliTarget {
-    JavaScript,
-    WebAssembly,
-    Native,
-    Component,
-    All,
-}
-
-impl From<CliTarget> for TargetSelection {
-    fn from(value: CliTarget) -> Self {
-        match value {
-            CliTarget::JavaScript => Self::JavaScript,
-            CliTarget::WebAssembly => Self::WebAssembly,
-            CliTarget::Native => Self::Native,
-            CliTarget::Component => Self::Component,
-            CliTarget::All => Self::All,
-        }
-    }
 }
 
 fn main() -> ExitCode {
@@ -295,7 +266,19 @@ fn build_request(options: CompileOptions) -> Result<ProfileBuildRequest, Diagnos
         return Err(cli_path_error());
     }
     let stem = options.name.unwrap_or_else(|| profile::default_stem(&options.entrypoint));
-    let targets = options.target.into();
+    let targets = if options.profile == Some(CliProfile::BrowserComponentV1) {
+        if options.target != CliTarget::Component {
+            return Err(Diagnostic::error(
+                "ZRYNA-C1012",
+                None,
+                "browser-component-v1 requires the component build target",
+                "use build --profile browser-component-v1 --target component",
+            ));
+        }
+        TargetSelection::BrowserComponent
+    } else {
+        options.target.into()
+    };
     if let Some(project_root) = project_root {
         if options.profile.is_some() {
             return Err(Diagnostic::error(
@@ -315,7 +298,7 @@ fn build_request(options: CompileOptions) -> Result<ProfileBuildRequest, Diagnos
         }));
     }
     Ok(match options.profile {
-        None => ProfileBuildRequest::M1(BuildRequest {
+        Some(CliProfile::BrowserComponentV1) | None => ProfileBuildRequest::M1(BuildRequest {
             workspace_root: root,
             entrypoint: options.entrypoint,
             artifact_stem: stem,

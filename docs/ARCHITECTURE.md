@@ -64,7 +64,10 @@ semantic lowering never depends on a replaceable provider.
    An explicit default-profile component build retains that exact core, canonically lifts the
    verified scalar functions, binds the empty authenticated browser capability-world identity,
    and independently audits the final component bytes. The driver publishes `.wasm` create-only.
-   Browser bindings and WASI capabilities remain explicit host profiles.
+   The explicit repository-local browser component profile adds deterministic generated scalar
+   bindings and declarations from the sealed component interface. Its loader authenticates the
+   complete component before using the retained import-free core in the browser. WASI capabilities
+   remain a separate explicit host profile.
 10. Native lowering creates explicit typed native claims; the native MIR verifier retains the
     sealed scalar ABI module and is the only constructor of the codegen-accepted
     `VerifiedMirModule`.
@@ -281,7 +284,8 @@ native output, FFI, and Boolean source/IR remain later gates.
 
 `zryna build` and `zryna run` accept one validated workspace-relative `.zry` entrypoint and one
 explicit target. Both accept `javascript`, `webassembly`, `native`, or `all`; default-M1 `build`
-also accepts `component`. Architecture validation is always
+also accepts `component`, and exact `--profile browser-component-v1` admits only
+`build --target component`. Architecture validation is always
 first. Omitting `--profile` preserves the exact M1 protocol-v2/`I32V1` path. Exact
 `--profile control-flow-v1` selects protocol v3, driver-owned deterministic module discovery, and
 the separate M2 semantic/IR path. The driver constructs one verified authority per request and
@@ -295,14 +299,16 @@ to mode `0700`; Windows inherits ACLs from the validated compiler-owned output r
 requires that root to be private to the invoking principal. After containment is revalidated, one
 create-only same-filesystem directory rename commits either
 `.zryna/out/<stem>.build` or `.zryna/out/<stem>.run`. Only selected target subdirectories exist.
-The component selection publishes only `component/<stem>.wasm` plus manifest v1, is deliberately
-absent from `all`, rejects explicit profiles, and has no run route. It is an implemented
-repository-development boundary and remains outside the advertised
-[v0.1.0 preview support matrix](DEVELOPER_PREVIEW.md).
+The default, unprofiled component selection publishes only `component/<stem>.wasm` plus manifest
+v1. The separate `browser-component-v1` selection publishes the same audited component together
+with deterministic ESM bindings, declarations, and `zryna-browser-manifest-v1.json` in one
+create-only bundle. Neither component selection belongs to `all` or has a CLI run route. Both
+remain outside the advertised [v0.1.0 preview support matrix](DEVELOPER_PREVIEW.md).
 Any preparation, execution, audit, publication, or cleanup failure before commit leaves no final
 bundle, and an existing bundle is never replaced.
 
-M1 writes only `zryna-manifest-v1.json`; M2 writes only `zryna-manifest-v2.json`. Build bundles
+Default M1 writes only `zryna-manifest-v1.json`; the browser scalar component profile writes only
+`zryna-browser-manifest-v1.json`; M2 writes only `zryna-manifest-v2.json`. Build bundles
 contain `.mjs`, `.wasm`, and/or the native `.o`. Run bundles contain `.mjs`, `.wasm`,
 and/or the invocation-specific native `.elf`, plus stable ordered typed observations in the
 manifest. Manifest v2 additionally authenticates the canonical entrypoint, path-ordered source
@@ -673,7 +679,7 @@ functions over `i32`, validates and profile-audits every complete binary, and ex
 fixtures in a pinned runtime. `bool` will be enabled only by a later universal profile implemented
 by every active backend.
 
-The explicit default-M1 `component` build wraps the unchanged audited core in a deterministic
+The default-M1 `component` build wraps the unchanged audited core in a deterministic
 Component Model artifact with exact canonical scalar lifts and metadata binding the authenticated
 `zryna:capability-profiles/browser@0.1.0` WIT source closure. That capability world is empty; the
 application scalar exports come from verified IR. Component external labels use the total,
@@ -683,8 +689,13 @@ collide; the exact logical name and mapped label are both covered by the interfa
 existing JavaScript, core WebAssembly, and native ABI names remain unchanged. The wrapper rejects imports, starts, nesting,
 wrong topology or identity, and resource excess before publication. It does not instantiate a
 component, generate bindings, or provide browser, DOM, WASI, filesystem, network, clock, random,
-or environment capabilities. Browser and WASI host execution remain later integration boundaries.
-Component artifact emission also remains outside the advertised v0.1.0 preview support matrix.
+or environment capabilities on the default, unprofiled route. The explicit
+`browser-component-v1` route instead generates a bounded browser loader and declarations from
+the sealed scalar interface. The loader authenticates the component bytes and instantiates only
+the retained, import-free core module; it does not instantiate a Component Model artifact or
+grant DOM, network, filesystem, clock, random, or environment access to guest code. General
+browser component hosting and WASI host execution remain later integration boundaries. Component
+artifact emission remains outside the advertised v0.1.0 preview support matrix.
 
 ## Language-server transport
 

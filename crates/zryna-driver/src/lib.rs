@@ -23,6 +23,7 @@
 
 #![forbid(unsafe_code)]
 
+mod browser_component;
 mod command_runtime;
 pub mod diagnostic_sessions;
 pub mod distribution;

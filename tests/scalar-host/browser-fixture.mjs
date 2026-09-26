@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const pin = JSON.parse(await readFile(new URL('./browser-pin.json', import.meta.url), 'utf8'));
 
-async function verifyBrowser(root) {
+export async function verifyBrowser(root) {
   const selected = pin.platforms[`${process.platform}-${process.arch}`];
   if (!selected || !/^[a-f0-9]{64}$/.test(selected.archiveSha256 ?? '') ||
       !/^[a-f0-9]{64}$/.test(selected.inventorySha256 ?? '')) {

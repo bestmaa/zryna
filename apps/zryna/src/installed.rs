@@ -42,6 +42,14 @@ pub(super) fn execute(
 }
 
 fn request(options: CompileOptions) -> Result<InstalledBuildRequest, Diagnostic> {
+    if options.profile == Some(CliProfile::BrowserComponentV1) {
+        return Err(Diagnostic::error(
+            "ZRYNA-C2001",
+            None,
+            "installed package compatibility does not include browser components",
+            "use the repository-local source build until package compatibility is specified",
+        ));
+    }
     if options.root.is_some() || options.node.is_some() {
         return Err(Diagnostic::error(
             "ZRYNA-C2001",
@@ -61,6 +69,9 @@ fn request(options: CompileOptions) -> Result<InstalledBuildRequest, Diagnostic>
             None => InstalledProfile::I32,
             Some(CliProfile::ControlFlowV1) => InstalledProfile::ControlFlow,
             Some(CliProfile::DataOwnershipV1) => InstalledProfile::DataOwnership,
+            Some(CliProfile::BrowserComponentV1) => {
+                unreachable!("rejected before request construction")
+            }
         },
     })
 }
