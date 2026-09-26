@@ -27,8 +27,9 @@ remain intentionally narrow.
   artifact from the same verified program and unchanged scalar core. It binds the exact empty
   browser capability-world identity, rejects undeclared imports and malformed or excessive final
   bytes before publication, and records manifest target `component` with artifact kind
-  `webassembly-component`. It is not part of `all`, rejects explicit profiles, cannot run, and
-  remains outside the advertised [v0.1.0 preview support matrix](DEVELOPER_PREVIEW.md).
+  `webassembly-component`. This default, unprofiled route is not part of `all`, cannot run, and
+  remains outside the advertised [v0.1.0 preview support matrix](DEVELOPER_PREVIEW.md). The
+  separate browser scalar profile below is the only admitted explicit component selection.
 - Explicit repository-local `--profile browser-component-v1 --target component` builds the same
   audited scalar component with deterministic browser ESM bindings, declarations and an exact
   three-artifact manifest. The loader authenticates retained bytes and invokes only the sealed
@@ -347,9 +348,11 @@ source control-flow and module oracle; it is not a claim of general language com
 M1/M2 scalar profiles do not claim heap values, an allocator or a tracing-GC profile. Their
 scalar-only surface is not a general zero-runtime or GC-free guarantee for data profiles.
 Explicit M3 uses bounded owned allocation and deterministic cleanup under its
-[public profile](M3_PUBLIC_PROFILE.md). No current profile claims tracing GC, browser execution,
-WASI/component execution, Windows or macOS native execution, static native executables, package
-resolution, watch mode, incremental builds, or production readiness.
+[public profile](M3_PUBLIC_PROFILE.md). The browser scalar profile above runs only its sealed,
+import-free core through the generated browser loader; it does not instantiate a Component Model
+artifact in a general component runtime. No current profile claims tracing GC, WASI/component
+host execution, Windows or macOS native execution, static native executables, package resolution,
+watch mode, incremental builds, or production readiness.
 
 ## Evidence and reference
 

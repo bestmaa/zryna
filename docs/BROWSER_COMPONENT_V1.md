@@ -16,6 +16,10 @@ rejections for a string argument, non-integral number, negative zero and wrong a
 does not supply a guest import or capability. The loopback-only static server is a host setup step, not a
 network permission granted to the component.
 
+The pinned Chrome fixture loads this checked-in page and its generated loader through exact
+browser routes, selects the component with the file picker, and checks the displayed result and
+rejections. It does not launch the example's loopback static server.
+
 ## Generated interface
 
 The bundle contains exactly one audited Component Model artifact, one deterministic ESM loader,

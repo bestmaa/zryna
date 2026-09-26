@@ -9,6 +9,7 @@ const pin = JSON.parse(await readFile(new URL('../scalar-host/browser-pin.json',
 const [loaderPath, componentPath, browserRoot] = process.argv.slice(2);
 const loader = await readFile(loaderPath, 'utf8');
 const bytes = await readFile(componentPath);
+const examplePage = await readFile(new URL('../../examples/browser-component/index.html', import.meta.url), 'utf8');
 const module = await import(pathToFileURL(loaderPath));
 const hostileSource = loader.replace('"logical":"add"', '"logical":"odd"');
 assert.notEqual(hostileSource, loader, 'binding fixture must alter one sealed export');
@@ -59,6 +60,14 @@ if (browserRoot) {
       if (route.request().isNavigationRequest() && route.request().url() === 'https://browser.invalid/') {
         return route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Browser component</title>' });
       }
+      if (route.request().isNavigationRequest() &&
+          route.request().url() === 'https://browser.invalid/examples/browser-component/') {
+        return route.fulfill({ contentType: 'text/html', body: examplePage });
+      }
+      if (route.request().url() ===
+          'https://browser.invalid/.zryna/out/add-browser.build/component/add-browser.mjs') {
+        return route.fulfill({ contentType: 'text/javascript', body: loader });
+      }
       unexpected++;
       return route.abort();
     });
@@ -99,6 +108,13 @@ if (browserRoot) {
       } finally { URL.revokeObjectURL(url); }
     }, { source: loader, hostileSource, component: Array.from(bytes) });
     assert.deepEqual(browserResult, node);
+    await page.goto('https://browser.invalid/examples/browser-component/');
+    await page.setInputFiles('#component', { name: 'add-browser.wasm',
+      mimeType: 'application/wasm', buffer: bytes });
+    await page.waitForFunction(() => document.querySelector('#result')?.textContent?.includes('"value"'),
+      undefined, { timeout: 5000 });
+    assert.deepEqual(JSON.parse(await page.locator('#result').textContent()),
+      { value: 42, rejected: [true, true, true, true] });
     assert.equal(unexpected, 0);
   } finally {
     const failures = [];
