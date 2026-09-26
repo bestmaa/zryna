@@ -4,6 +4,8 @@ Status: **proposed, unaccepted**. This is a review input for
 [#400](https://github.com/zryna/zryna/issues/400), not an executable profile, CLI contract,
 manifest version, or support claim. It changes none of the accepted WIT sources, registry,
 schemas, or existing public M1–M3 behavior.
+The [bounded H1 contract draft](WASI_COMMAND_H1_CONTRACT_DRAFT.md) develops the recommended
+choice and its unresolved pinned-interface denial transport.
 
 ## Established boundary
 
