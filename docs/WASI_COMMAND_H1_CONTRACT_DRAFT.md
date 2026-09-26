@@ -292,5 +292,5 @@ authenticated proof of the value that was supplied.
 These rows are design fixtures, not tests that have run. Implementation acceptance also needs
 the WIT contract, source/IR and independent component audits, focused driver/CLI tests,
 manifest inventory/execution-record checks, fixed examples, and required Linux and Windows gates on
-the reviewed revision. #400 stays open and unsupported until those proofs and the external
-decisions above are accepted.
+the reviewed revision. #400 stays open and unsupported until those proofs and the required
+repository contract decisions above are accepted.
