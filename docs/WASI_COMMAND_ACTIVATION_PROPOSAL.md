@@ -87,8 +87,8 @@ source spelling, public result type, and concrete ABI remain **unaccepted**.
    manifest version/name. Bind exact WIT world and dependency digests, source/verified program,
    requested and effective grants, limits, component identity, run result, denial and cleanup
    outcome. Decide how to authenticate grant values without disclosing secrets in a durable
-   manifest or a low-entropy unhashed digest; record no ambient values. Preserve old manifest
-   versions and the #399 browser bundle independently.
+   manifest: an unkeyed hash of a low-entropy secret permits offline guessing. Record no ambient
+   values. Preserve old manifest versions and the #399 browser bundle independently.
 
 These are owner decisions, not names or field shapes already approved by #400. The first
 implementation should stay confined to the accepted H1 subset; registry eligibility for
