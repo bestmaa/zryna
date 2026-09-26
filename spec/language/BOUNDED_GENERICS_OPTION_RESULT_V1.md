@@ -47,11 +47,17 @@ function identity<T extends ZrynaValue>(value: T): T {
 ```
 
 `ZrynaValue` is a compiler-reserved bound marker, not an ordinary interface, an
-object type, an implicit conversion or an erasable runtime trait. It admits exactly
-the complete storable M3 value types: `bool`, `i32`, `String`, closed nominal data,
-fixed arrays, `Vec`, `Shared` and `Weak`, subject to their existing recursive-layout
-and element restrictions. It excludes `unit`, borrows, unsized/incomplete forms,
-host resources and other type parameters that lack this bound. There is no bound
+object type, an implicit conversion or an erasable runtime trait. Its candidate
+admission rule is recursive over complete, storable types: the M3 scalars and
+`String`; closed M3 and user generic nominal structs/enums whose fields or
+payloads satisfy the rule; `Option<T>` and `Result<T,E>` with admitted arguments;
+and fixed arrays, `Vec`, `Shared` and `Weak` with admitted arguments. Existing
+layout, recursion and container-element restrictions still apply to each closed
+instance. The finite type graph is checked with visited closed keys, so a legal
+`Node<T>` through `Vec<Node<T>>` can satisfy the bound without infinite unfolding.
+It excludes `unit`, borrows, unsized/incomplete forms, host resources and an
+unbound type parameter. A type parameter explicitly declared with this bound
+may itself be used wherever this bound is required. There is no bound
 inference. The bound list is exactly `extends ZrynaValue`; multiple bounds,
 constraints on generic applications, defaults, variance annotations and `keyof`
 are excluded. A generic body is checked once with opaque type parameters; it may
@@ -67,13 +73,21 @@ identical structures never make them interchangeable. By-value recursion is chec
 after substitution, including a cycle that appears only for a particular argument.
 An indirection terminates layout recursion but does not erase the type argument.
 
-At a call or construction, type arguments use explicit `<...>` in a type position.
+At a function call or nominal construction, type arguments appear after the
+callee and immediately before the argument list: `identity<i32>(7)` and
+`Box<i32>({ value: 7 })`. Standard enum constructors use a member call with
+type arguments after the member name: `Option.some<i32>(7)` and
+`Result.err<i32, String>(message)`. The type annotations retain the ordinary
+`Option<i32>` and `Result<i32, String>` form. An instantiation expression
+followed by property access, such as `Option<i32>.some(7)`, is excluded because
+it is not TypeScript-compatible source syntax. The future provider must preserve
+the callee/member and each explicit argument span without assigning its meaning.
 Inference from arguments, expected results, or omitted generic arguments is
 excluded. Importing a generic declaration follows the existing exact named-import
 and module-closure rules. A source-level generic function name remains unique in
 its module: overload sets and specialization are excluded. The source call graph,
 including imported generic calls, remains acyclic. Instantiation cannot introduce
-direct or mutual recursion. A future syntax protocol must define distinct nodes
+direct or mutual function recursion. A future syntax protocol must define distinct nodes
 for parameter declarations, bound spans, closed type applications and explicit call
 arguments; protocol v4 must reject these forms unchanged.
 
@@ -115,15 +129,31 @@ runtime limits still apply.
 | Maximum nested closed type application depth | 64 |
 | Maximum key bytes for one closed instance | 4,096 |
 
+An instantiation dependency edge is one distinct ordered pair of closed source
+instance keys `(from, to)`: a substituted function body referring to a closed
+generic function or nominal type, or a substituted nominal field/variant type
+referring to a closed generic nominal, `Option` or `Result` instance through any
+number of M3 container wrappers. Repeated occurrences of the same pair count
+once. Scalar and nongeneric references do not count. A self-edge counts once.
+The edge inventory is sorted by `(from key, to key)` before assigning IDs or
+checking the limit. A synthetic fixture with 65,536 distinct pairs is accepted;
+adding the lexicographically next pair is the first-extra rejection, even when
+the same pair also occurs multiple times in source. Synthetic graph fixtures
+exercise this budget independently of stricter source-size limits.
+
 These ceilings do not increase M3's 65,536 fully instantiated type budget or
 256-diagnostic ceiling. A bounded work queue and explicit stack implement discovery;
-host call-stack depth and map insertion order cannot affect acceptance. A
-declaration may not generate an unbounded chain such as `f<Vec<T>>` from `f<T>`.
-Before expansion, the verifier rejects a repeated declaration identity on an
-instantiation dependency path with different argument keys. An identical repeated
-key is a call-graph cycle and is rejected under the existing nonrecursive-call
-rule. Both failures identify the smallest canonical path after deterministic
-sorting. This rule also makes termination independent of a resource ceiling.
+host call-stack depth and map insertion order cannot affect acceptance. Function
+recursion is rejected on the source-level call graph, regardless of equal or
+different type arguments. For data type expansion, a repeated *same closed key*
+is deduplicated and terminates traversal; its by-value cycle is then separately
+rejected by layout, while an indirection cycle such as
+`Node<T> { next: Vec<Node<T>> }` remains legal. Repeating one generic nominal
+declaration with *different* argument keys on a type-expansion path, as in
+`Nest<T> { next: Vec<Nest<Vec<T>>> }`, is rejected before further expansion.
+The diagnostic identifies the lexicographically smallest offending canonical
+path. Thus legal finite recursive data and forbidden infinite expansion have
+different outcomes, independent of the resource ceiling.
 
 ## 3. Option and Result
 
@@ -133,10 +163,10 @@ admitted arguments satisfy `ZrynaValue`. Constructor and match notation is a
 proposed extension of the v4 enum forms:
 
 ```ts
-const found: Option<i32> = Option<i32>.some(7);
-const absent: Option<i32> = Option<i32>.none();
-const outcome: Result<i32, String> = Result<i32, String>.ok(7);
-const failed: Result<i32, String> = Result<i32, String>.err(message);
+const found: Option<i32> = Option.some<i32>(7);
+const absent: Option<i32> = Option.none<i32>();
+const outcome: Result<i32, String> = Result.ok<i32, String>(7);
+const failed: Result<i32, String> = Result.err<i32, String>(message);
 
 const score: i32 = match(found, {
   "Option.none": () => 0,
@@ -145,7 +175,7 @@ const score: i32 = match(found, {
 ```
 
 `identity(value)` is rejected because the type argument is omitted;
-`Option<i32>.some(true)` is rejected for a payload type mismatch; and a match
+`Option.some<i32>(true)` is rejected for a payload type mismatch; and a match
 containing only `"Result.ok"` is rejected as nonexhaustive. These are source
 examples for a future provider, not protocol-v4 accepted input.
 
@@ -192,14 +222,27 @@ it does not silently start constructing `Option<Shared<T>>`.
 Malformed source, unknown/non-value arguments, missing or extra arguments, illegal
 generic operations, unclosed types, forbidden recursion, invalid nominal identity,
 wrong variant and nonexhaustive match are compile-time errors before backend
-emission. The implementing issue must reserve exact stable codes in the existing
-declaration/semantic/IR/layout families before executable use. Candidate diagnostic
-categories are `generic-form`, `generic-bound`, `generic-application`,
-`instantiation-cycle`, `instantiation-budget`, `variant/match`, and
-`closed-type/ABI`. Selection follows authoritative source location, then canonical
-instance key and complete numeric tie-break data. Budget exhaustion is terminal
-and cannot return a partial sealed program. No existing diagnostic code is
-reassigned by this proposal.
+emission. These are proposed exact codes, awaiting maintainer acceptance and
+future protocol/IR versioning; no current executable path may emit them:
+
+| Proposed code | Owning rejection |
+| --- | --- |
+| `ZRYNA-D7001` | Invalid generic declaration form, bound or parameter list |
+| `ZRYNA-M7001` | Missing, extra, unclosed or bound-violating type argument |
+| `ZRYNA-M7002` | Operation unavailable for opaque bounded parameter |
+| `ZRYNA-M7003` | Function recursion or expanding nominal instantiation |
+| `ZRYNA-M7004` | Wrong standard variant or inexact/nonexhaustive match |
+| `ZRYNA-M7005` | Generic or standard enum at a forbidden public ABI boundary |
+| `ZRYNA-M7201` | Terminal instantiation resource exhaustion |
+| `ZRYNA-I7001` | Unclosed, mismatched or forged verified-IR instance/variant/cleanup |
+| `ZRYNA-L7001` | Invalid closed layout key, record, ordinal or fingerprint |
+| `ZRYNA-L7201` | Terminal closed-layout resource exhaustion |
+
+Malformed provider syntax must fail in a future versioned syntax verifier before
+semantic codes apply; it cannot be retrofitted to v4. Selection follows
+authoritative source location, then canonical instance key and complete numeric
+tie-break data. Budget exhaustion is terminal and cannot return a partial sealed
+program. No existing diagnostic code is reassigned by this proposal.
 
 The implementation must provide at least these checked fixtures, with exact
 accepted/rejected outcome and stable diagnostics recorded by its owning phase:
@@ -223,11 +266,22 @@ one exact revision. Those results cannot be claimed from this document.
 
 Before freezing syntax, reviewers must decide whether `ZrynaValue` is the only
 initial bound and whether explicit application syntax can be represented without
-ambiguity by the replacement frontend. The candidate limits and new canonical
-layout key tags require exact-limit/first-extra and digest fixtures before adoption.
+ambiguity by the replacement frontend. A local parser check using installed
+`@typescript/typescript6` 6.0.2 accepts the member-call and direct-call
+candidates above and rejects `Option<i32>.some(7)`; the adapter's expected 6.0.3,
+provider-neutral and native-provider evidence remains uncollected. The candidate
+limits, diagnostics and canonical layout encodings
+require exact-limit/first-extra and independent digest fixtures before adoption.
 The public ABI of these types, aggregate export policy, WIT/component mapping and
 host resource policy remain separate proposals. No current supported profile is
 expanded by approving internal semantics.
+
+Issue #415 acceptance remains open until the reviewer approves the candidate
+bound, syntax, exact diagnostic codes, instance budgets and successor encoding;
+schema/fixed-fixture/ambiguity/dependency checks cover that approved design; and
+the missing generic nominal/Result record fixtures and independent full digest
+checks are supplied. This draft does not waive those issue requirements or claim
+that the public ABI or #400 host decisions have been settled.
 
 Dependency-ready slices are: (1) syntax protocol and provider-neutral fixtures;
 (2) semantic closed-type and deterministic instantiation authority; (3) versioned

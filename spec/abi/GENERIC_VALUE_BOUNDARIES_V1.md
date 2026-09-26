@@ -14,7 +14,9 @@ carrier is a source-visible ABI or a cross-version link symbol. A backend cannot
 specialize by representation, merge distinct verified instances, or expose a
 generic template as an untyped entrypoint.
 
-Only `i32` and `bool` remain admitted public scalar parameters/results. A
+Only the scalar types admitted by the selected current profile may cross its
+public scalar ABI: `i32` in the first scalar slice, and `bool` only where that
+profile's implemented ABI path admits it. A
 generic function, `Option`, `Result` or any aggregate containing them is rejected
 at that boundary before emission, even when one specialization could return a
 scalar. Generic nominal values and standard enum values remain internal.
