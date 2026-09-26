@@ -5,7 +5,9 @@ Status: **proposed, unaccepted**. This is a review input for
 manifest version, or support claim. It changes none of the accepted WIT sources, registry,
 schemas, or existing public M1–M3 behavior.
 The [bounded H1 contract draft](WASI_COMMAND_H1_CONTRACT_DRAFT.md) develops the recommended
-choice and its unresolved pinned-interface denial transport.
+choice and its unresolved pinned-interface denial transport. Its one-run grant/manifest
+decision supersedes the value-commitment question below; durable secret-value attestation is
+separate optional scope.
 
 ## Established boundary
 
@@ -88,9 +90,10 @@ source spelling, public result type, and concrete ABI remain **unaccepted**.
    expected value must not silently become a public output ABI. Allocate a distinct create-only
    manifest version/name. Bind exact WIT world and dependency digests, source/verified program,
    requested and effective grants, limits, component identity, run result, denial and cleanup
-   outcome. Decide how to authenticate grant values without disclosing secrets in a durable
-   manifest: an unkeyed hash of a low-entropy secret permits offline guessing. Record no ambient
-   values. Preserve old manifest versions and the #399 browser bundle independently.
+   outcome. The bounded H1 draft records presence and byte count, keeps the value only in the
+   captured one-run input, and makes no durable exact-value authenticity claim. An unkeyed hash
+   of a low-entropy secret permits offline guessing. Record no ambient values. Preserve old
+   manifest versions and the #399 browser bundle independently.
 
 These are owner decisions, not names or field shapes already approved by #400. The first
 implementation should stay confined to the accepted H1 subset; registry eligibility for

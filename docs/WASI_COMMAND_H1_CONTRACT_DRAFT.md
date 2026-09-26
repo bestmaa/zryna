@@ -15,6 +15,15 @@ keeps language admission, output target, WIT world, verified request, and host g
 The [private self-check](WASI_COMMAND_SELF_CHECK_V1.md) binds empty grants and compares an
 embedded `i32` expectation. Its bridge, zero-memory budget, and policy are not this proposal's
 public interface. The existing browser `component` build and its manifest remain separate.
+The proposed WIT input is the complete 34-file set returned by
+`zryna_backend_webassembly::pinned_wit_sources()`: the local
+`spec/wit/capability-profiles-v1/worlds.wit` plus all 33 pinned WASI `0.2.12` sources, across
+the exact `wasi:cli`, `clocks`, `filesystem`, `http`, `io`, `random`, and `sockets` packages.
+The backend's `wit_world_audit/pins.rs` owns each logical path and SHA-256; the fresh
+`audit_pinned_wit_worlds` result must authenticate all 34 bytes/paths and the eight resolved
+packages before command component construction. The selected command world has 13 explicit
+imports, 16 resolved imports including `wasi:io`, and only `wasi:cli/run@0.2.12` exported.
+An audit of `worlds.wit` alone is insufficient. No runtime path opens a substitute WIT file.
 
 **Proposed version identities:** a new `command-h1-v1` language gate, an explicit
 `wasi-command` target, `zryna.wasi-command-request.v1` for the private grant file, and
@@ -90,11 +99,15 @@ typed WIT `err` after that trap either: `run` produced no result. Record `runRet
 `execution: host-denial`, and the exact denied interface/operation in a separate host-origin
 manifest observation. Never report a successful `run: err(())` for that event.
 
-There are two coherent decisions. **A (recommended for the smallest pinned-world slice):**
+There are two coherent decisions. **A (proposed for the smallest pinned-world slice):**
 retain `Found/Missing` in source and make revocation a fatal instance denial with no `run`
 return. This needs an explicit, reviewed H1-specific reconciliation of
 [#358's provisional E3 permission-denied outcome](../spec/libraries/MINIMAL_CORE_HOST_V0.md)
-and #357's revocation rule; it must not silently waive either. **B:** add a reviewed
+and #357's revocation rule. The proposed reconciliation is: #357's "fail at the host boundary
+without performing the effect" is met by a no-effect trap; #358's permission-denied remains a
+distinct host-origin execution outcome in this pinned WIT slice, not a source enum case or a
+returned WIT `err`. This must be accepted as a narrow F2 transport rule, not silently inferred
+from the current contracts. **B:** add a reviewed
 error-bearing host interface so a source-level `Denied` case can be transported normally.
 B needs a new WIT package/world identity, registry/request revisions, component audit, and
 compatibility decision; it cannot be grafted onto `wasi:cli/environment@0.2.12` or the
@@ -121,7 +134,7 @@ A later path change cannot change this run; replacement of the sealed snapshot r
 does not source values from process environment, argv, cwd, or inherited descriptors. The
 caller retains ownership of the file: the driver neither modifies nor deletes it. The driver
 keeps no temporary disk copy, closes its retained handle after capture, and discards the
-in-memory value with the sealed policy after the run/receipt. No claim is made that
+in-memory value with the sealed policy after the run and manifest commit. No claim is made that
 ordinary memory disposal prevents operating-system swap or same-user process inspection.
 
 The proposed request JSON has exactly one world, one environment grant and one literal key;
@@ -141,6 +154,11 @@ ceilings. The #167 command ceiling of 128 environment entries and 65,536 total k
 bytes remains an independent upper bound; neither may be raised. Test exact 1/first 2 first-
 slice entries and exact/first-extra byte limits. Existing #167 registry tests retain their
 128/129 and 65,536/65,537 checks.
+Without a grant file, the driver constructs one canonical in-memory empty request for the
+same exact command world and host policy: no approved host operation, no requested or effective
+capability/interface/key, no value, and zero host quotas. The fixed fuel/deadline/memory
+execution envelope still applies. No empty file, implicit host context, or default environment
+entry substitutes for that request. A source that requires H1 cannot use it.
 
 The compiler seals the source literal and exact interface requirement independently of runtime
 grant data. Before creating a store, the driver verifies the root's explicit approval,
@@ -188,64 +206,70 @@ not retry guest cleanup or relabel the failure as missing/denied. This proposes 
 copy/ownership postcondition; exact allocator entrypoints and verifier rules remain subject
 to review before any code is written.
 
-## Manifest and confidential value authority
+## Manifest and one-run authority
 
-The proposed create-only manifest records schema/version; exact source, verified profile,
-component, WIT world/dependency and host-policy identities; requested and effective
-capability/interface/key; first-slice and registry limits; typed `run` outcome or trap;
-first denial and teardown disposition. It contains no plaintext host value, raw guest scalar,
-environment dump, process path, or unkeyed value hash. The exact value and presence bit remain
-in a sealed per-invocation policy paired with the captured file. Revalidation before
-instantiation and at each call compares that sealed policy with the source/component/request
-authority and a pre-run commitment; substitution invalidates execution. Manifest publication
-occurs only after a complete run and teardown record, through a create-only bundle.
+The grant is permission to use the exact environment interface for one authorized literal
+key under bounded quotas. The supplied present/missing value is host input data, not another
+capability. This follows #167's separation of capability eligibility from host-owned values
+and #357's binding of verified requirements and current grants. The driver captures the file
+once into an immutable private snapshot, validates it, and seals that snapshot with the
+prepared run. Only those captured bytes supply `get-environment`; no path reread, process
+environment, or inherited host descriptor can change the value during execution. A changed
+runtime policy object or grant identity rejects before a store or mediated effect.
 
-For a durable exact-value binding, propose two separate HMAC-SHA256 tags with one random
-256-bit host key `K`. This is a **draft wire encoding**, not existing manifest authority:
+The prepared run must retain and revalidate **all** of these opaque authorities together:
 
-- `field(x)` is an unsigned 64-bit little-endian byte length followed by exactly those bytes;
-  every string is its unnormalized UTF-8 bytes. Fixed digests are 32 raw bytes inside `field`.
-  Reject a length that does not fit, an unknown enum byte, trailing bytes, or an alternate
-  representation before tag comparison.
-- `request` is `field(schema) || field(world) || field(grant-kind) || field(key) ||
-  field(presence) || field(value)`. `grant-kind` is one byte: `0` empty or `1` environment.
-  `presence` is one byte: `0` for no grant, `1` for granted but missing, `2` for present.
-  Key and value are empty when their mode omits them; `presence=2` with an empty value is
-  distinct from `presence=1`. The host input's original JSON spacing and path are excluded.
-- `limits` is seventeen unsigned 64-bit little-endian integers, in order: #167's ten
-  canonical clock/environment/filesystem/network/randomness ceiling values, then one-key
-  maximum `1`, key-byte maximum `64`, value-byte maximum `1024`, request-file maximum
-  `4096`, fuel maximum `100000`, deadline milliseconds `5000`, and memory bytes `16777216`.
-  Encode the complete 136-byte sequence as one `field(limits)`.
-- `authorityTag = HMAC-SHA256(K, "zryna.wasi-command.authority.v1\0" || field(request) ||
-  field(source_digest) || field(component_digest) || field(wit_source_digest) ||
-  field(world_identity) || field(host_policy_identity) || field(approved_interface) ||
-  field(limits))`. `approved_interface` is empty for a pure source and exactly
-  `wasi:cli/environment@0.2.12` for H1. The sealed immutable policy retains this tag and
-  exact request bytes. The host verifies that policy before instantiation and checks its
-  identity and revocation state at each mediated call; it never rereads the grant pathname.
-- After teardown, `receiptTag = HMAC-SHA256(K, "zryna.wasi-command.receipt.v1\0" ||
-  field(authorityTag) || field(outcome) || field(denied_interface) ||
-  field(denied_operation) || field(cleanup))`. `outcome` is one byte: `0` returned WIT
-  `ok`, `1` returned WIT `err`, `2` host denial with no run return, or `3` runtime trap with
-  no run return. Denial names are empty except for `2`. `cleanup` is one byte: `0`
-  confirmed or `1` unconfirmed. No raw guest scalar is included. A fatal cleanup failure
-  cannot be reported as confirmed success.
+1. The authenticated source map's exact relative path and UTF-8 bytes, its source identity,
+   the `CommandH1V1` verifier-sealed program and program fingerprint, its verified effect
+   requirement and `main(): bool` scalar ABI. A source digest alone cannot substitute for the
+   verified program or profile seal.
+2. The #357 composition result for the one-node graph: selected language/profile and
+   `WitCommand` row, exact command world, source/program authority, empty or exact H1
+   requirement, root approval, policy version, resource ceilings, and composition binding.
+   The current private empty-only composition result does not authorize H1; the new result
+   needs the same independent derivation and stale-authority rejection.
+3. All 34 authenticated pinned WIT sources and the fresh resolved audit of eight packages,
+   three worlds, exact command imports and run export; the sealed component's retained core,
+   final bytes, independently audited topology, and both artifact identities. Neither a WIT
+   label nor a component digest alone grants a host operation.
+4. The driver-validated requested and effective grant set, exact literal key, approved
+   interface, fixed quotas and runtime envelope, plus the private captured present/value
+   bytes and current revocation state. The host receives that sealed policy rather than a
+   new filesystem read.
 
-The manifest records the exact algorithm/version, key identifier, `authorityTag`, and
-`receiptTag`, never `K` or the value. The proposed key identifier is
-`SHA-256("zryna.wasi-command.key-id.v1\0" || K)`, all 32 bytes. Generate `K` from a trusted
-operating-system entropy source, independently of the command's denied randomness grant.
-Verification requires the matching private request bytes and `K`, then recomputes both tags
-and compares them in constant time. A missing key or request is **unverifiable**, never a
-passing receipt. A plain or salted hash of a low-entropy value permits offline guessing.
+Before engine/store creation, revalidate the source/program/profile, composition, full WIT
+closure/component, and grant intersection. At each environment callback, check the retained
+policy identity, literal key, quota and revocation state before returning the captured value.
+After execution, derive the manifest only from those retained observations and the actual
+run/denial/teardown record. A create-only bundle commits the complete manifest or nothing.
 
-The exact owner-private host-key storage root, Windows ACL/Unix mode proof, key rotation,
-retention while referenced manifests exist, and authorized verification path lack accepted
-repository authority. They are one remaining security decision; until reviewed, the HMAC
-format above cannot claim a durable verifiable manifest. If #400 requires a standalone
-publicly verifiable exact-value manifest, a host-secret HMAC is insufficient and a separate
-attestation design is a further blocker.
+The proposed `zryna.wasi-command-manifest.v1` execution record contains:
+
+| Field group | Recorded value |
+| --- | --- |
+| Source and program | Source path/identity; `CommandH1V1` profile and verifier revision; sealed program fingerprint; verified H1 requirement; scalar `main` identity |
+| Composition | One-node graph/selection identity, root approval, exact `WitCommand` row, policy version and independently derived composition binding |
+| WIT and component | Command world/WASI version; all eight resolved package IDs and canonical import/export sets; complete 34-file closure identity; retained core and audited component identities |
+| Grants and limits | Canonical requested and effective capability/interface/key sets (both empty for omission), #167 ceiling and narrower one-key quota, fuel, deadline and memory limits |
+| Host input summary | `none`, `missing`, or `present`, with bounded UTF-8 byte count; no value, input path or unkeyed value hash |
+| Execution | `run-returned` with `runReturn: ok` or `err`, `host-denial` with `runReturn: absent`, or `runtime-trap` with `runReturn: absent` |
+| Denial and teardown | First denied interface/operation and host policy revision only for host denial; otherwise no denial; `confirmed` or `unconfirmed` teardown, never success inferred from a failed cleanup |
+
+For a compact complete WIT closure identity, the candidate `witClosureDigest` is SHA-256 over
+all 34 audited files sorted by logical path. For each file, hash an unsigned 64-bit
+little-endian path-byte length, its UTF-8 path bytes, an unsigned 64-bit little-endian
+source-byte length, and the exact pinned source bytes. Record count `34` and that digest;
+the retained authenticated audit, not the manifest digest, is execution authority. The
+manifest's source, program, composition and artifact identities are likewise observations
+of retained sealed authorities, not permission reconstructed from JSON.
+
+This durable JSON is an **execution record** of the grant set, limits, result and denial.
+It neither contains nor proves exact secret value bytes after the private snapshot is
+discarded, and it is not a third-party attestation or replay receipt. Exact-value
+commitments, caller-supplied verification keys and HMAC/key storage are separate optional
+scope, not a #400 baseline gate. A reader may verify documented identities against the
+matching compiler artifacts and pins, but must not treat an editable manifest alone as an
+authenticated proof of the value that was supplied.
 
 ## Fixed design and later execution fixtures
 
@@ -256,17 +280,17 @@ attestation design is a further blocker.
 | missing | Same grant key with `present:false` | `Missing` (distinct from `Found("")`); WIT outcome follows source bool |
 | empty value | `present:true,value:""` | `Found("")`; one owned empty String; not `Missing` |
 | omitted grant | H1 source, no file | Reject before engine/store, no callback |
-| changed authority | Substitute sealed captured value/presence, source, WIT pin, component, or HMAC key; separately replace pathname after capture | Reject sealed substitution before instantiation/publication; pathname replacement cannot change the captured run |
+| changed authority | Substitute captured policy, source, verified program/profile, composition, any of 34 WIT pins, or component; separately replace pathname after capture | Reject sealed substitution before instantiation/publication; pathname replacement cannot change the captured run |
 | malformed | Duplicate/conflicting key, unknown field/capability/world, bad UTF-8, wrong type, extra record | Reject in deterministic input phase |
 | bounds | One/two entries; 64/65-byte key; 1,024/1,025-byte value; 4,096/4,097-byte file; #167 128/129 entries | Exact accepted where applicable, first extra rejected at owning layer |
 | revoked | Revoke after sealing but before host call | No value read; trap; absent `run` return and distinct host-denial record; no false `Missing` or typed WIT `err` |
-| receipt | Empty grant, granted-missing and present-empty value; wrong key, length, byte order, tag, limit or outcome | Distinct authority tags for all three modes; every mutation fails verification; unavailable key/request is unverifiable |
+| manifest | Empty grant, granted-missing and present-empty value; changed requirement, world, limit, result or denial | Distinct grant/input summaries and complete retained identities; manifest never exposes or claims proof of value bytes |
 | denied probes | Filesystem, clock, randomness, sockets/network under empty or H1 grant; process import attempt | Deterministic host denial for admitted-world imports; process import rejected by world/topology audit, with no ambient effect |
 | malformed component | Changed import/function type, canonical option, realloc, memory, run result, or excess bytes | Reject before instantiation; next valid request recovers |
 | cleanup | Found, missing, source `err`, denied call, canonical failure, fuel/deadline trap | Exact ownership ledger, store invalidation, joined watchdog, fresh recovery |
 
 These rows are design fixtures, not tests that have run. Implementation acceptance also needs
 the WIT contract, source/IR and independent component audits, focused driver/CLI tests,
-exact-byte manifest/receipt checks, fixed examples, and required Linux and Windows gates on
+manifest inventory/execution-record checks, fixed examples, and required Linux and Windows gates on
 the reviewed revision. #400 stays open and unsupported until those proofs and the external
 decisions above are accepted.
