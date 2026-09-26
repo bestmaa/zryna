@@ -13,17 +13,16 @@ const ADD_BOOTSTRAP: &[u8] =
 const BOOL_SOURCE: &str = include_str!("../../../tests/m1-fixtures/bool-gated.zry");
 const ANY_SOURCE: &str = include_str!("../../../tests/m1-fixtures/invalid-any.zry");
 const PUBLIC_M1_BOOTSTRAP: &[u8] =
-    include_bytes!("../../../tests/fixtures/native-parser-v2-public-m1.snapshot.json");
-const M1_SOURCE: &str = include_str!("../../../tests/fixtures/native-parser-v2-m1.zry");
-const M1_BOOTSTRAP: &[u8] =
-    include_bytes!("../../../tests/fixtures/native-parser-v2-m1.snapshot.json");
+    include_bytes!("native_parser_v2/native-parser-v2-public-m1.snapshot.json");
+const M1_SOURCE: &str = include_str!("native_parser_v2/native-parser-v2-m1.zry");
+const M1_BOOTSTRAP: &[u8] = include_bytes!("native_parser_v2/native-parser-v2-m1.snapshot.json");
 const RETURN_NEWLINE_SOURCE: &str =
-    include_str!("../../../tests/fixtures/native-parser-v2-return-newline.zry");
+    include_str!("native_parser_v2/native-parser-v2-return-newline.zry");
 const RETURN_NEWLINE_BOOTSTRAP: &[u8] =
-    include_bytes!("../../../tests/fixtures/native-parser-v2-return-newline.snapshot.json");
-const RECOVERY_SOURCE: &str = include_str!("../../../tests/fixtures/native-parser-v2-recovery.zry");
+    include_bytes!("native_parser_v2/native-parser-v2-return-newline.snapshot.json");
+const RECOVERY_SOURCE: &str = include_str!("native_parser_v2/native-parser-v2-recovery.zry");
 const RECOVERY_BOOTSTRAP: &[u8] =
-    include_bytes!("../../../tests/fixtures/native-parser-v2-recovery.snapshot.json");
+    include_bytes!("native_parser_v2/native-parser-v2-recovery.snapshot.json");
 
 fn source(path: &str, text: &str) -> SourceFileInput {
     SourceFileInput { path: path.to_owned(), text: text.to_owned() }
@@ -60,8 +59,10 @@ fn complete_public_m1_source_corpus_matches_frozen_bootstrap_candidate() {
 
 #[test]
 fn frozen_bootstrap_missing_types_trailing_comma_and_asi_match() {
-    let (sources, native) =
-        candidate(vec![source("tests/fixtures/native-parser-v2-m1.zry", M1_SOURCE)]);
+    let (sources, native) = candidate(vec![source(
+        "crates/zryna-frontend/tests/native_parser_v2/native-parser-v2-m1.zry",
+        M1_SOURCE,
+    )]);
     let bootstrap = syntax_v2::decode_snapshot(M1_BOOTSTRAP).expect("frozen provider snapshot");
     assert_eq!(native, bootstrap);
     syntax_v2::verify_snapshot(native, &sources).expect("existing source-bound verifier");
@@ -70,7 +71,7 @@ fn frozen_bootstrap_missing_types_trailing_comma_and_asi_match() {
 #[test]
 fn frozen_bootstrap_and_native_reject_return_newline_at_the_same_token() {
     let sources = SourceMap::build(vec![source(
-        "tests/fixtures/native-parser-v2-return-newline.zry",
+        "crates/zryna-frontend/tests/native_parser_v2/native-parser-v2-return-newline.zry",
         RETURN_NEWLINE_SOURCE,
     )])
     .expect("bounded negative source");
@@ -94,7 +95,7 @@ fn frozen_bootstrap_and_native_reject_return_newline_at_the_same_token() {
 #[test]
 fn bounded_recovery_retains_the_same_following_function_as_bootstrap() {
     let sources = SourceMap::build(vec![source(
-        "tests/fixtures/native-parser-v2-recovery.zry",
+        "crates/zryna-frontend/tests/native_parser_v2/native-parser-v2-recovery.zry",
         RECOVERY_SOURCE,
     )])
     .expect("bounded recovery fixture");
