@@ -12,6 +12,7 @@ use zryna_syntax::v2 as syntax;
 use crate::native_lexer::{Keyword, LexedProject, Token, TokenKind};
 
 mod expression;
+mod recovery;
 
 /// A deterministic rejection of source outside this native candidate slice.
 #[derive(Clone, Debug)]
@@ -47,6 +48,31 @@ pub fn parse_v2_candidate(
     sources: &SourceMap,
     lexed: &LexedProject,
 ) -> Result<syntax::RawProjectSyntaxSnapshot, ParseError> {
+    parse_v2_internal(sources, lexed, false)
+}
+
+/// Constructs a bounded, untrusted v2 candidate that retains parser errors as diagnostics.
+///
+/// Each unsupported top-level declaration or function is discarded atomically. Recovery resumes
+/// at the next top-level `export` token after balanced braces, never inside the rejected body.
+/// The existing verifier can check the returned DTO, but its error diagnostics must stop semantic
+/// input construction. Lexical errors and resource overflow still return [`ParseError`].
+///
+/// # Errors
+///
+/// Returns an error for foreign source maps, lexical errors, or first-extra budgets.
+pub fn parse_v2_recovering_candidate(
+    sources: &SourceMap,
+    lexed: &LexedProject,
+) -> Result<syntax::RawProjectSyntaxSnapshot, ParseError> {
+    parse_v2_internal(sources, lexed, true)
+}
+
+fn parse_v2_internal(
+    sources: &SourceMap,
+    lexed: &LexedProject,
+    recovering: bool,
+) -> Result<syntax::RawProjectSyntaxSnapshot, ParseError> {
     if !lexed.is_bound_to(sources) || lexed.files().len() != sources.len() {
         return Err(failure("ZRYNA-F2002", "native tokens do not belong to this source map"));
     }
@@ -58,6 +84,7 @@ pub fn parse_v2_candidate(
     let mut total_parameters = 0_usize;
     let mut total_statements = 0_usize;
     let mut total_expressions = 0_usize;
+    let mut diagnostics = Vec::new();
     for file in lexed.files() {
         let source = sources
             .source(file.id())
@@ -79,7 +106,19 @@ pub fn parse_v2_candidate(
                 return Err(parser
                     .error_here("ZRYNA-F2003", "function inventory exceeds protocol-v2 limit"));
             }
-            let function = parser.function()?;
+            let checkpoint = parser.position;
+            let function = match parser.function() {
+                Ok(function) => function,
+                Err(error) if recovering && error.diagnostic().code() == "ZRYNA-F2002" => {
+                    if diagnostics.len() >= syntax::MAX_PROVIDER_DIAGNOSTICS {
+                        return Err(resource("parser diagnostics exceed protocol-v2 limit"));
+                    }
+                    diagnostics.push(recovery::raw_diagnostic(&error));
+                    recovery::skip_to_next_function(&mut parser, checkpoint);
+                    continue;
+                }
+                Err(error) => return Err(error),
+            };
             total_functions += 1;
             total_parameters += function.parameters.len();
             total_statements += function.body.statements.len();
@@ -101,7 +140,7 @@ pub fn parse_v2_candidate(
     Ok(syntax::RawProjectSyntaxSnapshot {
         schema_version: syntax::PROTOCOL_VERSION,
         files,
-        diagnostics: Vec::new(),
+        diagnostics,
     })
 }
 

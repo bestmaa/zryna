@@ -57,6 +57,19 @@ slice does not cover parenthesized expressions, M2/M3 grammar, bootstrap-equival
 diagnostics, or provider selection;
 it is not a completed native frontend. `tests/native_parser_v2.rs` compares the frozen bootstrap
 M1 snapshot and checks verifier acceptance plus negative/resource cases.
+The separate `parse_v2_recovering_candidate` synchronizes at the next top-level `export` after a
+rejected declaration, retaining later valid functions and one bounded error per rejection. It
+never returns a partial candidate on lexical or resource failure. Its DTO still requires the v2
+verifier; any retained error blocks semantic input. Recovery diagnostic wording and multiplicity
+are not yet bootstrap-equivalent.
+
+| Checked M1 source set | Native candidate evidence | Remaining gap |
+| --- | --- | --- |
+| `examples/universal/add.zry`, `tests/m1-fixtures/{bool-gated,invalid-any}.zry` | Exact frozen bootstrap DTO and v2 verifier acceptance | Semantic outcomes remain owned by the existing compiler. |
+| Missing annotations, trailing parameter comma, semicolon omission, and UTF-8 comment prefix | Exact frozen bootstrap DTO and v2 verifier acceptance | Broader TypeScript syntax is excluded. |
+| Newline directly after `return` | Same first F2002 code and source span; atomic rejection | Bootstrap also emits an expression-statement diagnostic. |
+| Unsupported parenthesized return before a valid function | Same retained valid function and F2002 category; verified error snapshot | Diagnostic span and wording still differ. |
+| First-extra functions, parameters, expression depth, and recovery diagnostics | Bounded focused tests | Full resource and fuzz corpus remains pending. |
 
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
 executable-syntax contract owned by `zryna-syntax`; it does not change v1 semantics in place. The
