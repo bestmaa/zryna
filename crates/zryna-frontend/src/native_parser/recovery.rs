@@ -7,15 +7,22 @@ use crate::native_lexer::{Keyword, TokenKind};
 
 pub(super) fn skip_to_next_function(parser: &mut FileParser<'_>, checkpoint: usize) {
     parser.position = checkpoint;
-    let mut braces = 0_usize;
+    let mut closers = Vec::new();
     while let Some(token) = parser.current() {
         match token.kind() {
-            TokenKind::OpenBrace => braces = braces.saturating_add(1),
-            TokenKind::CloseBrace => braces = braces.saturating_sub(1),
+            TokenKind::OpenBrace => closers.push(TokenKind::CloseBrace),
+            TokenKind::OpenBracket => closers.push(TokenKind::CloseBracket),
+            TokenKind::OpenParen => closers.push(TokenKind::CloseParen),
+            TokenKind::CloseBrace | TokenKind::CloseBracket | TokenKind::CloseParen
+                if closers.pop() != Some(token.kind()) =>
+            {
+                parser.position = parser.tokens.len();
+                return;
+            }
             _ => {}
         }
         parser.position += 1;
-        if braces == 0
+        if closers.is_empty()
             && parser
                 .current()
                 .is_some_and(|next| next.kind() == TokenKind::Keyword(Keyword::Export))

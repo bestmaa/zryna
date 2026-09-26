@@ -54,7 +54,7 @@ pub fn parse_v2_candidate(
 /// Constructs a bounded, untrusted v2 candidate that retains parser errors as diagnostics.
 ///
 /// Each unsupported top-level declaration or function is discarded atomically. Recovery resumes
-/// at the next top-level `export` token after balanced braces, never inside the rejected body.
+/// at the next top-level `export` token after balanced delimiters, never inside the rejected body.
 /// The existing verifier can check the returned DTO, but its error diagnostics must stop semantic
 /// input construction. Lexical errors and resource overflow still return [`ParseError`].
 ///

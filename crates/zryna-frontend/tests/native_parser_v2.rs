@@ -110,6 +110,35 @@ fn bounded_recovery_retains_the_same_following_function_as_bootstrap() {
 }
 
 #[test]
+fn recovery_never_promotes_nested_exports_to_top_level_functions() {
+    for (open, close) in [("[", "]"), ("(", ")")] {
+        let text = format!(
+            "export const x = {open}export function phantom(): i32 {{ return 1; }}{close}; \
+             export function retained(): i32 {{ return 2; }}"
+        );
+        let sources =
+            SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
+        let lexed = lex(&sources).expect("bounded lexical stream");
+        let raw = parse_v2_recovering_candidate(&sources, &lexed).expect("bounded recovery");
+        assert_eq!(raw.diagnostics.len(), 1);
+        assert_eq!(raw.files[0].functions.len(), 1);
+        assert_eq!(raw.files[0].functions[0].name.text, "retained");
+        syntax_v2::verify_snapshot(raw, &sources).expect("error snapshot remains verifiable");
+    }
+}
+
+#[test]
+fn mismatched_recovery_delimiters_cannot_promote_later_exports() {
+    let text = "export const x = [); export function retained(): i32 { return 2; }";
+    let sources = SourceMap::build(vec![source("src/main.zry", text)]).expect("bounded source");
+    let lexed = lex(&sources).expect("bounded lexical stream");
+    let raw = parse_v2_recovering_candidate(&sources, &lexed).expect("bounded recovery");
+    assert_eq!(raw.diagnostics.len(), 1);
+    assert!(raw.files[0].functions.is_empty());
+    syntax_v2::verify_snapshot(raw, &sources).expect("error snapshot remains verifiable");
+}
+
+#[test]
 fn first_extra_recovery_diagnostic_fails_atomically() {
     let rejected = "export function rejected(): i32 { return (1); }\n";
     let text = rejected.repeat(syntax_v2::MAX_PROVIDER_DIAGNOSTICS + 1);

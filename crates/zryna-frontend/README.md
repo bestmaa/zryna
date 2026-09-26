@@ -58,7 +58,8 @@ diagnostics, or provider selection;
 it is not a completed native frontend. `tests/native_parser_v2.rs` compares the frozen bootstrap
 M1 snapshot and checks verifier acceptance plus negative/resource cases.
 The separate `parse_v2_recovering_candidate` synchronizes at the next top-level `export` after a
-rejected declaration, retaining later valid functions and one bounded error per rejection. It
+rejected declaration and balanced braces, brackets, and parentheses, retaining later valid
+functions and one bounded error per rejection. Mismatched delimiters stop synchronization. It
 never returns a partial candidate on lexical or resource failure. Its DTO still requires the v2
 verifier; any retained error blocks semantic input. Recovery diagnostic wording and multiplicity
 are not yet bootstrap-equivalent.
