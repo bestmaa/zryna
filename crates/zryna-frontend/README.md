@@ -43,6 +43,19 @@ pinned TypeScript 6 provider on Linux and Windows. Add `-- --include-ignored` to
 proportional production-limit token, trivia, project-lexeme, and raw-byte proofs without lowering
 their limits.
 
+`native_parser::parse_v2_candidate` is an internal first parser slice over that exact bound token
+stream. It constructs untrusted protocol-v2 DTOs for exported functions with explicit named
+parameter/result annotations and semicolon-terminated return statements containing ASCII
+references, Boolean literals, canonical decimal integers, and left-associative addition. It
+retains source-order files/functions/statements, exact token-based UTF-8 spans, and canonical
+postorder expression arenas; first-extra v2 inventory failures are atomic. Lexical diagnostics,
+foreign source maps, malformed input, and syntax outside this closed slice are rejected. The
+existing `zryna_syntax::v2::verify_snapshot` remains the only syntax authority. This partial
+slice does not cover omitted annotations, automatic semicolon insertion, parenthesized
+expressions, M2/M3 grammar, bootstrap-equivalent recovery diagnostics, or provider selection;
+it is not a completed native frontend. `tests/native_parser_v2.rs` compares the frozen bootstrap
+M1 snapshot and checks verifier acceptance plus negative/resource cases.
+
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
 executable-syntax contract owned by `zryna-syntax`; it does not change v1 semantics in place. The
 TypeScript 6 adapter implements the protocol-v2 executable-syntax contract. Protocol v3 has its own
