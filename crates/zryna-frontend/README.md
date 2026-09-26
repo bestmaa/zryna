@@ -44,15 +44,17 @@ proportional production-limit token, trivia, project-lexeme, and raw-byte proofs
 their limits.
 
 `native_parser::parse_v2_candidate` is an internal first parser slice over that exact bound token
-stream. It constructs untrusted protocol-v2 DTOs for exported functions with explicit named
-parameter/result annotations and semicolon-terminated return statements containing ASCII
+stream. It constructs untrusted protocol-v2 DTOs for exported functions with named or missing
+parameter/result annotations and return statements containing ASCII
 references, Boolean literals, canonical decimal integers, and left-associative addition. It
 retains source-order files/functions/statements, exact token-based UTF-8 spans, and canonical
-postorder expression arenas; first-extra v2 inventory failures are atomic. Lexical diagnostics,
+postorder expression arenas. The frozen M1 subset includes trailing parameter commas and
+semicolon omission at a closing brace or before a line-separated return; a line break directly
+after `return` remains rejected. First-extra v2 inventory and depth failures are atomic. Lexical diagnostics,
 foreign source maps, malformed input, and syntax outside this closed slice are rejected. The
 existing `zryna_syntax::v2::verify_snapshot` remains the only syntax authority. This partial
-slice does not cover omitted annotations, automatic semicolon insertion, parenthesized
-expressions, M2/M3 grammar, bootstrap-equivalent recovery diagnostics, or provider selection;
+slice does not cover parenthesized expressions, M2/M3 grammar, bootstrap-equivalent recovery
+diagnostics, or provider selection;
 it is not a completed native frontend. `tests/native_parser_v2.rs` compares the frozen bootstrap
 M1 snapshot and checks verifier acceptance plus negative/resource cases.
 

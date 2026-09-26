@@ -35,9 +35,9 @@ impl std::error::Error for ParseError {}
 
 /// Constructs one untrusted protocol-v2 candidate from the exact native lexical output.
 ///
-/// This deliberately accepts only the closed `export function` / named annotation / `return`
-/// subset represented by protocol v2. Missing annotations and unsupported syntax are rejected
-/// until their bootstrap recovery behavior has independent differential coverage.
+/// This deliberately accepts only the closed `export function` / `return` subset represented by
+/// protocol v2. Missing annotations and semicolon insertion use the frozen bootstrap spans;
+/// unsupported syntax is rejected until its recovery has independent differential coverage.
 ///
 /// # Errors
 ///
@@ -146,6 +146,12 @@ impl FileParser<'_> {
 
     fn identifier(&mut self) -> Result<syntax::RawIdentifierSyntax, ParseError> {
         let token = self.take(TokenKind::Identifier)?;
+        if matches!(
+            self.spelling(token),
+            "this" | "null" | "super" | "new" | "typeof" | "void" | "delete" | "class"
+        ) {
+            return Err(error_at(token, "ZRYNA-F2002", "unsupported identifier spelling"));
+        }
         Ok(syntax::RawIdentifierSyntax { text: self.spelling(token).to_owned(), span: raw(token) })
     }
 
@@ -153,14 +159,37 @@ impl FileParser<'_> {
         &self.text[token.span().start() as usize..token.span().end() as usize]
     }
 
-    fn named_type(&mut self) -> Result<syntax::RawTypeSyntax, ParseError> {
-        self.take(TokenKind::Colon)?;
+    fn annotation(&mut self, insertion: u32) -> Result<syntax::RawTypeSyntax, ParseError> {
+        if self.maybe(TokenKind::Colon).is_none() {
+            return Ok(syntax::RawTypeSyntax {
+                span: UntrustedSpan { file: self.file, start: insertion, end: insertion },
+                kind: syntax::RawTypeSyntaxKind::Missing,
+            });
+        }
         let token = self
             .current()
             .ok_or_else(|| self.error_here("ZRYNA-F2002", "missing type annotation"))?;
         match token.kind() {
             TokenKind::Identifier => {}
             _ => return Err(self.error_here("ZRYNA-F2002", "unsupported type annotation")),
+        }
+        if matches!(
+            self.spelling(token),
+            "unknown"
+                | "never"
+                | "number"
+                | "string"
+                | "boolean"
+                | "symbol"
+                | "bigint"
+                | "undefined"
+                | "object"
+                | "infer"
+                | "keyof"
+                | "readonly"
+                | "unique"
+        ) {
+            return Err(error_at(token, "ZRYNA-F2002", "unsupported type annotation"));
         }
         self.position += 1;
         Ok(syntax::RawTypeSyntax {
@@ -173,39 +202,8 @@ impl FileParser<'_> {
         let export = self.take(TokenKind::Keyword(Keyword::Export))?;
         let keyword = self.take(TokenKind::Keyword(Keyword::Function))?;
         let name = self.identifier()?;
-        self.take(TokenKind::OpenParen)?;
-        let mut parameters = Vec::new();
-        if self.current().is_some_and(|token| token.kind() != TokenKind::CloseParen) {
-            loop {
-                if parameters.len() >= syntax::MAX_PARAMETERS_PER_FUNCTION {
-                    return Err(self.error_here(
-                        "ZRYNA-F2003",
-                        "function parameter inventory exceeds protocol-v2 limit",
-                    ));
-                }
-                let name = self.identifier()?;
-                let type_syntax = self.named_type()?;
-                parameters.push(syntax::RawParameterSyntax {
-                    span: UntrustedSpan {
-                        file: self.file,
-                        start: name.span.start,
-                        end: type_syntax.span.end,
-                    },
-                    name,
-                    type_syntax,
-                });
-                if self.maybe(TokenKind::Comma).is_none() {
-                    break;
-                }
-                if self.current().is_some_and(|token| token.kind() == TokenKind::CloseParen) {
-                    return Err(
-                        self.error_here("ZRYNA-F2002", "trailing parameter comma is unsupported")
-                    );
-                }
-            }
-        }
-        self.take(TokenKind::CloseParen)?;
-        let result_type = self.named_type()?;
+        let (parameters, parameter_end) = self.parameters()?;
+        let result_type = self.annotation(parameter_end)?;
         let open = self.take(TokenKind::OpenBrace)?;
         let mut statements = Vec::new();
         let mut expressions = Vec::new();
@@ -217,22 +215,40 @@ impl FileParser<'_> {
                 ));
             }
             let keyword = self.take(TokenKind::Keyword(Keyword::Return))?;
+            if self.current().is_some_and(|next| {
+                has_line_break(self.text, keyword.span().end(), next.span().start())
+            }) {
+                return Err(error_at(
+                    keyword,
+                    "ZRYNA-F2002",
+                    "return value must start on the same line",
+                ));
+            }
             let expression_start = self.position;
             let value = expression::addition(self, &mut expressions)?;
             if self.position == expression_start {
                 return Err(self.error_here("ZRYNA-F2002", "return value is missing"));
             }
-            let semicolon = self.take(TokenKind::Semicolon)?;
             let root = &expressions[value as usize];
+            let statement_end = if let Some(semicolon) = self.maybe(TokenKind::Semicolon) {
+                semicolon.span().end()
+            } else if self.current().is_some_and(|next| {
+                next.kind() == TokenKind::CloseBrace
+                    || (next.kind() == TokenKind::Keyword(Keyword::Return)
+                        && has_line_break(self.text, root.span.end, next.span().start()))
+            }) {
+                root.span.end
+            } else {
+                return Err(self.error_here("ZRYNA-F2002", "missing return statement terminator"));
+            };
             statements.push(syntax::RawStatementSyntax {
                 span: UntrustedSpan {
                     file: self.file,
                     start: keyword.span().start(),
-                    end: semicolon.span().end(),
+                    end: statement_end,
                 },
                 kind: syntax::RawStatementKind::Return { keyword_span: raw(keyword), value },
             });
-            debug_assert!(root.span.end <= semicolon.span().start());
         }
         let close = self.take(TokenKind::CloseBrace)?;
         Ok(syntax::RawFunctionSyntax {
@@ -257,11 +273,54 @@ impl FileParser<'_> {
             },
         })
     }
+
+    fn parameters(&mut self) -> Result<(Vec<syntax::RawParameterSyntax>, u32), ParseError> {
+        let open_paren = self.take(TokenKind::OpenParen)?;
+        let mut parameter_end = open_paren.span().end();
+        let mut parameters = Vec::new();
+        if self.current().is_some_and(|token| token.kind() != TokenKind::CloseParen) {
+            loop {
+                if parameters.len() >= syntax::MAX_PARAMETERS_PER_FUNCTION {
+                    return Err(self.error_here(
+                        "ZRYNA-F2003",
+                        "function parameter inventory exceeds protocol-v2 limit",
+                    ));
+                }
+                let name = self.identifier()?;
+                let type_syntax = self.annotation(name.span.end)?;
+                parameter_end = type_syntax.span.end;
+                parameters.push(syntax::RawParameterSyntax {
+                    span: UntrustedSpan {
+                        file: self.file,
+                        start: name.span.start,
+                        end: type_syntax.span.end,
+                    },
+                    name,
+                    type_syntax,
+                });
+                let Some(comma) = self.maybe(TokenKind::Comma) else {
+                    break;
+                };
+                parameter_end = comma.span().end();
+                if self.current().is_some_and(|token| token.kind() == TokenKind::CloseParen) {
+                    break;
+                }
+            }
+        }
+        self.take(TokenKind::CloseParen)?;
+        Ok((parameters, parameter_end))
+    }
 }
 
 fn raw(token: Token) -> UntrustedSpan {
     let span = token.span();
     UntrustedSpan { file: span.file().index(), start: span.start(), end: span.end() }
+}
+
+fn has_line_break(text: &str, start: u32, end: u32) -> bool {
+    text[start as usize..end as usize]
+        .chars()
+        .any(|character| matches!(character, '\n' | '\r' | '\u{2028}' | '\u{2029}'))
 }
 
 fn failure(code: &'static str, message: &'static str) -> ParseError {

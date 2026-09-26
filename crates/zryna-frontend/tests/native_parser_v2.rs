@@ -6,6 +6,13 @@ use zryna_source::{SourceFileInput, SourceMap};
 const ADD_SOURCE: &str = include_str!("../../../examples/universal/add.zry");
 const ADD_BOOTSTRAP: &[u8] =
     include_bytes!("../../../tests/fixtures/typescript-adapter-v2-result.json");
+const M1_SOURCE: &str = include_str!("../../../tests/fixtures/native-parser-v2-m1.zry");
+const M1_BOOTSTRAP: &[u8] =
+    include_bytes!("../../../tests/fixtures/native-parser-v2-m1.snapshot.json");
+const RETURN_NEWLINE_SOURCE: &str =
+    include_str!("../../../tests/fixtures/native-parser-v2-return-newline.zry");
+const RETURN_NEWLINE_BOOTSTRAP: &[u8] =
+    include_bytes!("../../../tests/fixtures/native-parser-v2-return-newline.snapshot.json");
 
 fn source(path: &str, text: &str) -> SourceFileInput {
     SourceFileInput { path: path.to_owned(), text: text.to_owned() }
@@ -25,6 +32,39 @@ fn frozen_bootstrap_add_snapshot_is_byte_span_equivalent() {
     assert_eq!(native, bootstrap);
     let verified = syntax_v2::verify_snapshot(native, &sources).expect("existing verifier");
     assert!(verified.is_bound_to(&sources));
+}
+
+#[test]
+fn frozen_bootstrap_missing_types_trailing_comma_and_asi_match() {
+    let (sources, native) =
+        candidate(vec![source("tests/fixtures/native-parser-v2-m1.zry", M1_SOURCE)]);
+    let bootstrap = syntax_v2::decode_snapshot(M1_BOOTSTRAP).expect("frozen provider snapshot");
+    assert_eq!(native, bootstrap);
+    syntax_v2::verify_snapshot(native, &sources).expect("existing source-bound verifier");
+}
+
+#[test]
+fn frozen_bootstrap_and_native_reject_return_newline_at_the_same_token() {
+    let sources = SourceMap::build(vec![source(
+        "tests/fixtures/native-parser-v2-return-newline.zry",
+        RETURN_NEWLINE_SOURCE,
+    )])
+    .expect("bounded negative source");
+    let lexed = lex(&sources).expect("bounded lexical stream");
+    let native = parse_v2_candidate(&sources, &lexed).expect_err("newline ends return");
+    let bootstrap =
+        syntax_v2::decode_snapshot(RETURN_NEWLINE_BOOTSTRAP).expect("frozen provider result");
+    assert!(bootstrap.files[0].functions.is_empty());
+    assert_eq!(native.diagnostic().code(), bootstrap.diagnostics[0].code);
+    let span = native.diagnostic().primary_span().expect("source-bound native error");
+    assert_eq!(&RETURN_NEWLINE_SOURCE[span.start() as usize..span.end() as usize], "return");
+    assert!(matches!(
+        &bootstrap.diagnostics[0].location,
+        syntax_v2::RawDiagnosticLocation::Source { span: provider }
+            if provider.file == span.file().index()
+                && provider.start == span.start()
+                && provider.end == span.end()
+    ));
 }
 
 #[test]
@@ -55,11 +95,36 @@ fn unsupported_and_ambiguous_constructs_fail_before_verification() {
         "export function f(): i32 { return 01; }",
         "export function f(): i32 { return - 1; }",
         "export function f(): i32 { return 1 + ; }",
+        "export function f(x: unknown): i32 { return 1; }",
+        "export function f(x: string): i32 { return 1; }",
+        "export function f(this: i32): i32 { return 1; }",
+        "export function f(): i32 { return null; }",
+        "export function f(): i32 { return this; }",
+        "export function f(): i32 { return 1 return 2; }",
+        "export function f(): i32 { return\n1; }",
         "export function f(): i32 { return 1; } const extra = 2;",
     ] {
         let sources = SourceMap::build(vec![source("src/main.zry", input)]).expect("source");
         let lexed = lex(&sources).expect("lexical stream");
         assert!(parse_v2_candidate(&sources, &lexed).is_err(), "{input}");
+    }
+}
+
+#[test]
+fn exact_expression_depth_accepts_128_and_rejects_first_extra_129() {
+    for (terms, expected_ok) in
+        [(syntax_v2::MAX_EXPRESSION_DEPTH, true), (syntax_v2::MAX_EXPRESSION_DEPTH + 1, false)]
+    {
+        let expression = vec!["1"; terms as usize].join(" + ");
+        let text = format!("export function f(): i32 {{ return {expression}; }}");
+        let sources =
+            SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
+        let lexed = lex(&sources).expect("bounded lexical stream");
+        let result = parse_v2_candidate(&sources, &lexed);
+        assert_eq!(result.is_ok(), expected_ok, "{terms} terms");
+        if let Ok(raw) = result {
+            syntax_v2::verify_snapshot(raw, &sources).expect("depth-bound candidate verifies");
+        }
     }
 }
 
@@ -102,4 +167,23 @@ fn first_extra_function_exceeds_the_frozen_function_limit() {
     let lexed = lex(&sources).expect("bounded lexical inventory");
     let error = parse_v2_candidate(&sources, &lexed).expect_err("first-extra function");
     assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
+}
+
+#[test]
+fn first_extra_parameter_exceeds_the_frozen_parameter_limit() {
+    for (count, expected_ok) in [
+        (syntax_v2::MAX_PARAMETERS_PER_FUNCTION, true),
+        (syntax_v2::MAX_PARAMETERS_PER_FUNCTION + 1, false),
+    ] {
+        let parameters = (0..count).map(|index| format!("p{index}: i32")).collect::<Vec<_>>();
+        let text = format!("export function f({}): i32 {{ return 1; }}", parameters.join(", "));
+        let sources =
+            SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
+        let lexed = lex(&sources).expect("bounded lexical stream");
+        let result = parse_v2_candidate(&sources, &lexed);
+        assert_eq!(result.is_ok(), expected_ok, "{count} parameters");
+        if let Ok(raw) = result {
+            syntax_v2::verify_snapshot(raw, &sources).expect("parameter-bound candidate verifies");
+        }
+    }
 }

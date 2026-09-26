@@ -11,7 +11,15 @@ pub(super) fn addition(
     expressions: &mut Vec<syntax::RawExpressionSyntax>,
 ) -> Result<u32, ParseError> {
     let mut lhs = atom(parser, expressions)?;
+    let mut depth = 1_u32;
     while let Some(operator) = parser.maybe(TokenKind::Plus) {
+        if depth >= syntax::MAX_EXPRESSION_DEPTH {
+            return Err(error_at(
+                operator,
+                "ZRYNA-F2002",
+                "expression depth exceeds protocol-v2 limit",
+            ));
+        }
         let rhs = atom(parser, expressions)?;
         let left = expressions[lhs as usize].span;
         let right = expressions[rhs as usize].span;
@@ -26,6 +34,7 @@ pub(super) fn addition(
                 },
             },
         )?;
+        depth += 1;
     }
     Ok(lhs)
 }
