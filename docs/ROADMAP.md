@@ -562,7 +562,11 @@ Completion gate: editor and playground behavior is driven by compiler contracts 
 
 - native Zryna lexer, parser, resolver, and snapshot provider;
 - provider conformance against the bootstrap TypeScript adapter;
-- generics and monomorphization, `Option`, and `Result` after separate specifications;
+- bounded generics and monomorphization, `Option`, and `Result` after the
+  [#415 specification candidate](../spec/language/BOUNDED_GENERICS_OPTION_RESULT_V1.md)
+  is reviewed: freeze provider syntax and fixtures, then closed-type semantics and
+  instance budgets, versioned layout/IR/ABI authorities, owned match/cleanup,
+  three-target conformance, and finally a separate public activation gate;
 - native-only FFI profile;
 - compatibility, performance, and security gates;
 - additional platforms after conformance gates exist;
