@@ -1,7 +1,41 @@
+use clap::ValueEnum;
 use std::ffi::OsString;
 
 use zryna_abi::ScalarValue;
 use zryna_diagnostics::Diagnostic;
+use zryna_driver::TargetSelection;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
+pub(super) enum CliProfile {
+    #[value(name = "browser-component-v1")]
+    BrowserComponentV1,
+    #[value(name = "control-flow-v1")]
+    ControlFlowV1,
+    #[value(name = "data-ownership-v1")]
+    DataOwnershipV1,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
+#[value(rename_all = "lower")]
+pub(super) enum CliTarget {
+    JavaScript,
+    WebAssembly,
+    Native,
+    Component,
+    All,
+}
+
+impl From<CliTarget> for TargetSelection {
+    fn from(value: CliTarget) -> Self {
+        match value {
+            CliTarget::JavaScript => Self::JavaScript,
+            CliTarget::WebAssembly => Self::WebAssembly,
+            CliTarget::Native => Self::Native,
+            CliTarget::Component => Self::Component,
+            CliTarget::All => Self::All,
+        }
+    }
+}
 
 pub(super) fn selects_typed_scalars(arguments: &[OsString]) -> bool {
     ["control-flow-v1", "data-ownership-v1"].iter().any(|profile| {

@@ -235,6 +235,7 @@ test('registry exports the exact implemented and planned publication inventory',
     [
       { id: 'reference/aggregate-layout-v1', source: 'spec/memory-model/AGGREGATE_LAYOUT_V1.md', path: 'documents/reference/aggregate-layout-v1.md', title: 'Aggregate layout v1' },
       { id: 'reference/architecture', source: 'docs/ARCHITECTURE.md', path: 'documents/reference/architecture.md', title: 'Compiler architecture' },
+      { id: 'reference/browser-component-v1', source: 'docs/BROWSER_COMPONENT_V1.md', path: 'documents/reference/browser-component-v1.md', title: 'Browser scalar component profile v1' },
       { id: 'reference/cli', source: 'docs/CLI.md', path: 'documents/reference/cli.md', title: 'CLI reference' },
       { id: 'reference/control-flow-modules-v1', source: 'spec/language/CONTROL_FLOW_MODULES_V1.md', path: 'documents/reference/control-flow-modules-v1.md', title: 'Scalar control flow and modules v1' },
       { id: 'reference/data-ownership-v1', source: 'spec/language/DATA_OWNERSHIP_V1.md', path: 'documents/reference/data-ownership-v1.md', title: 'Data and ownership v1' },

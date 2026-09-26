@@ -34,10 +34,12 @@ use crate::{
     runtime::{NodeRuntimeCapability, node_compatible_path},
 };
 
+mod artifacts;
 mod control_flow;
 mod preparation;
 mod project;
 mod scalar;
+use artifacts::write_prepared_artifacts;
 pub(crate) use control_flow::execute_installed as execute_installed_control_flow;
 use preparation::{PreparedArtifacts, analyze, configured_frontend};
 pub(crate) use project::{build_project_request, run_project_request};
@@ -45,6 +47,8 @@ pub(crate) use scalar::execute_installed as execute_installed_scalar;
 
 const MANIFEST_NAME: &str = "zryna-manifest-v1.json";
 const MANIFEST_PROFILE: &str = "zryna-m1-cli-v1";
+const BROWSER_MANIFEST_NAME: &str = "zryna-browser-manifest-v1.json";
+const BROWSER_MANIFEST_PROFILE: &str = "zryna-browser-component-v1";
 const CONTROL_FLOW_MANIFEST_NAME: &str = "zryna-manifest-v2.json";
 const CONTROL_FLOW_MANIFEST_PROFILE: &str = "zryna-control-flow-v1";
 const MAX_CONTROL_FLOW_MANIFEST_BYTES: usize = 32 * 1_024 * 1_024;
@@ -63,6 +67,8 @@ pub enum TargetSelection {
     Native,
     /// Audited WebAssembly Component Model artifact for the default scalar profile.
     Component,
+    /// Explicit capability-free browser bundle with generated scalar bindings.
+    BrowserComponent,
     /// Every target in canonical order.
     All,
 }
@@ -81,7 +87,7 @@ impl TargetSelection {
     }
 
     pub(crate) fn component(self) -> bool {
-        matches!(self, Self::Component)
+        matches!(self, Self::Component | Self::BrowserComponent)
     }
 
     fn ordered(self) -> Vec<ManifestTarget> {
@@ -108,7 +114,7 @@ impl fmt::Display for TargetSelection {
             Self::JavaScript => "javascript",
             Self::WebAssembly => "webassembly",
             Self::Native => "native",
-            Self::Component => "component",
+            Self::Component | Self::BrowserComponent => "component",
             Self::All => "all",
         })
     }
@@ -376,6 +382,19 @@ struct Manifest<'a> {
     invocation: Option<ManifestInvocation<'a>>,
     results: Vec<ManifestResult>,
     diagnostics: &'a [Diagnostic],
+    #[serde(skip_serializing_if = "Option::is_none")]
+    browser: Option<BrowserManifest>,
+}
+
+#[derive(Serialize)]
+struct BrowserManifest {
+    revision: &'static str,
+    world: &'static str,
+    wit_source_sha256: String,
+    component_sha256: String,
+    core_sha256: String,
+    interface_sha256: String,
+    core_offset: usize,
 }
 
 #[derive(Serialize)]
@@ -1283,7 +1302,11 @@ fn commit_prepared(
     let mut transaction = Transaction::create(output_root)?;
     let operation: Result<CommandSuccess, CommandFailure> = (|| {
         checkpoint()?;
-        let artifacts = write_prepared_artifacts(&transaction, request, command, prepared)?;
+        let (artifacts, core_offset) =
+            write_prepared_artifacts(&transaction, request, command, prepared)?;
+        if request.targets == TargetSelection::BrowserComponent && core_offset.is_none() {
+            return Err(transaction_error("browser component bindings were not prepared"));
+        }
 
         let results = if let Some(invocation) = invocation {
             execute_targets(
@@ -1303,7 +1326,11 @@ fn commit_prepared(
         checkpoint()?;
         let manifest = Manifest {
             version: 1,
-            profile: MANIFEST_PROFILE,
+            profile: if request.targets == TargetSelection::BrowserComponent {
+                BROWSER_MANIFEST_PROFILE
+            } else {
+                MANIFEST_PROFILE
+            },
             command,
             entrypoint: &request.entrypoint,
             source_sha256,
@@ -1316,6 +1343,21 @@ fn commit_prepared(
             }),
             results: manifest_results,
             diagnostics: &diagnostics,
+            browser: if let (Some(component), Some(core_offset)) =
+                (&prepared.component, core_offset)
+            {
+                Some(BrowserManifest {
+                    revision: crate::browser_component::REVISION,
+                    world: component.world_identity(),
+                    wit_source_sha256: crate::browser_component::hex(component.wit_source_digest()),
+                    component_sha256: crate::browser_component::hex(component.digest()),
+                    core_sha256: crate::browser_component::hex(component.core_digest()),
+                    interface_sha256: crate::browser_component::hex(component.interface_digest()),
+                    core_offset,
+                })
+            } else {
+                None
+            },
         };
         let mut manifest_bytes = serde_json::to_vec_pretty(&manifest).map_err(|_| {
             request_error(
@@ -1325,14 +1367,19 @@ fn commit_prepared(
             )
         })?;
         manifest_bytes.push(b'\n');
-        transaction.write_manifest(MANIFEST_NAME, &manifest_bytes)?;
+        let manifest_name = if request.targets == TargetSelection::BrowserComponent {
+            BROWSER_MANIFEST_NAME
+        } else {
+            MANIFEST_NAME
+        };
+        transaction.write_manifest(manifest_name, &manifest_bytes)?;
         checkpoint()?;
         transaction.commit(output_root, final_bundle)?;
         Ok(CommandSuccess {
             command,
-            manifest_path: final_bundle.join(MANIFEST_NAME),
+            manifest_path: final_bundle.join(manifest_name),
             manifest_portable_path: format!(
-                ".zryna/out/{}.{}/{MANIFEST_NAME}",
+                ".zryna/out/{}.{}/{manifest_name}",
                 request.artifact_stem,
                 command.suffix()
             ),
@@ -1351,71 +1398,6 @@ fn commit_prepared(
             Err(failure)
         }
     }
-}
-
-fn write_prepared_artifacts(
-    transaction: &Transaction,
-    request: &BuildRequest,
-    command: CommandKind,
-    prepared: &PreparedArtifacts,
-) -> Result<Vec<PublishedTargetArtifact>, CommandFailure> {
-    let mut artifacts = Vec::with_capacity(request.targets.ordered().len());
-    if let Some(artifact) = &prepared.javascript {
-        artifacts.push(transaction.write_artifact(
-            ManifestTarget::JavaScript,
-            "ecmascript-module",
-            &request.artifact_stem,
-            "mjs",
-            artifact.source.as_bytes(),
-        )?);
-    }
-    if let Some(artifact) = &prepared.webassembly {
-        artifacts.push(transaction.write_artifact(
-            ManifestTarget::WebAssembly,
-            "core-webassembly-module",
-            &request.artifact_stem,
-            "wasm",
-            artifact.bytes(),
-        )?);
-    }
-    if let Some(artifact) = &prepared.component {
-        artifacts.push(transaction.write_artifact(
-            ManifestTarget::Component,
-            "webassembly-component",
-            &request.artifact_stem,
-            "wasm",
-            artifact.bytes(),
-        )?);
-    }
-    if request.targets.native() {
-        let (kind, extension, bytes): (&str, &str, &[u8]) = if command == CommandKind::Run {
-            let executable = prepared.native_executable.as_ref().ok_or_else(|| {
-                request_error(
-                    "ZRYNA-C1010",
-                    "native executable preparation was not completed",
-                    "report this compiler invariant failure",
-                )
-            })?;
-            ("linux-x86-64-invocation-executable", "elf", executable.bytes())
-        } else {
-            let object = prepared.native_object.as_ref().ok_or_else(|| {
-                request_error(
-                    "ZRYNA-C1010",
-                    "native object preparation was not completed",
-                    "report this compiler invariant failure",
-                )
-            })?;
-            ("linux-x86-64-relocatable-object", "o", object.bytes())
-        };
-        artifacts.push(transaction.write_artifact(
-            ManifestTarget::Native,
-            kind,
-            &request.artifact_stem,
-            extension,
-            bytes,
-        )?);
-    }
-    Ok(artifacts)
 }
 
 fn execute_targets(
@@ -1494,7 +1476,7 @@ pub(crate) struct Transaction {
     stage_name: String,
     identity: Handle,
     output_directory: Dir,
-    artifacts: RefCell<BTreeMap<ManifestTarget, StagedArtifact>>,
+    artifacts: RefCell<BTreeMap<ManifestTarget, BTreeMap<String, StagedArtifact>>>,
     harnesses: RefCell<BTreeSet<String>>,
     manifest: RefCell<Option<StagedPrivateFile>>,
     committed: bool,
@@ -1564,28 +1546,31 @@ impl Transaction {
     ) -> Result<PublishedTargetArtifact, CommandFailure> {
         self.revalidate_stage()?;
         let directory = self.path.join(target.as_str());
-        create_owned_directory(&directory)?;
+        if !self.artifacts.borrow().contains_key(&target) {
+            create_owned_directory(&directory)?;
+        }
         let filename = format!("{stem}.{extension}");
         let expected_bytes = u64::try_from(bytes.len()).map_err(|_| {
             transaction_error("artifact length could not be represented in the manifest")
         })?;
         let expected_sha256 = sha256(bytes);
-        if self
-            .artifacts
-            .borrow_mut()
-            .insert(
-                target,
-                StagedArtifact {
-                    filename: filename.clone(),
-                    bytes: expected_bytes,
-                    sha256: expected_sha256.clone(),
-                    executable: target == ManifestTarget::Native && extension == "elf",
-                },
-            )
-            .is_some()
+        let mut artifacts = self.artifacts.borrow_mut();
+        let staged = artifacts.entry(target).or_default();
+        if (!staged.is_empty() && target != ManifestTarget::Component)
+            || staged.contains_key(&filename)
         {
             return Err(transaction_error("target artifact was staged more than once"));
         }
+        staged.insert(
+            filename.clone(),
+            StagedArtifact {
+                filename: filename.clone(),
+                bytes: expected_bytes,
+                sha256: expected_sha256.clone(),
+                executable: target == ManifestTarget::Native && extension == "elf",
+            },
+        );
+        drop(artifacts);
         let path = directory.join(&filename);
         write_complete_file(&path, bytes)?;
         if target == ManifestTarget::Native && extension == "elf" {
@@ -1643,7 +1628,10 @@ impl Transaction {
         self.revalidate_stage()?;
         if !matches!(
             manifest_name,
-            MANIFEST_NAME | CONTROL_FLOW_MANIFEST_NAME | crate::OWNERSHIP_MANIFEST_NAME
+            MANIFEST_NAME
+                | BROWSER_MANIFEST_NAME
+                | CONTROL_FLOW_MANIFEST_NAME
+                | crate::OWNERSHIP_MANIFEST_NAME
         ) || self.manifest.borrow().is_some()
         {
             return Err(transaction_error("manifest name is not a closed unique version"));
@@ -1796,7 +1784,7 @@ impl Transaction {
         {
             return Err(transaction_error("private stage inventory changed unexpectedly"));
         }
-        for (target, artifact) in artifacts.iter() {
+        for (target, files) in artifacts.iter() {
             let directory = self.path.join(target.as_str());
             if !directory.exists() && !complete {
                 continue;
@@ -1806,30 +1794,34 @@ impl Transaction {
             if !metadata.is_dir() || metadata_is_link_or_reparse(&metadata) {
                 return Err(transaction_error("staged target path is not a real directory"));
             }
-            let expected = BTreeSet::from([artifact.filename.clone()]);
+            let expected = files.keys().cloned().collect::<BTreeSet<_>>();
             let actual = read_directory_names(&directory)?;
             if (complete && actual != expected) || (!complete && !actual.is_subset(&expected)) {
                 return Err(transaction_error("staged target inventory changed unexpectedly"));
             }
-            let path = directory.join(&artifact.filename);
-            if !path.exists() && !complete {
-                continue;
-            }
-            let metadata = fs::symlink_metadata(&path)
-                .map_err(|_| transaction_error("staged artifact is unavailable"))?;
-            if !metadata.is_file() || metadata_is_link_or_reparse(&metadata) {
-                return Err(transaction_error("staged artifact is not a real regular file"));
-            }
-            if complete {
-                let bytes = fs::read(&path)
-                    .map_err(|_| transaction_error("staged artifact could not be audited"))?;
-                if u64::try_from(bytes.len()).ok() != Some(artifact.bytes)
-                    || sha256(&bytes) != artifact.sha256
-                {
-                    return Err(transaction_error("staged artifact bytes changed before commit"));
+            for artifact in files.values() {
+                let path = directory.join(&artifact.filename);
+                if !path.exists() && !complete {
+                    continue;
                 }
-                if artifact.executable && !is_executable_file(&metadata) {
-                    return Err(transaction_error("staged native executable mode changed"));
+                let metadata = fs::symlink_metadata(&path)
+                    .map_err(|_| transaction_error("staged artifact is unavailable"))?;
+                if !metadata.is_file() || metadata_is_link_or_reparse(&metadata) {
+                    return Err(transaction_error("staged artifact is not a real regular file"));
+                }
+                if complete {
+                    let bytes = fs::read(&path)
+                        .map_err(|_| transaction_error("staged artifact could not be audited"))?;
+                    if u64::try_from(bytes.len()).ok() != Some(artifact.bytes)
+                        || sha256(&bytes) != artifact.sha256
+                    {
+                        return Err(transaction_error(
+                            "staged artifact bytes changed before commit",
+                        ));
+                    }
+                    if artifact.executable && !is_executable_file(&metadata) {
+                        return Err(transaction_error("staged native executable mode changed"));
+                    }
                 }
             }
         }

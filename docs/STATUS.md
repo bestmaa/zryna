@@ -29,6 +29,11 @@ remain intentionally narrow.
   bytes before publication, and records manifest target `component` with artifact kind
   `webassembly-component`. It is not part of `all`, rejects explicit profiles, cannot run, and
   remains outside the advertised [v0.1.0 preview support matrix](DEVELOPER_PREVIEW.md).
+- Explicit repository-local `--profile browser-component-v1 --target component` builds the same
+  audited scalar component with deterministic browser ESM bindings, declarations and an exact
+  three-artifact manifest. The loader authenticates retained bytes and invokes only the sealed
+  import-free core scalar functions in a browser. See the [browser quickstart](BROWSER_COMPONENT_V1.md).
+  Installed package compatibility and guest host capabilities remain unavailable.
 - `zryna run` executes JavaScript, core WebAssembly, and Linux x86-64 native artifacts for one typed
   scalar invocation and commits one complete create-only bundle.
 - The M1 conformance suite observes `1 + 2`, `i32::MAX + 1`, and `i32::MIN - 1` through all three

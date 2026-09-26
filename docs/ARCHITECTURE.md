@@ -64,7 +64,10 @@ semantic lowering never depends on a replaceable provider.
    An explicit default-profile component build retains that exact core, canonically lifts the
    verified scalar functions, binds the empty authenticated browser capability-world identity,
    and independently audits the final component bytes. The driver publishes `.wasm` create-only.
-   Browser bindings and WASI capabilities remain explicit host profiles.
+   The explicit repository-local browser component profile adds deterministic generated scalar
+   bindings and declarations from the sealed component interface. Its loader authenticates the
+   complete component before using the retained import-free core in the browser. WASI capabilities
+   remain a separate explicit host profile.
 10. Native lowering creates explicit typed native claims; the native MIR verifier retains the
     sealed scalar ABI module and is the only constructor of the codegen-accepted
     `VerifiedMirModule`.

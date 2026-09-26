@@ -104,7 +104,7 @@ impl ProjectAdmission {
                 "resolve --root and --project-root to absolute real directories",
             ));
         }
-        if request.targets == TargetSelection::Component {
+        if request.targets.component() {
             return Err(project_error(
                 "ZRYNA-C2001",
                 CommandFailureKind::Request,
@@ -261,7 +261,7 @@ fn selected_targets(selection: TargetSelection) -> &'static [&'static str] {
         TargetSelection::JavaScript => &["javascript"],
         TargetSelection::WebAssembly => &["webassembly"],
         TargetSelection::Native => &["native-linux-x86_64"],
-        TargetSelection::Component => &[],
+        TargetSelection::Component | TargetSelection::BrowserComponent => &[],
         TargetSelection::All => &["javascript", "native-linux-x86_64", "webassembly"],
     }
 }

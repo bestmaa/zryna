@@ -15,6 +15,12 @@
       "title": "Compiler architecture"
     },
     {
+      "id": "reference/browser-component-v1",
+      "source": "docs/BROWSER_COMPONENT_V1.md",
+      "path": "documents/reference/browser-component-v1.md",
+      "title": "Browser scalar component profile v1"
+    },
+    {
       "id": "reference/cli",
       "source": "docs/CLI.md",
       "path": "documents/reference/cli.md",

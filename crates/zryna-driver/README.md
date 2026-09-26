@@ -143,6 +143,14 @@ publishes `<stem>.wasm` create-only through the same revalidated `.zryna/out` ca
 byte writer used by JavaScript. The public publisher accepts only the sealed validated artifact;
 it cannot publish arbitrary WebAssembly bytes. Same-stem `.mjs` and `.wasm` files may coexist.
 
+The explicit repository-local browser component build reuses the audited default-M1 component.
+`browser_component` reads only its sealed ordered scalar exports, component/core digests and
+retained bytes. It emits a deterministic ESM loader and `.d.mts` declaration, then the driver
+stages those with the component and browser manifest in one create-only transaction. The loader
+requires the exact component hash before instantiating the retained import-free core scalar
+module; guest code receives no DOM, network, filesystem, clock or random import. See the
+[browser contract](../../docs/BROWSER_COMPONENT_V1.md).
+
 Node.js 22.22.1 exercises the published module with the standard WebAssembly API as a conformance
 harness and as the public CLI host. This remains core, import-free WebAssembly execution, not a
 browser or DOM claim.

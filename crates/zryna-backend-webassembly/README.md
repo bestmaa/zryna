@@ -22,6 +22,8 @@ imports, nested components, starts, unsupported sections, changed aliases/types/
 topology, substituted WIT identity, and the first byte above the 1 MiB ceiling before returning
 artifact authority. Emission does not instantiate a host, generate a loader, or grant browser,
 WASI, DOM, network, filesystem, clock, or random capabilities.
+The separate driver browser profile consumes the sealed export view and retained artifact
+identity; the backend still owns only component encoding and final-byte audit.
 This repository-development boundary remains outside the advertised
 [v0.1.0 preview support matrix](../../docs/DEVELOPER_PREVIEW.md).
 

@@ -27,7 +27,7 @@ and manifest v3 are documented in [M3 driver](M3_CANDIDATE_DRIVER.md).
 zryna architecture check [--root <PATH>] [--json]
 zryna doctor             [--root <PATH>] [--json]
 zryna package resolve <PACKAGE> --source-root <PATH> --mode <frozen|update> [--git-cache <PATH>] [--json]
-zryna build <ENTRYPOINT> --target <javascript|webassembly|native|component|all> --node <PATH> [--profile control-flow-v1] [--root <PATH>] [--name <STEM>] [--json]
+zryna build <ENTRYPOINT> --target <javascript|webassembly|native|component|all> --node <PATH> [--profile <control-flow-v1|data-ownership-v1|browser-component-v1>] [--root <PATH>] [--name <STEM>] [--json]
 zryna run   <ENTRYPOINT> --target <javascript|webassembly|native|all> --export <NAME> --node <PATH> [--profile control-flow-v1] [--arg=<i32|bool>:<VALUE> ...] [--root <PATH>] [--name <STEM>] [--json]
 ```
 
@@ -48,11 +48,13 @@ bounded, deterministic graph of explicit relative `.zry` imports. The driver dis
 authenticates one final source map, and performs semantic lowering exactly once before target
 dispatch. The frontend never resolves imports or reads the workspace.
 
-`--profile` has no hidden default: omission means M1, and the only accepted explicit value is exact
-lowercase `control-flow-v1`. `--target` is mandatory, exact, lowercase, and has no alias or default.
-The `component` target is accepted only by `build` when `--profile` is omitted. It rejects explicit
-profiles and `run` before source or target work. This implemented repository-development target is
-outside the advertised [v0.1.0 preview support matrix](DEVELOPER_PREVIEW.md).
+`--profile` has no hidden default: omission means M1. Exact lowercase `control-flow-v1` selects
+M2; `data-ownership-v1` selects M3; `browser-component-v1` selects the default M1 scalar compiler
+with an explicit browser bundle.
+`--target` is mandatory, exact, lowercase, and has no alias or default. `component` is build-only;
+the browser profile requires it. Other explicit profiles with `component` reject before source or
+target work. The repository-local browser route and component emission are outside the advertised
+[v0.1.0 preview support matrix](DEVELOPER_PREVIEW.md).
 `--root` defaults to the current directory; the driver requires its resolved
 workspace root to be an absolute real directory. `--name` defaults to the entrypoint stem and must
 be 1 to 128 ASCII letters, digits, underscores, or hyphens, begin with a letter or underscore, and
@@ -77,7 +79,7 @@ Boolean source and invocation remain rejected when `--profile` is omitted.
 | `javascript` | deterministic `.mjs` | sealed module through Node.js | Linux, Windows |
 | `webassembly` | validated import-free `.wasm` | direct standard WebAssembly API through Node.js | Linux, Windows |
 | `native` | audited Linux x86-64 `.o` | invocation-specific audited `.elf` | Linux x86-64 for run |
-| `component` | audited import-free Component Model `.wasm` | unsupported | Linux, Windows |
+| `component` | audited import-free Component Model `.wasm`; explicit browser profile also emits ESM loader and declarations | unsupported | Linux, Windows build; pinned Chrome for browser execution |
 | `all` | `.mjs`, `.wasm`, `.o` | `.mjs`, `.wasm`, `.elf` | Linux x86-64 for run |
 
 `build native` emits a relocatable object and does not invent `main`. `run native` generates the
@@ -94,9 +96,10 @@ deployment, and live commit/digest evidence separately from the CLI contract.
 
 `component` preserves the unchanged audited M1 core module and canonically lifts its verified
 scalar exports. It binds the exact authenticated `zryna:capability-profiles/browser@0.1.0` source
-identity, whose capability-world import and export sets are empty. This is deterministic artifact
-emission only: no loader, host instantiation, browser, DOM, or WASI execution is provided. The
-selection is intentionally not folded into `all`.
+identity, whose capability-world import and export sets are empty. Without an explicit profile it
+remains artifact emission only. `browser-component-v1` adds a generated browser binding that
+hashes the exact component and invokes its retained import-free core scalar functions. See the
+[browser quickstart and interface contract](BROWSER_COMPONENT_V1.md). Neither path joins `all`.
 Artifact emission does not claim Component Model support for the v0.1.0 preview release.
 
 ## Output bundles
@@ -123,8 +126,15 @@ subdirectories, but contains `zryna-manifest-v2.json` instead. A bundle contains
 manifest version. Consequently an existing `<stem>.build` or `<stem>.run` bundle collides
 create-only regardless of profile; selecting M2 never replaces an M1 bundle.
 
+An explicit `--profile browser-component-v1` build contains exactly
+`component/<stem>.wasm`, `component/<stem>.mjs`, `component/<stem>.d.mts`, and
+`zryna-browser-manifest-v1.json`. It is also create-only and collides with a same-stem M1/M2
+build. The browser manifest retains the M1 source and artifact fields plus a `browser` record
+with binding revision, WIT world/source digest, component/core/interface digests, and the exact
+retained-core offset. Each of the three files has its own ordered artifact record and hash.
+
 The tree above shows every possible M1 build subdirectory; only selected target paths exist. A
-`component` build therefore contains only `component/<stem>.wasm` and
+default `component` build therefore contains only `component/<stem>.wasm` and
 `zryna-manifest-v1.json`.
 
 Only selected target paths exist. Build and run bundles with the same stem may coexist. A second
@@ -235,6 +245,7 @@ cargo run --locked -p zryna -- build examples/universal/add.zry --target javascr
 cargo run --locked -p zryna -- build examples/universal/add.zry --target webassembly --name add-wasm --node /absolute/path/to/node
 cargo run --locked -p zryna -- build examples/universal/add.zry --target native --name add-native --node /absolute/path/to/node
 cargo run --locked -p zryna -- build examples/universal/add.zry --target component --name add-component --node /absolute/path/to/node
+cargo run --locked -p zryna -- build examples/universal/add.zry --profile browser-component-v1 --target component --name add-browser --node /absolute/path/to/node
 cargo run --locked -p zryna -- build examples/universal/add.zry --target all --name add-all --node /absolute/path/to/node
 
 cargo run --locked -p zryna -- run examples/universal/add.zry --target javascript --name add-js --export add --arg=i32:20 --arg=i32:22 --node /absolute/path/to/node
@@ -252,7 +263,7 @@ On Windows, pass the absolute direct executable path, for example
 
 The M1 `all` invocation reports three ordered `i32` observations with value `-2147483648`; the checked
 M1 differential suite requires those observations and the manifest to agree. Package resolution,
-non-relative/package imports, watch mode, incremental or remote builds, browser execution, WASI,
+non-relative/package imports, watch mode, incremental or remote builds, general browser APIs, WASI,
 Windows or macOS native execution, static native executables, overwrite behavior, and
 runtime-enforced comparison inside an ordinary end-user command remain outside the current slice.
 The repository-owned [M2 conformance gate](M2_CONFORMANCE.md) performs fixed-oracle three-target

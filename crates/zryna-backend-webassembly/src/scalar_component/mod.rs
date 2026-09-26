@@ -23,12 +23,36 @@ mod tests;
 const METADATA_SECTION: &str = "zryna-component-v1";
 const METADATA_REVISION: &str = "zryna.scalar-component.v1";
 
+/// One authenticated scalar export retained by the audited component.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(super) struct ScalarExport {
+pub struct ScalarExport {
     logical: String,
     component: String,
     webassembly: String,
     arity: usize,
+}
+
+impl ScalarExport {
+    /// Exact source-level export name.
+    #[must_use]
+    pub fn logical_name(&self) -> &str {
+        &self.logical
+    }
+    /// Collision-free Component Model export label.
+    #[must_use]
+    pub fn component_name(&self) -> &str {
+        &self.component
+    }
+    /// Exact retained core-module export name.
+    #[must_use]
+    pub fn webassembly_name(&self) -> &str {
+        &self.webassembly
+    }
+    /// Number of verified `i32` parameters.
+    #[must_use]
+    pub const fn arity(&self) -> usize {
+        self.arity
+    }
 }
 
 /// One deterministic Component Model artifact sealed to verified scalar IR and pinned WIT.
@@ -39,6 +63,7 @@ pub struct ValidatedScalarComponent {
     digest: [u8; 32],
     core_digest: [u8; 32],
     interface_digest: [u8; 32],
+    exports: Vec<ScalarExport>,
 }
 
 impl ValidatedScalarComponent {
@@ -82,6 +107,18 @@ impl ValidatedScalarComponent {
     #[must_use]
     pub const fn interface_digest(&self) -> &[u8; 32] {
         &self.interface_digest
+    }
+
+    /// Returns only the sealed, ordered scalar interface derived from verified IR.
+    #[must_use]
+    pub fn exports(&self) -> &[ScalarExport] {
+        &self.exports
+    }
+
+    /// SHA-256 of the complete authenticated WIT source closure.
+    #[must_use]
+    pub const fn wit_source_digest(&self) -> &[u8; 32] {
+        self.world.source_digest()
     }
 
     /// Revalidates the sealed artifact against matching verified IR and WIT sources.
@@ -135,6 +172,7 @@ pub fn emit_scalar_component(
         core,
         world,
         interface_digest,
+        exports,
     })
 }
 

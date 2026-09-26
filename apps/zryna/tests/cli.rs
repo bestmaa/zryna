@@ -14,6 +14,7 @@ use std::{
 use std::process::{Child, Stdio};
 
 use serde_json::{Value, json};
+use sha2::Digest;
 use zryna_abi::{RawHostScalar, ScalarTarget, ScalarType, ScalarValue, normalize_result};
 
 static NEXT_CASE: AtomicU64 = AtomicU64::new(0);
@@ -505,6 +506,191 @@ fn component_build_publishes_one_audited_build_only_artifact() {
         serde_json::from_slice(&rejected.stdout).expect("component profile rejection JSON");
     assert_eq!(response["diagnostics"][0]["code"], "ZRYNA-C1012");
     assert!(!case.bundle(&profile_stem, "build").exists());
+}
+
+fn browser_component_case() -> (WorkspaceCase, PathBuf) {
+    let mut case = WorkspaceCase::new();
+    let stem = case.stem("browser_component", "build");
+    let output = command_output(
+        &case,
+        &[
+            "build",
+            &case.source_relative,
+            "--profile",
+            "browser-component-v1",
+            "--target",
+            "component",
+            "--name",
+            &stem,
+        ],
+    );
+    assert_success(&output);
+    let bundle = case.bundle(&stem, "build");
+    let manifest = read_json(&bundle.join("zryna-browser-manifest-v1.json"));
+    assert_eq!(manifest["profile"], "zryna-browser-component-v1");
+    assert_eq!(manifest["targets"], json!(["component"]));
+    assert_eq!(manifest["browser"]["world"], "zryna:capability-profiles/browser@0.1.0");
+    assert_eq!(manifest["browser"]["component_sha256"], manifest["artifacts"][0]["sha256"]);
+    let offset = usize::try_from(manifest["browser"]["core_offset"].as_u64().expect("core offset"))
+        .expect("bounded core offset");
+    let component =
+        fs::read(bundle.join(format!("component/{stem}.wasm"))).expect("component bytes");
+    assert_eq!(&component[offset..offset + 8], b"\0asm\x01\0\0\0");
+    let paths = manifest["artifacts"]
+        .as_array()
+        .expect("artifact inventory")
+        .iter()
+        .map(|record| record["path"].as_str().expect("path").to_owned())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        paths,
+        [
+            format!("component/{stem}.wasm"),
+            format!("component/{stem}.mjs"),
+            format!("component/{stem}.d.mts"),
+        ]
+    );
+    let actual = fs::read_dir(bundle.join("component"))
+        .expect("component directory")
+        .map(|entry| entry.expect("entry").file_name().into_string().expect("portable name"))
+        .collect::<BTreeSet<_>>();
+    assert_eq!(
+        actual,
+        [format!("{stem}.wasm"), format!("{stem}.mjs"), format!("{stem}.d.mts")].into()
+    );
+    for artifact in manifest["artifacts"].as_array().expect("artifacts") {
+        let path = artifact["path"].as_str().expect("path");
+        let bytes = fs::read(bundle.join(path)).expect("published artifact");
+        assert_eq!(artifact["bytes"], bytes.len());
+        assert_eq!(artifact["sha256"], format!("{:x}", sha2::Sha256::digest(&bytes)));
+    }
+    (case, bundle)
+}
+
+fn run_browser_component_fixture(browser_root: Option<&Path>) {
+    let (case, bundle) = browser_component_case();
+    let stem = bundle.file_stem().expect("bundle stem").to_string_lossy();
+    let node_path = |path: &Path| {
+        let rendered = path.to_string_lossy();
+        if cfg!(windows) {
+            rendered.trim_start_matches(r"\\?\").to_owned()
+        } else {
+            rendered.into_owned()
+        }
+    };
+    let output = Command::new(node_executable())
+        .arg(node_path(&case.root.join("tests/browser-component/run.mjs")))
+        .arg(node_path(&bundle.join("component").join(format!("{stem}.mjs"))))
+        .arg(node_path(&bundle.join("component").join(format!("{stem}.wasm"))))
+        .args(browser_root.map(&node_path))
+        .current_dir(&case.root)
+        .output()
+        .expect("browser component fixture must start");
+    assert_success(&output);
+}
+
+#[test]
+fn browser_component_bundle_and_node_bindings_are_sealed() {
+    run_browser_component_fixture(None);
+}
+
+#[test]
+fn browser_component_replays_deterministically_and_rejects_stale_binding() {
+    let mut case = WorkspaceCase::new();
+    let first = case.stem("browser_first", "build");
+    let second = case.stem("browser_second", "build");
+    for stem in [&first, &second] {
+        let output = command_output(
+            &case,
+            &[
+                "build",
+                &case.source_relative,
+                "--profile",
+                "browser-component-v1",
+                "--target",
+                "component",
+                "--name",
+                stem,
+            ],
+        );
+        assert_success(&output);
+    }
+    for extension in ["wasm", "mjs", "d.mts"] {
+        let first_bytes =
+            fs::read(case.bundle(&first, "build").join(format!("component/{first}.{extension}")))
+                .expect("first artifact");
+        let second_bytes =
+            fs::read(case.bundle(&second, "build").join(format!("component/{second}.{extension}")))
+                .expect("second artifact");
+        assert_eq!(first_bytes, second_bytes, "{extension} must replay exactly");
+    }
+    fs::write(
+        case.root.join(&case.source_relative),
+        "export function add(a: i32, b: i32): i32 { return a + a; }\n",
+    )
+    .expect("changed source");
+    let changed = case.stem("browser_changed", "build");
+    let output = command_output(
+        &case,
+        &[
+            "build",
+            &case.source_relative,
+            "--profile",
+            "browser-component-v1",
+            "--target",
+            "component",
+            "--name",
+            &changed,
+        ],
+    );
+    assert_success(&output);
+    let loader = case.bundle(&first, "build").join(format!("component/{first}.mjs"));
+    let component = case.bundle(&changed, "build").join(format!("component/{changed}.wasm"));
+    let script = "import assert from 'node:assert/strict'; import {readFile} from 'node:fs/promises'; import {pathToFileURL} from 'node:url'; const {instantiateBrowserComponent} = await import(pathToFileURL(process.argv[1])); await assert.rejects(instantiateBrowserComponent(new Uint8Array(await readFile(process.argv[2]))), error => error.message === 'ZRYNA-B3992');";
+    let compatible = |path: &Path| path.to_string_lossy().trim_start_matches(r"\\?\").to_owned();
+    let output = Command::new(node_executable())
+        .args(["--input-type=module", "--eval", script])
+        .arg(compatible(&loader))
+        .arg(compatible(&component))
+        .output()
+        .expect("stale-binding test must start");
+    assert_success(&output);
+}
+
+#[test]
+fn browser_component_selector_rejects_other_targets_and_run_without_a_bundle() {
+    let mut case = WorkspaceCase::new();
+    for (command, target) in [("build", "javascript"), ("run", "component")] {
+        let stem = case.stem("browser_rejected", command);
+        let mut arguments = vec![
+            command,
+            &case.source_relative,
+            "--profile",
+            "browser-component-v1",
+            "--target",
+            target,
+            "--name",
+            &stem,
+            "--json",
+        ];
+        if command == "run" {
+            arguments.extend(["--export", "add", "--arg=i32:20", "--arg=i32:22"]);
+        }
+        let output = command_output(&case, &arguments);
+        assert_eq!(output.status.code(), Some(2));
+        let response: Value = serde_json::from_slice(&output.stdout).expect("rejection JSON");
+        assert_eq!(response["diagnostics"][0]["code"], "ZRYNA-C1012");
+        assert!(!case.bundle(&stem, command).exists());
+    }
+}
+
+#[test]
+#[ignore = "requires reviewed pinned Chrome for Testing fixture"]
+fn browser_component_pinned_real_browser_and_node_agree() {
+    let root = env::var_os("ZRYNA_TEST_BROWSER_ROOT")
+        .map(PathBuf::from)
+        .expect("reviewed browser fixture root required");
+    run_browser_component_fixture(Some(&root));
 }
 
 fn m1_registry() -> Value {

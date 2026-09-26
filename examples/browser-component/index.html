@@ -1,0 +1,26 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Zryna browser scalar component</title>
+<h1>Zryna browser scalar component</h1>
+<p>Select the generated <code>add-browser.wasm</code> from the build bundle.</p>
+<input id="component" type="file" accept=".wasm">
+<pre id="result">Waiting for the component.</pre>
+<script type="module">
+  import { instantiateBrowserComponent } from '/.zryna/out/add-browser.build/component/add-browser.mjs';
+  const result = document.querySelector('#result');
+  document.querySelector('#component').addEventListener('change', async event => {
+    try {
+      const file = event.target.files[0];
+      if (!file) return;
+      const component = await instantiateBrowserComponent(new Uint8Array(await file.arrayBuffer()));
+      const rejected = [];
+      for (const args of [['20', 22], [20.5, 22], [-0, 22], [20]]) {
+        try { component.add(...args); rejected.push(false); }
+        catch (error) { rejected.push(error instanceof TypeError || error instanceof RangeError); }
+      }
+      result.textContent = JSON.stringify({ value: component.add(20, 22), rejected }, null, 2);
+    } catch (error) {
+      result.textContent = String(error);
+    }
+  });
+</script>
