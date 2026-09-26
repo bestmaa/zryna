@@ -1,0 +1,52 @@
+{
+  "format": "zryna.generic-instantiation-v1.proposed-fixtures",
+  "status": "candidate-only",
+  "identities": {
+    "genericFunction": {
+      "moduleId": 0,
+      "functionIndex": 0,
+      "argument": "i32",
+      "keyHex": "400000000000000000010000000100000001",
+      "sha256": "239cb3a761f38e6229ed98a8bfdc2325c4819bd85a0a1b45b8416a324dd70b05"
+    },
+    "nonGenericFunctionRoot": {
+      "moduleId": 0,
+      "functionIndex": 0,
+      "keyHex": "410000000000000000",
+      "sha256": "3f2b9739dd51749140d9b3066beee40b88e20ffd16f414c44303751402b09ea3"
+    },
+    "finiteNestedBox": {
+      "moduleId": 0,
+      "dataDeclarationIndex": 0,
+      "type": "Box<Box<i32>>",
+      "keyHex": "1200000000000000000100000012000000120000000000000000010000000100000001",
+      "sha256": "f14b8a59c4f4264057fd70dad2ed53151b552e7d70923abe9b60e139b3eaefa9"
+    }
+  },
+  "mixedKeyOrder": [
+    "Box<i32>",
+    "Option<i32>",
+    "identity<i32>",
+    "non-generic function root"
+  ],
+  "semanticCases": [
+    {
+      "name": "finite supplied nesting",
+      "form": "Box<T> { value: T }; Box<Box<i32>>",
+      "expected": "admit",
+      "reason": "inner Box<i32> is a supplied argument subtree"
+    },
+    {
+      "name": "same closed key through indirection",
+      "form": "Node<T> { next: Vec<Node<T>> }; Node<i32>",
+      "expected": "admit",
+      "reason": "same closed key deduplicates and Vec stops layout recursion"
+    },
+    {
+      "name": "generated expanding head",
+      "form": "Nest<T> { next: Vec<Nest<Vec<T>>> }; Nest<i32>",
+      "expected": "ZRYNA-M7003",
+      "reason": "declaration-generated Nest application repeats declaration with different argument key"
+    }
+  ]
+}

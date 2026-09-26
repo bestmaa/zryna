@@ -26,6 +26,8 @@ childKey = u32 byteLength || complete child key bytes
 
 All lanes are unsigned little-endian. The count is one or two for user nominal
 types, exactly one for Option, exactly two for Result. A mismatch is invalid.
+The language contract's function tags `40` and `41` are disjoint from these
+type keys and never enter the layout type universe or its fingerprint.
 These tags are candidate assignments awaiting maintainer acceptance, not an
 extension to the currently implemented v1 key parser. Two fixed key fixtures
 are `Option<i32>` = `14010000000100000001` and `Result<i32,bool>` =

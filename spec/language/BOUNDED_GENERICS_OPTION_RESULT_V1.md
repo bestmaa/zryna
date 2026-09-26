@@ -93,26 +93,49 @@ arguments; protocol v4 must reject these forms unchanged.
 
 ## 2. Closed instantiation and monomorphization
 
-An instance key consists of the authenticated module ID, source declaration index,
-declaration kind (function, struct or enum), ordered count of arguments and their
-canonical complete type keys. Every nested key is length-prefixed. The proposal
-uses the same primitive/container key categories as [aggregate layout v1](../memory-model/AGGREGATE_LAYOUT_V1.md),
-but a generic nominal key additionally includes the ordered closed arguments.
-The eventual layout contract must assign new tagged, unambiguous encodings; current
-layout tags and fingerprints cannot represent these instances and must reject them.
-Source spelling, alias path, traversal order, target and host address never enter
-an instance key. Distinct instances with identical bodies do not merge.
+Closed data instances use the exact proposed type keys in the
+[successor layout contract](../memory-model/GENERIC_ENUM_LAYOUT_V1.md): tags
+`12`/`13` plus `(ModuleId, data-declaration-index)` for user generic structs
+and enums, and reserved tags `14`/`15` plus arguments for compiler-owned
+`Option`/`Result`. The latter have no source module or declaration index.
+Function keys use a disjoint candidate namespace:
 
-Discovery starts from all admitted non-generic functions and fully closed data
-types in the authenticated module graph. Walk declarations in ascending ModuleId
-and source declaration index; within each body visit type annotations, expressions
-and calls in source order. Enqueue each new closed instance by its canonical key,
-then process the smallest pending key by unsigned bytewise order. Each instance
-body is substituted once, checked, and added to a globally deduplicated inventory.
-The final instance inventory is sorted by canonical key, then assigned dense
-instance IDs in that order. A later backend may choose symbol spellings only from
-these sealed IDs and verified keys; it may not discover new instances. The same
-closed source graph gives the same IDs across targets and repeated builds.
+```text
+40 || u32 ModuleId || u32 functionIndex || u32 argCount || childKey[argCount]
+   closed generic function instance
+41 || u32 ModuleId || u32 functionIndex
+   non-generic source function root
+childKey = u32 byteLength || complete canonical type key bytes
+```
+
+All integer lanes are unsigned little-endian. `functionIndex` is zero-based
+source order among functions in the authenticated module, independent of the
+data-declaration index. The `40` count is one or two; a `41` key has no count
+or arguments and is never a monomorphized instance. The first byte separates
+functions from every admitted type key. For ModuleId 0, functionIndex 0,
+`identity<i32>` has key `400000000000000000010000000100000001` and SHA-256
+`239cb3a761f38e6229ed98a8bfdc2325c4819bd85a0a1b45b8416a324dd70b05`;
+the nongeneric root has key `410000000000000000`. A mixed unsigned bytewise
+fixture orders `Box<i32>` (tag `12`), `Option<i32>` (tag `14`),
+`identity<i32>` (tag `40`), then the root (tag `41`). The root participates
+in edge identity but not the pending generic-instance inventory. Source
+spelling, alias path, traversal order, target and host address never enter a
+key. Distinct instances with identical bodies do not merge.
+
+Discovery starts from all admitted non-generic function roots and fully closed
+data types in the authenticated module graph. Walk declarations in ascending
+ModuleId, kind (`data` before `function`) and source index; within each body
+visit type annotations, expressions and calls in source order. Enqueue each new
+closed generic function or data instance by its canonical key, then process the
+smallest pending key by unsigned bytewise order. Each instance body is substituted
+once, checked, and added to a globally deduplicated inventory. The final generic
+function inventory is sorted by tag-`40` key and assigned dense function-instance
+IDs. The successor layout authority separately assigns TypeIds from its complete
+type universe; nongeneric function roots retain existing function identity and
+receive no monomorphization ID. A later backend may choose private symbol
+spellings only from these sealed IDs and verified keys; it may not discover new
+instances. The same closed source graph gives the same IDs across targets and
+repeated builds.
 
 Candidate compile-time ceilings are below. Every count uses checked arithmetic;
 the exact-limit member is admitted and the first extra member is rejected before
@@ -124,17 +147,21 @@ runtime limits still apply.
 | Type parameters on one declaration | 2 |
 | Explicit type arguments at one use | 2 |
 | Distinct closed generic function instances | 4,096 |
-| Distinct closed generic nominal instances | 4,096 |
+| Distinct closed generic data instances (user nominal plus Option/Result) | 4,096 |
 | Total closed instantiation dependency edges | 65,536 |
 | Maximum nested closed type application depth | 64 |
 | Maximum key bytes for one closed instance | 4,096 |
 
-An instantiation dependency edge is one distinct ordered pair of closed source
-instance keys `(from, to)`: a substituted function body referring to a closed
-generic function or nominal type, or a substituted nominal field/variant type
-referring to a closed generic nominal, `Option` or `Result` instance through any
-number of M3 container wrappers. Repeated occurrences of the same pair count
-once. Scalar and nongeneric references do not count. A self-edge counts once.
+An instantiation dependency edge is one distinct ordered pair of keys
+`(from, to)`. `from` is a generic instance, a nongeneric function root (`41`),
+or a nongeneric nominal type key (`10`/`11`) whose body is being checked.
+`to` is a closed generic function (`40`) or closed generic data type (`12`–`15`)
+referenced by its substituted body, including through M3 container wrappers.
+For a generic function, calls and type occurrences produce edges. For a data
+declaration, field and variant type occurrences produce edges. Repeated
+occurrences of the same pair count once. Scalar and nongeneric targets do not
+count. A self-edge counts once. Roots count in the edge inventory but neither
+the generic function nor generic data 4,096-instance ceiling.
 The edge inventory is sorted by `(from key, to key)` before assigning IDs or
 checking the limit. A synthetic fixture with 65,536 distinct pairs is accepted;
 adding the lexicographically next pair is the first-extra rejection, even when
@@ -145,15 +172,28 @@ These ceilings do not increase M3's 65,536 fully instantiated type budget or
 256-diagnostic ceiling. A bounded work queue and explicit stack implement discovery;
 host call-stack depth and map insertion order cannot affect acceptance. Function
 recursion is rejected on the source-level call graph, regardless of equal or
-different type arguments. For data type expansion, a repeated *same closed key*
-is deduplicated and terminates traversal; its by-value cycle is then separately
-rejected by layout, while an indirection cycle such as
-`Node<T> { next: Vec<Node<T>> }` remains legal. Repeating one generic nominal
-declaration with *different* argument keys on a type-expansion path, as in
-`Nest<T> { next: Vec<Nest<Vec<T>>> }`, is rejected before further expansion.
-The diagnostic identifies the lexicographically smallest offending canonical
-path. Thus legal finite recursive data and forbidden infinite expansion have
-different outcomes, independent of the resource ceiling.
+different type arguments. Supplied explicit type-argument trees are finite and
+are validated before declaration-body expansion. An occurrence inherited from
+a parameter substitution, including a nested subtree of a supplied argument,
+is a finite supplied instance and does not trigger the expanding-declaration
+rule. Thus `Box<Box<i32>>` with `Box<T> { value: T }` admits both closed Box
+instances: the inner Box is already in the supplied argument tree. For data
+type expansion, a repeated *same closed key* is deduplicated and terminates
+traversal; its by-value cycle is separately rejected by layout, while an
+indirection cycle such as `Node<T> { next: Vec<Node<T>> }` remains legal.
+Only a nominal application head introduced by a declaration's own field/variant
+type expression (rather than copied from a supplied argument subtree) triggers
+the expanding-declaration check. If that generated head repeats its generic
+nominal declaration with a different argument key on the generated-expansion
+path, it is rejected before further expansion. For example,
+`Nest<T> { next: Vec<Nest<Vec<T>>> }` is rejected, including when entered
+through a finite outer argument; `Nest<T> { next: Vec<Nest<T>> }` has the same
+key and is legal by indirection. The diagnostic identifies the lexicographically
+smallest offending canonical path. The
+[fixed instantiation fixtures](generic-instantiation-v1-fixtures.json) name the
+finite supplied-nesting, same-key indirection and expanding-generated cases.
+This deliberate bounded rule may reject finite alternating generated instances;
+later widening requires a new contract.
 
 ## 3. Option and Result
 

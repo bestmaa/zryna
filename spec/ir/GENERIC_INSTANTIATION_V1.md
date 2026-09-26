@@ -5,9 +5,12 @@ This is a future versioned extension; current `DataOwnershipV1` verified IR must
 continue rejecting user generics, `Option` and `Result`.
 
 The [language contract](../language/BOUNDED_GENERICS_OPTION_RESULT_V1.md) owns source
-meaning and canonical closed instance keys. The IR authority receives the exact
-authenticated module graph, a sorted complete instance inventory and a closed
-type universe. It alone seals backend-consumable instance IDs. A raw producer may
+meaning and canonical closed instance keys. Function keys use tag `40`, source
+function roots use `41`, and closed data types use the disjoint layout key tags;
+compiler-owned Option/Result have no source declaration index. The IR authority
+receives the exact authenticated module graph, a sorted generic-function
+inventory and a separately sealed closed type universe. It alone seals
+backend-consumable function-instance IDs. A raw producer may
 claim IDs but cannot make them authoritative.
 
 Each verified function instance carries its declaration identity, ordered type
