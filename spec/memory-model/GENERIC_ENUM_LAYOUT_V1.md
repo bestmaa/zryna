@@ -68,9 +68,12 @@ records and `Option<i32>=3` has four records in that order. Its Option record is
 `0100000001000000` (concatenated hex). The full 230-byte fingerprint document
 has SHA-256
 `1701d9b3c46f81f99b2e1e992528a08dde5956364de423526ddfb8b9e796925e`.
-Independent encoders must reproduce the record and digest and reject a mutated
-tag, argument, target or ordinal. These proposed bytes still require maintainer
-acceptance; current v1 fingerprints cannot be reused.
+The companion [fixed-fixture file](generic-enum-layout-v1-fixtures.json) also pins
+complete generic `Box<i32>`, `Choice<i32,bool>` and `Result<i32,bool>` record
+bytes and both storage target digests for all four cases. Independent encoders must reproduce every
+record and digest and reject a mutated tag, argument, target or ordinal. These
+proposed bytes still require maintainer acceptance; current v1 fingerprints
+cannot be reused.
 Consumers require the exact matching successor fingerprint. Invalid target,
 unknown argument, cross-target fingerprint, changed ordinal, wrong payload,
 overflow, excessive depth and by-value cycle all fail before code generation.
@@ -78,5 +81,6 @@ overflow, excessive depth and by-value cycle all fail before code generation.
 Fixed fixtures must cover primitive, owned and nested arguments, both storage
 targets, recursive indirection, direct/indirect by-value cycles, exact/first-extra
 type/depth/key/object limits, checked arithmetic with synthetic small targets,
-and a one-byte key/fingerprint mutation. Remaining generic struct/enum and
-Result full-record fixtures must be independently checked before implementation.
+and a one-byte key/fingerprint mutation. The four fixed records cover both
+generic nominal kinds and both compiler-owned enum families; mutation and
+independent encoder fixtures remain implementation gates.

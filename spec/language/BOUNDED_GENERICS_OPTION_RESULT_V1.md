@@ -266,22 +266,23 @@ one exact revision. Those results cannot be claimed from this document.
 
 Before freezing syntax, reviewers must decide whether `ZrynaValue` is the only
 initial bound and whether explicit application syntax can be represented without
-ambiguity by the replacement frontend. A local parser check using installed
-`@typescript/typescript6` 6.0.2 accepts the member-call and direct-call
-candidates above and rejects `Option<i32>.some(7)`; the adapter's expected 6.0.3,
-provider-neutral and native-provider evidence remains uncollected. The candidate
-limits, diagnostics and canonical layout encodings
+ambiguity by the replacement frontend. An authenticated portable-candidate
+TypeScript 6.0.3 parser check accepts eight generic declaration/call forms above
+and rejects `Option<i32>.some(7)`; a future provider-neutral protocol/schema and
+native-provider conformance remain implementation work. The candidate limits,
+diagnostics and canonical layout encodings
 require exact-limit/first-extra and independent digest fixtures before adoption.
 The public ABI of these types, aggregate export policy, WIT/component mapping and
 host resource policy remain separate proposals. No current supported profile is
 expanded by approving internal semantics.
 
-Issue #415 acceptance remains open until the reviewer approves the candidate
-bound, syntax, exact diagnostic codes, instance budgets and successor encoding;
-schema/fixed-fixture/ambiguity/dependency checks cover that approved design; and
-the missing generic nominal/Result record fixtures and independent full digest
-checks are supplied. This draft does not waive those issue requirements or claim
-that the public ABI or #400 host decisions have been settled.
+Issue #415 specification acceptance remains open until the reviewer approves
+the candidate bound, syntax, exact diagnostic codes, instance budgets and
+successor encoding, and the new fixture/schema/ambiguity/dependency checks are
+reviewed. Later provider,
+compiler, runtime, backend and public activation evidence is implementation work.
+This draft does not waive issue requirements or claim that the public aggregate
+ABI or #400 host decisions have been settled.
 
 Dependency-ready slices are: (1) syntax protocol and provider-neutral fixtures;
 (2) semantic closed-type and deterministic instantiation authority; (3) versioned
