@@ -17,6 +17,14 @@ graphs have functionless modules containing named imports and trivia. The driver
 source capabilities and graph decisions. This checkpoint adds no public frontend selection,
 package import resolution, semantic execution, or target dispatch.
 
+A separate internal `discover_native_straight_line_closure` entry uses the same driver-owned
+algorithm with the native v3 import-prefix and straight-line-function candidate. The existing v3
+verifier authenticates each candidate before graph discovery uses its imports. The final closure
+retains function-bearing syntax against one immutable source map; malformed or unsupported source
+in any batch rejects the complete result. The import-only entry remains functionless. This library
+entry does not change the public `control-flow-v1` provider, support the broader M2 grammar, or
+resolve packages.
+
 This boundary does not authorize a backend by itself. Its final authenticated snapshot enters the
 [M2 straight-line semantic boundary](M2_STRAIGHT_LINE_SEMANTICS.md) and its
 [control-flow extension](M2_CONTROL_FLOW_SEMANTICS.md), then the internal

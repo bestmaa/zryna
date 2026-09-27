@@ -40,6 +40,22 @@ pub fn discover_native_import_only_closure(
     discover_module_closure_with_clock(root, entrypoint, &NativeImportFrontend, Instant::now)
 }
 
+/// Discovers an internal native v3 closure of named imports and straight-line functions.
+///
+/// Every source must contain an import prefix followed by only the function form supported by
+/// the native v3 candidate. The existing verifier authenticates each candidate before the
+/// driver resolves imports or seals the final source map. This entry selects no public frontend.
+///
+/// # Errors
+///
+/// Rejects unsupported syntax, failed verification, or any existing source-closure failure.
+pub fn discover_native_straight_line_closure(
+    root: &WorkspaceSourceRoot,
+    entrypoint: NormalizedSourcePath,
+) -> Result<VerifiedModuleClosure, ModuleClosureError> {
+    discover_module_closure_with_clock(root, entrypoint, &NativeStraightLineFrontend, Instant::now)
+}
+
 pub(crate) trait ClosureFrontendV3 {
     fn minimum_analysis_timeout(&self) -> Duration;
     fn analyze(
@@ -79,6 +95,26 @@ impl ClosureFrontendV3 for NativeImportFrontend {
         let lexed = native_lexer::lex(sources)
             .map_err(|error| ModuleClosureError::Rejected(vec![error.diagnostic().clone()]))?;
         let raw = native_parser::v3::parse_v3_import_candidate(sources, &lexed)
+            .map_err(|error| ModuleClosureError::Rejected(vec![error.diagnostic().clone()]))?;
+        syntax_v3::verify_snapshot(raw, sources).map_err(ModuleClosureError::Rejected)
+    }
+}
+
+struct NativeStraightLineFrontend;
+
+impl ClosureFrontendV3 for NativeStraightLineFrontend {
+    fn minimum_analysis_timeout(&self) -> Duration {
+        Duration::ZERO
+    }
+
+    fn analyze(
+        &self,
+        sources: &SourceMap,
+        _timeout: Duration,
+    ) -> Result<syntax_v3::ProjectSyntaxSnapshot, ModuleClosureError> {
+        let lexed = native_lexer::lex(sources)
+            .map_err(|error| ModuleClosureError::Rejected(vec![error.diagnostic().clone()]))?;
+        let raw = native_parser::v3::parse_v3_straight_line_candidate(sources, &lexed)
             .map_err(|error| ModuleClosureError::Rejected(vec![error.diagnostic().clone()]))?;
         syntax_v3::verify_snapshot(raw, sources).map_err(ModuleClosureError::Rejected)
     }

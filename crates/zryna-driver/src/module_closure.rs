@@ -14,7 +14,7 @@ use zryna_source::{
 
 use crate::source_session::{ModuleSourceRoot, ModuleSourceSession};
 use crate::workspace_source::{MAX_DIRECTORY_ENTRIES, StableSource};
-mod entry;
+pub(crate) mod entry;
 pub use entry::{discover_module_closure, discover_native_import_only_closure};
 
 /// Maximum modules in one M2 closure.

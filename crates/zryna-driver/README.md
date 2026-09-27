@@ -105,6 +105,13 @@ candidate before an import becomes a driver request. Native lexical, parser, and
 retain their diagnostics as driver rejections. This library checkpoint does not select a public
 frontend, lower functions, compile packages, or dispatch a target.
 
+`discover_native_straight_line_closure` is a separate library entry for the native v3 candidate
+with a named-import prefix followed by straight-line scalar functions. It uses the same retained
+source session, verifier, fixed-point graph checks, and final-map sealing. Every source must fit
+that parser's closed grammar; unsupported later syntax rejects the whole closure. The import-only
+entry retains its functionless rule. This entry does not select a public frontend, lower functions,
+resolve packages, or dispatch a target.
+
 M2 and M3 discovery validate each provider request against the source session's exact captured
 paths and bytes. Workspace sessions revalidate the current batch's files and ancestor bindings;
 project sessions use the resolver-owned root inventory. Complete source validation remains before
