@@ -86,7 +86,7 @@ fn unsupported_or_later_tokens_reject_the_whole_project() {
         " trailing",
         " function later(): i32 { return 1 }",
         " function later(): i32 { if (true) { return 1; } return 2; }",
-        " function later(): i32 { let x: i32 = 1; return x; }",
+        " function later(): i32 { let x: i32 = 1; x = 2; return x; }",
         " function later(): i32 { return helper(); }",
     ] {
         assert_eq!(candidate(&format!("{prefix}{tail}")), Err("ZRYNA-F2002".to_owned()), "{tail}");

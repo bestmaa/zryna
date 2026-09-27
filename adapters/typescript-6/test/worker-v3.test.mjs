@@ -155,6 +155,25 @@ test('checked-in M2 semantic fixtures are exact real adapter responses', async (
   }
 });
 
+test('native local-declaration fixtures are exact TypeScript 6 responses', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_locals/', import.meta.url);
+  const main = await readFile(new URL('main.zry', fixture), 'utf8');
+  const math = await readFile(new URL('math.zry', fixture), 'utf8');
+  const useBefore = await readFile(new URL('../../../tests/m2-fixtures/invalid/use-before-declaration/main.zry', import.meta.url), 'utf8');
+  const rejected = await readFile(new URL('rejected.zry', fixture), 'utf8');
+  const [localsResponse, useBeforeResponse, rejectedResponse] = await exchange([
+    analyze(1, [{ path: 'src/math.zry', text: math }, { path: 'src/main.zry', text: main }]),
+    analyze(2, [{ path: 'src/main.zry', text: useBefore }]),
+    analyze(3, [{ path: 'src/rejected.zry', text: rejected }]),
+  ]);
+  const localsSnapshot = JSON.parse(await readFile(new URL('locals.snapshot.json', fixture), 'utf8'));
+  const useBeforeSnapshot = JSON.parse(await readFile(new URL('use-before.snapshot.json', fixture), 'utf8'));
+  const rejectedSnapshot = JSON.parse(await readFile(new URL('rejected.response.json', fixture), 'utf8'));
+  assert.deepEqual(localsResponse.result, localsSnapshot);
+  assert.deepEqual(useBeforeResponse.result, useBeforeSnapshot);
+  assert.deepEqual(rejectedResponse, rejectedSnapshot);
+});
+
 test('file IDs and UTF-8 spans remain deterministic for shuffled batches', async () => {
   const prefix = '// 😀\r\n';
   const source = `${prefix}export function value(): i32 { return 1; }`;

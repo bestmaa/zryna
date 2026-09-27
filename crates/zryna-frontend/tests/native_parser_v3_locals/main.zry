@@ -1,0 +1,11 @@
+// 😀 native source spans
+import { helper as alias } from "./math.zry";
+function plain(x: i32): i32 {
+  const one: i32 = 1;
+  let two: i32 = x + one;
+  return two + 1;
+}
+export function ready(flag: bool): bool {
+  const yes: bool = true;
+  return yes;
+}
