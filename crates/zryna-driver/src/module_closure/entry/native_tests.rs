@@ -333,7 +333,7 @@ impl ClosureFrontendV3 for ReplaceDuringFinalAnalysis<'_> {
         &self,
         sources: &zryna_source::SourceMap,
         timeout: Duration,
-    ) -> Result<zryna_frontend::syntax_v3::ProjectSyntaxSnapshot, ModuleClosureError> {
+    ) -> Result<syntax_v3::ProjectSyntaxSnapshot, ModuleClosureError> {
         let result = if self.straight_line {
             NativeStraightLineFrontend.analyze(sources, timeout)
         } else {
