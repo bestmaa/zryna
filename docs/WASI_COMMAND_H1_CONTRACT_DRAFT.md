@@ -202,9 +202,67 @@ Preallocation, multiplication, range and 1,024-byte checks precede copying. An o
 language allocation failure retains the existing typed trap and drops initialized language
 prefixes without publishing a result. Invalid canonical data, realloc, lifting, or cleanup
 failure is fatal: invalidate the store, reclaim independently held host resources, and do
-not retry guest cleanup or relabel the failure as missing/denied. This proposes the F1
-copy/ownership postcondition; exact allocator entrypoints and verifier rules remain subject
-to review before any code is written.
+not retry guest cleanup or relabel the failure as missing/denied.
+
+### F1 memory and allocator acceptance candidate
+
+The command-specific core uses exactly one fixed 256-page memory32 (16,777,216 bytes). It
+reserves `[0, 65,536)` for null/static state, bounds the **command-only** private language
+arena to `[65,536, 15,728,640)`, and reserves `[15,728,640, 16,777,216)` as a 1,048,576-byte
+Canonical ABI transfer arena. All intervals are half-open. The current M3 backend instead
+lets its private bump arena reach byte 16,777,216; therefore its allocator, scalar exports,
+and effective capacity cannot simply be reused unchanged. The distinct `CommandH1V1`
+backend/verifier must seal and independently audit the lower 15,728,640-byte private limit.
+Existing M3 artifacts and verifier limits remain untouched. The store allows one 16 MiB
+memory, with no growth, additional memory, shared memory, or memory64.
+
+The command verifier and independent backend audit must reject any language allocation
+or pointer-producing instruction able to enter the transfer interval.
+
+Only the command component's audited internal core exposes this memory and a canonical
+`realloc(oldPointer:i32, oldByteLength:i32, alignment:i32, newByteLength:i32) -> i32`
+to the component's selected canonical options. Neither is a public source or M3 scalar
+export. The generated receiving bridge uses the same instance's private transfer release
+operation after it copies a host result; it never uses the M3 language arena as the
+Canonical ABI allocator. A checked ledger owns each nonempty transfer allocation. New
+allocations start in the transfer interval; resize allocates a new aligned block, copies
+`min(oldByteLength, newByteLength)` bytes, and releases the old ledger entry only after
+success. `oldPointer=0,oldByteLength=0` creates a new allocation when the new size is
+positive and returns zero when it is zero. `newByteLength=0` releases an existing
+allocation and returns zero. Any other nonzero old pointer must name
+an exact live ledger entry; `oldPointer=0` with nonzero old length rejects. The allocator
+accepts only alignment 1 or 4 for this audited result shape. Release requires the exact
+live pointer and size; duplicate, foreign, overlapping, misaligned, out-of-range, and
+wrapped ranges trap. Zero-length
+strings use `(0,0)` and create no owned buffer. The transfer cursor resets to 15,728,640
+only when every transfer entry for the callback has been released. An arena reset alone
+is not a per-buffer release.
+
+The H1 bridge admits only the pinned environment result: an empty list for `Missing`, or
+one `(key,value)` pair with the authorized 1–64-byte key and a 0–1,024-byte UTF-8 value.
+It checks list and string lengths, canonical offsets/alignment, source key identity, and
+all ranges before copying into a distinct language String. A single transfer allocation
+is capped at 4,096 bytes and total live plus unreclaimed transfer bytes at 1,048,576;
+exceeding either traps before writing. The 4,096-byte bound accommodates the pinned
+UTF-8 Canonical ABI's at-most-four-times temporary string allocation for this 1,024-byte
+value. Only alignment 1 for string bytes and alignment 4 for list/tuple records is needed;
+the independent component audit rejects other result shapes. The command-only language
+allocation path must return a checked status to the bridge before emitting an E1 trap:
+the present M3 helper traps immediately, so it cannot by itself release outstanding
+transfer buffers. The bridge releases each transfer entry exactly once before a `Found`
+value becomes visible. After a failed language allocation status, it releases those
+entries before emitting the existing E1 trap and publishes no `Found`. A trap during
+canonical allocation, lowering, lifting, or release is fatal:
+discard the store and independently tracked host state without a guest
+cleanup retry. The immutable host snapshot remains outside guest memory until the mediated
+call. This candidate needs an independent implementation and audit before F1 is accepted.
+
+Acceptance fixtures must distinguish bytes 15,728,639/15,728,640 at the private boundary
+and 16,777,215/16,777,216 at the transfer boundary; test empty, present-empty, multibyte,
+and 1,024/1,025-byte values; first-extra list item and key byte; repeated calls with
+complete ledger drain; resize-copy-release and forged/double release; canonical allocation
+failure and subsequent fresh-instance recovery; and absence of a borrowed guest-memory
+view after the callback. These are future tests, not executed evidence.
 
 ## Manifest and one-run authority
 
@@ -253,7 +311,7 @@ The proposed `zryna.wasi-command-manifest.v1` execution record contains:
 | Grants and limits | Canonical requested and effective capability/interface/key sets (both empty for omission), #167 ceiling and narrower one-key quota, fuel, deadline and memory limits |
 | Host input summary | `none`, `missing`, or `present`, with bounded UTF-8 byte count; no value, input path or unkeyed value hash |
 | Execution | `run-returned` with `runReturn: ok` or `err`, `host-denial` with `runReturn: absent`, or `runtime-trap` with `runReturn: absent` |
-| Denial and teardown | First denied interface/operation and host policy revision only for host denial; otherwise no denial; `confirmed` or `unconfirmed` teardown, never success inferred from a failed cleanup |
+| Denial and teardown | First denied interface/operation, `permission-denied` or `quota-exceeded` reason and host policy revision only for host denial; otherwise no denial; `confirmed` or `unconfirmed` teardown, never success inferred from a failed cleanup |
 
 For a compact complete WIT closure identity, the candidate `witClosureDigest` is SHA-256 over
 all 34 audited files sorted by logical path. For each file, hash an unsigned 64-bit
@@ -284,6 +342,7 @@ authenticated proof of the value that was supplied.
 | malformed | Duplicate/conflicting key, unknown field/capability/world, bad UTF-8, wrong type, extra record | Reject in deterministic input phase |
 | bounds | One/two entries; 64/65-byte key; 1,024/1,025-byte value; 4,096/4,097-byte file; #167 128/129 entries | Exact accepted where applicable, first extra rejected at owning layer |
 | revoked | Revoke after sealing but before host call | No value read; trap; absent `run` return and distinct host-denial record; no false `Missing` or typed WIT `err` |
+| quota exhausted | Use an already-exhausted enforced H1 quota before a mediated read | No value read; trap; absent `run` return and `quota-exceeded` host-denial record |
 | manifest | Empty grant, granted-missing and present-empty value; changed requirement, world, limit, result or denial | Distinct grant/input summaries and complete retained identities; manifest never exposes or claims proof of value bytes |
 | denied probes | Filesystem, clock, randomness, sockets/network under empty or H1 grant; process import attempt | Deterministic host denial for admitted-world imports; process import rejected by world/topology audit, with no ambient effect |
 | malformed component | Changed import/function type, canonical option, realloc, memory, run result, or excess bytes | Reject before instantiation; next valid request recovers |
