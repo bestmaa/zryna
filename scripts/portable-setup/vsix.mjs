@@ -1,17 +1,41 @@
 import { inflateRawSync } from 'node:zlib';
 
-// VSIX metadata timestamps are not part of the extension's behavior. Canonicalize only those
-// fields, retaining the package's exact compressed bytes, checksums and content inventory.
+// VSIX metadata timestamps and entry order are not part of the extension's behavior. Preserve
+// each complete local record, including compressed bytes and data descriptors, while sorting it.
 export function canonicalVsix(input) {
-  const bytes = Buffer.from(input);
-  const entries = vsixEntries(bytes);
-  for (const entry of entries) {
-    bytes.writeUInt16LE(0, entry.local + 10);
-    bytes.writeUInt16LE(33, entry.local + 12);
-    bytes.writeUInt16LE(0, entry.central + 12);
-    bytes.writeUInt16LE(33, entry.central + 14);
+  const entries = vsixEntries(input);
+  const byLocal = [...entries].sort((a, b) => a.local - b.local);
+  const byName = [...entries].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  const directoryStart = input.readUInt32LE(input.length - 6);
+  if (!byLocal.length || byLocal[0].local !== 0
+    || byLocal.some((entry, index) => entry.local >= (byLocal[index + 1]?.local ?? directoryStart))) {
+    throw new Error('VSIX local records overlap or are missing.');
   }
-  return bytes;
+  const output = Buffer.alloc(input.length);
+  const offsets = new Map();
+  let cursor = 0;
+  for (const entry of byName) {
+    const index = byLocal.indexOf(entry);
+    const end = byLocal[index + 1]?.local ?? directoryStart;
+    input.copy(output, cursor, entry.local, end);
+    offsets.set(entry.name, cursor);
+    output.writeUInt16LE(0, cursor + 10);
+    output.writeUInt16LE(33, cursor + 12);
+    cursor += end - entry.local;
+  }
+  if (cursor !== directoryStart) throw new Error('VSIX local records differ from the directory.');
+  for (const entry of byName) {
+    const index = entries.indexOf(entry);
+    const end = entries[index + 1]?.central ?? input.length - 22;
+    input.copy(output, cursor, entry.central, end);
+    output.writeUInt16LE(0, cursor + 12);
+    output.writeUInt16LE(33, cursor + 14);
+    output.writeUInt32LE(offsets.get(entry.name), cursor + 42);
+    cursor += end - entry.central;
+  }
+  if (cursor !== input.length - 22) throw new Error('VSIX directory records differ from the ZIP end.');
+  input.copy(output, cursor, input.length - 22);
+  return output;
 }
 
 export function vsixEntries(bytes) {
