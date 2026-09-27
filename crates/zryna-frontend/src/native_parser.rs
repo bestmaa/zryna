@@ -1,7 +1,8 @@
 //! Internal native syntax candidate construction from the bound lexical stream.
 //!
-//! This first closed slice constructs protocol-v2 function/return/addition candidates. It does
-//! not select a provider or grant syntax authority: callers must use the existing v2 verifier.
+//! This closed slice constructs protocol-v2 function/return/addition candidates and bounded
+//! diagnostics for selected unsupported expressions. It does not select a provider or grant syntax
+//! authority: callers must use the existing v2 verifier.
 
 use std::fmt;
 
