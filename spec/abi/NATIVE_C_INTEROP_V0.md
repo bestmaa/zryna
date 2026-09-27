@@ -162,6 +162,11 @@ length, and leaves `out` untouched on error. It accumulates in a checked wider
 integer and checks the result against `INT32_MAX` before the narrowing assignment;
 any future bound that permits overflow must return a distinct declared range status
 without writing `out`. No unsigned result is silently converted into Zryna `i32`.
+The status-`1` length case is a direct raw C-fixture observation. A reviewed
+safe wrapper checks its declared maximum before C entry and rejects an
+over-limit length without calling `sum_bytes`; it does not expose raw status
+`1` as evidence that its pre-call bound check ran.
+
 The incomplete `struct fixture_handle` is created by
 `int32_t fixture_open(int32_t seed, struct fixture_handle **out)`, queried by
 `int32_t fixture_read(struct fixture_handle *, int32_t *out)`, and consumed by
@@ -180,7 +185,8 @@ signed-overflow arithmetic.
 | --- | --- |
 | `add(20, 22)`, `sum_bytes(NULL, 0)`, `sum_bytes([1, 2, 3], 3)`, and `open(7)`/read/close | Results `42`, `0`, `6`, and `7`; one handle release trace; no retained borrow after return. |
 | `open(-1)` and wrapper sequence `open(7)` then `open(-1)` | Declared recoverable status `1`, no output on the failed call; the wrapper releases its first accepted handle exactly once and reads no uninitialized output. |
-| `(NULL, n>0)`, over-limit length, invalid UTF-8 in UTF-8 mode, noncanonical Boolean shim | Rejected before unsafe call or result exposure with the declared boundary outcome. |
+| `(NULL, n>0)`, safe-wrapper over-limit length, invalid UTF-8 in UTF-8 mode, noncanonical Boolean shim | Rejected before unsafe call or result exposure with the declared boundary outcome. |
+| Direct raw `sum_bytes` with `n > 4096` and a valid buffer | Fixture status `1`, `out` untouched; this does not bypass the safe wrapper's pre-call maximum check. |
 | Unknown status, written length above capacity, null non-null result, wrong-library handle or release, repeated close | Independent verifier/wrapper rejects; no second free; ABI/host failure where foreign code has already violated the contract. |
 | Missing/renamed symbol, wrong ELF architecture or header width/alignment, undeclared library, wrong target or `all` selection | Rejected at declaration, artifact audit, link-input validation or profile selection as appropriate; no partial published artifact. |
 | C attempts callback, retains borrowed pointer, unwinds across boundary, or requires worker-thread entry | Signature or reviewed library policy rejected; hostile execution is not classified as a recoverable language error. |
