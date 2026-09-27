@@ -16,19 +16,22 @@ mod recovery;
 
 /// A deterministic rejection of source outside this native candidate slice.
 #[derive(Clone, Debug)]
-pub struct ParseError(Diagnostic);
+pub struct ParseError {
+    primary: Diagnostic,
+    following: Option<Box<syntax::RawProviderDiagnostic>>,
+}
 
 impl ParseError {
     /// Returns the source-bound diagnostic.
     #[must_use]
     pub const fn diagnostic(&self) -> &Diagnostic {
-        &self.0
+        &self.primary
     }
 }
 
 impl fmt::Display for ParseError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.0, formatter)
+        fmt::Display::fmt(&self.primary, formatter)
     }
 }
 
@@ -77,7 +80,7 @@ fn parse_v2_internal(
         return Err(failure("ZRYNA-F2002", "native tokens do not belong to this source map"));
     }
     if let Some(diagnostic) = lexed.diagnostics().first() {
-        return Err(ParseError(diagnostic.clone()));
+        return Err(ParseError { primary: diagnostic.clone(), following: None });
     }
     let mut files = Vec::with_capacity(lexed.files().len());
     let mut total_functions = 0_usize;
@@ -94,6 +97,7 @@ fn parse_v2_internal(
         }
         let mut parser = FileParser {
             text: source.text(),
+            sources,
             tokens: file.tokens().collect(),
             position: 0,
             file: file.id().index(),
@@ -110,10 +114,14 @@ fn parse_v2_internal(
             let function = match parser.function() {
                 Ok(function) => function,
                 Err(error) if recovering && error.diagnostic().code() == "ZRYNA-F2002" => {
-                    if diagnostics.len() >= syntax::MAX_PROVIDER_DIAGNOSTICS {
+                    let needed = 1 + usize::from(error.following.is_some());
+                    if diagnostics.len() + needed > syntax::MAX_PROVIDER_DIAGNOSTICS {
                         return Err(resource("parser diagnostics exceed protocol-v2 limit"));
                     }
                     diagnostics.push(recovery::raw_diagnostic(&error));
+                    if let Some(following) = error.following {
+                        diagnostics.push(*following);
+                    }
                     recovery::skip_to_next_function(&mut parser, checkpoint);
                     continue;
                 }
@@ -146,12 +154,30 @@ fn parse_v2_internal(
 
 struct FileParser<'a> {
     text: &'a str,
+    sources: &'a SourceMap,
     tokens: Vec<Token>,
     position: usize,
     file: u32,
 }
 
 impl FileParser<'_> {
+    fn error_between(&self, first: Token, last: Token, message: &'static str) -> ParseError {
+        let span =
+            UntrustedSpan { file: self.file, start: first.span().start(), end: last.span().end() };
+        self.sources.verify_span(span).map_or_else(
+            |_| failure("ZRYNA-F1003", "native token range is not source-bound"),
+            |span| ParseError {
+                primary: Diagnostic::error_at(
+                    "ZRYNA-F2002",
+                    span,
+                    message,
+                    "use only the documented protocol-v2 bootstrap syntax",
+                ),
+                following: None,
+            },
+        )
+    }
+
     fn error_here(&self, code: &'static str, message: &'static str) -> ParseError {
         self.current()
             .or_else(|| self.tokens.last().copied())
@@ -257,11 +283,13 @@ impl FileParser<'_> {
             if self.current().is_some_and(|next| {
                 has_line_break(self.text, keyword.span().end(), next.span().start())
             }) {
-                return Err(error_at(
+                let mut error = self.error_between(
                     keyword,
-                    "ZRYNA-F2002",
-                    "return value must start on the same line",
-                ));
+                    keyword,
+                    "statement uses unsupported syntax 'ReturnStatement'",
+                );
+                error.following = recovery::newline_expression_statement(self).map(Box::new);
+                return Err(error);
             }
             let expression_start = self.position;
             let value = expression::addition(self, &mut expressions)?;
@@ -363,16 +391,22 @@ fn has_line_break(text: &str, start: u32, end: u32) -> bool {
 }
 
 fn failure(code: &'static str, message: &'static str) -> ParseError {
-    ParseError(Diagnostic::error(code, None, message, "use the supported native syntax subset"))
+    ParseError {
+        primary: Diagnostic::error(code, None, message, "use the supported native syntax subset"),
+        following: None,
+    }
 }
 
 fn error_at(token: Token, code: &'static str, message: &'static str) -> ParseError {
-    ParseError(Diagnostic::error_at(
-        code,
-        token.span(),
-        message,
-        "use the supported native syntax subset",
-    ))
+    ParseError {
+        primary: Diagnostic::error_at(
+            code,
+            token.span(),
+            message,
+            "use the supported native syntax subset",
+        ),
+        following: None,
+    }
 }
 
 fn resource(message: &'static str) -> ParseError {

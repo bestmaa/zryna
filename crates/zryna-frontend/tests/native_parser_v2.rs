@@ -90,6 +90,10 @@ fn frozen_bootstrap_and_native_reject_return_newline_at_the_same_token() {
                 && provider.start == span.start()
                 && provider.end == span.end()
     ));
+    let recovered = parse_v2_recovering_candidate(&sources, &lexed)
+        .expect("bounded return newline diagnostics");
+    assert_eq!(recovered, bootstrap);
+    syntax_v2::verify_snapshot(recovered, &sources).expect("error snapshot remains verifiable");
 }
 
 #[test]
@@ -103,9 +107,7 @@ fn bounded_recovery_retains_the_same_following_function_as_bootstrap() {
     assert!(parse_v2_candidate(&sources, &lexed).is_err());
     let native = parse_v2_recovering_candidate(&sources, &lexed).expect("bounded recovery");
     let bootstrap = syntax_v2::decode_snapshot(RECOVERY_BOOTSTRAP).expect("frozen provider result");
-    assert_eq!(native.files[0].functions, bootstrap.files[0].functions);
-    assert_eq!(native.diagnostics.len(), 1);
-    assert_eq!(native.diagnostics[0].code, bootstrap.diagnostics[0].code);
+    assert_eq!(native, bootstrap);
     let verified = syntax_v2::verify_snapshot(native, &sources).expect("existing verifier");
     assert_eq!(verified.diagnostics()[0].code(), "ZRYNA-F2002");
 }
@@ -148,6 +150,29 @@ fn first_extra_recovery_diagnostic_fails_atomically() {
     let error = parse_v2_recovering_candidate(&sources, &lexed)
         .expect_err("first-extra recovery diagnostic");
     assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
+}
+
+#[test]
+fn return_newline_diagnostic_pairs_respect_the_first_extra_limit() {
+    let rejected = "export function f(): i32 { return\n1; }\n";
+    for (count, within_limit) in [
+        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS / 2, true),
+        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS / 2 + 1, false),
+    ] {
+        let text = rejected.repeat(count);
+        let sources =
+            SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
+        let lexed = lex(&sources).expect("bounded lexical stream");
+        let result = parse_v2_recovering_candidate(&sources, &lexed);
+        if within_limit {
+            let raw = result.expect("exact diagnostic limit");
+            assert_eq!(raw.diagnostics.len(), syntax_v2::MAX_PROVIDER_DIAGNOSTICS);
+            syntax_v2::verify_snapshot(raw, &sources).expect("source-bound error snapshot");
+        } else {
+            let error = result.expect_err("first extra diagnostic is atomic");
+            assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
+        }
+    }
 }
 
 #[test]
