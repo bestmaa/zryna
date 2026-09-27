@@ -20,6 +20,7 @@ function fixture({ trusted = true, capability, analysisProfile, editResult = [],
   const output = { lines: [], shown: 0 };
   const status = { visible: false, show() { this.visible = true; }, hide() { this.visible = false; }, dispose() {} };
   const storage = { profile: savedProfile };
+  let settingsPrefix = 'trusted';
   let releaseInitialize;
   const initializeGate = deferInitialize ? new Promise(resolveGate => { releaseInitialize = resolveGate; }) : null;
   const document = {
@@ -39,9 +40,10 @@ function fixture({ trusted = true, capability, analysisProfile, editResult = [],
     workspace: {
       isTrusted: trusted,
       getWorkspaceFolder: () => ({ uri: { toString: () => 'file:///project' } }),
-      getConfiguration: () => ({ inspect: key => ({ globalValue: resolve(`trusted-${key}`), workspaceValue: 'hostile-workspace-command' }) }),
+      getConfiguration: () => ({ inspect: key => ({ globalValue: resolve(`${settingsPrefix}-${key}`), workspaceValue: 'hostile-workspace-command' }) }),
       onDidChangeTextDocument: callback => { events.change = callback; return disposable(); },
-      onDidCloseTextDocument: disposable, onDidChangeConfiguration: disposable,
+      onDidCloseTextDocument: disposable,
+      onDidChangeConfiguration: callback => { events.configuration = callback; return disposable(); },
     },
     window: {
       onDidChangeActiveTextEditor: callback => { events.editor = callback; return disposable(); },
@@ -93,7 +95,8 @@ function fixture({ trusted = true, capability, analysisProfile, editResult = [],
   } });
   return { document, launched, sent, requests, providers, initialized, connections, published, commands, storage, vscode,
     events, output, status,
-    releaseInitialize, deactivate: sandbox.module.exports.deactivate };
+    releaseInitialize, setSettingsPrefix: value => { settingsPrefix = value; },
+    deactivate: sandbox.module.exports.deactivate };
 }
 
 test('untrusted, virtual and closed documents cannot launch a compiler', async () => {
@@ -121,6 +124,61 @@ test('matching server gets only the explicit document and stale versions cannot 
   assert.deepEqual(f.sent.map(item => item.method), ['initialized', 'textDocument/didOpen']);
   assert.equal(f.sent[1].params.textDocument.text, f.document.getText());
   await f.deactivate();
+});
+
+test('settings changes reconnect the active document and ignore unrelated changes', async () => {
+  const f = fixture();
+  f.vscode.window.activeTextEditor = { document: f.document };
+  await f.providers.format.provideDocumentFormattingEdits(f.document, {});
+  const first = f.connections[0];
+  f.events.configuration({ affectsConfiguration: section => section === 'other' });
+  await new Promise(resolveImmediate => setImmediate(resolveImmediate));
+  assert.equal(f.launched.length, 1);
+  assert.equal(first.closed, undefined);
+  f.setSettingsPrefix('changed');
+  f.events.configuration({ affectsConfiguration: section => section === 'zryna' });
+  await new Promise(resolveImmediate => setImmediate(resolveImmediate));
+  assert.equal(first.closed, true);
+  assert.equal(f.launched.length, 2);
+  assert.equal(f.launched[1].serverPath, resolve('changed-serverPath'));
+  assert.equal(f.sent.filter(item => item.method === 'textDocument/didOpen').length, 2);
+  await f.deactivate();
+});
+
+test('rapid settings changes suppress stale reconnects during an unfinished handshake', async () => {
+  const f = fixture({ deferInitialize: true });
+  f.vscode.window.activeTextEditor = { document: f.document };
+  const first = f.providers.format.provideDocumentFormattingEdits(f.document, {});
+  await new Promise(resolveImmediate => setImmediate(resolveImmediate));
+  assert.equal(f.launched.length, 1);
+  f.events.configuration({ affectsConfiguration: () => true });
+  f.events.configuration({ affectsConfiguration: () => true });
+  f.releaseInitialize();
+  await assert.rejects(first, /document changed/);
+  await new Promise(resolveImmediate => setImmediate(resolveImmediate));
+  assert.equal(f.launched.length, 2);
+  assert.equal(f.sent.filter(item => item.method === 'textDocument/didOpen').length, 1);
+  await f.deactivate();
+});
+
+test('settings changes do not launch for ineligible documents or leak failed handshakes', async () => {
+  for (const kind of ['untrusted', 'virtual', 'closed']) {
+    const f = fixture({ trusted: kind !== 'untrusted' });
+    if (kind === 'virtual') f.document.uri.scheme = 'https';
+    if (kind === 'closed') f.document.isClosed = true;
+    f.vscode.window.activeTextEditor = { document: f.document };
+    f.events.configuration({ affectsConfiguration: () => true });
+    await new Promise(resolveImmediate => setImmediate(resolveImmediate));
+    assert.equal(f.launched.length, 0);
+    await f.deactivate();
+  }
+  const mismatch = fixture({ capability: 'wrong-format' });
+  mismatch.vscode.window.activeTextEditor = { document: mismatch.document };
+  mismatch.events.configuration({ affectsConfiguration: () => true });
+  await new Promise(resolveImmediate => setImmediate(resolveImmediate));
+  assert.equal(mismatch.launched.length, 1);
+  assert.equal(mismatch.sent.length, 0);
+  await mismatch.deactivate();
 });
 
 test('foreign definition locations cannot redirect the editor', async () => {

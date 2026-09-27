@@ -12,6 +12,7 @@ let diagnostics;
 let globalStatus;
 let globalOutput;
 let editorProfile = 'i32-v1';
+let configurationRevision = 0;
 
 function configuration() {
   const installation = configuredInstallation(vscode);
@@ -253,7 +254,15 @@ function activate(context) {
       if (active?.document === document) void disconnect();
     }),
     vscode.workspace.onDidChangeConfiguration(event => {
-      if (event.affectsConfiguration('zryna')) void disconnect();
+      if (!event.affectsConfiguration('zryna')) return;
+      const revision = ++configurationRevision;
+      void disconnect().then(() => {
+        if (revision !== configurationRevision) return;
+        const document = vscode.window.activeTextEditor?.document;
+        if (document?.languageId === 'zryna' && document.uri.scheme === 'file'
+          && !document.isClosed && vscode.workspace.isTrusted
+          && vscode.workspace.getWorkspaceFolder(document.uri)) return ensure(document);
+      }).catch(() => {});
     }),
     vscode.window.onDidChangeActiveTextEditor(editor => {
       globalStatus.hide();
@@ -267,4 +276,9 @@ function activate(context) {
   }
 }
 
-module.exports = { activate, deactivate: disconnect };
+async function deactivate() {
+  configurationRevision++;
+  await disconnect();
+}
+
+module.exports = { activate, deactivate };
