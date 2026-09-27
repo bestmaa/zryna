@@ -1,7 +1,7 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
-use zryna_frontend::VerifiedFrontendProviderV3;
-use zryna_source::NormalizedSourcePath;
+use zryna_frontend::{VerifiedFrontendProviderV3, native_lexer, native_parser, syntax_v3};
+use zryna_source::{NormalizedSourcePath, SourceMap};
 
 use super::{ModuleClosureError, VerifiedModuleClosure, discover_module_closure_with_clock};
 use crate::WorkspaceSourceRoot;
@@ -23,3 +23,66 @@ pub fn discover_module_closure<Provider: VerifiedFrontendProviderV3 + ?Sized>(
 ) -> Result<VerifiedModuleClosure, ModuleClosureError> {
     discover_module_closure_with_clock(root, entrypoint, frontend, Instant::now)
 }
+
+/// Discovers an internal import-only native v3 closure without selecting a public provider.
+///
+/// Every source in the graph must contain only named imports and trivia. The native parser
+/// constructs an untrusted candidate; the existing v3 verifier authenticates it before the
+/// driver resolves any import. The returned closure has no compilation or target authority.
+///
+/// # Errors
+///
+/// Rejects unsupported syntax, failed verification, or any existing source-closure failure.
+pub fn discover_native_import_only_closure(
+    root: &WorkspaceSourceRoot,
+    entrypoint: NormalizedSourcePath,
+) -> Result<VerifiedModuleClosure, ModuleClosureError> {
+    discover_module_closure_with_clock(root, entrypoint, &NativeImportFrontend, Instant::now)
+}
+
+pub(crate) trait ClosureFrontendV3 {
+    fn minimum_analysis_timeout(&self) -> Duration;
+    fn analyze(
+        &self,
+        sources: &SourceMap,
+        timeout: Duration,
+    ) -> Result<syntax_v3::ProjectSyntaxSnapshot, ModuleClosureError>;
+}
+
+impl<Provider: VerifiedFrontendProviderV3 + ?Sized> ClosureFrontendV3 for Provider {
+    fn minimum_analysis_timeout(&self) -> Duration {
+        VerifiedFrontendProviderV3::minimum_analysis_timeout(self)
+    }
+
+    fn analyze(
+        &self,
+        sources: &SourceMap,
+        timeout: Duration,
+    ) -> Result<syntax_v3::ProjectSyntaxSnapshot, ModuleClosureError> {
+        self.analyze_verified_v3_with_timeout(sources, timeout)
+            .map_err(ModuleClosureError::Frontend)
+    }
+}
+
+struct NativeImportFrontend;
+
+impl ClosureFrontendV3 for NativeImportFrontend {
+    fn minimum_analysis_timeout(&self) -> Duration {
+        Duration::ZERO
+    }
+
+    fn analyze(
+        &self,
+        sources: &SourceMap,
+        _timeout: Duration,
+    ) -> Result<syntax_v3::ProjectSyntaxSnapshot, ModuleClosureError> {
+        let lexed = native_lexer::lex(sources)
+            .map_err(|error| ModuleClosureError::Rejected(vec![error.diagnostic().clone()]))?;
+        let raw = native_parser::v3::parse_v3_import_candidate(sources, &lexed)
+            .map_err(|error| ModuleClosureError::Rejected(vec![error.diagnostic().clone()]))?;
+        syntax_v3::verify_snapshot(raw, sources).map_err(ModuleClosureError::Rejected)
+    }
+}
+
+#[cfg(test)]
+mod native_tests;

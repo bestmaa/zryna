@@ -7,7 +7,7 @@ use std::{
 
 use sha2::{Digest, Sha256};
 use zryna_diagnostics::{Diagnostic, Severity};
-use zryna_frontend::{VerifiedFrontendProviderV3, WorkerError, syntax_v3};
+use zryna_frontend::{WorkerError, syntax_v3};
 use zryna_source::{
     NormalizedSourcePath, SourceFileInput, SourceMap, Span, resolve_explicit_zry_import,
 };
@@ -15,7 +15,7 @@ use zryna_source::{
 use crate::source_session::{ModuleSourceRoot, ModuleSourceSession};
 use crate::workspace_source::{MAX_DIRECTORY_ENTRIES, StableSource};
 mod entry;
-pub use entry::discover_module_closure;
+pub use entry::{discover_module_closure, discover_native_import_only_closure};
 
 /// Maximum modules in one M2 closure.
 pub const MAX_MODULE_FILES: usize = 4_096;
@@ -320,7 +320,7 @@ struct ResolvedEdge {
 
 #[allow(clippy::too_many_lines)]
 pub(crate) fn discover_module_closure_with_clock<
-    Provider: VerifiedFrontendProviderV3 + ?Sized,
+    Provider: entry::ClosureFrontendV3 + ?Sized,
     Clock: FnMut() -> Instant,
 >(
     root: &impl ModuleSourceRoot,
@@ -390,9 +390,9 @@ pub(crate) fn discover_module_closure_with_clock<
             now(),
             frontend.minimum_analysis_timeout(),
         )?;
-        let snapshot = frontend.analyze_verified_v3_with_timeout(&batch_map, remaining);
+        let snapshot = frontend.analyze(&batch_map, remaining);
         enforce_discovery_wall_time(discovery_started, now())?;
-        let snapshot = snapshot.map_err(ModuleClosureError::Frontend)?;
+        let snapshot = snapshot?;
         reject_provider_errors(&snapshot)?;
         let batch_imports = snapshot_fingerprints(&snapshot);
 
@@ -456,9 +456,9 @@ pub(crate) fn discover_module_closure_with_clock<
         now(),
         frontend.minimum_analysis_timeout(),
     )?;
-    let syntax = frontend.analyze_verified_v3_with_timeout(&sources, remaining);
+    let syntax = frontend.analyze(&sources, remaining);
     enforce_discovery_wall_time(discovery_started, now())?;
-    let syntax = syntax.map_err(ModuleClosureError::Frontend)?;
+    let syntax = syntax?;
     reject_provider_errors(&syntax)?;
     source_session.revalidate_all().map_err(rejected)?;
     if !syntax.is_bound_to(&sources) {
