@@ -69,6 +69,12 @@ must be declared and audited; imports name one external C symbol, while generate
 exports use a versioned `zryna_c_v0_e_` prefix plus a checked logical name to avoid
 the existing `zryna_v1_e_` namespace. Exact and ASCII-case-folded collisions with
 exports, runtime helpers and linked foreign definitions reject before emission.
+The representative direct `i32` export accepts exact 32-bit signed carriers,
+has no owned inputs or host effects, and performs wrapping addition. It has
+no arithmetic-overflow trap or status channel. A future export whose body can
+produce a controlled language trap needs an explicit C status-and-result
+contract that preserves the trap identity and contains it without unwinding;
+it cannot encode failure in a direct scalar result or a process exit.
 
 ## Foreign resource declaration
 
@@ -143,9 +149,13 @@ cross-language unwinding, and dynamically inferred library search.
 
 ## Representative C fixture and expected observations
 
-The future fixture is a tiny versioned C library with `int32_t add(int32_t,int32_t)`;
-its wrapper checks the mathematical sum fits `int32_t` before the call and traps with
-verified cleanup on overflow. The library itself receives only admitted inputs. It also has
+The future fixture is a tiny versioned C library with `int32_t add(int32_t,int32_t)`.
+It returns Zryna's signed two's-complement addition modulo `2^32` for every
+`int32_t` input. Its C implementation must avoid signed-overflow undefined
+behavior and out-of-range signed conversion: add converted operands in
+`uint32_t`, reconstruct the signed value in `int64_t` by subtracting `2^32`
+for bits above `INT32_MAX`, then narrow only an in-range value to `int32_t`.
+The library also has
 `int32_t sum_bytes(const uint8_t *, size_t, int32_t *out)`. The latter returns status
 `0` and writes an initialized signed result for `n <= 4096`, status `1` for a larger
 length, and leaves `out` untouched on error. It accumulates in a checked wider
@@ -159,10 +169,12 @@ The incomplete `struct fixture_handle` is created by
 without allocating or writing `out` for a negative seed; status `0` creates a
 handle whose read result is the seed. Its contract fixes the allocator/release
 pair, `NULL` and zero-length behavior, bounds, failure atomicity, and a trace
-counter for each release. A separate generated export `zryna_c_v0_e_add` is
-called by a C11 client using the generated exact header. The C client checks
-`add(20, 22) == 42` twice as a full 32-bit result, without interpreting process
-exit as the function result.
+counter for each release. A separate generated export
+`int32_t zryna_c_v0_e_add(int32_t, int32_t)` is called by a C11 client using
+the generated exact header. The C client checks `add(20, 22) == 42` twice as
+a full 32-bit result and `(INT32_MAX, 1) == INT32_MIN` as a wrapping edge,
+without interpreting process exit as the function result or executing C
+signed-overflow arithmetic.
 
 | Case | Expected future proof |
 | --- | --- |

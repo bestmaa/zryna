@@ -56,6 +56,43 @@ String/Vec/Shared/Weak layouts remain inadmissible by inferred source spelling.
 No callbacks, worker threads, thread-affine handles, reentrant entry,
 variadics, by-value records or cross-language unwinding are admitted.
 
+## Candidate fixture operation policies
+
+`fixture-c-v0` is the proposed logical identity for the five imported C
+operations in the candidate header, not a filename, acquired artifact or
+linker grant. Its one handle kind is `fixture-c-v0/fixture_handle`; its
+allocator identity is `fixture-c-v0/fixture_open`, paired only with release
+`fixture-c-v0/fixture_close`. The generated reverse export belongs to the
+output artifact, whose concrete identity the driver must validate under the
+accepted #361 native inputs. Every pointer below is non-null unless the row
+explicitly admits `NULL`; every call is synchronous and forbids retention,
+callbacks, reentry, threading and cross-language unwind. Abort, signal,
+timeout and loader failure remain process failures for every operation.
+
+| Exact C symbol | Input, owner and borrow end | Result, status and release obligation |
+| --- | --- | --- |
+| `add(int32_t, int32_t)` | No pointers or resource transfer. Both inputs are exact signed 32-bit values. | Direct wrapping `int32_t` sum for every input; no status domain, allocation or release. The C body must use unsigned modulo arithmetic and reconstruct an in-range signed result, never C signed-overflow arithmetic. |
+| `sum_bytes(const uint8_t *, size_t, int32_t *)` | Caller owns stable input bytes and the `out` slot through return. Input borrow ends at return. `(NULL, 0)` is admitted; `(NULL, n>0)` rejects. The checked byte count is at most `4096` for success and fits `size_t`. Bytes mode has no UTF-8 requirement; C cannot retain the pointer. | Status `0` writes one initialized `int32_t` sum; status `1` for length above `4096` leaves `out` untouched and input unchanged. The caller reads `out` only after `0`. Unknown status or a write on `1` is host/ABI failure. No allocation or release. |
+| `fixture_open(int32_t, struct fixture_handle **)` | Caller owns the `out` slot. No input handle or transfer. | Status `0` writes one non-null newly allocated `fixture-c-v0/fixture_handle`; its release obligation passes to the wrapper immediately. Status `1` for a negative seed allocates nothing, leaves `out` untouched and preserves earlier handles. Unknown status, null success or partial allocation on `1` is host/ABI failure. The only release is `fixture_close`, exactly once. |
+| `fixture_read(struct fixture_handle *, int32_t *)` | A live `fixture-c-v0/fixture_handle` is borrowed without transfer until return; caller owns `out`. Null, stale, transferred or wrong-library handles reject before C entry. | Status `0` writes the seed to `out`; there is no recoverable error status in this fixture. Unknown status or unwritten `out` on `0` is host/ABI failure. The handle stays owned and later needs its one `fixture_close`; `out` is read only after `0`. |
+| `fixture_close(struct fixture_handle *)` | Consumes one live owned `fixture-c-v0/fixture_handle`; no other allocator or library may supply it. Null, repeated or wrong-kind close rejects before C entry. | `void` release is infallible under these preconditions and records exactly one release. A release fault is host/process failure with the obligation unresolved, never a successful return or second free. |
+| `zryna_c_v0_e_add(int32_t, int32_t)` | Generated fresh non-reentrant export with exact signed 32-bit carriers; no pointers, foreign library, allocation, resource transfer or host effects. | Direct full-width wrapping `int32_t` sum for every input. There is no controlled arithmetic-overflow trap or status domain for this pure body. Process faults remain process failures, not scalar results. |
+
+The `sum_bytes` status-`1` and `fixture_open` status-`1` guarantees are the
+fixture's proposed failure-atomicity claims; a real library requires its own
+documented proof. An in-process C contract violation does not make arbitrary
+malformed pointers safely releasable. This table fixes design inputs only;
+independent declaration, wrapper, linker and execution checks remain later
+acceptance work.
+
+The accepted [`ControlFlowV1`](../language/CONTROL_FLOW_MODULES_V1.md)
+addition rule is signed two's-complement modulo `2^32`, with no arithmetic
+trap; [`DataOwnershipV1`](../language/DATA_OWNERSHIP_V1.md) inherits it.
+The direct-result export is admissible for this pure total body. A genuinely
+fallible future export needs its own declared status and result channel with
+exact controlled-trap identity, no output on failure and no cross-language
+unwinding; the direct `add` signature does not silently supply that channel.
+
 ## Review cases and future evidence owner
 
 These are acceptance cases, not test results. “Before call” refers to
@@ -66,6 +103,7 @@ type rows indicated.
 | Case | Required observation | Evidence owner after acceptance |
 | --- | --- | --- |
 | `add(20, 22)` and reverse `zryna_c_v0_e_add(20, 22)` twice | Full signed 32-bit result `42` each time; generated header matches the export. | Import/export execution and C client |
+| `add(INT32_MAX, 1)` and reverse export with the same inputs | Both return `INT32_MIN` through defined wrapping behavior; C fixture and client never perform signed-overflow arithmetic. | Import/export execution and C client |
 | `sum_bytes(NULL, 0)` and `[1, 2, 3]` length `3` | Accepted when null-zero is declared; results `0` and `6`; no retained borrow. | Safe wrapper and C fixture |
 | `open(7)`/read/close | Read `7`; one same-library release trace. | Resource wrapper and C fixture |
 | `open(-1)` after an earlier accepted handle | Status `1` leaves the failed `out` untouched; earlier handle released once; uninitialized output unread. | Injected partial-failure fixture |
