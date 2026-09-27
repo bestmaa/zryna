@@ -23,6 +23,9 @@ const RETURN_NEWLINE_BOOTSTRAP: &[u8] =
 const RECOVERY_SOURCE: &str = include_str!("native_parser_v2/native-parser-v2-recovery.zry");
 const RECOVERY_BOOTSTRAP: &[u8] =
     include_bytes!("native_parser_v2/native-parser-v2-recovery.snapshot.json");
+const EXPRESSION_SOURCE: &str = include_str!("native_parser_v2/native-parser-v2-expressions.zry");
+const EXPRESSION_BOOTSTRAP: &[u8] =
+    include_bytes!("native_parser_v2/native-parser-v2-expressions.snapshot.json");
 
 fn source(path: &str, text: &str) -> SourceFileInput {
     SourceFileInput { path: path.to_owned(), text: text.to_owned() }
@@ -113,6 +116,25 @@ fn bounded_recovery_retains_the_same_following_function_as_bootstrap() {
 }
 
 #[test]
+fn unsupported_expression_diagnostics_match_frozen_bootstrap_and_retain_sibling() {
+    let sources = SourceMap::build(vec![source(
+        "crates/zryna-frontend/tests/native_parser_v2/native-parser-v2-expressions.zry",
+        EXPRESSION_SOURCE,
+    )])
+    .expect("bounded differential source");
+    let lexed = lex(&sources).expect("bounded lexical stream");
+    let bootstrap =
+        syntax_v2::decode_snapshot(EXPRESSION_BOOTSTRAP).expect("frozen provider snapshot");
+    assert_eq!(bootstrap.diagnostics.len(), 5);
+    assert_eq!(bootstrap.files[0].functions[0].name.text, "retained");
+    let strict = parse_v2_candidate(&sources, &lexed).expect_err("unsupported call");
+    assert_eq!(strict.diagnostic().code(), "ZRYNA-F2002");
+    let native = parse_v2_recovering_candidate(&sources, &lexed).expect("bounded recovery");
+    assert_eq!(native, bootstrap);
+    syntax_v2::verify_snapshot(native, &sources).expect("error snapshot remains verifiable");
+}
+
+#[test]
 fn recovery_never_promotes_nested_exports_to_top_level_functions() {
     for (open, close) in [("[", "]"), ("(", ")")] {
         let text = format!(
@@ -172,6 +194,53 @@ fn return_newline_diagnostic_pairs_respect_the_first_extra_limit() {
             let error = result.expect_err("first extra diagnostic is atomic");
             assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
         }
+    }
+}
+
+#[test]
+fn unsupported_call_diagnostics_respect_the_first_extra_limit() {
+    let rejected = "export function f(): i32 { return f(1); }\n";
+    for (count, within_limit) in [
+        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS, true),
+        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS + 1, false),
+    ] {
+        let text = rejected.repeat(count);
+        let sources =
+            SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
+        let lexed = lex(&sources).expect("bounded lexical stream");
+        let result = parse_v2_recovering_candidate(&sources, &lexed);
+        if within_limit {
+            let raw = result.expect("exact diagnostic limit");
+            assert_eq!(raw.diagnostics.len(), count);
+            assert!(raw.files[0].functions.is_empty());
+            syntax_v2::verify_snapshot(raw, &sources).expect("source-bound error snapshot");
+        } else {
+            let error = result.expect_err("first extra diagnostic is atomic");
+            assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
+        }
+    }
+}
+
+#[test]
+fn bounded_expression_grammar_mutations_never_bypass_snapshot_verification() {
+    let atoms = ["1", "x", "true", "\"x\"", "f(1)", "(2)", "f([1, 2])"];
+    let suffixes = ["", " + 2", " * 3", " + f(4)", " * 5 + 6", " === 7"];
+    let mut seed = 0x412_u32;
+    for case in 0..128 {
+        seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+        let atom = atoms[(seed as usize) % atoms.len()];
+        seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+        let suffix = suffixes[(seed as usize) % suffixes.len()];
+        let text = format!(
+            "// π case {case}\nexport function f(x: i32): i32 {{ return {atom}{suffix}; }}\n\
+             export function retained(): i32 {{ return 1; }}"
+        );
+        let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
+        let lexed = lex(&sources).expect("lexical stream");
+        let raw = parse_v2_recovering_candidate(&sources, &lexed)
+            .expect("bounded mutated grammar candidate");
+        assert_eq!(raw.files[0].functions.last().expect("retained sibling").name.text, "retained");
+        syntax_v2::verify_snapshot(raw, &sources).expect("mutated candidate remains verifiable");
     }
 }
 
@@ -260,7 +329,11 @@ fn unsupported_token_reports_its_authoritative_span() {
     let lexed = lex(&sources).expect("lexical stream");
     let error = parse_v2_candidate(&sources, &lexed).expect_err("multiplication is outside v2");
     let span = error.diagnostic().primary_span().expect("bound diagnostic location");
-    assert_eq!(&text[span.start() as usize..span.end() as usize], "*");
+    assert_eq!(&text[span.start() as usize..span.end() as usize], "1 * 2");
+    assert_eq!(
+        error.diagnostic().message(),
+        "expression uses unsupported syntax 'BinaryExpression'"
+    );
 }
 
 #[test]

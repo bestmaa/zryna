@@ -48,6 +48,7 @@ fn atom(
     let expression = match token.kind() {
         TokenKind::Identifier => {
             let name = parser.identifier()?;
+            reject_call(parser, token)?;
             syntax::RawExpressionSyntax {
                 span: name.span,
                 kind: syntax::RawExpressionKind::Reference { name },
@@ -74,6 +75,13 @@ fn atom(
                 span: raw(token),
                 kind: syntax::RawExpressionKind::I32Literal { spelling: spelling.to_owned() },
             }
+        }
+        TokenKind::StringLiteral => {
+            return Err(parser.error_between(
+                token,
+                token,
+                "expression uses unsupported syntax 'StringLiteral'",
+            ));
         }
         TokenKind::Minus => {
             parser.position += 1;
@@ -126,7 +134,91 @@ fn atom(
         }
         _ => return Err(parser.error_here("ZRYNA-F2002", "unsupported protocol-v2 expression")),
     };
+    reject_multiplication(parser, token)?;
     push(expressions, expression)
+}
+
+fn reject_call(
+    parser: &FileParser<'_>,
+    first: crate::native_lexer::Token,
+) -> Result<(), ParseError> {
+    if parser.current().is_some_and(|next| next.kind() == TokenKind::OpenParen) {
+        let close = call_end(parser).ok_or_else(|| {
+            parser.error_here("ZRYNA-F2002", "unsupported protocol-v2 expression")
+        })?;
+        return Err(parser.error_between(
+            first,
+            close,
+            "expression uses unsupported syntax 'CallExpression'",
+        ));
+    }
+    Ok(())
+}
+
+fn reject_multiplication(
+    parser: &FileParser<'_>,
+    first: crate::native_lexer::Token,
+) -> Result<(), ParseError> {
+    if parser.current().is_some_and(|next| next.kind() == TokenKind::Asterisk) {
+        let end = multiplication_end(parser).ok_or_else(|| {
+            parser.error_here("ZRYNA-F2002", "unsupported protocol-v2 expression")
+        })?;
+        return Err(parser.error_between(
+            first,
+            end,
+            "expression uses unsupported syntax 'BinaryExpression'",
+        ));
+    }
+    Ok(())
+}
+
+fn call_end(parser: &FileParser<'_>) -> Option<crate::native_lexer::Token> {
+    let mut closers = Vec::new();
+    for token in parser.tokens[parser.position..].iter().copied() {
+        match token.kind() {
+            TokenKind::OpenParen => closers.push(TokenKind::CloseParen),
+            TokenKind::OpenBracket => closers.push(TokenKind::CloseBracket),
+            TokenKind::OpenBrace => closers.push(TokenKind::CloseBrace),
+            TokenKind::CloseParen | TokenKind::CloseBracket | TokenKind::CloseBrace => {
+                if closers.pop() != Some(token.kind()) {
+                    return None;
+                }
+                if closers.is_empty() {
+                    return Some(token);
+                }
+            }
+            TokenKind::Semicolon if closers.is_empty() => return None,
+            _ => {}
+        }
+    }
+    None
+}
+
+fn multiplication_end(parser: &FileParser<'_>) -> Option<crate::native_lexer::Token> {
+    let mut tokens = parser.tokens[parser.position..].iter().copied();
+    let mut end = None;
+    while tokens.next()?.kind() == TokenKind::Asterisk {
+        let mut operand = tokens.next()?;
+        if operand.kind() == TokenKind::Minus {
+            operand = tokens.next()?;
+            if operand.kind() != TokenKind::DecimalInteger {
+                return None;
+            }
+        } else if !matches!(
+            operand.kind(),
+            TokenKind::Identifier
+                | TokenKind::DecimalInteger
+                | TokenKind::StringLiteral
+                | TokenKind::Keyword(Keyword::True | Keyword::False)
+        ) {
+            return None;
+        }
+        end = Some(operand);
+        if tokens.clone().next().is_none_or(|next| next.kind() != TokenKind::Asterisk) {
+            break;
+        }
+    }
+    end
 }
 
 fn push(

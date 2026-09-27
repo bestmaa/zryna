@@ -1,0 +1,7 @@
+// π prefix
+export function calling(): i32 { return compute(1 + 2); }
+export function product(): i32 { return 2 * 3 + 4; }
+export function text(): i32 { return "x"; }
+export function nested(): i32 { return 1 + compute([2, 3]); }
+export function chain(): i32 { return 2 * 3 * 4 + 5; }
+export function retained(): i32 { return 5; }
