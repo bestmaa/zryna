@@ -33,6 +33,8 @@ pub fn parse_v3_straight_line_candidate(
     let mut total_bindings = 0_usize;
     let mut total_functions = 0_usize;
     let mut total_parameters = 0_usize;
+    let mut total_statements = 0_usize;
+    let mut total_locals = 0_usize;
     let mut total_expressions = 0_usize;
     for file in lexed.files() {
         let source = sources
@@ -68,9 +70,26 @@ pub fn parse_v3_straight_line_candidate(
                     {
                         return Err(resource("function inventory exceeds protocol-v3 limit"));
                     }
-                    let function = parser.function(total_parameters, total_expressions)?;
+                    let function = parser.function(
+                        total_parameters,
+                        total_statements,
+                        total_locals,
+                        total_expressions,
+                    )?;
                     total_functions += 1;
                     total_parameters += function.parameters.len();
+                    total_statements += function.body.statements.len();
+                    total_locals += function
+                        .body
+                        .statements
+                        .iter()
+                        .filter(|statement| {
+                            matches!(
+                                &statement.kind,
+                                syntax::RawStatementKind::LocalDeclaration { .. }
+                            )
+                        })
+                        .count();
                     total_expressions += function.body.expressions.len();
                     functions.push(function);
                 }
@@ -118,7 +137,7 @@ impl FileParser<'_> {
         let token = self.function_take(TokenKind::Identifier)?;
         let name = self.spelling(token);
         if !matches!(name, "i32" | "bool") {
-            return Err(function_error_at(token, "unsupported function type annotation"));
+            return Err(function_error_at(token, "unsupported type annotation"));
         }
         Ok(syntax::RawTypeSyntax {
             span: raw(token),
@@ -126,9 +145,66 @@ impl FileParser<'_> {
         })
     }
 
+    fn local_declaration(
+        &mut self,
+        keyword: Token,
+        mutable: bool,
+        expressions: &mut Vec<syntax::RawExpressionSyntax>,
+        previous_expressions: usize,
+    ) -> Result<syntax::RawStatementSyntax, ParseError> {
+        self.position += 1;
+        let name = self.function_identifier()?;
+        let type_syntax = self.named_type()?;
+        let equals = self.function_take(TokenKind::Equals)?;
+        let initializer = self.addition(expressions, previous_expressions)?;
+        let semicolon = self.function_take(TokenKind::Semicolon)?;
+        Ok(syntax::RawStatementSyntax {
+            span: UntrustedSpan {
+                file: self.file,
+                start: keyword.span().start(),
+                end: semicolon.span().end(),
+            },
+            kind: syntax::RawStatementKind::LocalDeclaration {
+                keyword_span: raw(keyword),
+                mutable,
+                name,
+                type_syntax,
+                equals_span: raw(equals),
+                initializer,
+                semicolon_span: raw(semicolon),
+            },
+        })
+    }
+
+    fn final_return(
+        &mut self,
+        expressions: &mut Vec<syntax::RawExpressionSyntax>,
+        previous_expressions: usize,
+    ) -> Result<(syntax::RawStatementSyntax, Token), ParseError> {
+        let keyword = self.function_take(TokenKind::Keyword(Keyword::Return))?;
+        let value = self.addition(expressions, previous_expressions)?;
+        let semicolon = self.function_take(TokenKind::Semicolon)?;
+        let close = self.function_take(TokenKind::CloseBrace)?;
+        let statement = syntax::RawStatementSyntax {
+            span: UntrustedSpan {
+                file: self.file,
+                start: keyword.span().start(),
+                end: semicolon.span().end(),
+            },
+            kind: syntax::RawStatementKind::Return {
+                keyword_span: raw(keyword),
+                value,
+                semicolon_span: raw(semicolon),
+            },
+        };
+        Ok((statement, close))
+    }
+
     fn function(
         &mut self,
         previous_parameters: usize,
+        previous_statements: usize,
+        previous_locals: usize,
         previous_expressions: usize,
     ) -> Result<syntax::RawFunctionSyntax, ParseError> {
         let export = self.maybe(TokenKind::Keyword(Keyword::Export));
@@ -162,11 +238,40 @@ impl FileParser<'_> {
         self.function_take(TokenKind::CloseParen)?;
         let result_type = self.named_type()?;
         let open = self.function_take(TokenKind::OpenBrace)?;
-        let return_keyword = self.function_take(TokenKind::Keyword(Keyword::Return))?;
         let mut expressions = Vec::new();
-        let value = self.addition(&mut expressions, previous_expressions)?;
-        let semicolon = self.function_take(TokenKind::Semicolon)?;
-        let close = self.function_take(TokenKind::CloseBrace)?;
+        let mut statements = Vec::new();
+        let mut locals = 0_usize;
+        while let Some(token) = self.current() {
+            let mutable = match token.kind() {
+                TokenKind::Keyword(Keyword::Let) => true,
+                TokenKind::Keyword(Keyword::Const) => false,
+                _ => break,
+            };
+            if statements.len() >= syntax::MAX_STATEMENTS_PER_FUNCTION
+                || previous_statements + statements.len() >= syntax::MAX_STATEMENTS_PER_PROJECT
+            {
+                return Err(resource("statement inventory exceeds protocol-v3 limit"));
+            }
+            if locals >= syntax::MAX_LOCALS_PER_FUNCTION
+                || previous_locals + locals >= syntax::MAX_LOCALS_PER_PROJECT
+            {
+                return Err(resource("local inventory exceeds protocol-v3 limit"));
+            }
+            statements.push(self.local_declaration(
+                token,
+                mutable,
+                &mut expressions,
+                previous_expressions,
+            )?);
+            locals += 1;
+        }
+        if statements.len() >= syntax::MAX_STATEMENTS_PER_FUNCTION
+            || previous_statements + statements.len() >= syntax::MAX_STATEMENTS_PER_PROJECT
+        {
+            return Err(resource("statement inventory exceeds protocol-v3 limit"));
+        }
+        let (statement, close) = self.final_return(&mut expressions, previous_expressions)?;
+        statements.push(statement);
         let body_span =
             UntrustedSpan { file: self.file, start: open.span().start(), end: close.span().end() };
         Ok(syntax::RawFunctionSyntax {
@@ -186,21 +291,12 @@ impl FileParser<'_> {
                 blocks: vec![syntax::RawBlockSyntax {
                     span: body_span,
                     open_brace_span: raw(open),
-                    statements: vec![0],
+                    statements: (0..statements.len())
+                        .map(|index| u32::try_from(index).expect("bounded statement inventory"))
+                        .collect(),
                     close_brace_span: raw(close),
                 }],
-                statements: vec![syntax::RawStatementSyntax {
-                    span: UntrustedSpan {
-                        file: self.file,
-                        start: return_keyword.span().start(),
-                        end: semicolon.span().end(),
-                    },
-                    kind: syntax::RawStatementKind::Return {
-                        keyword_span: raw(return_keyword),
-                        value,
-                        semicolon_span: raw(semicolon),
-                    },
-                }],
+                statements,
                 expressions,
             },
         })
@@ -245,8 +341,7 @@ impl FileParser<'_> {
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
     ) -> Result<u32, ParseError> {
-        let token =
-            self.current().ok_or_else(|| self.function_error_here("missing return value"))?;
+        let token = self.current().ok_or_else(|| self.function_error_here("missing expression"))?;
         let kind = match token.kind() {
             TokenKind::Identifier => {
                 syntax::RawExpressionKind::Reference { name: self.function_identifier()? }
@@ -268,7 +363,7 @@ impl FileParser<'_> {
                 self.position += 1;
                 syntax::RawExpressionKind::I32Literal { spelling }
             }
-            _ => return Err(self.function_error_here("unsupported return expression")),
+            _ => return Err(self.function_error_here("unsupported expression")),
         };
         push_expression(
             expressions,

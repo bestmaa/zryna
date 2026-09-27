@@ -1,0 +1,2 @@
+export function good(): i32 { return 1; }
+export function bad(): i32 { const x: i32 = 1, y: i32 = 2; return x; }
