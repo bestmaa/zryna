@@ -66,6 +66,7 @@ pub use javascript::{
     MAX_JAVASCRIPT_ARTIFACT_STEM_BYTES, PublishedJavaScriptArtifact, compile_javascript,
     publish_javascript,
 };
+pub use module_closure::entry::discover_native_straight_line_closure;
 pub use module_closure::{
     MAX_MODULE_DIRECTORY_ENTRIES, MAX_MODULE_DISCOVERY_ROUNDS, MAX_MODULE_DISCOVERY_WALL_TIME,
     MAX_MODULE_EDGE_MANIFEST_BYTES, MAX_MODULE_FILES, MAX_MODULE_IMPORT_DECLARATIONS,

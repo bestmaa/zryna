@@ -25,7 +25,7 @@ Use [GETTING_STARTED](GETTING_STARTED.md) for M1/M2, [M3_GETTING_STARTED](M3_GET
 
 - Start: [semantics README](../crates/zryna-semantics/README.md), [M2 control-flow semantics](M2_CONTROL_FLOW_SEMANTICS.md), [module closure](M2_MODULE_CLOSURE.md).
 - Entries: `crates/zryna-semantics/src/lib.rs::{SemanticInput::try_new,lower}` for M1; `src/control_flow_v1.rs::lower` for M2.
-- Filesystem/module authority: `crates/zryna-driver/src/module_closure.rs::discover_module_closure`; `discover_native_import_only_closure` is the bounded internal import-only entry in `src/module_closure/entry.rs`. Do not put resolution into the adapter or backend.
+- Filesystem/module authority: `crates/zryna-driver/src/module_closure.rs::discover_module_closure`; `src/module_closure/entry.rs` has separate internal native entries for import-only and import-prefix/straight-line-function closure. Do not put resolution into the adapter or backend.
 - Focus: `cargo test --locked -p zryna-semantics`; closure tests in driver `module_closure_tests.rs`; `pnpm m2:quick` for cross-phase M2 checks.
 - Source legality and backend profile acceptance are separate. Finish with the full gates below.
 
