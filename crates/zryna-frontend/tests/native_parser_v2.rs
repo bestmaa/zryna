@@ -26,6 +26,9 @@ const RECOVERY_BOOTSTRAP: &[u8] =
 const EXPRESSION_SOURCE: &str = include_str!("native_parser_v2/native-parser-v2-expressions.zry");
 const EXPRESSION_BOOTSTRAP: &[u8] =
     include_bytes!("native_parser_v2/native-parser-v2-expressions.snapshot.json");
+const ANNOTATION_SOURCE: &str = include_str!("native_parser_v2/native-parser-v2-annotations.zry");
+const ANNOTATION_BOOTSTRAP: &[u8] =
+    include_bytes!("native_parser_v2/native-parser-v2-annotations.snapshot.json");
 
 fn source(path: &str, text: &str) -> SourceFileInput {
     SourceFileInput { path: path.to_owned(), text: text.to_owned() }
@@ -132,6 +135,49 @@ fn unsupported_expression_diagnostics_match_frozen_bootstrap_and_retain_sibling(
     let native = parse_v2_recovering_candidate(&sources, &lexed).expect("bounded recovery");
     assert_eq!(native, bootstrap);
     syntax_v2::verify_snapshot(native, &sources).expect("error snapshot remains verifiable");
+}
+
+#[test]
+fn unsupported_primitive_annotations_match_frozen_bootstrap_and_retain_sibling() {
+    let sources = SourceMap::build(vec![source(
+        "crates/zryna-frontend/tests/native_parser_v2/native-parser-v2-annotations.zry",
+        ANNOTATION_SOURCE,
+    )])
+    .expect("bounded differential source");
+    let lexed = lex(&sources).expect("bounded lexical stream");
+    let bootstrap =
+        syntax_v2::decode_snapshot(ANNOTATION_BOOTSTRAP).expect("frozen provider snapshot");
+    assert_eq!(bootstrap.diagnostics.len(), 9);
+    assert_eq!(bootstrap.files[0].functions[0].name.text, "retained");
+    let strict = parse_v2_candidate(&sources, &lexed).expect_err("unsupported annotation");
+    assert_eq!(strict.diagnostic().code(), "ZRYNA-F2002");
+    let native = parse_v2_recovering_candidate(&sources, &lexed).expect("bounded recovery");
+    assert_eq!(native, bootstrap);
+    syntax_v2::verify_snapshot(native, &sources).expect("error snapshot remains verifiable");
+}
+
+#[test]
+fn primitive_annotation_diagnostics_respect_the_first_extra_limit() {
+    let rejected = "export function f(x: string): i32 { return 1; }\n";
+    for (count, within_limit) in [
+        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS, true),
+        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS + 1, false),
+    ] {
+        let text = rejected.repeat(count);
+        let sources =
+            SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
+        let lexed = lex(&sources).expect("bounded lexical stream");
+        let result = parse_v2_recovering_candidate(&sources, &lexed);
+        if within_limit {
+            let raw = result.expect("exact diagnostic limit");
+            assert_eq!(raw.diagnostics.len(), count);
+            assert!(raw.files[0].functions.is_empty());
+            syntax_v2::verify_snapshot(raw, &sources).expect("source-bound error snapshot");
+        } else {
+            let error = result.expect_err("first extra diagnostic is atomic");
+            assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
+        }
+    }
 }
 
 #[test]

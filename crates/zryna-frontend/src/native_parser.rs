@@ -1,8 +1,8 @@
 //! Internal native syntax candidate construction from the bound lexical stream.
 //!
 //! This closed slice constructs protocol-v2 function/return/addition candidates and bounded
-//! diagnostics for selected unsupported expressions. It does not select a provider or grant syntax
-//! authority: callers must use the existing v2 verifier.
+//! diagnostics for selected unsupported expressions and annotations. It does not select a provider
+//! or grant syntax authority: callers must use the existing v2 verifier.
 
 use std::fmt;
 
@@ -104,6 +104,7 @@ fn parse_v2_internal(
             file: file.id().index(),
         };
         let mut functions = Vec::new();
+        let mut function_index = 0_usize;
         while parser.current().is_some() {
             if functions.len() >= syntax::MAX_FUNCTIONS_PER_FILE
                 || total_functions >= syntax::MAX_FUNCTIONS_PER_PROJECT
@@ -112,7 +113,15 @@ fn parse_v2_internal(
                     .error_here("ZRYNA-F2003", "function inventory exceeds protocol-v2 limit"));
             }
             let checkpoint = parser.position;
-            let function = match parser.function() {
+            let index = function_index;
+            if parser
+                .tokens
+                .get(checkpoint + 1)
+                .is_some_and(|token| token.kind() == TokenKind::Keyword(Keyword::Function))
+            {
+                function_index += 1;
+            }
+            let function = match parser.function(index) {
                 Ok(function) => function,
                 Err(error) if recovering && error.diagnostic().code() == "ZRYNA-F2002" => {
                     let needed = 1 + usize::from(error.following.is_some());
@@ -159,6 +168,12 @@ struct FileParser<'a> {
     tokens: Vec<Token>,
     position: usize,
     file: u32,
+}
+
+#[derive(Clone, Copy)]
+enum AnnotationContext {
+    Parameter(usize),
+    Result(usize),
 }
 
 impl FileParser<'_> {
@@ -225,7 +240,11 @@ impl FileParser<'_> {
         &self.text[token.span().start() as usize..token.span().end() as usize]
     }
 
-    fn annotation(&mut self, insertion: u32) -> Result<syntax::RawTypeSyntax, ParseError> {
+    fn annotation(
+        &mut self,
+        insertion: u32,
+        context: AnnotationContext,
+    ) -> Result<syntax::RawTypeSyntax, ParseError> {
         if self.maybe(TokenKind::Colon).is_none() {
             return Ok(syntax::RawTypeSyntax {
                 span: UntrustedSpan { file: self.file, start: insertion, end: insertion },
@@ -239,22 +258,33 @@ impl FileParser<'_> {
             TokenKind::Identifier => {}
             _ => return Err(self.error_here("ZRYNA-F2002", "unsupported type annotation")),
         }
-        if matches!(
-            self.spelling(token),
-            "unknown"
-                | "never"
-                | "number"
-                | "string"
-                | "boolean"
-                | "symbol"
-                | "bigint"
-                | "undefined"
-                | "object"
-                | "infer"
-                | "keyof"
-                | "readonly"
-                | "unique"
-        ) {
+        if let Some(kind) = match self.spelling(token) {
+            "unknown" => Some("UnknownKeyword"),
+            "never" => Some("NeverKeyword"),
+            "number" => Some("NumberKeyword"),
+            "string" => Some("StringKeyword"),
+            "boolean" => Some("BooleanKeyword"),
+            "symbol" => Some("SymbolKeyword"),
+            "bigint" => Some("BigIntKeyword"),
+            "undefined" => Some("UndefinedKeyword"),
+            "object" => Some("ObjectKeyword"),
+            _ => None,
+        } {
+            let context = match context {
+                AnnotationContext::Parameter(index) => format!("parameter {index} annotation"),
+                AnnotationContext::Result(index) => format!("function {index} result annotation"),
+            };
+            return Err(ParseError {
+                primary: Diagnostic::error_at(
+                    "ZRYNA-F2002",
+                    token.span(),
+                    format!("{context} uses unsupported syntax '{kind}'"),
+                    "use only the documented protocol-v2 bootstrap syntax",
+                ),
+                following: None,
+            });
+        }
+        if matches!(self.spelling(token), "infer" | "keyof" | "readonly" | "unique") {
             return Err(error_at(token, "ZRYNA-F2002", "unsupported type annotation"));
         }
         self.position += 1;
@@ -264,12 +294,12 @@ impl FileParser<'_> {
         })
     }
 
-    fn function(&mut self) -> Result<syntax::RawFunctionSyntax, ParseError> {
+    fn function(&mut self, index: usize) -> Result<syntax::RawFunctionSyntax, ParseError> {
         let export = self.take(TokenKind::Keyword(Keyword::Export))?;
         let keyword = self.take(TokenKind::Keyword(Keyword::Function))?;
         let name = self.identifier()?;
         let (parameters, parameter_end) = self.parameters()?;
-        let result_type = self.annotation(parameter_end)?;
+        let result_type = self.annotation(parameter_end, AnnotationContext::Result(index))?;
         let open = self.take(TokenKind::OpenBrace)?;
         let mut statements = Vec::new();
         let mut expressions = Vec::new();
@@ -355,7 +385,8 @@ impl FileParser<'_> {
                     ));
                 }
                 let name = self.identifier()?;
-                let type_syntax = self.annotation(name.span.end)?;
+                let type_syntax =
+                    self.annotation(name.span.end, AnnotationContext::Parameter(parameters.len()))?;
                 parameter_end = type_syntax.span.end;
                 parameters.push(syntax::RawParameterSyntax {
                     span: UntrustedSpan {
