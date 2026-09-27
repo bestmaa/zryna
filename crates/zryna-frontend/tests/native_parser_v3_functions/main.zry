@@ -1,0 +1,6 @@
+// π source prefix
+import { addPair as add } from "./math.zry";
+function helper(value: i32): i32 { return value; }
+export function main(left: i32, right: i32): i32 {
+  return left + right;
+}
