@@ -1,0 +1,10 @@
+export function text(x: string): i32 { return 1; }
+export function count(x: i32, y: number): i32 { return 2; }
+export function flag(): boolean { return true; }
+export function opaque(x: unknown): i32 { return 3; }
+export function bottom(x: never): i32 { return 3; }
+export function sym(x: symbol): i32 { return 3; }
+export function big(x: bigint): i32 { return 3; }
+export function absent(x: undefined): i32 { return 3; }
+export function obj(x: object): i32 { return 3; }
+export function retained(x: String): i32 { return 4; }

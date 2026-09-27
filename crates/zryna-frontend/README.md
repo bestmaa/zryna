@@ -64,9 +64,13 @@ partial candidate on lexical or resource failure. Its DTO still requires the v2 
 retained error blocks semantic input. The frozen parenthesized-return and return-newline cases
 match bootstrap diagnostic spans, wording, guidance, and multiplicity. Rejected direct calls,
 simple multiplication chains, and string literals now have the same exact subtree spans and
-diagnostic text as the bootstrap provider. A balanced call is scanned iteratively over the
-lexer's bounded token stream; recovery still resumes only at a genuine top-level export. Other
-unsupported expressions and declarations still need independent differential recovery evidence.
+diagnostic text as the bootstrap provider. Unsupported primitive parameter and result annotations
+now preserve the pinned bootstrap keyword span, function or parameter index, diagnostic text, and
+guidance for one unsupported primitive annotation per rejected function. A distinct named type,
+such as `String`, remains a candidate for semantic checking. A balanced call is scanned iteratively
+over the lexer's bounded token stream; recovery still resumes only at a genuine top-level export. Other
+unsupported annotation forms, multiple errors in one function, expressions, and declarations still
+need independent differential recovery evidence.
 
 | Checked M1 source set | Native candidate evidence | Remaining gap |
 | --- | --- | --- |
@@ -75,6 +79,7 @@ unsupported expressions and declarations still need independent differential rec
 | Newline directly after `return` followed by `1;` | Both frozen bootstrap F2002 diagnostics and verified error snapshot | Other expression-statement forms remain unproven. |
 | Unsupported parenthesized return before a valid function | Exact frozen bootstrap diagnostic and retained function; verified error snapshot | Parenthesized syntax remains unsupported. |
 | Unsupported direct calls, simple multiplication, and string literals with a later valid function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Other unsupported expressions retain generic rejection. |
+| Unsupported primitive annotations with a later named-type function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Multiple errors in one function and other unsupported type forms remain unproven. |
 | First-extra functions, parameters, expression depth, and recovery diagnostics | Bounded focused tests | Full resource and fuzz corpus remains pending. |
 
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
