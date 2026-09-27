@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zryna bounded scalar playground</title>
+<h1>Zryna bounded scalar playground</h1>
+<p>This page runs the fixed <code>examples/universal/add.zry</code> browser component.
+  Edit the scalar arguments below. Source editing and browser compilation are unavailable.</p>
+<form id="run-form">
+  <p><label for="preset">Fixed corpus example</label>
+    <select id="preset"><option value="">Custom arguments</option></select></p>
+  <p><label for="first">First signed i32</label>
+    <input id="first" type="text" inputmode="numeric" maxlength="11" required></p>
+  <p><label for="second">Second signed i32</label>
+    <input id="second" type="text" inputmode="numeric" maxlength="11" required></p>
+  <button id="run" type="submit">Run</button>
+  <button id="cancel" type="button" disabled>Cancel</button>
+</form>
+<pre id="output" role="status" aria-live="polite"></pre>
+<p>Each run is limited to one worker and five seconds. The component has an empty import world.
+  The SHA-256 shown after a run identifies the audited component bytes.</p>
+<script type="module" src="./app.mjs"></script>
+</html>
