@@ -4,7 +4,7 @@ use serde_json::Value;
 use zryna_frontend::{ProviderExpectationV3, WorkerFrontendV3, WorkerLimitsV3, WorkerSpecV3};
 use zryna_source::{SourceFileInput, SourceMap};
 
-use super::{FormattingDocument, layout};
+use super::{FormattingDocument, FormattingError, layout};
 
 fn frontend() -> WorkerFrontendV3 {
     let output = Command::new("node").args(["-p", "process.execPath"]).output().expect("node path");
@@ -74,10 +74,10 @@ fn m2_formatting_is_canonical_and_preserves_verified_meaning() {
     let original_ir =
         zryna_semantics::control_flow_v1::lower(semantic_input).expect("M2 semantics");
     let document = FormattingDocument::prepare_control_flow(&syntax, &original).expect("plan");
-    assert_eq!(document.complete, expected);
+    assert_eq!(document.complete.as_deref(), Ok(expected));
     assert_eq!(layout::format_control_flow(expected).as_deref(), Some(expected));
 
-    let formatted = sources(&document.complete);
+    let formatted = sources(document.complete.as_deref().expect("formatted source"));
     let reparsed = frontend.analyze_verified_v3(&formatted).expect("reparsed M2 syntax");
     let entry = formatted.verify_file_id(0).expect("entry");
     let semantic_input =
@@ -96,8 +96,9 @@ fn m2_formatting_is_canonical_and_preserves_verified_meaning() {
     assert_eq!(
         FormattingDocument::prepare_control_flow(&reparsed, &formatted)
             .expect("second plan")
-            .complete,
-        expected
+            .complete
+            .as_deref(),
+        Ok(expected)
     );
 }
 
@@ -171,7 +172,7 @@ fn m2_operator_boundaries_survive_formatting() {
         let original_ir =
             zryna_semantics::control_flow_v1::lower(original_input).expect("semantics");
         let document = FormattingDocument::prepare_control_flow(&syntax, &original).expect("plan");
-        assert_eq!(document.complete, expected);
+        assert_eq!(document.complete.as_deref(), Ok(expected));
         let formatted = sources(expected);
         let reparsed = frontend.analyze_verified_v3(&formatted).expect("reparsed operators");
         let formatted_input = zryna_semantics::control_flow_v1::SemanticInput::try_new(
@@ -193,5 +194,46 @@ fn m2_operator_boundaries_survive_formatting() {
         erase_coordinates(&mut before);
         erase_coordinates(&mut after);
         assert_eq!(before, after, "verified operator topology and token identities");
+    }
+}
+
+#[test]
+fn m2_formatting_result_limit_is_exact_and_preserves_semantic_admission() {
+    let maximum = super::super::MAX_RESPONSE_BYTES / 8;
+    let function = "export function f(): i32 {\n  return 1;\n}\n";
+    let frontend = frontend();
+    for length in [maximum, maximum + 1] {
+        let text = format!("/*{}*/\n{function}", "x".repeat(length - function.len() - 5));
+        assert_eq!(text.len(), length);
+        let source = sources(&text);
+        let syntax = frontend.analyze_verified_v3(&source).expect("verified M2 syntax");
+        let entry = source.verify_file_id(0).expect("entry");
+        let semantic_input =
+            zryna_semantics::control_flow_v1::SemanticInput::try_new(&syntax, &source, entry)
+                .expect("semantic input");
+        zryna_semantics::control_flow_v1::lower(semantic_input).expect("accepted semantics");
+        let document = FormattingDocument::prepare_control_flow(&syntax, &source).expect("plan");
+        if length == maximum {
+            assert_eq!(document.complete.as_ref().map(String::len), Ok(maximum));
+        } else {
+            assert!(matches!(document.complete, Err(FormattingError::Limit)));
+        }
+        let mut session =
+            crate::diagnostic_sessions::DiagnosticSession::try_new().expect("session");
+        let revision = session
+            .admit_control_flow_analysis(
+                source,
+                &syntax,
+                &zryna_source::NormalizedSourcePath::new("src/main.zry").expect("path"),
+            )
+            .expect("admission");
+        let result = session.format_source(revision, "src/main.zry", None);
+        if length == maximum {
+            let edits = result.expect("exact cap");
+            assert_eq!(edits.len(), 1);
+            assert_eq!(edits[0].text.len(), maximum);
+        } else {
+            assert!(matches!(result, Err(FormattingError::Limit)));
+        }
     }
 }

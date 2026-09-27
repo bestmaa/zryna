@@ -155,3 +155,19 @@ fn format_error(id: &RequestId, error: FormattingError) -> Value {
     result["error"]["data"] = json!({"code":error.code()});
     result
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{FormattingError, format_error};
+
+    #[test]
+    fn formatter_limit_has_stable_protocol_code_and_no_edits() {
+        let request = crate::protocol::decode(
+            br#"{"jsonrpc":"2.0","id":7,"method":"textDocument/formatting"}"#,
+        )
+        .expect("request");
+        let response = format_error(&request.id.expect("id"), FormattingError::Limit);
+        assert_eq!(response["error"]["data"]["code"], "ZRYNA-D4004");
+        assert!(response.get("result").is_none());
+    }
+}

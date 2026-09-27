@@ -139,7 +139,7 @@ cache. JSON results remain capped at 1 MiB and 10,000 edits; definition and form
 
 | Stable code | Meaning |
 | --- | --- |
-| ZRYNA-D4001 | No admitted formatting state: invalid/unsupported syntax or semantics, unavailable diagnostics, unsupported whitespace or preparation limit. |
+| ZRYNA-D4001 | No admitted formatting state: invalid/unsupported syntax or semantics, unavailable diagnostics, or unsupported whitespace. |
 | ZRYNA-D4002 | Requested revision is no longer active (LSP ContentModified). |
 | ZRYNA-D4003 | Invalid coordinate, reversed selection or partial function. |
 | ZRYNA-D4004 | Request/result limit exceeded. |
@@ -165,8 +165,9 @@ edit or no edit when already canonical. Range formatting accepts complete functi
 each edit stays inside its selected function and preserves every byte outside. Partial function
 selections reject with `ZRYNA-D4003`; empty or trivia-only selections return no edits. Invalid,
 unsupported, or semantically rejected input returns `ZRYNA-D4001` with no edits. Stale revisions
-return `ZRYNA-D4002`, and result limits return `ZRYNA-D4004`. The formatted result cap is 131,072
-UTF-8 bytes. Cancellation and source replacement cannot publish old edits.
+return `ZRYNA-D4002`. Semantically accepted input whose canonical document exceeds 131,072
+UTF-8 bytes returns `ZRYNA-D4004` with no edits; the exact cap is accepted. Cancellation and
+source replacement cannot publish old edits.
 
 ## Local editor installation and compatibility
 
