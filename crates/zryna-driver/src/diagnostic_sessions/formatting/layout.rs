@@ -7,6 +7,15 @@ pub(super) fn format_control_flow(source: &str) -> Option<String> {
     control_flow::format(source)
 }
 
+pub(super) fn format_control_flow_bounded(
+    source: &str,
+    maximum: usize,
+) -> Result<String, LayoutError> {
+    control_flow::format_bounded(source, maximum)
+}
+
+pub(super) use control_flow::LayoutError;
+
 pub(super) fn format(source: &str) -> Option<String> {
     let tokens = tokens(source)?;
     let mut output = String::new();

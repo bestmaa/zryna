@@ -188,7 +188,7 @@ fn formatting_range_preserves_outside_bytes_and_rejects_partial_functions() {
 }
 
 #[test]
-fn formatting_preparation_limit_is_inclusive_and_foreign_sessions_reject() {
+fn formatting_result_limit_is_inclusive_and_foreign_sessions_reject() {
     let frontend = frontend();
     let function = "export function f(): i32 {\n  return 1;\n}\n";
     for length in [131_072, 131_073] {
@@ -201,7 +201,7 @@ fn formatting_preparation_limit_is_inclusive_and_foreign_sessions_reject() {
         if length == 131_072 {
             assert!(formatted.expect("exact limit").is_empty());
         } else {
-            assert_eq!(formatted, Err(FormattingError::Unavailable));
+            assert_eq!(formatted, Err(FormattingError::Limit));
         }
         let mut foreign = DiagnosticSession::try_new().expect("independent session");
         foreign.admit_unready(sources("src/main.zry", &text)).expect("foreign revision");

@@ -16,7 +16,17 @@ struct Token<'a> {
 }
 
 pub(super) fn format(source: &str) -> Option<String> {
-    let tokens = tokenize(source)?;
+    format_bounded(source, usize::MAX).ok()
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum LayoutError {
+    Invalid,
+    Limit,
+}
+
+pub(super) fn format_bounded(source: &str, maximum: usize) -> Result<String, LayoutError> {
+    let tokens = tokenize(source).ok_or(LayoutError::Invalid)?;
     let mut output = String::new();
     let mut depth = 0_u8;
     let mut previous: Option<Token<'_>> = None;
@@ -42,7 +52,7 @@ pub(super) fn format(source: &str) -> Option<String> {
                 )
             });
         if token.text == "}" {
-            depth = depth.checked_sub(1)?;
+            depth = depth.checked_sub(1).ok_or(LayoutError::Invalid)?;
             newline(&mut output);
         }
         if token.text == "else"
@@ -65,7 +75,7 @@ pub(super) fn format(source: &str) -> Option<String> {
         output.push_str(token.text);
         match token.text {
             "{" => {
-                depth = depth.checked_add(1)?;
+                depth = depth.checked_add(1).ok_or(LayoutError::Invalid)?;
                 newline(&mut output);
             }
             "}" | ";" => newline(&mut output),
@@ -77,12 +87,18 @@ pub(super) fn format(source: &str) -> Option<String> {
         }
         previous_unary = unary;
         previous = Some(token);
+        if output.len() > maximum {
+            return Err(LayoutError::Limit);
+        }
     }
     if depth != 0 {
-        return None;
+        return Err(LayoutError::Invalid);
     }
     newline(&mut output);
-    Some(output)
+    if output.len() > maximum {
+        return Err(LayoutError::Limit);
+    }
+    Ok(output)
 }
 
 fn newline(output: &mut String) {

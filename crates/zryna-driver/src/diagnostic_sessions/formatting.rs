@@ -69,7 +69,7 @@ pub struct FormattingEdit {
 #[derive(Debug)]
 pub(super) struct FormattingDocument {
     path: String,
-    complete: String,
+    complete: Result<String, FormattingError>,
     functions: Vec<Range<u32>>,
     control_flow: bool,
 }
@@ -85,9 +85,11 @@ impl FormattingDocument {
         let [file] = syntax.files() else { return None };
         let source = sources.source(file.id())?;
         let complete = layout::format(source.text())?;
-        if complete.len() > super::MAX_RESPONSE_BYTES / 8 {
-            return None;
-        }
+        let complete = if complete.len() > super::MAX_RESPONSE_BYTES / 8 {
+            Err(FormattingError::Limit)
+        } else {
+            Ok(complete)
+        };
         Some(Self {
             path: file.path().as_str().to_owned(),
             complete,
@@ -108,10 +110,13 @@ impl FormattingDocument {
             return None;
         }
         let source = sources.source(file.id())?;
-        let complete = layout::format_control_flow(source.text())?;
-        if complete.len() > super::MAX_RESPONSE_BYTES / 8 {
-            return None;
-        }
+        let complete =
+            match layout::format_control_flow_bounded(source.text(), super::MAX_RESPONSE_BYTES / 8)
+            {
+                Ok(complete) => Ok(complete),
+                Err(layout::LayoutError::Limit) => Err(FormattingError::Limit),
+                Err(layout::LayoutError::Invalid) => return None,
+            };
         Some(Self {
             path: file.path().as_str().to_owned(),
             complete,
@@ -121,7 +126,7 @@ impl FormattingDocument {
     }
 
     pub(super) fn cache_bytes(&self) -> usize {
-        self.path.len() + self.complete.len() + self.functions.len() * 8
+        self.path.len() + self.complete.as_ref().map_or(0, String::len) + self.functions.len() * 8
     }
 }
 
@@ -150,14 +155,15 @@ impl DiagnosticSession {
             .as_ref()
             .filter(|f| f.path == path)
             .ok_or(FormattingError::Unavailable)?;
+        let complete = document.complete.as_ref().map_err(|error| *error)?;
         let id = record.sources.verify_file_id(0).map_err(|_| FormattingError::Unavailable)?;
         let source = record.sources.source(id).ok_or(FormattingError::Unavailable)?.text();
         let end = u32::try_from(source.len()).map_err(|_| FormattingError::Limit)?;
         let Some(range) = range else {
-            return Ok(if document.complete == source {
+            return Ok(if complete == source {
                 Vec::new()
             } else {
-                vec![FormattingEdit { start: 0, end, text: document.complete.clone() }]
+                vec![FormattingEdit { start: 0, end, text: complete.clone() }]
             });
         };
         record.sources.span(id, range.start, range.end).map_err(|_| FormattingError::Range)?;
