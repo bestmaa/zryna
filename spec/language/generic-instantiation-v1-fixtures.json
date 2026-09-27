@@ -29,6 +29,38 @@
     "identity<i32>",
     "non-generic function root"
   ],
+  "depthBoundary": [
+    {
+      "form": "Option^64<i32>",
+      "applicationDepth": 64,
+      "keyBytes": 577,
+      "sha256": "a5ca6e9453db43f4db6b54433eecf19a0c68672e53efb8762ca523bfe9a9b603",
+      "expected": "admit"
+    },
+    {
+      "form": "Option^65<i32>",
+      "applicationDepth": 65,
+      "keyBytes": 586,
+      "sha256": "a693c9a23e8fa9f1ef7e348bbd2933befd24688854c48b4b24cfba21960fd26c",
+      "expected": "ZRYNA-M7201"
+    }
+  ],
+  "mixedDepthBoundary": [
+    {
+      "form": "Vec<Option^63<i32>>",
+      "applicationDepth": 64,
+      "keyBytes": 573,
+      "sha256": "53971fb509b15b0ddcac4fab4639c16c116f86ed19e26c423291b4b83bf8bf6d",
+      "expected": "admit"
+    },
+    {
+      "form": "Vec<Option^64<i32>>",
+      "applicationDepth": 65,
+      "keyBytes": 582,
+      "sha256": "8655833fa2374b9df630fbfcdaa2e6853778d795043445e266c4226fe9cac746",
+      "expected": "ZRYNA-M7201"
+    }
+  ],
   "semanticCases": [
     {
       "name": "finite supplied nesting",

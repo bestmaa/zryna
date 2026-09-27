@@ -152,6 +152,20 @@ runtime limits still apply.
 | Maximum nested closed type application depth | 64 |
 | Maximum key bytes for one closed instance | 4,096 |
 
+The depth limit counts application nodes in a complete canonical type key:
+`bool`, `i32`, `String` and a non-generic nominal key have depth zero;
+`[T; N]`, `Vec<T>`, `Shared<T>`, `Weak<T>`, a closed generic nominal,
+`Option<T>` and `Result<T,E>` each have depth one plus the maximum depth
+of their type arguments (or array element). A generic function key has no
+type-application level of its own; each supplied type argument is checked
+independently. Nominal fields and variant payloads do not unfold inside a
+type key. Thus 64 nested `Option` applications around `i32` are admitted
+by this ceiling and 65 are the first-extra `ZRYNA-M7201` rejection, subject
+to the other independent ceilings. An outer `Vec` consumes one level:
+`Vec<Option^63<i32>>` reaches 64 and `Vec<Option^64<i32>>` reaches 65.
+The fixed instantiation fixtures use `Option^N<i32>` as shorthand for N
+nested applications, not source syntax, and pin these keys and outcomes.
+
 An instantiation dependency edge is one distinct ordered pair of keys
 `(from, to)`. `from` is a generic instance, a nongeneric function root (`41`),
 or a nongeneric nominal type key (`10`/`11`) whose body is being checked.

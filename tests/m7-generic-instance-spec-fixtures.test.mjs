@@ -46,3 +46,26 @@ test('function and type instance keys occupy disjoint ordered namespaces', () =>
     'admit', 'admit', 'ZRYNA-M7003',
   ]);
 });
+
+test('nested closed application depth admits the exact limit and rejects the first extra', () => {
+  let option = i32;
+  for (let depth = 1; depth <= 65; depth += 1) {
+    option = join(Buffer.from([0x14]), lane32(1), child(option));
+    if (depth === 63 || depth === 64) {
+      const expected = instanceFixture.mixedDepthBoundary[depth - 63];
+      const vec = join(Buffer.from([0x21]), child(option));
+      assert.equal(expected.form, `Vec<Option^${depth}<i32>>`);
+      assert.equal(expected.applicationDepth, depth + 1);
+      assert.equal(vec.length, expected.keyBytes);
+      assert.equal(digest(vec), expected.sha256);
+      assert.equal(expected.expected, depth === 63 ? 'admit' : 'ZRYNA-M7201');
+    }
+    if (depth < 64) continue;
+    const expected = instanceFixture.depthBoundary[depth - 64];
+    assert.equal(expected.form, `Option^${depth}<i32>`);
+    assert.equal(expected.applicationDepth, depth);
+    assert.equal(option.length, expected.keyBytes);
+    assert.equal(digest(option), expected.sha256);
+    assert.equal(expected.expected, depth === 64 ? 'admit' : 'ZRYNA-M7201');
+  }
+});
