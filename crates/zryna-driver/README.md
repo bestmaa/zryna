@@ -98,6 +98,13 @@ edges, source hashes, and a canonical graph digest. It is documented in
 `--profile control-flow-v1` now composes that closure with the straight-line/control-flow semantic
 boundary and all selected sealed backends. Omitting `--profile` does not enter this path.
 
+The separate `discover_native_import_only_closure` library entry reuses that exact retained source
+session, v3 verifier, fixed-point graph checks, and final-map sealing. Its native frontend accepts
+only functionless modules made of named imports and trivia; unsupported tokens reject the complete
+candidate before an import becomes a driver request. Native lexical, parser, and verifier failures
+retain their diagnostics as driver rejections. This library checkpoint does not select a public
+frontend, lower functions, compile packages, or dispatch a target.
+
 M2 and M3 discovery validate each provider request against the source session's exact captured
 paths and bytes. Workspace sessions revalidate the current batch's files and ancestor bindings;
 project sessions use the resolver-owned root inventory. Complete source validation remains before

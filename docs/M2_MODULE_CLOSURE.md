@@ -10,6 +10,13 @@ protocol-v3 provider receives only normalized portable paths and immutable sourc
 receives a host path, directory handle, workspace capability, or authority to choose a resolved
 dependency.
 
+An internal native import-only entry now supplies verified v3 snapshots to this same driver
+algorithm. It lexes each driver-captured source map, parses every nontrivia token as part of a
+named import or rejects the whole batch, then invokes the existing v3 verifier. The only accepted
+graphs have functionless modules containing named imports and trivia. The driver still owns all
+source capabilities and graph decisions. This checkpoint adds no public frontend selection,
+package import resolution, semantic execution, or target dispatch.
+
 This boundary does not authorize a backend by itself. Its final authenticated snapshot enters the
 [M2 straight-line semantic boundary](M2_STRAIGHT_LINE_SEMANTICS.md) and its
 [control-flow extension](M2_CONTROL_FLOW_SEMANTICS.md), then the internal

@@ -71,7 +71,7 @@ pub use module_closure::{
     MAX_MODULE_EDGE_MANIFEST_BYTES, MAX_MODULE_FILES, MAX_MODULE_IMPORT_DECLARATIONS,
     MAX_MODULE_IMPORT_EDGES, MAX_MODULE_PROVIDER_CALLS, MAX_MODULE_PROVIDER_SOURCE_BYTES,
     MAX_MODULE_SOURCE_BYTES, ModuleClosureError, ModuleEdge, ModuleRecord, VerifiedModuleClosure,
-    discover_module_closure,
+    discover_module_closure, discover_native_import_only_closure,
 };
 pub use native::{
     LinuxX8664LinkToolchain, MAX_NATIVE_EXECUTABLE_BYTES, MAX_NATIVE_LINK_TIMEOUT,
