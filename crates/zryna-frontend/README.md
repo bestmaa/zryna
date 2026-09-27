@@ -82,6 +82,18 @@ need independent differential recovery evidence.
 | Unsupported primitive annotations with a later named-type function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Multiple errors in one function and other unsupported type forms remain unproven. |
 | First-extra functions, parameters, expression depth, and recovery diagnostics | Bounded focused tests | Full resource and fuzz corpus remains pending. |
 
+`native_parser::v3::parse_v3_import_candidate` is a separate internal M2 candidate for
+functionless modules containing named imports only. It consumes every nontrivia native token or
+rejects the complete project, so a later function, declaration, malformed import, or trailing
+token cannot leave an omitted import in a returned snapshot. The admitted subset preserves source
+order, aliases, plain names, single- or double-quoted explicit relative `.zry` specifiers, and
+exact UTF-8 keyword, binding, token, and value spans. Import and binding inventories fail on the
+first extra item within the v3 limits. A frozen TypeScript 6 protocol-v3 import-only snapshot and
+the earlier complete v3 worker fixture provide differential evidence; the existing
+`zryna_syntax::v3::verify_snapshot` remains the only syntax authority. This candidate does not
+parse functions or other M2 declarations and is not registered as a frontend provider. It does
+not resolve modules, admit a public profile, or change v2, v3, or v4 protocol contracts.
+
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
 executable-syntax contract owned by `zryna-syntax`; it does not change v1 semantics in place. The
 TypeScript 6 adapter implements the protocol-v2 executable-syntax contract. Protocol v3 has its own

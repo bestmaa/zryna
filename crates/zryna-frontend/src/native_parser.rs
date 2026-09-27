@@ -14,6 +14,7 @@ use crate::native_lexer::{Keyword, LexedProject, Token, TokenKind};
 
 mod expression;
 mod recovery;
+pub mod v3;
 
 /// A deterministic rejection of source outside this native candidate slice.
 #[derive(Clone, Debug)]
