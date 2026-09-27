@@ -172,7 +172,20 @@ violations, never a recoverable absence. Signals, host exceptions, raw WebAssemb
 process exit statuses are host/process failures, not substitutes for typed language outcomes.
 
 Missing/forbidden capabilities reject at #357's owning validation phase before any operation.
-Revocation during execution returns the accepted permission-denied outcome without the effect.
+For a future `CommandH1V1` H1 lookup on pinned `wasi:cli/environment@0.2.12`, revocation
+before the mediated read traps at the host boundary without the effect. Its E3
+`permission-denied` outcome belongs to the host execution record: there is no source
+`Found`/`Missing` result and no `wasi:cli/run@0.2.12` return, including WIT `err`. The
+driver records the denied interface/operation and invalidates the instance. This is the
+H1-only transport of #357's revocation rule through an interface with no typed denial
+result; it does not admit a general source Result, change the pinned WIT identity, or set
+an outcome rule for H2-H5 or other hosts. Other E3 operations still need their own
+concrete F2 transport decision before implementation. The H1 one-key, key-byte, and
+value-byte ceilings are validated against the captured input before instantiation;
+repeated reads of that same value do not deplete a runtime H1 quota. The host's sealed
+denial state, set before its deliberate trap, identifies the exact denial reason; an
+unrelated raw WebAssembly trap remains a host/process failure, not an E3 host denial.
+
 The future implementation must allocate stable diagnostic codes at the compiler authority for
 new rejection categories; these prose labels allocate no codes and do not repurpose #167's codes.
 

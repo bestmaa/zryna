@@ -129,6 +129,15 @@ execution policy under #361/#362. A package used in both graphs is checked indep
    Recheck at each invocation/instantiation and mediate each host operation. Revocation or an
    exhausted quota fails at the host boundary without performing the denied effect.
 
+For a future `CommandH1V1` execution using the pinned
+`wasi:cli/environment@0.2.12` import, that last host-boundary rule has one concrete
+transport: a revoked environment grant traps before reading or copying the value. The
+`wasi:cli/run@0.2.12` call then has no return value; the host records a distinct
+permission-denied execution outcome with the denied interface and operation. It must
+not fabricate a source `Missing` or a returned WIT `err`. This specifies the #357 side
+of the H1-only #358 reconciliation; it grants no new operation, changes no other
+target's error transport, and does not activate the proposed command profile.
+
 Language/source verification must independently reject undeclared host operations before sealing
 IR; declared metadata alone is insufficient. For `all`, all three selections must pass before
 any backend dispatch or transaction commit. Existing per-profile transactions stay authoritative;
