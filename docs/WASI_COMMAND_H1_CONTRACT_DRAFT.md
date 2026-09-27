@@ -154,6 +154,10 @@ ceilings. The #167 command ceiling of 128 environment entries and 65,536 total k
 bytes remains an independent upper bound; neither may be raised. Test exact 1/first 2 first-
 slice entries and exact/first-extra byte limits. Existing #167 registry tests retain their
 128/129 and 65,536/65,537 checks.
+
+The driver validates these static H1 limits against the captured file before creating a
+store. Repeated reads of the admitted value do not consume a per-call environment quota.
+
 Without a grant file, the driver constructs one canonical in-memory empty request for the
 same exact command world and host policy: no approved host operation, no requested or effective
 capability/interface/key, no value, and zero host quotas. The fixed fuel/deadline/memory
@@ -227,7 +231,10 @@ operation after it copies a host result; it never uses the M3 language arena as 
 Canonical ABI allocator. A checked ledger owns each nonempty transfer allocation. New
 allocations start in the transfer interval; resize allocates a new aligned block, copies
 `min(oldByteLength, newByteLength)` bytes, and releases the old ledger entry only after
-success. `oldPointer=0,oldByteLength=0` creates a new allocation when the new size is
+success. Before copying or changing the ledger, validate the requested alignment and
+checked new range. For a nonzero old pointer, require an exact live ledger entry and
+`oldByteLength` equal to its recorded allocation size.
+`oldPointer=0,oldByteLength=0` creates a new allocation when the new size is
 positive and returns zero when it is zero. `newByteLength=0` releases an existing
 allocation and returns zero. Any other nonzero old pointer must name
 an exact live ledger entry; `oldPointer=0` with nonzero old length rejects. The allocator
@@ -260,9 +267,10 @@ call. This candidate needs an independent implementation and audit before F1 is 
 Acceptance fixtures must distinguish bytes 15,728,639/15,728,640 at the private boundary
 and 16,777,215/16,777,216 at the transfer boundary; test empty, present-empty, multibyte,
 and 1,024/1,025-byte values; first-extra list item and key byte; repeated calls with
-complete ledger drain; resize-copy-release and forged/double release; canonical allocation
-failure and subsequent fresh-instance recovery; and absence of a borrowed guest-memory
-view after the callback. These are future tests, not executed evidence.
+complete ledger drain; resize-copy-release and forged/double release; wrong old allocation
+length before copy; canonical allocation failure and subsequent fresh-instance recovery;
+and absence of a borrowed guest-memory view after the callback. These are future tests,
+not executed evidence.
 
 ## Manifest and one-run authority
 
@@ -297,7 +305,8 @@ The prepared run must retain and revalidate **all** of these opaque authorities 
 
 Before engine/store creation, revalidate the source/program/profile, composition, full WIT
 closure/component, and grant intersection. At each environment callback, check the retained
-policy identity, literal key, quota and revocation state before returning the captured value.
+policy identity, literal key, validated static limits and revocation state before returning
+the captured value.
 After execution, derive the manifest only from those retained observations and the actual
 run/denial/teardown record. A create-only bundle commits the complete manifest or nothing.
 
@@ -310,8 +319,16 @@ The proposed `zryna.wasi-command-manifest.v1` execution record contains:
 | WIT and component | Command world/WASI version; all eight resolved package IDs and canonical import/export sets; complete 34-file closure identity; retained core and audited component identities |
 | Grants and limits | Canonical requested and effective capability/interface/key sets (both empty for omission), #167 ceiling and narrower one-key quota, fuel, deadline and memory limits |
 | Host input summary | `none`, `missing`, or `present`, with bounded UTF-8 byte count; no value, input path or unkeyed value hash |
-| Execution | `run-returned` with `runReturn: ok` or `err`, `host-denial` with `runReturn: absent`, or `runtime-trap` with `runReturn: absent` |
-| Denial and teardown | First denied interface/operation, `permission-denied` or `quota-exceeded` reason and host policy revision only for host denial; otherwise no denial; `confirmed` or `unconfirmed` teardown, never success inferred from a failed cleanup |
+| Execution | `run-returned` with `runReturn: ok` or `err`; `host-denial` with `runReturn: absent`; or `runtime-trap` with `runReturn: absent`, `trapCategory`, and conditional `trapIdentity` |
+| Denial and teardown | First denied interface/operation, `permission-denied` reason and host policy revision only for authentic host denial; otherwise no denial fields; `confirmed` or `unconfirmed` teardown, never success inferred from a failed cleanup |
+
+The sealed host denial state, set before its deliberate trap, is the only source of a
+`host-denial` record. On `runtime-trap`, `trapCategory` is exactly `controlled-language`,
+`interface-violation`, or `host-process-failure`. `trapIdentity` is the exact verified
+`zryna.trap.*` identity for a controlled language trap, or a fixed audited failure
+identity for an interface violation. An unrelated raw Wasm trap or host/process exception
+is `host-process-failure`, with `trapIdentity` absent and no arbitrary exception text.
+All three categories have no denial fields and no WIT run return.
 
 For a compact complete WIT closure identity, the candidate `witClosureDigest` is SHA-256 over
 all 34 audited files sorted by logical path. For each file, hash an unsigned 64-bit
@@ -342,7 +359,8 @@ authenticated proof of the value that was supplied.
 | malformed | Duplicate/conflicting key, unknown field/capability/world, bad UTF-8, wrong type, extra record | Reject in deterministic input phase |
 | bounds | One/two entries; 64/65-byte key; 1,024/1,025-byte value; 4,096/4,097-byte file; #167 128/129 entries | Exact accepted where applicable, first extra rejected at owning layer |
 | revoked | Revoke after sealing but before host call | No value read; trap; absent `run` return and distinct host-denial record; no false `Missing` or typed WIT `err` |
-| quota exhausted | Use an already-exhausted enforced H1 quota before a mediated read | No value read; trap; absent `run` return and `quota-exceeded` host-denial record |
+| static limit | 1,025-byte captured value or second key before instantiation | Reject the input before a store; repeated reads of one admitted value do not deplete a runtime quota |
+| fatal categories | Controlled E1 language trap, forged canonical pointer, unrelated raw Wasm trap or host exception | Absent `run` return; correct category and conditional identity; no denial fields without a host denial |
 | manifest | Empty grant, granted-missing and present-empty value; changed requirement, world, limit, result or denial | Distinct grant/input summaries and complete retained identities; manifest never exposes or claims proof of value bytes |
 | denied probes | Filesystem, clock, randomness, sockets/network under empty or H1 grant; process import attempt | Deterministic host denial for admitted-world imports; process import rejected by world/topology audit, with no ambient effect |
 | malformed component | Changed import/function type, canonical option, realloc, memory, run result, or excess bytes | Reject before instantiation; next valid request recovers |
