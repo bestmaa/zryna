@@ -94,6 +94,19 @@ the earlier complete v3 worker fixture provide differential evidence; the existi
 parse functions or other M2 declarations and is not registered as a frontend provider. It does
 not resolve modules, admit a public profile, or change v2, v3, or v4 protocol contracts.
 
+`native_parser::v3::parse_v3_straight_line_candidate` separately admits a named-import prefix
+followed by source-ordered exported or unexported functions. Its first function-body slice requires
+explicit `i32` or `bool` parameter and result annotations and one semicolon-terminated return of
+an identifier, Boolean, canonical nonnegative integer, or left-associative addition of those
+atoms. It emits one canonical root block and source-ordered statement and postorder expression
+arenas. A frozen two-file TypeScript 6 v3 snapshot and the import-plus-helper prefix of the
+existing complete v3 fixture are exact DTO oracles; the v3 verifier remains authoritative. Every
+nontrivia token must be consumed, including after a valid function, or the complete candidate
+fails. Function, parameter, and expression-depth boundaries have exact and first-extra tests.
+The original import-only entry retains its closed behavior for source closure. Local declarations,
+assignment, calls, other operators, nested blocks, `if`, `while`, recovery parity, provider
+selection, and module resolution remain outside this parser slice.
+
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
 executable-syntax contract owned by `zryna-syntax`; it does not change v1 semantics in place. The
 TypeScript 6 adapter implements the protocol-v2 executable-syntax contract. Protocol v3 has its own

@@ -1,7 +1,7 @@
-//! Internal import-only protocol-v3 candidate construction from bound native tokens.
+//! Internal protocol-v3 candidate construction from bound native tokens.
 //!
-//! Every nontrivia token must belong to an admitted named import. The raw candidate remains
-//! untrusted until the existing protocol-v3 verifier checks it; this module is not a provider.
+//! Each entry consumes or rejects every nontrivia token in its admitted subset. Raw candidates
+//! remain untrusted until the existing protocol-v3 verifier checks them; this is not a provider.
 
 use std::fmt;
 
@@ -11,7 +11,11 @@ use zryna_syntax::v3 as syntax;
 
 use crate::native_lexer::{Keyword, LexedProject, Token, TokenKind};
 
-/// One deterministic import-only candidate rejection.
+mod straight_line;
+
+pub use straight_line::parse_v3_straight_line_candidate;
+
+/// One deterministic protocol-v3 candidate rejection.
 #[derive(Clone, Debug)]
 pub struct ParseError {
     diagnostic: Diagnostic,
