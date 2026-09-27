@@ -185,7 +185,8 @@ signed-overflow arithmetic.
 | --- | --- |
 | `add(20, 22)`, `sum_bytes(NULL, 0)`, `sum_bytes([1, 2, 3], 3)`, and `open(7)`/read/close | Results `42`, `0`, `6`, and `7`; one handle release trace; no retained borrow after return. |
 | `open(-1)` and wrapper sequence `open(7)` then `open(-1)` | Declared recoverable status `1`, no output on the failed call; the wrapper releases its first accepted handle exactly once and reads no uninitialized output. |
-| `(NULL, n>0)`, safe-wrapper over-limit length, invalid UTF-8 in UTF-8 mode, noncanonical Boolean shim | Rejected before unsafe call or result exposure with the declared boundary outcome. |
+| `(NULL, n>0)`, safe-wrapper over-limit length, noncanonical Boolean shim | Rejected before unsafe call or result exposure with the declared boundary outcome. |
+| Invalid UTF-8 in a separately declared UTF-8 wrapper, not the bytes-mode `sum_bytes` fixture | Complete sequence rejected before unsafe call or result exposure. |
 | Direct raw `sum_bytes` with `n > 4096` and a valid buffer | Fixture status `1`, `out` untouched; this does not bypass the safe wrapper's pre-call maximum check. |
 | Unknown status, written length above capacity, null non-null result, wrong-library handle or release, repeated close | Independent verifier/wrapper rejects; no second free; ABI/host failure where foreign code has already violated the contract. |
 | Missing/renamed symbol, wrong ELF architecture or header width/alignment, undeclared library, wrong target or `all` selection | Rejected at declaration, artifact audit, link-input validation or profile selection as appropriate; no partial published artifact. |

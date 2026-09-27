@@ -107,7 +107,8 @@ type rows indicated.
 | `sum_bytes(NULL, 0)` and `[1, 2, 3]` length `3` | Accepted when null-zero is declared; results `0` and `6`; no retained borrow. | Safe wrapper and C fixture |
 | `open(7)`/read/close | Read `7`; one same-library release trace. | Resource wrapper and C fixture |
 | `open(-1)` after an earlier accepted handle | Status `1` leaves the failed `out` untouched; earlier handle released once; uninitialized output unread. | Injected partial-failure fixture |
-| `(NULL, n>0)`, safe-wrapper length above maximum, invalid UTF-8 | Rejected before the unsafe call or result exposure, with the declared boundary outcome. | Safe wrapper |
+| `(NULL, n>0)`, safe-wrapper length above maximum | Rejected before the unsafe call or result exposure, with the declared boundary outcome. | `sum_bytes` safe wrapper |
+| Invalid UTF-8 in a separately declared UTF-8 wrapper | Complete byte sequence rejected before the unsafe call or result exposure; this is not a `sum_bytes` bytes-mode case. | Later UTF-8 wrapper |
 | Direct raw `sum_bytes` with `n > 4096` and valid input | C fixture returns status `1`, leaves `out` untouched and changes no input; this tests the C status contract, not the wrapper precheck. | Raw C fixture |
 | Boolean shim `0`, `1`, `2`, and `UINT32_MAX` | First two accepted; others rejected before body or result exposure. | Import and export shims |
 | Unknown status, written length above capacity, null non-null result | Host/ABI failure after foreign violation; no uninitialized read or guessed cleanup. | Independent hostile-result tests |
