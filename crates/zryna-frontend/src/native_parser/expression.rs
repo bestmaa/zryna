@@ -99,6 +99,31 @@ fn atom(
                 kind: syntax::RawExpressionKind::I32Literal { spelling: spelling.to_owned() },
             }
         }
+        TokenKind::OpenParen => {
+            let mut depth = 0_usize;
+            for next in parser.tokens[parser.position..].iter().copied() {
+                match next.kind() {
+                    TokenKind::OpenParen => depth += 1,
+                    TokenKind::CloseParen => {
+                        depth -= 1;
+                        if depth == 0 {
+                            return Err(parser.error_between(
+                                token,
+                                next,
+                                "expression uses unsupported syntax 'ParenthesizedExpression'",
+                            ));
+                        }
+                    }
+                    TokenKind::OpenBrace
+                    | TokenKind::CloseBrace
+                    | TokenKind::OpenBracket
+                    | TokenKind::CloseBracket
+                    | TokenKind::Semicolon => break,
+                    _ => {}
+                }
+            }
+            return Err(parser.error_here("ZRYNA-F2002", "unsupported protocol-v2 expression"));
+        }
         _ => return Err(parser.error_here("ZRYNA-F2002", "unsupported protocol-v2 expression")),
     };
     push(expressions, expression)

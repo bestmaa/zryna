@@ -59,17 +59,18 @@ it is not a completed native frontend. `tests/native_parser_v2.rs` compares the 
 M1 snapshot and checks verifier acceptance plus negative/resource cases.
 The separate `parse_v2_recovering_candidate` synchronizes at the next top-level `export` after a
 rejected declaration and balanced braces, brackets, and parentheses, retaining later valid
-functions and one bounded error per rejection. Mismatched delimiters stop synchronization. It
-never returns a partial candidate on lexical or resource failure. Its DTO still requires the v2
-verifier; any retained error blocks semantic input. Recovery diagnostic wording and multiplicity
-are not yet bootstrap-equivalent.
+functions and bounded errors. Mismatched delimiters stop synchronization. It never returns a
+partial candidate on lexical or resource failure. Its DTO still requires the v2 verifier; any
+retained error blocks semantic input. The frozen parenthesized-return and return-newline cases
+match bootstrap diagnostic spans, wording, guidance, and multiplicity; wider recovery parity
+remains pending.
 
 | Checked M1 source set | Native candidate evidence | Remaining gap |
 | --- | --- | --- |
 | `examples/universal/add.zry`, `tests/m1-fixtures/{bool-gated,invalid-any}.zry` | Exact frozen bootstrap DTO and v2 verifier acceptance | Semantic outcomes remain owned by the existing compiler. |
 | Missing annotations, trailing parameter comma, semicolon omission, and UTF-8 comment prefix | Exact frozen bootstrap DTO and v2 verifier acceptance | Broader TypeScript syntax is excluded. |
-| Newline directly after `return` | Same first F2002 code and source span; atomic rejection | Bootstrap also emits an expression-statement diagnostic. |
-| Unsupported parenthesized return before a valid function | Same retained valid function and F2002 category; verified error snapshot | Diagnostic span and wording still differ. |
+| Newline directly after `return` followed by `1;` | Both frozen bootstrap F2002 diagnostics and verified error snapshot | Other expression-statement forms remain unproven. |
+| Unsupported parenthesized return before a valid function | Exact frozen bootstrap diagnostic and retained function; verified error snapshot | Parenthesized syntax remains unsupported. |
 | First-extra functions, parameters, expression depth, and recovery diagnostics | Bounded focused tests | Full resource and fuzz corpus remains pending. |
 
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
