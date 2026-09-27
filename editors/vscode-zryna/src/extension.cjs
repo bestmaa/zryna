@@ -90,7 +90,7 @@ function updateGlobalStatus() {
   globalStatus.show();
 }
 
-async function connect(document) {
+async function connect(document, revision) {
   if (document.isClosed || !vscode.workspace.isTrusted || document.uri.scheme !== 'file' || document.languageId !== 'zryna') {
     throw new Error('Zryna requires a trusted local file workspace.');
   }
@@ -99,6 +99,12 @@ async function connect(document) {
   if (active?.uri === document.uri.toString() && active.profile === editorProfile && active.ready
     && !active.connection.closed) return active;
   await disconnect();
+  if (revision !== configurationRevision) throw new Error('The Zryna configuration changed before connection.');
+  if (document.isClosed || !vscode.workspace.isTrusted || document.uri.scheme !== 'file'
+    || document.languageId !== 'zryna'
+    || vscode.workspace.getWorkspaceFolder(document.uri)?.uri.toString() !== folder.uri.toString()) {
+    throw new Error('The document changed before the Zryna connection was ready.');
+  }
   const state = { document, uri: document.uri.toString(), profile: editorProfile };
   const version = document.version;
   const config = configuration();
@@ -125,7 +131,10 @@ async function connect(document) {
       || !cap.documentFormattingProvider || !cap.documentRangeFormattingProvider) {
       throw new Error('This extension requires a matching Zryna 0.4.0 server and editor profile.');
     }
-    if (active !== state || editorProfile !== state.profile || document.version !== version || document.isClosed) {
+    if (active !== state || revision !== configurationRevision || editorProfile !== state.profile
+      || document.version !== version || document.isClosed || !vscode.workspace.isTrusted
+      || document.uri.scheme !== 'file' || document.languageId !== 'zryna'
+      || vscode.workspace.getWorkspaceFolder(document.uri)?.uri.toString() !== folder.uri.toString()) {
       throw new Error('The document changed before the Zryna connection was ready.');
     }
     state.definitionProvider = cap.definitionProvider;
@@ -143,7 +152,8 @@ async function connect(document) {
 }
 
 function ensure(document) {
-  const next = starting.catch(() => {}).then(() => connect(document));
+  const revision = configurationRevision;
+  const next = starting.catch(() => {}).then(() => connect(document, revision));
   starting = next;
   return next;
 }

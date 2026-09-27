@@ -161,6 +161,32 @@ test('rapid settings changes suppress stale reconnects during an unfinished hand
   await f.deactivate();
 });
 
+test('deactivation cancels a settings reconnect queued behind an unfinished handshake', async () => {
+  const f = fixture({ deferInitialize: true });
+  f.vscode.window.activeTextEditor = { document: f.document };
+  const first = f.providers.format.provideDocumentFormattingEdits(f.document, {});
+  await new Promise(resolveImmediate => setImmediate(resolveImmediate));
+  f.events.configuration({ affectsConfiguration: () => true });
+  await new Promise(resolveImmediate => setImmediate(resolveImmediate));
+  await f.deactivate();
+  f.releaseInitialize();
+  await assert.rejects(first, /document changed/);
+  await new Promise(resolveImmediate => setImmediate(resolveImmediate));
+  assert.equal(f.launched.length, 1);
+  assert.equal(f.sent.length, 0);
+});
+
+test('revoked workspace trust prevents an unfinished handshake from receiving source', async () => {
+  const f = fixture({ deferInitialize: true });
+  const first = f.providers.format.provideDocumentFormattingEdits(f.document, {});
+  await new Promise(resolveImmediate => setImmediate(resolveImmediate));
+  f.vscode.workspace.isTrusted = false;
+  f.releaseInitialize();
+  await assert.rejects(first, /document changed/);
+  assert.equal(f.sent.length, 0);
+  await f.deactivate();
+});
+
 test('settings changes do not launch for ineligible documents or leak failed handshakes', async () => {
   for (const kind of ['untrusted', 'virtual', 'closed']) {
     const f = fixture({ trusted: kind !== 'untrusted' });
