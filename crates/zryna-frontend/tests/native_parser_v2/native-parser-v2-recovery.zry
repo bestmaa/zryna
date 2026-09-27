@@ -1,0 +1,2 @@
+export function rejected(): i32 { return (1); }
+export function retained(): i32 { return 2; }

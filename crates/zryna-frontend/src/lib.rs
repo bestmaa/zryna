@@ -12,6 +12,7 @@ use zryna_source::{
 };
 
 pub mod native_lexer;
+pub mod native_parser;
 mod worker;
 pub use worker::{
     FrontendCapabilitiesV3, FrontendCapabilitiesV4, MAX_HANDSHAKE_RESPONSE_BYTES,
@@ -23,7 +24,6 @@ pub use worker::{
     WorkerFrontendV4, WorkerLimits, WorkerLimitsV3, WorkerLimitsV4, WorkerSpec, WorkerSpecV3,
     WorkerSpecV4,
 };
-
 /// Provider-neutral executable syntax contract spoken by protocol-v2 providers.
 pub use zryna_syntax::v2 as syntax_v2;
 /// Provider-neutral M2 syntax contract spoken only by exact protocol-v3 providers.
