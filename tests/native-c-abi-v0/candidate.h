@@ -12,6 +12,9 @@ int32_t sum_bytes(const uint8_t *bytes, size_t length, int32_t *out);
 int32_t fixture_open(int32_t seed, struct fixture_handle **out);
 int32_t fixture_read(struct fixture_handle *handle, int32_t *out);
 void fixture_close(struct fixture_handle *handle);
+int32_t fixture_copy_bytes(const uint8_t *bytes, size_t length,
+                           uint8_t **out_bytes, size_t *out_length);
+void fixture_release_bytes(uint8_t *bytes);
 int32_t zryna_c_v0_e_add(int32_t left, int32_t right);
 
 #endif

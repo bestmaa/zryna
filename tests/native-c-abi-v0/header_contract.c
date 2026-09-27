@@ -48,6 +48,9 @@ CHECK_FUNCTION(sum_bytes, int32_t (*)(const uint8_t *, size_t, int32_t *));
 CHECK_FUNCTION(fixture_open, int32_t (*)(int32_t, struct fixture_handle **));
 CHECK_FUNCTION(fixture_read, int32_t (*)(struct fixture_handle *, int32_t *));
 CHECK_FUNCTION(fixture_close, void (*)(struct fixture_handle *));
+CHECK_FUNCTION(fixture_copy_bytes,
+               int32_t (*)(const uint8_t *, size_t, uint8_t **, size_t *));
+CHECK_FUNCTION(fixture_release_bytes, void (*)(uint8_t *));
 CHECK_FUNCTION(zryna_c_v0_e_add, int32_t (*)(int32_t, int32_t));
 
 #if defined(REJECT_EXPORT_ARITY)
@@ -58,4 +61,9 @@ _Bool zryna_c_v0_e_add(int32_t left, int32_t right);
 int32_t sum_bytes(const uint8_t *bytes, uint32_t length, int32_t *out);
 #elif defined(REJECT_HANDLE_POINTER_LEVEL)
 int32_t fixture_open(int32_t seed, struct fixture_handle *out);
+#elif defined(REJECT_OWNED_BUFFER_POINTER_LEVEL)
+int32_t fixture_copy_bytes(const uint8_t *bytes, size_t length,
+                           uint8_t *out_bytes, size_t *out_length);
+#elif defined(REJECT_OWNED_BUFFER_RELEASE_TYPE)
+void fixture_release_bytes(struct fixture_handle *bytes);
 #endif
