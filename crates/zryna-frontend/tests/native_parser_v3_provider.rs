@@ -47,6 +47,8 @@ fn pinned_provider_and_native_v3_parser_match_m2_corpus_and_rejections() {
             "function f(): i32 { return (1); }",
             "function f(): i32 { return foo.bar(); }",
             "function f(): i32 { return 1; } import { x } from \"./x.zry\";",
+            "function f(): i32 { let x: i32 = 1; return x--; }",
+            "function f(): i32 { let x: i32 = 1; return x++; }",
         ]
         .into_iter()
         .enumerate()
@@ -91,7 +93,7 @@ fn pinned_provider_and_native_v3_parser_match_m2_corpus_and_rejections() {
             rejected += 1;
         }
     }
-    assert_eq!((accepted, rejected), (13, 5), "M2 accepted and rejected source counts");
+    assert_eq!((accepted, rejected), (13, 7), "M2 accepted and rejected source counts");
 }
 
 #[test]

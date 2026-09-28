@@ -3,7 +3,7 @@
 use zryna_source::UntrustedSpan;
 use zryna_syntax::v3 as syntax;
 
-use crate::native_lexer::{Token, TokenKind};
+use crate::native_lexer::{Keyword, Token, TokenKind};
 
 use super::super::{FileParser, ParseError, function_error_at, raw};
 use super::push_expression;
@@ -90,12 +90,20 @@ pub(super) fn parse(
                 next.kind() == token.kind() && token.span().end() == next.span().start()
             })
         {
+            let second = parser.current().expect("adjacent operator token");
             let rejected = parser
                 .tokens
                 .get(parser.position + 1)
                 .copied()
-                .or_else(|| parser.current())
-                .expect("adjacent operator token");
+                .filter(|next| {
+                    matches!(
+                        next.kind(),
+                        TokenKind::Identifier
+                            | TokenKind::DecimalInteger
+                            | TokenKind::Keyword(Keyword::True | Keyword::False)
+                    )
+                })
+                .unwrap_or(second);
             return Err(function_error_at(rejected, "unsupported increment or decrement"));
         }
         while operators.last().is_some_and(|(_, current)| *current >= next_precedence) {
