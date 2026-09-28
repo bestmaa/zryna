@@ -87,11 +87,11 @@ fn malformed_and_unsupported_child_statements_reject_whole_candidate() {
     let sources = SourceMap::build(vec![source("src/rejected.zry", REJECTED)]).expect("source");
     assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
     for body in [
-        "{ return 1; } return 2;",
-        "if (true) {} return 1;",
-        "while (true) {} return 1;",
+        "if (true) return 1;",
+        "while (true) return 1;",
+        "if (true) {} else return 1;",
         "{} return (1);",
-        "{} return 1; return 2;",
+        "{} break; return 1;",
     ] {
         assert_eq!(one(body), Err("ZRYNA-F2002".to_owned()), "{body}");
     }
@@ -185,7 +185,7 @@ fn malformed_later_function_or_file_cannot_expose_earlier_blocks() {
     assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
     let sources = SourceMap::build(vec![source(
         "src/main.zry",
-        "function good(): i32 { {} return 1; } function bad(): i32 { { return 2; } return 3; }",
+        "function good(): i32 { {} return 1; } function bad(): i32 { { return (2); } return 3; }",
     )])
     .expect("source");
     assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));

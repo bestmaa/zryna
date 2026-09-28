@@ -5,7 +5,7 @@ use zryna_syntax::v3 as syntax;
 
 use crate::native_lexer::{Token, TokenKind};
 
-use super::super::{FileParser, ParseError, raw, resource};
+use super::super::{FileParser, ParseError, function_error_at, raw};
 use super::push_expression;
 
 fn precedence(kind: TokenKind) -> Option<u8> {
@@ -56,7 +56,7 @@ fn reduce(
     let (lhs, lhs_depth) = values.pop().expect("binary operator has a left operand");
     let depth = lhs_depth.max(rhs_depth) + 1;
     if depth > syntax::MAX_NESTING_DEPTH {
-        return Err(resource("expression nesting exceeds protocol-v3 limit"));
+        return Err(function_error_at(operator, "expression depth exceeds protocol-v3 limit"));
     }
     let span = UntrustedSpan {
         file,

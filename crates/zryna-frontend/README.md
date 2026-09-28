@@ -97,34 +97,33 @@ parse functions or other M2 declarations and is not registered as a frontend pro
 not resolve modules, admit a public profile, or change v2, v3, or v4 protocol contracts.
 
 `native_parser::v3::parse_v3_straight_line_candidate` separately admits a named-import prefix
-followed by source-ordered exported or unexported functions. Its function-body slice requires
-explicit `i32` or `bool` parameter and result annotations. The root block may interleave standalone
-lexical blocks, typed `let` or `const` declarations, and simple `name = expression;` assignments
-before one final semicolon-terminated return. Child blocks may contain those declarations,
-assignments, and further standalone blocks, including empty blocks. Initializers, assignment
-values, and returns use identifiers, Boolean literals, canonical nonnegative integers,
+followed by source-ordered exported or unexported functions. The function-body parser admits typed
+`let` or `const` declarations, simple `name = expression;` assignments, value returns, standalone
+blocks, braced `if` with an optional braced `else`, and braced `while`, including empty and nested
+blocks. Parameter and result annotations may be missing in the syntax DTO; named annotations
+remain source-faithful for later semantic validation. Initializers, assignment values, conditions,
+and returns use identifiers, Boolean literals, canonical nonnegative integers,
 compact canonical negative decimal integers through 64 total bytes (one literal node), numeric
 negation of one canonical nonnegative decimal token of at most 64 bytes in other cases (two nodes),
 direct identifier calls with up to 256 source-ordered arguments, and unary minus over
 nonparenthesized atoms. Binary operators are `*`, `+`, `-`, `<`, `<=`, `>`, `>=`, `===`, and `!==`,
-with the pinned worker's precedence and left associativity. A trailing call-argument comma is
-accepted. It emits preorder block and statement arenas with source-ordered postorder expressions.
+with the pinned worker's precedence and left associativity. Trailing call-argument and parameter
+commas are accepted. It emits preorder block and statement arenas with source-ordered postorder
+expressions.
 Frozen two-file TypeScript 6 v3 function, local, assignment, zero-argument call, signed-literal,
 identifier-negation, numeric-negation, scalar-expression, and lexical-block snapshots, the complete
-two-file M2 straight-line syntax snapshot, the M2 use-before-declaration source's syntax snapshot,
-and the import-plus-helper prefix of the existing complete v3 fixture are exact DTO oracles; the v3
+two-file M2 straight-line syntax snapshot, the positive and semantic-negative M2 control-flow
+snapshots, the complete two-file v3 snapshot, and UTF-8/CRLF and type-syntax snapshots are exact DTO
+oracles; the v3
 verifier remains authoritative. Syntax acceptance of a name before its declaration, assignment to a
 `const`, or call to an unresolved function gives it no semantic authority. Every nontrivia token
 must be consumed, including after a valid function, or the complete candidate fails. Function,
-parameter, block, statement, and expression boundaries have exact and first-extra tests. The block
-and statement hard limits coincide here because each child block owns a statement and the root
-requires a final return. The original import-only entry retains its closed behavior for source
-closure. Compound or property assignment, parenthesized expressions or callees, indirect, generic,
-optional, or spread calls, child-block returns, other operators, `if`, `while`, recovery, full
-diagnostic parity, provider selection, and module resolution remain outside this parser slice.
-Native/verifier expression-tree depth accepts 128 and rejects 129; the pinned worker rejects a flat
-128-atom addition source after accepting 127, so full worker resource parity remains an open part
-of the native-parser work.
+parameter, block, statement, and expression boundaries have exact and first-extra tests. Source
+delimiter nesting and statement-context expression depth follow the pinned worker's 128-depth
+boundary, including its flat-addition 127/128 split. The original import-only entry retains its
+closed behavior for source closure. Compound or property assignment, parenthesized expressions or
+callees, indirect, generic, optional, or spread calls, other operators, recovery, full diagnostic
+parity, provider selection, and module resolution remain outside this parser slice.
 
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
 executable-syntax contract owned by `zryna-syntax`; it does not change v1 semantics in place. The

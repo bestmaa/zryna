@@ -1,0 +1,5 @@
+function named(value, other: arbitrary,): other {
+  let local: any = 1;
+  return local;
+}
+function resultless() { }

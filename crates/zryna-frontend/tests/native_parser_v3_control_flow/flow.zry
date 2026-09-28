@@ -1,0 +1,12 @@
+// π keeps byte spans distinct from character offsets.
+function flow(flag: bool): i32 {
+  let value: i32 = 0;
+  if (flag) {
+    while (value < 2) {
+      { value = value + 1; }
+    }
+  } else {
+    return -1;
+  }
+  return value;
+}

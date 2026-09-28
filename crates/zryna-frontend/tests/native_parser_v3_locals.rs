@@ -80,8 +80,6 @@ fn unsupported_local_forms_match_worker_rejection_class_and_fail_atomically() {
         "function f(): i32 { const x: i32 = 1 return x; }",
         "function f(): i32 { var x: i32 = 1; return x; }",
         "function f(): i32 { let x: i32 = 1 == 2; return x; }",
-        "function f(): i32 { let x: i32 = 1; return x; let y: i32 = 2; }",
-        "function f(): i32 { let x: i32 = 1; { return x; } }",
         "function f(): i32 { let x: i32 = 1; return x + (call(1)); }",
     ] {
         assert_eq!(one(text), Err("ZRYNA-F2002".to_owned()), "{text}");
@@ -90,16 +88,12 @@ fn unsupported_local_forms_match_worker_rejection_class_and_fail_atomically() {
 
 #[test]
 fn local_errors_name_the_annotation_or_expression() {
-    for (text, message) in [
-        ("function f(): i32 { let x: any = 1; return 1; }", "unsupported type annotation"),
-        ("function f(): i32 { let x: i32 = (1); return x; }", "unsupported expression"),
-    ] {
-        let sources = SourceMap::build(vec![source("src/main.zry", text)]).expect("source");
-        let lexed = lex(&sources).expect("tokens");
-        let error = parse_v3_straight_line_candidate(&sources, &lexed).expect_err("local rejects");
-        assert_eq!(error.diagnostic().code(), "ZRYNA-F2002");
-        assert_eq!(error.diagnostic().message(), message);
-    }
+    let text = "function f(): i32 { let x: i32 = (1); return x; }";
+    let sources = SourceMap::build(vec![source("src/main.zry", text)]).expect("source");
+    let lexed = lex(&sources).expect("tokens");
+    let error = parse_v3_straight_line_candidate(&sources, &lexed).expect_err("local rejects");
+    assert_eq!(error.diagnostic().code(), "ZRYNA-F2002");
+    assert_eq!(error.diagnostic().message(), "unsupported expression");
 }
 
 #[test]

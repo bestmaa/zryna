@@ -1,4 +1,4 @@
-//! Internal protocol-v3 candidate for named imports and straight-line scalar functions.
+//! Internal protocol-v3 candidate for named imports and structured scalar functions.
 
 use zryna_diagnostics::Diagnostic;
 use zryna_source::{SourceMap, UntrustedSpan};
@@ -11,7 +11,26 @@ use super::{FileParser, ParseError, raw};
 mod blocks;
 mod expression;
 
-/// Constructs an untrusted v3 candidate for an import prefix followed by straight-line functions.
+fn enforce_source_nesting(tokens: &[Token]) -> Result<(), ParseError> {
+    let mut depth = 0_u32;
+    for token in tokens {
+        match token.kind() {
+            TokenKind::OpenBrace | TokenKind::OpenBracket | TokenKind::OpenParen => {
+                depth += 1;
+                if depth > syntax::MAX_NESTING_DEPTH {
+                    return Err(resource("source exceeds the nesting limit"));
+                }
+            }
+            TokenKind::CloseBrace | TokenKind::CloseBracket | TokenKind::CloseParen => {
+                depth = depth.saturating_sub(1);
+            }
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
+/// Constructs an untrusted v3 candidate for an import prefix followed by scalar functions.
 ///
 /// Every nontrivia token in every file must belong to the supported grammar. This entry is
 /// separate from the import-only candidate used by native source closure. The returned DTO
@@ -53,6 +72,7 @@ pub fn parse_v3_straight_line_candidate(
             position: 0,
             file: file.id().index(),
         };
+        enforce_source_nesting(&parser.tokens)?;
         let mut imports = Vec::new();
         let mut functions = Vec::new();
         while let Some(token) = parser.current() {
@@ -141,14 +161,21 @@ impl FileParser<'_> {
     fn named_type(&mut self) -> Result<syntax::RawTypeSyntax, ParseError> {
         self.function_take(TokenKind::Colon)?;
         let token = self.function_take(TokenKind::Identifier)?;
-        let name = self.spelling(token);
-        if !matches!(name, "i32" | "bool") {
-            return Err(function_error_at(token, "unsupported type annotation"));
-        }
         Ok(syntax::RawTypeSyntax {
             span: raw(token),
-            kind: syntax::RawTypeSyntaxKind::Named { name: name.to_owned() },
+            kind: syntax::RawTypeSyntaxKind::Named { name: self.spelling(token).to_owned() },
         })
+    }
+
+    fn optional_type(&mut self, insertion: u32) -> Result<syntax::RawTypeSyntax, ParseError> {
+        if self.current().is_some_and(|token| token.kind() == TokenKind::Colon) {
+            self.named_type()
+        } else {
+            Ok(syntax::RawTypeSyntax {
+                span: UntrustedSpan { file: self.file, start: insertion, end: insertion },
+                kind: syntax::RawTypeSyntaxKind::Missing,
+            })
+        }
     }
 
     fn local_declaration(
@@ -157,12 +184,13 @@ impl FileParser<'_> {
         mutable: bool,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
+        block_depth: u32,
     ) -> Result<syntax::RawStatementSyntax, ParseError> {
         self.position += 1;
         let name = self.function_identifier()?;
         let type_syntax = self.named_type()?;
         let equals = self.function_take(TokenKind::Equals)?;
-        let initializer = self.expression(expressions, previous_expressions)?;
+        let initializer = self.expression(expressions, previous_expressions, block_depth)?;
         let semicolon = self.function_take(TokenKind::Semicolon)?;
         Ok(syntax::RawStatementSyntax {
             span: UntrustedSpan {
@@ -186,10 +214,11 @@ impl FileParser<'_> {
         &mut self,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
+        block_depth: u32,
     ) -> Result<syntax::RawStatementSyntax, ParseError> {
         let target = self.function_identifier()?;
         let equals = self.function_take(TokenKind::Equals)?;
-        let value = self.expression(expressions, previous_expressions)?;
+        let value = self.expression(expressions, previous_expressions, block_depth)?;
         let semicolon = self.function_take(TokenKind::Semicolon)?;
         Ok(syntax::RawStatementSyntax {
             span: UntrustedSpan {
@@ -206,15 +235,15 @@ impl FileParser<'_> {
         })
     }
 
-    fn final_return(
+    fn return_statement(
         &mut self,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
-    ) -> Result<(syntax::RawStatementSyntax, Token), ParseError> {
+        block_depth: u32,
+    ) -> Result<syntax::RawStatementSyntax, ParseError> {
         let keyword = self.function_take(TokenKind::Keyword(Keyword::Return))?;
-        let value = self.expression(expressions, previous_expressions)?;
+        let value = self.expression(expressions, previous_expressions, block_depth)?;
         let semicolon = self.function_take(TokenKind::Semicolon)?;
-        let close = self.function_take(TokenKind::CloseBrace)?;
         let statement = syntax::RawStatementSyntax {
             span: UntrustedSpan {
                 file: self.file,
@@ -227,7 +256,7 @@ impl FileParser<'_> {
                 semicolon_span: raw(semicolon),
             },
         };
-        Ok((statement, close))
+        Ok(statement)
     }
 
     fn function(
@@ -251,7 +280,7 @@ impl FileParser<'_> {
                     return Err(resource("parameter inventory exceeds protocol-v3 limit"));
                 }
                 let name = self.function_identifier()?;
-                let type_syntax = self.named_type()?;
+                let type_syntax = self.optional_type(name.span.end)?;
                 parameters.push(syntax::RawParameterSyntax {
                     span: UntrustedSpan {
                         file: self.file,
@@ -264,10 +293,13 @@ impl FileParser<'_> {
                 if self.maybe(TokenKind::Comma).is_none() {
                     break;
                 }
+                if self.current().is_some_and(|token| token.kind() == TokenKind::CloseParen) {
+                    break;
+                }
             }
         }
-        self.function_take(TokenKind::CloseParen)?;
-        let result_type = self.named_type()?;
+        let close_paren = self.function_take(TokenKind::CloseParen)?;
+        let result_type = self.optional_type(close_paren.span().start())?;
         let open = self.function_take(TokenKind::OpenBrace)?;
         let (body, close) = self.body(
             open,

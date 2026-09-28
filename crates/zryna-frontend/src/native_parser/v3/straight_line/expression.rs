@@ -20,7 +20,7 @@ impl FileParser<'_> {
         end: u32,
     ) -> Result<(u32, u32), ParseError> {
         if operand_depth >= syntax::MAX_NESTING_DEPTH {
-            return Err(resource("expression nesting exceeds protocol-v3 limit"));
+            return Err(function_error_at(operator, "expression depth exceeds protocol-v3 limit"));
         }
         let index = push_expression(
             expressions,
@@ -83,8 +83,14 @@ impl FileParser<'_> {
         &mut self,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
+        block_depth: u32,
     ) -> Result<u32, ParseError> {
-        operators::parse(self, expressions, previous_expressions, 1).map(|(index, _)| index)
+        let start = self.current().ok_or_else(|| self.function_error_here("missing expression"))?;
+        let (index, depth) = operators::parse(self, expressions, previous_expressions, 1)?;
+        if depth + block_depth > syntax::MAX_NESTING_DEPTH {
+            return Err(function_error_at(start, "expression depth exceeds protocol-v3 limit"));
+        }
+        Ok(index)
     }
 
     fn direct_call(
@@ -93,6 +99,7 @@ impl FileParser<'_> {
         previous_expressions: usize,
         call_nesting: u32,
     ) -> Result<(u32, u32), ParseError> {
+        let callee_token = self.current().expect("call starts with identifier");
         let callee = self.function_identifier()?;
         let open = self.function_take(TokenKind::OpenParen)?;
         let mut arguments = Vec::new();
@@ -118,7 +125,10 @@ impl FileParser<'_> {
         }
         let close = self.function_take(TokenKind::CloseParen)?;
         if argument_depth >= syntax::MAX_NESTING_DEPTH {
-            return Err(resource("expression nesting exceeds protocol-v3 limit"));
+            return Err(function_error_at(
+                callee_token,
+                "expression depth exceeds protocol-v3 limit",
+            ));
         }
         let index = push_expression(
             expressions,
@@ -156,7 +166,7 @@ impl FileParser<'_> {
             }
             minuses.push(token);
             if minuses.len() > syntax::MAX_NESTING_DEPTH as usize {
-                return Err(resource("expression nesting exceeds protocol-v3 limit"));
+                return Err(function_error_at(token, "expression depth exceeds protocol-v3 limit"));
             }
             self.position += 1;
         }

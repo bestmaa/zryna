@@ -85,7 +85,6 @@ fn unsupported_or_later_tokens_reject_the_whole_project() {
         " import { later } from './later.zry';",
         " trailing",
         " function later(): i32 { return 1 }",
-        " function later(): i32 { if (true) { return 1; } return 2; }",
         " function later(): i32 { let x: i32 = 1; x += 2; return x; }",
         " function later(): i32 { return helper(1,,2); }",
     ] {
@@ -95,9 +94,6 @@ fn unsupported_or_later_tokens_reject_the_whole_project() {
         "export function f(): i32 { return (1); }",
         "export function f(): i32 { return --1; }",
         "export function f(): i32 { return 1 == 2; }",
-        "export function f(): any { return 1; }",
-        "export function f(x: i32): i32 { return x; return x; }",
-        "export function f(x: i32,): i32 { return x; }",
     ] {
         assert_eq!(candidate(text), Err("ZRYNA-F2002".to_owned()), "{text}");
     }
@@ -169,8 +165,8 @@ fn exact_and_first_extra_functions_are_atomic() {
 #[test]
 fn expression_depth_accepts_exact_and_rejects_first_extra() {
     for (count, accepted) in [
-        (syntax_v3::MAX_NESTING_DEPTH as usize, true),
-        (syntax_v3::MAX_NESTING_DEPTH as usize + 1, false),
+        (syntax_v3::MAX_NESTING_DEPTH as usize - 1, true),
+        (syntax_v3::MAX_NESTING_DEPTH as usize, false),
     ] {
         let expression = vec!["1"; count].join(" + ");
         let text = format!("export function sum(): i32 {{ return {expression}; }}");
@@ -182,7 +178,7 @@ fn expression_depth_accepts_exact_and_rejects_first_extra() {
             assert_eq!(raw.files[0].functions[0].body.expressions.len(), 2 * count - 1);
             syntax_v3::verify_snapshot(raw, &sources).expect("exact depth verifies");
         } else {
-            assert_eq!(result.expect_err("first extra depth").diagnostic().code(), "ZRYNA-F1002");
+            assert_eq!(result.expect_err("first extra depth").diagnostic().code(), "ZRYNA-F2002");
         }
     }
 }

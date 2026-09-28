@@ -73,7 +73,7 @@ fn worker_rejected_prefix_decrement_is_pinned_separately() {
 #[test]
 fn negated_identifiers_obey_actual_depth_on_both_addition_sides() {
     let max = syntax_v3::MAX_NESTING_DEPTH as usize;
-    for (atoms, accepted) in [(max - 1, true), (max, false)] {
+    for (atoms, accepted) in [(max - 2, true), (max - 1, false)] {
         let text =
             format!("function sum(x: i32): i32 {{ return -x{}; }}", " + 1".repeat(atoms - 1));
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
@@ -81,10 +81,10 @@ fn negated_identifiers_obey_actual_depth_on_both_addition_sides() {
             syntax_v3::verify_snapshot(parse(&sources).expect("exact depth"), &sources)
                 .expect("exact depth verifies");
         } else {
-            assert_eq!(parse(&sources), Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
         }
     }
-    for (atoms, accepted) in [(max - 1, true), (max, false)] {
+    for (atoms, accepted) in [(max - 2, true), (max - 1, false)] {
         let text =
             format!("function sum(x: i32): i32 {{ return 1 + -x{}; }}", " + 1".repeat(atoms - 2));
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
@@ -92,10 +92,10 @@ fn negated_identifiers_obey_actual_depth_on_both_addition_sides() {
             syntax_v3::verify_snapshot(parse(&sources).expect("exact right-side depth"), &sources)
                 .expect("exact right-side depth verifies");
         } else {
-            assert_eq!(parse(&sources), Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
         }
     }
-    for (atoms, accepted) in [(max, true), (max + 1, false)] {
+    for (atoms, accepted) in [(max - 1, true), (max, false)] {
         let expression = format!("{} + -x", vec!["1"; atoms - 1].join(" + "));
         let text = format!("function sum(x: i32): i32 {{ return {expression}; }}");
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
@@ -103,7 +103,7 @@ fn negated_identifiers_obey_actual_depth_on_both_addition_sides() {
             syntax_v3::verify_snapshot(parse(&sources).expect("late right operand"), &sources)
                 .expect("late right operand verifies");
         } else {
-            assert_eq!(parse(&sources), Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
         }
     }
 }
