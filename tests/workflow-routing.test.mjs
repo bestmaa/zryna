@@ -110,6 +110,8 @@ test('representative paths select only their owning optional contract lanes', ()
     ['scripts/check-provider-conformance-v4.mjs', ['provider_v4']],
     ['scripts/native-lexer-provider-witness.mjs', ['provider_v4']],
     ['scripts/run-native-lexer-provider-differential.mjs', ['provider_v4']],
+    ['scripts/run-native-parser-provider-differential.mjs', ['provider_v4']],
+    ['tests/native-parser-provider-runner.test.mjs', ['provider_v4']],
     ['scripts/run-native-lexer-resource-tests.mjs', ['provider_v4']],
     ['scripts/verify-provider-v4-ci-result.mjs', ['provider_v4']],
     ['tests/native-lexer-resource-runner.test.mjs', ['provider_v4']],

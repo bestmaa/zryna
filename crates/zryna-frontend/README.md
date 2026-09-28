@@ -133,8 +133,11 @@ forms. It enforces source, declaration, type, function, block, statement, expres
 aggregate, and match-arm limits before exposing a candidate. Frozen TypeScript 6 snapshots cover
 UTF-8 and CRLF spans, interleaved declarations, two-file order, nested type construction, and the
 new expression and statement forms. Generated expression mutations are also checked by the
-existing `zryna_syntax::v4::verify_snapshot`, which remains the only syntax authority. The entry
-does not register a provider, perform semantic checks, resolve imports, or activate a public
+existing `zryna_syntax::v4::verify_snapshot`, which remains the only syntax authority. The
+`provider:conformance:v4` gate compares native candidates with the pinned TypeScript 6 worker for
+all 68 frozen M3 source fixtures and seven rejected forms, requiring identical raw candidates,
+rejection codes, and source locations within the provider's rejected constructs. The entry does
+not register a provider, perform semantic checks, resolve imports, or activate a public
 profile. Unsupported source fails as a whole while differential recovery and diagnostic parity
 remain separate work.
 

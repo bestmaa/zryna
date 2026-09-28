@@ -123,7 +123,7 @@ test('package command and routed Linux/Windows workflow keep conformance fail cl
   const pkg = JSON.parse(readFileSync(resolve(workspaceRoot, 'package.json')));
   assert.equal(
     pkg.scripts['provider:conformance:v4'],
-    'node scripts/check-provider-conformance-v4.mjs && node --test tests/provider-conformance-v4.test.mjs tests/native-lexer-provider-runner.test.mjs && cargo test --locked -p zryna-frontend --test provider_conformance_v4 && node scripts/run-native-lexer-provider-differential.mjs',
+    'node scripts/check-provider-conformance-v4.mjs && node --test tests/provider-conformance-v4.test.mjs tests/native-lexer-provider-runner.test.mjs tests/native-parser-provider-runner.test.mjs && cargo test --locked -p zryna-frontend --test provider_conformance_v4 && node scripts/run-native-lexer-provider-differential.mjs && node scripts/run-native-parser-provider-differential.mjs',
   );
   const workflow = parseDocument(readFileSync(
     resolve(workspaceRoot, '.github/workflows/ci.yml'),
