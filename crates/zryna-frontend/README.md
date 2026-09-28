@@ -122,7 +122,7 @@ parameter, block, statement, and expression boundaries have exact and first-extr
 delimiter nesting and statement-context expression depth follow the pinned worker's 128-depth
 boundary, including its flat-addition 127/128 split. The original import-only entry retains its
 closed behavior for source closure. A live pinned-worker test compares all 14 public M2 source
-files (13 exact candidates and one equivalent rejection), four further rejected forms, and 128
+files (13 exact candidates and one equivalent rejection), six further rejected forms, and 128
 deterministic accepted or atomic-rejection grammar mutations. Compound or property assignment,
 parenthesized expressions or callees, indirect, generic, optional, or spread calls, other
 operators, recovery, full diagnostic parity, provider selection, and module resolution remain
