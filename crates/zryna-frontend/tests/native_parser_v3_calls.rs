@@ -86,15 +86,18 @@ fn unsupported_callees_match_worker_rejection_and_fail_atomically() {
 }
 
 #[test]
-fn argumented_calls_remain_outside_the_native_candidate() {
-    // The pinned worker emits a syntax candidate for this source; this native slice is narrower.
-    assert_eq!(one(ARGUMENTED), Err("ZRYNA-F2002".to_owned()));
+fn argumented_calls_are_syntax_candidates() {
+    let sources = SourceMap::build(vec![source("src/main.zry", ARGUMENTED)]).expect("source");
+    let native = parse(&sources).expect("direct argumented call");
+    syntax_v3::verify_snapshot(native, &sources).expect("existing v3 verifier");
 }
 
 #[test]
 fn malformed_later_function_or_file_cannot_expose_calls() {
     assert_eq!(
-        one("function good(): i32 { return helper(); } function bad(): i32 { return helper(1); }"),
+        one(
+            "function good(): i32 { return helper(); } function bad(): i32 { return helper(1,,2); }"
+        ),
         Err("ZRYNA-F2002".to_owned())
     );
     let sources = SourceMap::build(vec![

@@ -158,7 +158,7 @@ impl FileParser<'_> {
         let name = self.function_identifier()?;
         let type_syntax = self.named_type()?;
         let equals = self.function_take(TokenKind::Equals)?;
-        let initializer = self.addition(expressions, previous_expressions)?;
+        let initializer = self.expression(expressions, previous_expressions)?;
         let semicolon = self.function_take(TokenKind::Semicolon)?;
         Ok(syntax::RawStatementSyntax {
             span: UntrustedSpan {
@@ -185,7 +185,7 @@ impl FileParser<'_> {
     ) -> Result<syntax::RawStatementSyntax, ParseError> {
         let target = self.function_identifier()?;
         let equals = self.function_take(TokenKind::Equals)?;
-        let value = self.addition(expressions, previous_expressions)?;
+        let value = self.expression(expressions, previous_expressions)?;
         let semicolon = self.function_take(TokenKind::Semicolon)?;
         Ok(syntax::RawStatementSyntax {
             span: UntrustedSpan {
@@ -208,7 +208,7 @@ impl FileParser<'_> {
         previous_expressions: usize,
     ) -> Result<(syntax::RawStatementSyntax, Token), ParseError> {
         let keyword = self.function_take(TokenKind::Keyword(Keyword::Return))?;
-        let value = self.addition(expressions, previous_expressions)?;
+        let value = self.expression(expressions, previous_expressions)?;
         let semicolon = self.function_take(TokenKind::Semicolon)?;
         let close = self.function_take(TokenKind::CloseBrace)?;
         let statement = syntax::RawStatementSyntax {

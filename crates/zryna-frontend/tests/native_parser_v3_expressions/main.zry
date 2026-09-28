@@ -1,0 +1,21 @@
+// 😀 scalar expression spans
+import { combine as mix, zero } from "./math.zry";
+export function arithmetic(a: i32, b: i32, c: i32): i32 {
+  let current: i32 = a + b * c - -1;
+  current = current * 2 + mix(a, b + c,);
+  return -mix(zero(), - -1) + current;
+}
+export function comparisons(a: i32, b: i32): bool {
+  const eq: bool = a === b;
+  const ne: bool = a !== b;
+  const lt: bool = a < b;
+  const le: bool = a <= b;
+  const gt: bool = a > b;
+  const ge: bool = a >= b;
+  return eq === ne;
+}
+function precedence(): bool { return 1 + 2 * 3 < 8 === true; }
+function left(a: i32, b: i32, c: i32): i32 { return a - b - c; }
+function binaryPostorder(a: i32, b: i32, c: i32): i32 { return a * b + c; }
+function reversePrecedence(): bool { return 1 === 2 < 3; }
+function syntaxOnly(): i32 { return -true; }

@@ -55,7 +55,7 @@ fn two_file_numeric_negation_matches_pinned_worker_and_verifies() {
 
 #[test]
 fn malformed_numeric_and_other_negation_forms_remain_excluded() {
-    for expression in ["-01", "-00", "-0x1", "-1n", "--1", "-true", "-helper()", "-(-1)"] {
+    for expression in ["-01", "-00", "-0x1", "-1n", "--1", "-(-1)"] {
         let text = format!("function value(): i32 {{ return {expression}; }}");
         assert_eq!(one(&text), Err("ZRYNA-F2002".to_owned()), "{expression}");
     }
@@ -152,7 +152,7 @@ fn later_malformed_function_or_file_cannot_expose_numeric_negation() {
     );
     let sources = SourceMap::build(vec![
         source("a.zry", "function good(): i32 { return - 1; }"),
-        source("z.zry", "function bad(): i32 { return -true; }"),
+        source("z.zry", "function bad(): i32 { return -(-1); }"),
     ])
     .expect("two sources");
     assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));

@@ -58,11 +58,8 @@ fn two_file_identifier_negation_matches_pinned_worker_and_verifies() {
 }
 
 #[test]
-fn other_worker_negations_remain_outside_the_native_candidate() {
-    for expression in ["-helper()", "-true", "-(-x)"] {
-        let text = format!("function value(x: i32): i32 {{ return {expression}; }}");
-        assert_eq!(one(&text), Err("ZRYNA-F2002".to_owned()), "{expression}");
-    }
+fn parenthesized_negation_remains_outside_the_native_candidate() {
+    assert_eq!(one("function value(x: i32): i32 { return -(-x); }"), Err("ZRYNA-F2002".to_owned()));
 }
 
 #[test]
@@ -137,12 +134,12 @@ fn negated_references_obey_exact_and_first_extra_expression_inventory() {
 #[test]
 fn later_malformed_function_or_file_cannot_expose_negation() {
     assert_eq!(
-        one("function good(x: i32): i32 { return -x; } function bad(): i32 { return -true; }"),
+        one("function good(x: i32): i32 { return -x; } function bad(): i32 { return --1; }"),
         Err("ZRYNA-F2002".to_owned())
     );
     let sources = SourceMap::build(vec![
         source("a.zry", "function good(x: i32): i32 { return -x; }"),
-        source("z.zry", "function bad(): i32 { return -helper(); }"),
+        source("z.zry", "function bad(): i32 { return -(-1); }"),
     ])
     .expect("two sources");
     assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));

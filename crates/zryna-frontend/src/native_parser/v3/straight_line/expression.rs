@@ -7,6 +7,8 @@ use crate::native_lexer::{Keyword, Token, TokenKind};
 
 use super::{FileParser, ParseError, function_error_at, raw, resource};
 
+mod operators;
+
 impl FileParser<'_> {
     fn negation(
         &self,
@@ -14,8 +16,12 @@ impl FileParser<'_> {
         previous_expressions: usize,
         operator: Token,
         operand: u32,
+        operand_depth: u32,
         end: u32,
     ) -> Result<(u32, u32), ParseError> {
+        if operand_depth >= syntax::MAX_NESTING_DEPTH {
+            return Err(resource("expression nesting exceeds protocol-v3 limit"));
+        }
         let index = push_expression(
             expressions,
             previous_expressions,
@@ -24,7 +30,7 @@ impl FileParser<'_> {
                 kind: syntax::RawExpressionKind::Negation { operator_span: raw(operator), operand },
             },
         )?;
-        Ok((index, 2))
+        Ok((index, operand_depth + 1))
     }
 
     fn numeric_negation(
@@ -70,55 +76,51 @@ impl FileParser<'_> {
                 },
             },
         )?;
-        self.negation(expressions, previous_expressions, operator, operand, digits.span().end())
+        self.negation(expressions, previous_expressions, operator, operand, 1, digits.span().end())
     }
 
-    pub(super) fn addition(
+    pub(super) fn expression(
         &mut self,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
     ) -> Result<u32, ParseError> {
-        let (mut left, mut depth) = self.atom(expressions, previous_expressions)?;
-        while let Some(operator) = self.maybe(TokenKind::Plus) {
-            if depth >= syntax::MAX_NESTING_DEPTH {
-                return Err(resource("expression nesting exceeds protocol-v3 limit"));
-            }
-            let (right, right_depth) = self.atom(expressions, previous_expressions)?;
-            let next_depth = depth.max(right_depth) + 1;
-            if next_depth > syntax::MAX_NESTING_DEPTH {
-                return Err(resource("expression nesting exceeds protocol-v3 limit"));
-            }
-            let span = UntrustedSpan {
-                file: self.file,
-                start: expressions[left as usize].span.start,
-                end: expressions[right as usize].span.end,
-            };
-            left = push_expression(
-                expressions,
-                previous_expressions,
-                syntax::RawExpressionSyntax {
-                    span,
-                    kind: syntax::RawExpressionKind::Addition {
-                        operator_span: raw(operator),
-                        lhs: left,
-                        rhs: right,
-                    },
-                },
-            )?;
-            depth = next_depth;
-        }
-        Ok(left)
+        operators::parse(self, expressions, previous_expressions, 1).map(|(index, _)| index)
     }
 
-    fn zero_argument_call(
+    fn direct_call(
         &mut self,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
-    ) -> Result<u32, ParseError> {
+        call_nesting: u32,
+    ) -> Result<(u32, u32), ParseError> {
         let callee = self.function_identifier()?;
         let open = self.function_take(TokenKind::OpenParen)?;
+        let mut arguments = Vec::new();
+        let mut argument_depth = 0;
+        if self.current().is_some_and(|token| token.kind() != TokenKind::CloseParen) {
+            loop {
+                if arguments.len() >= syntax::MAX_PARAMETERS_PER_FUNCTION {
+                    return Err(resource("call exceeds protocol-v3 argument limit"));
+                }
+                if call_nesting >= syntax::MAX_NESTING_DEPTH {
+                    return Err(resource("expression nesting exceeds protocol-v3 limit"));
+                }
+                let (argument, depth) =
+                    operators::parse(self, expressions, previous_expressions, call_nesting + 1)?;
+                arguments.push(argument);
+                argument_depth = argument_depth.max(depth);
+                if self.maybe(TokenKind::Comma).is_none()
+                    || self.current().is_some_and(|token| token.kind() == TokenKind::CloseParen)
+                {
+                    break;
+                }
+            }
+        }
         let close = self.function_take(TokenKind::CloseParen)?;
-        push_expression(
+        if argument_depth >= syntax::MAX_NESTING_DEPTH {
+            return Err(resource("expression nesting exceeds protocol-v3 limit"));
+        }
+        let index = push_expression(
             expressions,
             previous_expressions,
             syntax::RawExpressionSyntax {
@@ -130,86 +132,86 @@ impl FileParser<'_> {
                 kind: syntax::RawExpressionKind::Call {
                     callee,
                     open_paren_span: raw(open),
-                    arguments: Vec::new(),
+                    arguments,
                     close_paren_span: raw(close),
                 },
             },
-        )
+        )?;
+        Ok((index, argument_depth + 1))
     }
 
-    fn atom(
+    fn operand(
         &mut self,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
+        call_nesting: u32,
     ) -> Result<(u32, u32), ParseError> {
-        let token = self.current().ok_or_else(|| self.function_error_here("missing expression"))?;
-        if token.kind() == TokenKind::Minus {
+        let mut minuses = Vec::new();
+        while let Some(token) = self.current().filter(|token| token.kind() == TokenKind::Minus) {
+            if minuses
+                .last()
+                .is_some_and(|previous: &Token| previous.span().end() == token.span().start())
+            {
+                return Err(function_error_at(token, "unsupported decrement"));
+            }
+            minuses.push(token);
+            if minuses.len() > syntax::MAX_NESTING_DEPTH as usize {
+                return Err(resource("expression nesting exceeds protocol-v3 limit"));
+            }
             self.position += 1;
-            if self.current().is_some_and(|next| next.kind() == TokenKind::Identifier)
-                && !self
+        }
+        let token = self.current().ok_or_else(|| self.function_error_here("missing expression"))?;
+        let (mut index, mut depth) =
+            if token.kind() == TokenKind::DecimalInteger && !minuses.is_empty() {
+                self.numeric_negation(
+                    expressions,
+                    previous_expressions,
+                    minuses.pop().expect("one numeric operator"),
+                )?
+            } else if token.kind() == TokenKind::Identifier
+                && self
                     .tokens
                     .get(self.position + 1)
                     .is_some_and(|next| next.kind() == TokenKind::OpenParen)
             {
-                let name = self.function_identifier()?;
-                let operand_span = name.span;
-                let operand = push_expression(
+                self.direct_call(expressions, previous_expressions, call_nesting)?
+            } else {
+                let kind = match token.kind() {
+                    TokenKind::Identifier => {
+                        syntax::RawExpressionKind::Reference { name: self.function_identifier()? }
+                    }
+                    TokenKind::Keyword(Keyword::True | Keyword::False) => {
+                        self.position += 1;
+                        syntax::RawExpressionKind::BoolLiteral {
+                            value: token.kind() == TokenKind::Keyword(Keyword::True),
+                        }
+                    }
+                    TokenKind::DecimalInteger => {
+                        let spelling = self.spelling(token);
+                        if spelling.len() > syntax::MAX_LITERAL_BYTES
+                            || (spelling != "0" && spelling.starts_with('0'))
+                        {
+                            return Err(self.function_error_here("noncanonical integer literal"));
+                        }
+                        let spelling = spelling.to_owned();
+                        self.position += 1;
+                        syntax::RawExpressionKind::I32Literal { spelling }
+                    }
+                    _ => return Err(self.function_error_here("unsupported expression")),
+                };
+                let index = push_expression(
                     expressions,
                     previous_expressions,
-                    syntax::RawExpressionSyntax {
-                        span: operand_span,
-                        kind: syntax::RawExpressionKind::Reference { name },
-                    },
+                    syntax::RawExpressionSyntax { span: raw(token), kind },
                 )?;
-                return self.negation(
-                    expressions,
-                    previous_expressions,
-                    token,
-                    operand,
-                    operand_span.end,
-                );
-            }
-            return self.numeric_negation(expressions, previous_expressions, token);
+                (index, 1)
+            };
+        for operator in minuses.into_iter().rev() {
+            let end = expressions[index as usize].span.end;
+            (index, depth) =
+                self.negation(expressions, previous_expressions, operator, index, depth, end)?;
         }
-        if token.kind() == TokenKind::Identifier
-            && self
-                .tokens
-                .get(self.position + 1)
-                .is_some_and(|next| next.kind() == TokenKind::OpenParen)
-        {
-            return self
-                .zero_argument_call(expressions, previous_expressions)
-                .map(|index| (index, 1));
-        }
-        let kind = match token.kind() {
-            TokenKind::Identifier => {
-                syntax::RawExpressionKind::Reference { name: self.function_identifier()? }
-            }
-            TokenKind::Keyword(Keyword::True | Keyword::False) => {
-                self.position += 1;
-                syntax::RawExpressionKind::BoolLiteral {
-                    value: token.kind() == TokenKind::Keyword(Keyword::True),
-                }
-            }
-            TokenKind::DecimalInteger => {
-                let spelling = self.spelling(token);
-                if spelling.len() > syntax::MAX_LITERAL_BYTES
-                    || (spelling != "0" && spelling.starts_with('0'))
-                {
-                    return Err(self.function_error_here("noncanonical integer literal"));
-                }
-                let spelling = spelling.to_owned();
-                self.position += 1;
-                syntax::RawExpressionKind::I32Literal { spelling }
-            }
-            _ => return Err(self.function_error_here("unsupported expression")),
-        };
-        push_expression(
-            expressions,
-            previous_expressions,
-            syntax::RawExpressionSyntax { span: raw(token), kind },
-        )
-        .map(|index| (index, 1))
+        Ok((index, depth))
     }
 }
 
