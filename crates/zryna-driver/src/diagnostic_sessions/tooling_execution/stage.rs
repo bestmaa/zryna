@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeMap,
     env, fs,
     io::{Read, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
@@ -13,6 +13,10 @@ use sha2::{Digest, Sha256};
 use zryna_diagnostics::Diagnostic;
 
 use super::{capture::CapturedToolingClosure, execution_error};
+
+mod inventory;
+
+use inventory::{file_name, validate_inventory};
 
 const MAX_STAGE_NAME_ATTEMPTS: u64 = 64;
 static NEXT_STAGE: AtomicU64 = AtomicU64::new(0);
@@ -368,52 +372,6 @@ fn stage_file(
         RetainedFile { parent: parent_key, name, identity, state, sha256: captured.sha256 },
     );
     Ok(())
-}
-
-fn file_name(key: &str) -> &'static str {
-    match key {
-        "worker" => "worker.mjs",
-        "worker-v3" => "worker-v3.mjs",
-        "limits-v3" => "limits-v3.mjs",
-        "worker-v4" => "worker-v4.mjs",
-        "limits-v4" => "limits-v4.mjs",
-        "wrapper-manifest" | "old-manifest" => "package.json",
-        "wrapper-runtime" | "old-runtime" => "typescript.js",
-        _ => "",
-    }
-}
-
-fn validate_inventory(key: &str, directory: &Dir) -> Result<(), Diagnostic> {
-    let expected: BTreeSet<String> = match key {
-        ROOT => [
-            "node_modules",
-            "worker.mjs",
-            "worker-v3.mjs",
-            "limits-v3.mjs",
-            "worker-v4.mjs",
-            "limits-v4.mjs",
-        ]
-        .map(str::to_owned)
-        .into_iter()
-        .collect(),
-        MODULES => ["@typescript"].map(str::to_owned).into_iter().collect(),
-        SCOPE => ["old", "typescript6"].map(str::to_owned).into_iter().collect(),
-        WRAPPER | OLD => ["lib", "package.json"].map(str::to_owned).into_iter().collect(),
-        WRAPPER_LIB | OLD_LIB => ["typescript.js"].map(str::to_owned).into_iter().collect(),
-        _ => return Err(stage_changed()),
-    };
-    let actual = directory
-        .entries()
-        .map_err(|_| stage_changed())?
-        .map(|entry| {
-            entry
-                .map_err(|_| stage_changed())?
-                .file_name()
-                .into_string()
-                .map_err(|_| stage_changed())
-        })
-        .collect::<Result<BTreeSet<_>, _>>()?;
-    if actual == expected { Ok(()) } else { Err(stage_changed()) }
 }
 
 fn validate_root_path(path: &Path) -> Result<Dir, Diagnostic> {
