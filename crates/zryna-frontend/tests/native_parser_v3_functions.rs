@@ -93,7 +93,7 @@ fn unsupported_or_later_tokens_reject_the_whole_project() {
     }
     for text in [
         "export function f(): i32 { return (1); }",
-        "export function f(): i32 { return -x; }",
+        "export function f(): i32 { return -true; }",
         "export function f(): i32 { return 1 * 2; }",
         "export function f(): any { return 1; }",
         "export function f(x: i32): i32 { return x; return x; }",
