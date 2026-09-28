@@ -99,17 +99,19 @@ fn direct_calls_accept_exact_argument_limit_and_reject_first_extra() {
 #[test]
 fn operators_calls_and_prefixes_obey_exact_and_first_extra_depth() {
     let max = syntax_v3::MAX_NESTING_DEPTH as usize;
-    for (count, accepted) in [(max, true), (max + 1, false)] {
+    for (count, accepted) in [(max - 1, true), (max, false)] {
         let text = format!("function value(): i32 {{ return {}; }}", vec!["1"; count].join(" - "));
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
         if accepted {
             syntax_v3::verify_snapshot(parse(&sources).expect("exact binary depth"), &sources)
                 .expect("binary depth verifies");
         } else {
-            assert_eq!(parse(&sources), Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
         }
     }
-    for (calls, accepted) in [(max - 1, true), (max, false)] {
+    for (calls, accepted, code) in
+        [(max - 2, true, ""), (max - 1, false, "ZRYNA-F2002"), (max, false, "ZRYNA-F1002")]
+    {
         let expression = format!("{}1{}", "helper(".repeat(calls), ")".repeat(calls));
         let text = format!("function value(): i32 {{ return {expression}; }}");
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
@@ -117,10 +119,10 @@ fn operators_calls_and_prefixes_obey_exact_and_first_extra_depth() {
             syntax_v3::verify_snapshot(parse(&sources).expect("exact call depth"), &sources)
                 .expect("call depth verifies");
         } else {
-            assert_eq!(parse(&sources), Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(parse(&sources), Err(code.to_owned()));
         }
     }
-    for (minuses, accepted) in [(max - 1, true), (max, false)] {
+    for (minuses, accepted) in [(max - 2, true), (max - 1, false)] {
         let expression = format!("{}1", "- ".repeat(minuses));
         let text = format!("function value(): i32 {{ return {expression}; }}");
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
@@ -128,10 +130,10 @@ fn operators_calls_and_prefixes_obey_exact_and_first_extra_depth() {
             syntax_v3::verify_snapshot(parse(&sources).expect("exact prefix depth"), &sources)
                 .expect("prefix depth verifies");
         } else {
-            assert_eq!(parse(&sources), Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
         }
     }
-    for (minuses, accepted) in [(max, true), (max + 1, false)] {
+    for (minuses, accepted) in [(max - 1, true), (max, false)] {
         let expression = format!("{}-1", "- ".repeat(minuses - 1));
         let text = format!("function value(): i32 {{ return {expression}; }}");
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
@@ -142,7 +144,7 @@ fn operators_calls_and_prefixes_obey_exact_and_first_extra_depth() {
             )
             .expect("signed-prefix depth verifies");
         } else {
-            assert_eq!(parse(&sources), Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
         }
     }
 }

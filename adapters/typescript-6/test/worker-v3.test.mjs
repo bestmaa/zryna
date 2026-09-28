@@ -338,6 +338,68 @@ test('native scalar-expression fixtures preserve worker precedence and call boun
   assert.equal(workerOverflow.error.code, 'ZRYNA-F2002');
 });
 
+test('native lexical-block fixtures preserve preorder and root-inclusive depth', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_blocks/', import.meta.url);
+  const main = (await readFile(new URL('main.zry', fixture), 'utf8')).replace(/\r?\n/g, '\r\n');
+  const math = await readFile(new URL('math.zry', fixture), 'utf8');
+  const rejected = await readFile(new URL('rejected.zry', fixture), 'utf8');
+  const expected = JSON.parse(await readFile(new URL('blocks.snapshot.json', fixture), 'utf8'));
+  const rejectedExpected = JSON.parse(await readFile(new URL('rejected.response.json', fixture), 'utf8'));
+  const nested = (depth) => `function f(): i32 { ${'{'.repeat(depth - 1)}${'}'.repeat(depth - 1)} return 1; }`;
+  const [positive, malformed, exact, overflow] = await exchange([
+    analyze(1, [{ path: 'src/math.zry', text: math }, { path: 'src/main.zry', text: main }]),
+    analyze(2, [{ path: 'src/rejected.zry', text: rejected }]),
+    analyze(3, [{ path: 'src/main.zry', text: nested(128) }]),
+    analyze(4, [{ path: 'src/main.zry', text: nested(129) }]),
+  ]);
+  assert.deepEqual(positive.result, expected);
+  assert.equal(validateSnapshot(positive.result), true, JSON.stringify(validateSnapshot.errors));
+  assert.deepEqual(malformed, rejectedExpected);
+  assert.equal(exact.result.files[0].functions[0].body.blocks.length, 128);
+  assert.equal(overflow.error.code, 'ZRYNA-F1002');
+});
+
+test('native control-flow fixture preserves UTF-8 CRLF spans and structured arenas', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_control_flow/', import.meta.url);
+  const text = (await readFile(new URL('flow.zry', fixture), 'utf8')).replace(/\r?\n/g, '\r\n');
+  const expected = JSON.parse(await readFile(new URL('flow.snapshot.json', fixture), 'utf8'));
+  const [response] = await exchange([analyze(1, [{ path: 'src/flow.zry', text }])]);
+  assert.equal(response.error, undefined, JSON.stringify(response.error));
+  assert.deepEqual(response.result, expected);
+  assert.equal(validateSnapshot(response.result), true, JSON.stringify(validateSnapshot.errors));
+  assert.deepEqual(response.result.files[0].functions[0].body.blocks.map((block) => block.statements), [
+    [0, 1, 6], [2], [3], [4], [5],
+  ]);
+});
+
+test('native type-syntax fixture preserves missing and named annotations', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_control_flow/', import.meta.url);
+  const text = await readFile(new URL('types.zry', fixture), 'utf8');
+  const expected = JSON.parse(await readFile(new URL('types.snapshot.json', fixture), 'utf8'));
+  const [response] = await exchange([analyze(1, [{ path: 'src/types.zry', text }])]);
+  assert.equal(response.error, undefined, JSON.stringify(response.error));
+  assert.deepEqual(response.result, expected);
+  assert.equal(validateSnapshot(response.result), true, JSON.stringify(validateSnapshot.errors));
+});
+
+test('structured control flow keeps mixed nesting and malformed requests atomic', async () => {
+  const branch = (children) => `function f(): i32 { ${'{'.repeat(children)}if (true) {}${'}'.repeat(children)} }`;
+  const childReturn = `function f(): i32 { ${'{'.repeat(127)}return 1;${'}'.repeat(127)} }`;
+  const malformed = 'function good(): i32 { if (true) { return 1; } return 2; } function bad(): i32 { while (true) { return (3); } }';
+  const [exact, sourceOverflow, expressionOverflow, invalid, recovery] = await exchange([
+    analyze(1, [{ path: 'src/main.zry', text: branch(126) }]),
+    analyze(2, [{ path: 'src/main.zry', text: branch(127) }]),
+    analyze(3, [{ path: 'src/main.zry', text: childReturn }]),
+    analyze(4, [{ path: 'src/main.zry', text: malformed }]),
+    { id: 5, method: 'handshake' },
+  ]);
+  assert.equal(exact.result.files[0].functions[0].body.blocks.length, 128);
+  assert.equal(sourceOverflow.error.code, 'ZRYNA-F1002');
+  assert.equal(expressionOverflow.error.code, 'ZRYNA-F2002');
+  assert.equal(invalid.error.code, 'ZRYNA-F2002');
+  assert.equal(recovery.result.protocol_version, 3);
+});
+
 test('file IDs and UTF-8 spans remain deterministic for shuffled batches', async () => {
   const prefix = '// 😀\r\n';
   const source = `${prefix}export function value(): i32 { return 1; }`;

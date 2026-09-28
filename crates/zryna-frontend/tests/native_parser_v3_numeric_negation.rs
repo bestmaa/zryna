@@ -88,27 +88,27 @@ fn verifier_rejects_a_forged_numeric_negation_operator() {
 #[test]
 fn numeric_negation_obeys_actual_depth_on_both_addition_sides() {
     let max = syntax_v3::MAX_NESTING_DEPTH as usize;
-    for (atoms, accepted) in [(max - 1, true), (max, false)] {
+    for (atoms, accepted) in [(max - 2, true), (max - 1, false)] {
         let text = format!("function sum(): i32 {{ return -0{}; }}", " + 1".repeat(atoms - 1));
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
         if accepted {
             syntax_v3::verify_snapshot(parse(&sources).expect("exact depth"), &sources)
                 .expect("exact depth verifies");
         } else {
-            assert_eq!(parse(&sources), Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
         }
     }
-    for (atoms, accepted) in [(max - 1, true), (max, false)] {
+    for (atoms, accepted) in [(max - 2, true), (max - 1, false)] {
         let text = format!("function sum(): i32 {{ return 1 + - 0{}; }}", " + 1".repeat(atoms - 2));
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
         if accepted {
             syntax_v3::verify_snapshot(parse(&sources).expect("exact right-side depth"), &sources)
                 .expect("exact right-side depth verifies");
         } else {
-            assert_eq!(parse(&sources), Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
         }
     }
-    for (atoms, accepted) in [(max, true), (max + 1, false)] {
+    for (atoms, accepted) in [(max - 1, true), (max, false)] {
         let expression = format!("{} + -0", vec!["1"; atoms - 1].join(" + "));
         let text = format!("function sum(): i32 {{ return {expression}; }}");
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
@@ -116,7 +116,7 @@ fn numeric_negation_obeys_actual_depth_on_both_addition_sides() {
             syntax_v3::verify_snapshot(parse(&sources).expect("late right operand"), &sources)
                 .expect("late right operand verifies");
         } else {
-            assert_eq!(parse(&sources), Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));
         }
     }
 }

@@ -111,8 +111,8 @@ fn malformed_later_function_or_file_cannot_expose_calls() {
 #[test]
 fn call_atoms_obey_exact_and_first_extra_addition_depth() {
     for (count, accepted) in [
-        (syntax_v3::MAX_NESTING_DEPTH as usize, true),
-        (syntax_v3::MAX_NESTING_DEPTH as usize + 1, false),
+        (syntax_v3::MAX_NESTING_DEPTH as usize - 1, true),
+        (syntax_v3::MAX_NESTING_DEPTH as usize, false),
     ] {
         let expression = vec!["helper()"; count].join(" + ");
         let text = format!("export function sum(): i32 {{ return {expression}; }}");
@@ -123,7 +123,7 @@ fn call_atoms_obey_exact_and_first_extra_addition_depth() {
             assert_eq!(native.files[0].functions[0].body.expressions.len(), 2 * count - 1);
             syntax_v3::verify_snapshot(native, &sources).expect("exact depth verifies");
         } else {
-            assert_eq!(result, Err("ZRYNA-F1002".to_owned()));
+            assert_eq!(result, Err("ZRYNA-F2002".to_owned()));
         }
     }
 }

@@ -34,7 +34,7 @@
     "protocol:check": "node --check tests/syntax-protocol-v2.test.mjs && node --check tests/syntax-protocol-v3.test.mjs",
     "protocol:test": "node --test tests/syntax-protocol-v2.test.mjs tests/syntax-protocol-v3.test.mjs",
     "diagnostics:contract": "node --test tests/diagnostics-protocol-v2.test.mjs",
-    "provider:conformance:v4": "node scripts/check-provider-conformance-v4.mjs && node --test tests/provider-conformance-v4.test.mjs tests/native-lexer-provider-runner.test.mjs && cargo test --locked -p zryna-frontend --test provider_conformance_v4 && node scripts/run-native-lexer-provider-differential.mjs",
+    "provider:conformance:v4": "node scripts/check-provider-conformance-v4.mjs && node --test tests/provider-conformance-v4.test.mjs tests/native-lexer-provider-runner.test.mjs tests/native-parser-provider-runner.test.mjs && cargo test --locked -p zryna-frontend --test provider_conformance_v4 && node scripts/run-native-lexer-provider-differential.mjs && node scripts/run-native-parser-provider-differential.mjs",
     "m3:quick": "node scripts/run-m3-quick.mjs",
     "m3:registry": "node scripts/check-m3-conformance.mjs && node --test tests/m3-conformance.test.mjs",
     "m3:check": "node scripts/run-m3-conformance.mjs",

@@ -3,9 +3,9 @@
 use zryna_source::UntrustedSpan;
 use zryna_syntax::v3 as syntax;
 
-use crate::native_lexer::{Token, TokenKind};
+use crate::native_lexer::{Keyword, Token, TokenKind};
 
-use super::super::{FileParser, ParseError, raw, resource};
+use super::super::{FileParser, ParseError, function_error_at, raw};
 use super::push_expression;
 
 fn precedence(kind: TokenKind) -> Option<u8> {
@@ -56,7 +56,7 @@ fn reduce(
     let (lhs, lhs_depth) = values.pop().expect("binary operator has a left operand");
     let depth = lhs_depth.max(rhs_depth) + 1;
     if depth > syntax::MAX_NESTING_DEPTH {
-        return Err(resource("expression nesting exceeds protocol-v3 limit"));
+        return Err(function_error_at(operator, "expression depth exceeds protocol-v3 limit"));
     }
     let span = UntrustedSpan {
         file,
@@ -90,7 +90,21 @@ pub(super) fn parse(
                 next.kind() == token.kind() && token.span().end() == next.span().start()
             })
         {
-            return Err(parser.function_error_here("unsupported increment or decrement"));
+            let second = parser.current().expect("adjacent operator token");
+            let rejected = parser
+                .tokens
+                .get(parser.position + 1)
+                .copied()
+                .filter(|next| {
+                    matches!(
+                        next.kind(),
+                        TokenKind::Identifier
+                            | TokenKind::DecimalInteger
+                            | TokenKind::Keyword(Keyword::True | Keyword::False)
+                    )
+                })
+                .unwrap_or(second);
+            return Err(function_error_at(rejected, "unsupported increment or decrement"));
         }
         while operators.last().is_some_and(|(_, current)| *current >= next_precedence) {
             let (operator, _) = operators.pop().expect("pending operator");

@@ -1,0 +1,4 @@
+function f(): i32 {
+  upgradeWeak;
+  return 1;
+}

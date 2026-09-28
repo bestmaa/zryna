@@ -1,0 +1,4 @@
+function infer(value,) {
+  const copy: i32 = value;
+  return copy;
+}

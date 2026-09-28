@@ -1,0 +1,10 @@
+interface Choice extends ZrynaEnum {
+  none: ZrynaNone;
+  some: i32;
+}
+function decide(value: Choice): i32 {
+  return match(value, {
+    "Choice.none": () => 0,
+    "Choice.some": (number) => number,
+  });
+}

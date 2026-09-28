@@ -1,8 +1,7 @@
-//! Internal native syntax candidate construction from the bound lexical stream.
+//! Internal native syntax candidates from bound lexical streams.
 //!
-//! This closed slice constructs protocol-v2 function/return/addition candidates and bounded
-//! diagnostics for selected unsupported expressions and annotations. It does not select a provider
-//! or grant syntax authority: callers must use the existing v2 verifier.
+//! Each version constructs untrusted source-faithful DTOs. Callers must use the corresponding
+//! protocol verifier before consuming a candidate; this module does not select a provider.
 
 use std::fmt;
 
@@ -15,6 +14,7 @@ use crate::native_lexer::{Keyword, LexedProject, Token, TokenKind};
 mod expression;
 mod recovery;
 pub mod v3;
+pub mod v4;
 
 /// A deterministic rejection of source outside this native candidate slice.
 #[derive(Clone, Debug)]

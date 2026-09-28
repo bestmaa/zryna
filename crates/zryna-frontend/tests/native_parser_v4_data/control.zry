@@ -1,0 +1,16 @@
+export function count(value: i32): i32 {
+  let total: i32 = 0;
+  {
+    total = total + 1;
+  }
+  if (value > 0) {
+    total = total + value;
+  } else {
+    total = total - 1;
+  }
+  while (total < 10) {
+    total = total + 1;
+  }
+  log(total);
+  return total;
+}

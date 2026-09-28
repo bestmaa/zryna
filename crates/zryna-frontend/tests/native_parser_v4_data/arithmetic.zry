@@ -1,0 +1,4 @@
+function calculate(left: i32, right: i32): i32 {
+  const result: i32 = left + right * 2;
+  return identity(result);
+}

@@ -1,0 +1,8 @@
+interface Pair extends ZrynaStruct {
+  left: i32;
+  right: i32;
+}
+function construct(value: i32): Pair {
+  const right: i32 = 2;
+  return Pair({ left: value, right });
+}

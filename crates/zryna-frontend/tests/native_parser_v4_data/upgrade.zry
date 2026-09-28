@@ -1,0 +1,9 @@
+function use(weak: Weak<i32>): i32 {
+  let result: i32 = 0;
+  upgradeWeak(weak, (strong) => {
+    result = strong;
+  }, () => {
+    result = 1;
+  });
+  return result;
+}

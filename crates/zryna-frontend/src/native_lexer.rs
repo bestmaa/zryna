@@ -1,4 +1,4 @@
-//! Source-bound lexical foundation for the future native protocol-v4 frontend.
+//! Source-bound lexical foundation for the native protocol-v4 frontend.
 //!
 //! This module deliberately stops before parsing and provider selection. It retains every token
 //! and trivia byte so a later parser and formatter can share one source-faithful lexical stream.

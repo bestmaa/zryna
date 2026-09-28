@@ -1,0 +1,16 @@
+interface Pair extends ZrynaStruct {
+  value: i32;
+}
+function make(value: i32): Pair {
+  return Pair({ value });
+}
+interface Choice extends ZrynaEnum {
+  none: ZrynaNone;
+  some: Pair;
+}
+function choose(value: Choice): Pair {
+  return match(value, {
+    "Choice.none": () => make(0),
+    "Choice.some": (item) => item,
+  });
+}

@@ -82,7 +82,7 @@ need independent differential recovery evidence.
 | Unsupported parenthesized return before a valid function | Exact frozen bootstrap diagnostic and retained function; verified error snapshot | Parenthesized syntax remains unsupported. |
 | Unsupported direct calls, simple multiplication, and string literals with a later valid function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Other unsupported expressions retain generic rejection. |
 | Multiple unsupported primitive annotations in one well-formed signature, then a named-type function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Mixed error kinds in one function and other unsupported type forms remain unproven. |
-| First-extra functions, parameters, expression depth, and recovery diagnostics | Bounded focused tests | Full resource and fuzz corpus remains pending. |
+| First-extra functions, parameters, expression depth, and recovery diagnostics | Bounded focused tests and 128 deterministic expression mutations | Other unsupported grammar axes remain excluded. |
 
 `native_parser::v3::parse_v3_import_candidate` is a separate internal M2 candidate for
 functionless modules containing named imports only. It consumes every nontrivia native token or
@@ -97,31 +97,52 @@ parse functions or other M2 declarations and is not registered as a frontend pro
 not resolve modules, admit a public profile, or change v2, v3, or v4 protocol contracts.
 
 `native_parser::v3::parse_v3_straight_line_candidate` separately admits a named-import prefix
-followed by source-ordered exported or unexported functions. Its first function-body slice requires
-explicit `i32` or `bool` parameter and result annotations, zero or more interleaved root-block
-`let` or `const` declarations with explicit `i32` or `bool` annotations and initializers and
-simple `name = expression;` assignments, and one final semicolon-terminated return. Initializers,
-assignment values, and returns use identifiers, Boolean literals, canonical nonnegative integers,
+followed by source-ordered exported or unexported functions. The function-body parser admits typed
+`let` or `const` declarations, simple `name = expression;` assignments, value returns, standalone
+blocks, braced `if` with an optional braced `else`, and braced `while`, including empty and nested
+blocks. Parameter and result annotations may be missing in the syntax DTO; named annotations
+remain source-faithful for later semantic validation. Initializers, assignment values, conditions,
+and returns use identifiers, Boolean literals, canonical nonnegative integers,
 compact canonical negative decimal integers through 64 total bytes (one literal node), numeric
 negation of one canonical nonnegative decimal token of at most 64 bytes in other cases (two nodes),
 direct identifier calls with up to 256 source-ordered arguments, and unary minus over
 nonparenthesized atoms. Binary operators are `*`, `+`, `-`, `<`, `<=`, `>`, `>=`, `===`, and `!==`,
-with the pinned worker's precedence and left associativity. A trailing call-argument comma is
-accepted. It emits one canonical root block with source-ordered statement and postorder expression
-arenas. Frozen two-file TypeScript 6 v3 function, local, assignment, zero-argument call,
-signed-literal, identifier-negation, numeric-negation, and scalar-expression snapshots, the M2
-use-before-declaration source's syntax snapshot, and the import-plus-helper prefix of the existing
-complete v3 fixture are exact DTO oracles; the v3 verifier remains authoritative. Syntax acceptance
-of a name before its declaration, assignment to a `const`, or call to an unresolved function gives
-it no semantic authority. Every nontrivia token must be consumed, including after a valid function,
-or the complete candidate fails. Function, parameter, statement, and expression-depth boundaries
-have exact and first-extra tests. The original import-only entry retains its closed behavior for
-source closure. Compound or
-property assignment, parenthesized expressions or callees, indirect/generic/optional/spread calls,
-other operators, nested blocks, `if`, `while`, recovery and full diagnostic parity, provider
-selection, and module resolution remain outside this parser slice. Native/verifier expression-tree
-depth accepts 128 and rejects 129; the pinned worker rejects a flat 128-atom addition source after
-accepting 127, so full worker resource parity remains an open part of the native-parser work.
+with the pinned worker's precedence and left associativity. Trailing call-argument and parameter
+commas are accepted. It emits preorder block and statement arenas with source-ordered postorder
+expressions.
+Frozen two-file TypeScript 6 v3 function, local, assignment, zero-argument call, signed-literal,
+identifier-negation, numeric-negation, scalar-expression, and lexical-block snapshots, the complete
+two-file M2 straight-line syntax snapshot, the positive and semantic-negative M2 control-flow
+snapshots, the complete two-file v3 snapshot, and UTF-8/CRLF and type-syntax snapshots are exact DTO
+oracles; the v3
+verifier remains authoritative. Syntax acceptance of a name before its declaration, assignment to a
+`const`, or call to an unresolved function gives it no semantic authority. Every nontrivia token
+must be consumed, including after a valid function, or the complete candidate fails. Function,
+parameter, block, statement, and expression boundaries have exact and first-extra tests. Source
+delimiter nesting and statement-context expression depth follow the pinned worker's 128-depth
+boundary, including its flat-addition 127/128 split. The original import-only entry retains its
+closed behavior for source closure. A live pinned-worker test compares all 14 public M2 source
+files (13 exact candidates and one equivalent rejection), six further rejected forms, and 128
+deterministic accepted or atomic-rejection grammar mutations. Compound or property assignment,
+parenthesized expressions or callees, indirect, generic, optional, or spread calls, other
+operators, recovery, full diagnostic parity, provider selection, and module resolution remain
+outside this parser slice.
+
+`native_parser::v4::parse_v4_candidate` constructs an untrusted protocol-v4 candidate from the
+same bound lexical stream. It admits named imports; source-ordered struct and enum declarations;
+module-wide postorder type syntax; functions with preorder blocks and statements; scalar and
+control-flow syntax; and the documented data, collection, ownership, match, and weak-upgrade
+forms. It enforces source, declaration, type, function, block, statement, expression, local,
+aggregate, and match-arm limits before exposing a candidate. Frozen TypeScript 6 snapshots cover
+UTF-8 and CRLF spans, interleaved declarations, two-file order, nested type construction, and the
+new expression and statement forms. Generated expression mutations are also checked by the
+existing `zryna_syntax::v4::verify_snapshot`, which remains the only syntax authority. The
+`provider:conformance:v4` gate compares native candidates with the pinned TypeScript 6 worker for
+all 95 frozen M3 source fixtures, one four-file composition, and seven rejected forms. It requires
+identical raw candidates, rejection codes, and source locations within the provider's rejected
+constructs. The entry does not register a provider, perform semantic checks, resolve imports, or
+activate a public profile. Unsupported source fails as a whole while differential recovery and
+diagnostic parity remain separate work.
 
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
 executable-syntax contract owned by `zryna-syntax`; it does not change v1 semantics in place. The

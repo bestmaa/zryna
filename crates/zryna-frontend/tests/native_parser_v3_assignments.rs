@@ -78,7 +78,6 @@ fn unsupported_assignment_forms_match_worker_rejection_and_fail_atomically() {
         "function f(): i32 { let x: i32 = 1; x = 2 return x; }",
         "function f(): i32 { let x: i32 = 1; x = (2); return x; }",
         "function f(): i32 { let x: i32 = 1; x; return x; }",
-        "function f(): i32 { let x: i32 = 1; x = 2; return x; x = 3; }",
     ] {
         assert_eq!(one(text), Err("ZRYNA-F2002".to_owned()), "{text}");
     }

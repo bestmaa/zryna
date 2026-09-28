@@ -1,0 +1,4 @@
+function arrays(value: i32): Vec<Vec<i32>> {
+  const fixed: FixedArray<i32, 2> = FixedArray<i32, 2>([1, 2]);
+  return Vec<Vec<i32>>([Vec<i32>([value]), Vec<i32>([fixed[0]])]);
+}
