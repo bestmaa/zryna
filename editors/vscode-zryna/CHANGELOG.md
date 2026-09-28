@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.5.0 — M3 formatter candidate
+
+- Add explicit M3 editor formatting for admitted data/ownership source and saved imports below the trusted workspace folder.
+- Bind the M3 server to that folder at startup and require the matching 0.5.0 capability before sending source.
+- Keep explicit Run limited to the verified scalar and M2 profiles.
+
 ## 0.4.0 — M2 editor candidate
 
 - Add an explicit editor profile selection for scalar-v2 and control-flow-v1 source.
@@ -29,5 +35,6 @@
 - Cancellation, stale-result rejection, bounded transport and inert diagnostic rendering.
 
 The original packages required a matching source build; public v0.2.3 servers lack formatting.
-M3 formatting and marketplace publication remain pending. A built or installed VSIX is not a
-marketplace release. No new compiler tag or binary release accompanies this package.
+Cross-platform clean-install acceptance is required before marketplace publication of the M3
+package. A built or installed VSIX is not a marketplace release. No new compiler tag or binary
+release accompanies this package.

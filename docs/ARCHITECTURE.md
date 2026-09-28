@@ -703,13 +703,15 @@ The registered `zryna-language-server` application is a thin stdio transport ove
 revision-bound diagnostic session and scalar definition authority. It owns framing, in-memory
 document lifecycle, URI/version correlation, negotiated coordinate conversion and cancellation;
 it depends only on the driver orchestrator and source foundation. Protocol input cannot select a
-frontend process or gain filesystem, build, runtime, network or mutation authority. The exact
+frontend process or filesystem root, or gain build, runtime, network or mutation authority. The
+separately selected M3 profile reads saved imports only below a root captured at startup. The exact
 supported methods and omissions are documented in [Language server protocol v1](LANGUAGE_SERVER.md).
 The initial scalar editor client in `editors/vscode-zryna` is registered by the pnpm workspace;
 it is not a Rust compiler component and adds no compiler dependency edge. It consumes diagnostics,
 definitions and presentation-only edits without defining compiler rules. The driver derives bounded
-formatting plans from verified, semantically accepted scalar snapshots. M2/M3 formatting remains
-unsupported. The client VSIX carries no compiler/runtime binary or download mechanism. A separate
+formatting plans from verified, semantically accepted scalar, M2, and M3 snapshots. M3 tooling
+binds open-buffer overlays to a retained workspace source root for saved imports and revalidates
+the exact graph before edits. The client VSIX carries no compiler/runtime binary or download mechanism. A separate
 portable setup candidate binds the server, VSIX and unchanged signed compiler installation.
 Installed tooling authenticates fixed runtime/provider bytes through driver-owned capture and
 private staging, without a compiler checkout or additional application dependency edge.

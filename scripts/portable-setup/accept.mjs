@@ -39,7 +39,7 @@ for (const tool of ['node', 'cargo', 'rustc', 'pnpm']) {
 }
 assert.equal(command(config.compilerPath, ['--version']), 'zryna 0.2.3');
 assert.equal(command(config.serverPath, ['--version']),
-  `zryna-language-server 0.4.0 portable-setup-v1 ${config.manifest.sourceCommit}`);
+  `zryna-language-server 0.5.0 portable-setup-v1 ${config.manifest.sourceCommit}`);
 command(config.compilerPath, ['new', 'hello']);
 for (const target of ['javascript', 'webassembly']) {
   assert.equal(command(config.compilerPath, ['run', 'src/main.zry', '--project-root', 'hello',
@@ -49,10 +49,18 @@ const project = join(work, 'practice');
 mkdirSync(project);
 copyFileSync(join(relocated, 'examples/main.zry'), join(project, 'main.zry'));
 copyFileSync(join(relocated, 'examples/control-flow.zry'), join(project, 'control-flow.zry'));
+const m3Project = join(project, 'm3');
+mkdirSync(m3Project);
+copyFileSync(join(relocated, 'examples/m3/main.zry'), join(m3Project, 'main.zry'));
+copyFileSync(join(relocated, 'examples/m3/math.zry'), join(m3Project, 'math.zry'));
 const bytes = readFileSync(join(project, 'main.zry'));
 const sourceHash = hash(bytes);
 const m2Bytes = readFileSync(join(project, 'control-flow.zry'));
 const m2SourceHash = hash(m2Bytes);
+const m3Bytes = readFileSync(join(m3Project, 'main.zry'));
+const m3SourceHash = hash(m3Bytes);
+const m3ImportBytes = readFileSync(join(m3Project, 'math.zry'));
+const m3ImportHash = hash(m3ImportBytes);
 const reports = [];
 const invocation = async (executable, argv, cwd) => ({ stdout: command(executable, argv, cwd), stderr: '' });
 for (const [target, name, values, expected] of [['javascript', 'add', ['13', '-4'], 9],
@@ -79,7 +87,7 @@ try {
   const initialize = await connection.request('initialize', {
     rootUri: pathToFileURL(project).href, capabilities: { general: { positionEncodings: ['utf-16'] } },
   });
-  assert.equal(initialize.serverInfo.version, '0.4.0');
+  assert.equal(initialize.serverInfo.version, '0.5.0');
   assert.equal(initialize.capabilities.definitionProvider, true);
   assert.equal(initialize.capabilities.experimental.zrynaSourceCommit, config.manifest.sourceCommit);
   const uri = pathToFileURL(join(project, 'main.zry')).href;
@@ -112,7 +120,7 @@ try {
     rootUri: pathToFileURL(project).href, capabilities: { general: { positionEncodings: ['utf-16'] } },
     initializationOptions: { zrynaProfile: 'control-flow-v1' },
   });
-  assert.equal(initialize.serverInfo.version, '0.4.0');
+  assert.equal(initialize.serverInfo.version, '0.5.0');
   assert.equal(initialize.capabilities.definitionProvider, false);
   assert.equal(initialize.capabilities.experimental.zrynaAnalysisProfile, 'control-flow-v1');
   assert.equal(initialize.capabilities.experimental.zrynaFormattingProfile, 'control-flow-format-v1');
@@ -136,8 +144,46 @@ try {
   assert.ok(m2Notices.some(value => value.method === 'textDocument/publishDiagnostics'
     && value.params.version === 2 && value.params.diagnostics.length > 0));
 } finally { await m2Connection.stop(); }
+const m3Connection = new Connection({ ...config, workspaceRoot: m3Project }, () => {}, () => {},
+  (executable, argv, options) => spawn(executable, argv, { ...options, env }));
+try {
+  const initialize = await m3Connection.request('initialize', {
+    rootUri: pathToFileURL(m3Project).href, capabilities: { general: { positionEncodings: ['utf-16'] } },
+    initializationOptions: { zrynaProfile: 'data-ownership-v1' },
+  });
+  assert.equal(initialize.serverInfo.version, '0.5.0');
+  assert.equal(initialize.capabilities.definitionProvider, false);
+  assert.equal(initialize.capabilities.experimental.zrynaAnalysisProfile, 'data-ownership-v1');
+  assert.equal(initialize.capabilities.experimental.zrynaFormattingProfile, 'data-ownership-format-v1');
+  assert.equal(initialize.capabilities.experimental.zrynaSourceCommit, config.manifest.sourceCommit);
+  const uri = pathToFileURL(join(m3Project, 'main.zry')).href;
+  m3Connection.notify('initialized', {});
+  m3Connection.notify('textDocument/didOpen', { textDocument: { uri, languageId: 'zryna', version: 1,
+    text: m3Bytes.toString() } });
+  const edits = await m3Connection.request('textDocument/formatting', {
+    textDocument: { uri }, options: { tabSize: 2, insertSpaces: true },
+  });
+  assert.deepEqual(edits.map(edit => edit.newText).join(''),
+    'import {\n  double\n}\nfrom "./math.zry";\nexport function score(value: i32): i32 {\n  return double(value);\n}\n');
+  m3Connection.notify('textDocument/didChange', { textDocument: { uri, version: 2 },
+    contentChanges: [{ text: edits.map(edit => edit.newText).join('') }] });
+  assert.deepEqual(await m3Connection.request('textDocument/formatting', {
+    textDocument: { uri }, options: { tabSize: 2, insertSpaces: true },
+  }), []);
+  writeFileSync(join(m3Project, 'math.zry'), 'export function double(value:i32):i32{return missing;}');
+  await assert.rejects(
+    m3Connection.request('textDocument/formatting', {
+      textDocument: { uri }, options: { tabSize: 2, insertSpaces: true },
+    }), /ZRYNA-D4002/,
+  );
+} finally {
+  writeFileSync(join(m3Project, 'math.zry'), m3ImportBytes);
+  await m3Connection.stop();
+}
 assert.equal(hash(readFileSync(join(project, 'main.zry'))), sourceHash);
 assert.equal(hash(readFileSync(join(project, 'control-flow.zry'))), m2SourceHash);
+assert.equal(hash(readFileSync(join(m3Project, 'main.zry'))), m3SourceHash);
+assert.equal(hash(readFileSync(join(m3Project, 'math.zry'))), m3ImportHash);
 assert.throws(() => verifyInstallation(relocated, '0'.repeat(64)));
 for (const name of ['worker.mjs', 'worker-v3.mjs', 'limits-v3.mjs']) {
   const worker = join(relocated, 'compiler/lib/zryna/bootstrap', name);
@@ -173,8 +219,10 @@ const receipt = { format: 'zryna.portable-acceptance.v1', sourceCommit: config.m
   manifestSha256: digest, target: config.manifest.target, runtimePathIsolated: true,
   compilerStarter: { javascript: 42, webassembly: 42 },
   editorRun: { scalar: { javascript: 9, webassembly: 26 }, controlFlow: { javascript: 10, webassembly: -6 } },
-  formatting: { scalar: true, controlFlow: true }, diagnostics: { scalar: true, controlFlow: true },
-  scalarDefinition: true, sourcePreserved: { scalar: sourceHash, controlFlow: m2SourceHash }, relocated: true,
+  formatting: { scalar: true, controlFlow: true, dataOwnership: true },
+  diagnostics: { scalar: true, controlFlow: true },
+  scalarDefinition: true, sourcePreserved: { scalar: sourceHash, controlFlow: m2SourceHash,
+    dataOwnership: m3SourceHash, savedImport: m3ImportHash }, relocated: true,
   mismatchRejected: true, substitutedWorkerRejected: true, missingWorkerRejected: true,
   environment: { platform: process.platform, hostRelease: require('node:os').release(),
     independentCleanMachine: false }, installation: relocated };

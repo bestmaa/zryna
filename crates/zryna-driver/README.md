@@ -89,6 +89,14 @@ files, executes no workspace program, and grants no build or Run authority. The 
 protocol-v2 `admit` path and its scalar definition index remain available; M2 definition lookup
 is unavailable until a separate verified M2 index exists.
 
+For the separately selected M3 language-server profile, `ToolingCompiler` captures the pinned
+protocol-v4 worker and limits module in the same private stage. Its workspace admission uses the
+bounded ownership module closure: exact open-buffer overlays shadow saved files, while unopened
+imports use the retained no-follow `WorkspaceSourceRoot` session. Final verified syntax and
+successful M3 semantics create per-module formatting plans for complete imports, data declarations,
+and functions. A pre-edit graph rediscovery requires every reachable source byte to match the
+admitted revision. This grants no compiler execution or source-write authority.
+
 The default public success profile is the one-file, explicitly typed `i32` subset documented by
 `zryna-semantics`. Source-level `bool` remains rejected by `I32V1`. The separate
 `discover_module_closure` boundary resolves bounded protocol-v3 module graphs through a retained

@@ -6,7 +6,7 @@ const { resolve } = require('node:path');
 const vm = require('node:vm');
 
 function fixture({ trusted = true, capability, analysisProfile, editResult = [],
-  installed = false, sourceCommit = 'a'.repeat(40), serverVersion = '0.4.0', setupFailure = false,
+  installed = false, sourceCommit = 'a'.repeat(40), serverVersion = '0.5.0', setupFailure = false,
   savedProfile = 'i32-v1', deferInitialize = false } = {}) {
   const launched = [];
   const sent = [];
@@ -39,7 +39,7 @@ function fixture({ trusted = true, capability, analysisProfile, editResult = [],
     Location: class Location { constructor(uri, range) { this.uri = uri; this.range = range; } },
     workspace: {
       isTrusted: trusted,
-      getWorkspaceFolder: () => ({ uri: { toString: () => 'file:///project' } }),
+      getWorkspaceFolder: () => ({ uri: { toString: () => 'file:///project', fsPath: resolve('trusted-project') } }),
       getConfiguration: () => ({ inspect: key => ({ globalValue: resolve(`${settingsPrefix}-${key}`), workspaceValue: 'hostile-workspace-command' }) }),
       onDidChangeTextDocument: callback => { events.change = callback; return disposable(); },
       onDidCloseTextDocument: disposable,
@@ -69,11 +69,12 @@ function fixture({ trusted = true, capability, analysisProfile, editResult = [],
         initialized.push(params);
         if (initializeGate) await initializeGate;
         const m2 = params.initializationOptions?.zrynaProfile === 'control-flow-v1';
+        const m3 = params.initializationOptions?.zrynaProfile === 'data-ownership-v1';
         return {
         serverInfo: { name: 'zryna-language-server', version: serverVersion },
-        capabilities: { positionEncoding: 'utf-16', definitionProvider: !m2, documentFormattingProvider: true,
-          documentRangeFormattingProvider: true, experimental: { zrynaAnalysisProfile: analysisProfile ?? (m2 ? 'control-flow-v1' : 'scalar-v2'),
-            zrynaFormattingProfile: capability ?? (m2 ? 'control-flow-format-v1' : 'scalar-format-v1'),
+        capabilities: { positionEncoding: 'utf-16', definitionProvider: !(m2 || m3), documentFormattingProvider: true,
+          documentRangeFormattingProvider: true, experimental: { zrynaAnalysisProfile: analysisProfile ?? (m3 ? 'data-ownership-v1' : m2 ? 'control-flow-v1' : 'scalar-v2'),
+            zrynaFormattingProfile: capability ?? (m3 ? 'data-ownership-format-v1' : m2 ? 'control-flow-format-v1' : 'scalar-format-v1'),
             zrynaInstallationProfile: 'portable-setup-v1', zrynaSourceCommit: sourceCommit } },
         };
       }
@@ -111,7 +112,7 @@ test('untrusted, virtual and closed documents cannot launch a compiler', async (
 
 test('workspace executable overrides are ignored and incompatible servers receive no document contents', async () => {
   const old = fixture({ capability: 'old-scalar-server' });
-  await assert.rejects(old.providers.format.provideDocumentFormattingEdits(old.document, {}), /matching Zryna 0.4.0/);
+  await assert.rejects(old.providers.format.provideDocumentFormattingEdits(old.document, {}), /matching Zryna 0.5.0/);
   assert.equal(old.sent.length, 0);
   assert.equal(old.launched[0].serverPath, resolve('trusted-serverPath'));
   assert.equal(old.initialized[0].initializationOptions, undefined);
@@ -245,17 +246,35 @@ test('M2 capability mismatch sends no source and does not return edits', async (
     { serverVersion: '0.3.0' }, { sourceCommit: 'b'.repeat(40), installed: true },
   ]) {
     const f = fixture({ savedProfile: 'control-flow-v1', ...option });
-    await assert.rejects(f.providers.format.provideDocumentFormattingEdits(f.document, {}), /matching Zryna 0.4.0/);
+    await assert.rejects(f.providers.format.provideDocumentFormattingEdits(f.document, {}), /matching Zryna 0.5.0/);
     assert.equal(f.sent.length, 0);
     assert.equal(f.initialized[0].initializationOptions.zrynaProfile, 'control-flow-v1');
     await f.deactivate();
   }
 });
 
+test('M3 selection passes only the trusted folder at startup and checks capability before source', async () => {
+  const f = fixture({ savedProfile: 'data-ownership-v1' });
+  await f.providers.format.provideDocumentFormattingEdits(f.document, {});
+  assert.equal(f.launched[0].workspaceRoot, resolve('trusted-project'));
+  assert.equal(f.initialized[0].rootUri, 'file:///project');
+  assert.equal(f.initialized[0].initializationOptions.zrynaProfile, 'data-ownership-v1');
+  assert.equal(await f.providers.definition.provideDefinition(f.document, { line: 0, character: 0 }), null);
+  await f.deactivate();
+
+  for (const option of [{ capability: 'control-flow-format-v1' }, { serverVersion: '0.4.0' }]) {
+    const incompatible = fixture({ savedProfile: 'data-ownership-v1', ...option });
+    await assert.rejects(incompatible.providers.format.provideDocumentFormattingEdits(
+      incompatible.document, {}), /matching Zryna 0.5.0/);
+    assert.equal(incompatible.sent.length, 0);
+    await incompatible.deactivate();
+  }
+});
+
 test('same profile selection retries failed handshakes and picker cancellation preserves state', async () => {
   const f = fixture({ savedProfile: 'control-flow-v1', capability: 'wrong-format' });
   f.vscode.window.activeTextEditor = { document: f.document };
-  await assert.rejects(f.commands['zryna.selectEditorProfile']('control-flow-v1'), /matching Zryna 0.4.0/);
+  await assert.rejects(f.commands['zryna.selectEditorProfile']('control-flow-v1'), /matching Zryna 0.5.0/);
   assert.equal(f.sent.length, 0);
   assert.equal(f.initialized.length, 1);
   f.vscode.window.showQuickPick = async () => undefined;

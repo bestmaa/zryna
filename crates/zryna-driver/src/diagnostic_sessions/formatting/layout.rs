@@ -2,6 +2,7 @@
 //! Every non-whitespace byte, including comments and punctuation, is retained in order.
 
 mod control_flow;
+mod data_ownership;
 
 pub(super) fn format_control_flow(source: &str) -> Option<String> {
     control_flow::format(source)
@@ -15,6 +16,12 @@ pub(super) fn format_control_flow_bounded(
 }
 
 pub(super) use control_flow::LayoutError;
+pub(super) fn format_data_ownership_bounded(
+    source: &str,
+    maximum: usize,
+) -> Result<String, LayoutError> {
+    data_ownership::format_bounded(source, maximum)
+}
 
 pub(super) fn format(source: &str) -> Option<String> {
     let tokens = tokens(source)?;

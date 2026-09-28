@@ -39,6 +39,27 @@ test('launch uses explicit executable and arguments without shell or workspace c
   assert.throws(() => new Connection({ serverPath: 'relative', compilerRoot: '/', nodePath: '/' }), /absolute/);
 });
 
+test('M3 launch binds the trusted workspace root without a shell', () => {
+  const f = fixture();
+  f.connection.fail(new Error('test cleanup'));
+  const workspaceRoot = resolve('trusted workspace');
+  let invocation;
+  const child = new EventEmitter();
+  child.stdin = new PassThrough();
+  child.stdout = new PassThrough();
+  child.stderr = new PassThrough();
+  child.kill = () => {};
+  const connection = new Connection({ ...f.config, workspaceRoot }, () => {}, () => {}, (...args) => {
+    invocation = args;
+    return child;
+  });
+  assert.deepEqual(invocation[1], ['--compiler-root', f.config.compilerRoot,
+    '--node', f.config.nodePath, '--workspace-root', workspaceRoot]);
+  assert.equal(invocation[2].shell, false);
+  connection.fail(new Error('test cleanup'));
+  assert.throws(() => new Connection({ ...f.config, workspaceRoot: 'relative' }), /trusted workspace root/);
+});
+
 test('fragmented Unicode responses correlate exactly; notifications remain inert', async () => {
   const f = fixture();
   const pending = f.connection.request('test', {});

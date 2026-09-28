@@ -162,7 +162,7 @@ fn cache_retention_accepts_exact_limit_and_evicts_for_first_extra() {
         report: active.report.clone(),
         definitions: active.definitions.clone(),
         cache_bytes: MAX_SESSION_CACHE_BYTES,
-        formatting: None,
+        formatting: Vec::new(),
     });
     session.retained.push_back(exact);
     session.cache_bytes = MAX_SESSION_CACHE_BYTES;

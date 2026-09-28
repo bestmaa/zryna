@@ -14,15 +14,15 @@ function fixture(t) {
   fs.mkdirSync(root);
   const suffix = process.platform === 'win32' ? '.exe' : '';
   const files = [`bin/zryna-language-server${suffix}`, `compiler/bin/zryna${suffix}`,
-    'editor/zryna-0.4.0.vsix', 'README.md', 'LICENSE', 'NOTICE', 'a.txt', 'b.txt', 'c.txt', 'd.txt']
+    'editor/zryna-0.5.0.vsix', 'README.md', 'LICENSE', 'NOTICE', 'a.txt', 'b.txt', 'c.txt', 'd.txt']
     .map(name => {
       fs.mkdirSync(path.dirname(path.join(root, name)), { recursive: true });
       fs.writeFileSync(path.join(root, name), name);
       return { path: name, size: Buffer.byteLength(name), sha256: hash(Buffer.from(name)) };
     });
-  const manifest = { format: 'zryna.portable-setup.v1', candidate: '0.1.0-candidate.2',
+  const manifest = { format: 'zryna.portable-setup.v1', candidate: '0.1.0-candidate.3',
     target: process.platform === 'win32' ? 'x86_64-pc-windows-msvc' : 'x86_64-unknown-linux-gnu',
-    compilerVersion: '0.2.3', serverVersion: '0.4.0', editorVersion: '0.4.0',
+    compilerVersion: '0.2.3', serverVersion: '0.5.0', editorVersion: '0.5.0',
     capability: 'portable-setup-v1', sourceCommit: 'a'.repeat(40), files };
   const write = () => {
     const bytes = Buffer.from(JSON.stringify(manifest));
@@ -63,14 +63,14 @@ test('mixed candidate, compiler, server and editor identities reject even with a
     assert.throws(() => verifyInstallation(f.root, f.write()), /identity/, field);
     f.manifest[field] = original;
   }
-  assert.equal(verifyInstallation(f.root, f.write()).manifest.editorVersion, '0.4.0');
+  assert.equal(verifyInstallation(f.root, f.write()).manifest.editorVersion, '0.5.0');
 });
 
 test('the exact current VSIX path is required even if an old package is inventoried', t => {
   const f = fixture(t);
-  const current = path.join(f.root, 'editor', 'zryna-0.4.0.vsix');
+  const current = path.join(f.root, 'editor', 'zryna-0.5.0.vsix');
   fs.renameSync(current, path.join(f.root, 'editor', 'zryna-0.3.0.vsix'));
-  f.manifest.files.find(file => file.path === 'editor/zryna-0.4.0.vsix').path = 'editor/zryna-0.3.0.vsix';
+  f.manifest.files.find(file => file.path === 'editor/zryna-0.5.0.vsix').path = 'editor/zryna-0.3.0.vsix';
   assert.throws(() => verifyInstallation(f.root, f.write()), /identity/);
 });
 

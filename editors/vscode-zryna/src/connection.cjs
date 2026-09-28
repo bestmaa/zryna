@@ -13,6 +13,10 @@ class Connection {
       typeof value === 'string' && isAbsolute(value) && !value.includes('\0'))) {
       throw new Error('Configure absolute Zryna server, compiler and Node paths in user settings.');
     }
+    if (config.workspaceRoot !== undefined && (typeof config.workspaceRoot !== 'string'
+      || !isAbsolute(config.workspaceRoot) || config.workspaceRoot.includes('\0'))) {
+      throw new Error('Zryna requires an absolute trusted workspace root.');
+    }
     this.pending = new Map();
     this.sequence = 0;
     this.buffer = Buffer.alloc(0);
@@ -21,6 +25,7 @@ class Connection {
     this.closed = false;
     const args = config.installed ? ['--installed-root', config.compilerRoot]
       : ['--compiler-root', config.compilerRoot, '--node', config.nodePath];
+    if (config.workspaceRoot !== undefined) args.push('--workspace-root', config.workspaceRoot);
     this.child = launch(config.serverPath, args, {
       cwd: config.compilerRoot, shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
     });

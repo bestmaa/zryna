@@ -11,7 +11,7 @@ const args = process.argv.slice(2);
 if (args.length !== 0 && (args.length !== 2 || args[0] !== '--out')) {
   throw new Error('usage: package-editor.mjs [--out <path>]');
 }
-const output = args.length ? resolve(args[1]) : join(root, '.zryna/out/zryna-0.4.0.vsix');
+const output = args.length ? resolve(args[1]) : join(root, '.zryna/out/zryna-0.5.0.vsix');
 const manifest = require.resolve('@vscode/vsce/package.json');
 const cli = join(dirname(manifest), JSON.parse(readFileSync(manifest, 'utf8')).bin.vsce);
 const inventory = spawnSync(process.execPath, [cli, 'ls', '--no-dependencies'], {

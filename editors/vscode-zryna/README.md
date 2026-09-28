@@ -1,15 +1,15 @@
 # Zryna Developer Preview
 
-Thin local editor integration for Zryna's verified scalar and bounded M2 diagnostics and formatter.
+Thin local editor integration for Zryna's verified scalar, M2 and M3 diagnostics and formatter.
 Lexical syntax highlighting and explicit **Zryna: Run Saved File** are included. The default
 profile is scalar `i32-v1`; select `control-flow-v1` for local `let`/`const`, direct calls,
-`if`/`else` and `while`. Imports and M3 data/ownership remain outside the editor. Unsupported
-or incomplete input receives no edits.
+`if`/`else` and `while`; select `data-ownership-v1` for admitted M3 source and saved imports.
+Unsupported or incomplete input receives no edits. Explicit Run remains limited to scalar and M2.
 
 ## Installation
 
-The portable **0.1.0-candidate.2** setup combines the unchanged compiler 0.2.3 with server/editor
-0.4.0 and a pinned runtime. Follow the [portable setup guide](https://github.com/zryna/zryna/blob/main/docs/PORTABLE_SETUP.md).
+The portable **0.1.0-candidate.3** setup combines the unchanged compiler 0.2.3 with server/editor
+0.5.0 and a pinned runtime. Follow the [portable setup guide](https://github.com/zryna/zryna/blob/main/docs/PORTABLE_SETUP.md).
 Verify the reviewer-delivered archive identity before execution. This is a review candidate, not
 a public beta or marketplace release. Its isolated installer creates a new profile with user
 settings `zryna.installationPath` and `zryna.installationDigest`. The entire installation is checked
@@ -27,7 +27,7 @@ pnpm m0:check
 cargo build --locked -p zryna-language-server
 pnpm editor:check
 pnpm editor:package
-code --install-extension /absolute/compiler/checkout/.zryna/out/zryna-0.4.0.vsix
+code --install-extension /absolute/compiler/checkout/.zryna/out/zryna-0.5.0.vsix
 ```
 
 Set these **user settings** to absolute paths:
@@ -77,25 +77,25 @@ only after verifying that no acceptance VS Code process still uses the printed s
 pnpm editor:host-acceptance -- '<verified setup directory>' '<setup.json SHA-256>'
 ```
 
-The host checks activation, scalar and M2 profile selection, scalar definition, M2 diagnostics and
-recovery, format idempotence, real JavaScript and WebAssembly return values, and opening generated
+The host checks activation, scalar, M2 and M3 profile selection, scalar definition, M2 diagnostics and
+recovery, M3 saved-import formatting, format idempotence, real JavaScript and WebAssembly return values, and opening generated
 JavaScript. It uses a validated command argument for Run so the interactive picker remains available
 to users. The API tests do not prove status-bar appearance, rendered Problems layout, notification
 presentation, or OS file explorer behavior; those require a separate visual review. The harness is
 not part of `editor:check` or default CI.
 
-On a local Windows run against the `cb60922` candidate, the one-time trusted setup completed in
+On a local Windows run against the earlier 0.4.0 `cb60922` candidate, the one-time trusted setup completed in
 23.0 seconds; two consecutive cached, unattended acceptance runs completed in 24.0 and 24.0
 seconds. The first VS Code download in an earlier probe took 102 seconds including a failed trust
 check, so a complete cold acceptance duration has not been measured. These are observations,
-not duration guarantees. Linux and CI behavior remain unverified.
+not duration guarantees or 0.5.0 host acceptance evidence. Linux and CI behavior remain unverified.
 
 ## Compatibility
 
 | Extension | Editor | Server |
 | --- | --- | --- |
-| 0.4.0 | VS Code-compatible API >=1.82.0 | Server 0.4.0 with `scalar-format-v1` for default scalar and `control-flow-format-v1` for explicit M2, plus `portable-setup-v1`; installed mode checks exact source revision |
-| 0.4.0 | Same | Public released v0.2.3 server and older 0.3.0 server are incompatible; the unchanged installed compiler 0.2.3 supports Run |
+| 0.5.0 | VS Code-compatible API >=1.82.0 | Server 0.5.0 with exact `scalar-format-v1`, `control-flow-format-v1` or `data-ownership-format-v1` capability for the selected profile, plus `portable-setup-v1`; installed mode checks exact source revision |
+| 0.5.0 | Same | Public released v0.2.3 server and older 0.4.0 server are incompatible; the unchanged installed compiler 0.2.3 supports scalar/M2 Run |
 
 The extension verifies the exact capability before sending source. A package-version match alone
 is insufficient. The VSIX alone contains no compiler; the portable candidate supplies the matched
@@ -115,9 +115,10 @@ Default scalar formatting supports the protocol-v2 i32 function/return/reference
 slice, and Go to Definition. Select **Zryna: Select Editor Profile** to use explicit
 `control-flow-v1` diagnostics and formatting for the bounded local M2 syntax. M2 has no definition
 index; Go to Definition is scalar-only. M2 formatting requires a semantically accepted single
-file and caps the formatted result at 131,072 bytes. Imports, parenthesized expressions, globals,
-classes and M3 syntax remain outside this editor formatter. Malformed/unavailable revisions, partial ranges,
-cancellation and stale documents produce no edits. See the
+file and caps the formatted result at 131,072 bytes. Select `data-ownership-v1` for M3 formatting
+of the active buffer and saved imports below the trusted workspace folder. Unopened imports are
+authenticated from disk; changes to admitted sources before edit publication reject edits.
+Malformed/unavailable revisions, partial ranges, cancellation and stale documents produce no edits. See the
 [language server and format contract](https://github.com/zryna/zryna/blob/main/docs/LANGUAGE_SERVER.md).
 
 ## Run and inspect output

@@ -1,12 +1,16 @@
 # Portable setup candidate
 
-This is **setup 0.1.0-candidate.2**, an internal review and user-acceptance candidate, not a
+This is **setup 0.1.0-candidate.3**, an internal review and user-acceptance candidate, not a
 published beta or stable release. It combines the unchanged, signed compiler **0.2.3 Developer
-Preview**, language server **0.4.0**, editor **0.4.0**, Node **22.22.1** and TypeScript **6.0.3**.
+Preview**, language server **0.5.0**, editor **0.5.0**, Node **22.22.1** and TypeScript **6.0.3**.
 Those component versions intentionally differ. `setup.json` binds the exact component bytes and
 source revision. The editor requires `scalar-format-v1` for its default scalar profile or
 `control-flow-format-v1` for explicit M2, plus `portable-setup-v1` and the exact server source
 revision. An older released server with the same compiler version is incompatible.
+
+The explicit M3 editor profile requires the exact data-ownership formatting capability. It
+authenticates saved imports beneath the trusted workspace folder and never runs project code
+during formatting. Explicit Run remains limited to scalar and M2.
 
 The supported packaging targets are Windows x64 (Windows Server 2022 baseline) and Ubuntu 24.04
 x64. Windows desktop and WSL observations are additional local smoke evidence, not independent
@@ -20,11 +24,11 @@ Obtain the candidate archive, its SHA-256, and the SHA-256 of `setup.json` throu
 candidate handoff. Check the exact archive hash **before extraction or execution**:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 -LiteralPath .\zryna-setup-0.1.0-candidate.2-x86_64-pc-windows-msvc.zip
+Get-FileHash -Algorithm SHA256 -LiteralPath .\zryna-setup-0.1.0-candidate.3-x86_64-pc-windows-msvc.zip
 ```
 
 ```sh
-sha256sum zryna-setup-0.1.0-candidate.2-x86_64-unknown-linux-gnu.tar.gz
+sha256sum zryna-setup-0.1.0-candidate.3-x86_64-unknown-linux-gnu.tar.gz
 ```
 
 A checksum found only beside an untrusted download is not publisher authentication. This
@@ -47,7 +51,7 @@ short-name aliases. The verifier rejects noncanonical paths rather than followin
 In PowerShell, select the extracted root and the reviewed manifest digest:
 
 ```powershell
-$setup = 'C:\Zryna\zryna-setup-0.1.0-candidate.2-x86_64-pc-windows-msvc'
+$setup = 'C:\Zryna\zryna-setup-0.1.0-candidate.3-x86_64-pc-windows-msvc'
 $digest = '<reviewed setup.json SHA256>'
 & "$setup\install.cmd" --digest $digest
 & "$setup\install.cmd" --digest $digest --editor "$env:LOCALAPPDATA\Programs\Microsoft VS Code\Code.exe" --profile "$env:USERPROFILE\ZrynaCandidateProfile"
@@ -63,7 +67,7 @@ profile, workspace settings or source. To open a project later, start Code with 
 ## Linux installation
 
 ```sh
-setup="$HOME/zryna-setup-0.1.0-candidate.2-x86_64-unknown-linux-gnu"
+setup="$HOME/zryna-setup-0.1.0-candidate.3-x86_64-unknown-linux-gnu"
 digest='<reviewed setup.json SHA256>'
 "$setup/install.sh" --digest "$digest"
 "$setup/install.sh" --digest "$digest" --editor /usr/bin/code --profile "$HOME/ZrynaCandidateProfile"
@@ -90,12 +94,18 @@ The extension does not download tools, run on save, auto-save, or execute arbitr
    the second request should make no edit. Run `accumulate` with JavaScript, then enter `true`
    and `5`; expect `javascript: i32 10`. Run again with WebAssembly, enter `false` and `3`;
    expect `webassembly: i32 -6`. These runs require explicit profile, target, export and inputs.
+7. Copy `examples/m3/main.zry` and `examples/m3/math.zry` into a new `m3` directory beneath
+   that trusted folder. Open `main.zry`, select **M3 data ownership**, then Format Document.
+   The import is read from the saved `math.zry` file; a second format request makes no edit.
+   This profile provides formatting and diagnostics, not M3 Run.
 
 The default editor profile retains the one-file `i32-v1` Run subset and its 1,024 UTF-8-byte
 package limit. Explicit `control-flow-v1` enables bounded local `let`/`const`, direct calls,
 `if`/`else`, `while`, and exact i32/bool inputs for saved-source Run, capped at 2 MiB of source.
-Imports, parenthesized expressions, globals and M3 ownership remain outside the editor. The server
-serves one open document per connection; M2 formatted output is capped at 131,072 bytes.
+The explicit `data-ownership-v1` editor profile formats admitted M3 source with saved imports
+below the trusted workspace folder. The edited entry may be unsaved; the server authenticates
+unopened imports from disk and rejects edits if they change before publication. The server serves
+one active document per connection; M2 formatted output is capped at 131,072 bytes.
 Go to Definition applies only to the scalar profile. The compiler remains the authority for
 accepted source, invocation and resource limits. Opening, editing, formatting and saving never
 execute project code.

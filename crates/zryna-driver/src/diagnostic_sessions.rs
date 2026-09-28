@@ -158,7 +158,7 @@ struct RevisionRecord {
     report: Option<Arc<str>>,
     definitions: Option<Arc<DefinitionIndex>>,
     cache_bytes: usize,
-    formatting: Option<FormattingDocument>,
+    formatting: Vec<FormattingDocument>,
 }
 
 #[derive(Clone, Debug)]
@@ -230,7 +230,7 @@ impl DiagnosticSession {
     ) -> Result<DiagnosticRevision, DiagnosticSessionError> {
         let report = protocol_v2::render_json(diagnostics, &sources)
             .map_err(DiagnosticSessionError::Diagnostics)?;
-        self.admit(sources, Some(report.into()), None, None)
+        self.admit(sources, Some(report.into()), None, Vec::new())
     }
 
     pub(crate) fn admit_worker_failure(
@@ -273,7 +273,12 @@ impl DiagnosticSession {
             .map_err(DiagnosticSessionError::Diagnostics)?;
         {
             let formatting = FormattingDocument::prepare(syntax, &sources);
-            self.admit(sources, Some(report.into()), Some(Arc::new(definitions)), formatting)
+            self.admit(
+                sources,
+                Some(report.into()),
+                Some(Arc::new(definitions)),
+                formatting.into_iter().collect(),
+            )
         }
     }
 
@@ -307,7 +312,7 @@ impl DiagnosticSession {
                         sources,
                         Some(report.into()),
                         Some(Arc::new(definitions)),
-                        formatting,
+                        formatting.into_iter().collect(),
                     )
                 }
             }
@@ -347,6 +352,39 @@ impl DiagnosticSession {
                 let report = protocol_v2::render_json(syntax.diagnostics(), &sources)
                     .map_err(DiagnosticSessionError::Diagnostics)?;
                 let formatting = FormattingDocument::prepare_control_flow(syntax, &sources);
+                self.admit(sources, Some(report.into()), None, formatting.into_iter().collect())
+            }
+            Err(diagnostics) => self.admit_diagnostics(sources, &diagnostics),
+        }
+    }
+
+    /// Admits an exact protocol-v4 M3 source map after verified ownership semantics.
+    ///
+    /// # Errors
+    /// Rejects foreign source authority, an absent entry, invalid diagnostics, or retention
+    /// exhaustion. Failed semantic analysis retains diagnostics without formatting edits.
+    pub fn admit_data_ownership_analysis(
+        &mut self,
+        sources: SourceMap,
+        syntax: &zryna_frontend::syntax_v4::ProjectSyntaxSnapshot,
+        entrypoint: &NormalizedSourcePath,
+    ) -> Result<DiagnosticRevision, DiagnosticSessionError> {
+        if !syntax.is_bound_to(&sources) {
+            return Err(DiagnosticSessionError::SemanticAuthority);
+        }
+        let entry = sources.file_id(entrypoint).ok_or(DiagnosticSessionError::SemanticAuthority)?;
+        if syntax.diagnostics().iter().any(|diagnostic| diagnostic.severity() == Severity::Error) {
+            return self.admit_diagnostics(sources, syntax.diagnostics());
+        }
+        let input =
+            zryna_semantics::data_ownership_v1::SemanticInput::try_new(syntax, &sources, entry)
+                .ok_or(DiagnosticSessionError::SemanticAuthority)?;
+        match zryna_semantics::data_ownership_v1::lower(input) {
+            Ok(_) => {
+                let report = protocol_v2::render_json(syntax.diagnostics(), &sources)
+                    .map_err(DiagnosticSessionError::Diagnostics)?;
+                let formatting = FormattingDocument::prepare_data_ownership(syntax, &sources)
+                    .ok_or(DiagnosticSessionError::SemanticAuthority)?;
                 self.admit(sources, Some(report.into()), None, formatting)
             }
             Err(diagnostics) => self.admit_diagnostics(sources, &diagnostics),
@@ -362,13 +400,22 @@ impl DiagnosticSession {
         &mut self,
         sources: SourceMap,
     ) -> Result<DiagnosticRevision, DiagnosticSessionError> {
-        self.admit(sources, None, None, None)
+        self.admit(sources, None, None, Vec::new())
     }
 
     /// Returns the currently active revision, when one has been admitted.
     #[must_use]
     pub fn active_revision(&self) -> Option<DiagnosticRevision> {
         self.retained.back().map(|record| record.description)
+    }
+
+    /// Returns the exact immutable source map retained for the active revision.
+    #[must_use]
+    pub fn active_sources(&self, revision: DiagnosticRevision) -> Option<&SourceMap> {
+        self.retained
+            .back()
+            .filter(|record| record.description == revision)
+            .map(|record| &record.sources)
     }
 
     /// Returns the number of immutable revisions retained for bounded incremental reuse.
@@ -388,7 +435,7 @@ impl DiagnosticSession {
         sources: SourceMap,
         report: Option<Arc<str>>,
         definitions: Option<Arc<DefinitionIndex>>,
-        formatting: Option<FormattingDocument>,
+        formatting: Vec<FormattingDocument>,
     ) -> Result<DiagnosticRevision, DiagnosticSessionError> {
         if self.next_revision > MAX_REVISION {
             return Err(DiagnosticSessionError::RevisionExhausted);
@@ -403,7 +450,7 @@ impl DiagnosticSession {
         let cache_bytes = checked_cache_charge(
             source_bytes,
             report.as_ref().map_or(0, |value| value.len()),
-            semantic_bytes + formatting.as_ref().map_or(0, FormattingDocument::cache_bytes),
+            semantic_bytes + formatting.iter().map(FormattingDocument::cache_bytes).sum::<usize>(),
         )?;
         let description = DiagnosticRevision {
             handle: DiagnosticSnapshotHandle { session: self.session, serial: self.next_revision },

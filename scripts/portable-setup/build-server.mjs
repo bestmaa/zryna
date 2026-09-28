@@ -18,7 +18,7 @@ const flags = [`--remap-path-prefix=${source}=/zryna/source`, `--remap-path-pref
   process.platform === 'win32' ? '-Clink-arg=/Brepro' : '-Clink-arg=-Wl,--build-id=none'];
 const env = { ...process.env, ZRYNA_TOOLING_SOURCE_COMMIT: git.stdout.trim(),
   CARGO_ENCODED_RUSTFLAGS: flags.join('\x1f'), CARGO_TARGET_DIR: join(output, 'target'),
-  CARGO_INCREMENTAL: '0', CARGO_BUILD_JOBS: '3' };
+  CARGO_INCREMENTAL: '0', CARGO_BUILD_JOBS: '2' };
 delete env.RUSTFLAGS;
 const result = spawnSync('cargo', ['build', '--locked', '--release', '--target', target,
   '-p', 'zryna-language-server'], { cwd: source, env, shell: false, windowsHide: true, stdio: 'inherit' });
