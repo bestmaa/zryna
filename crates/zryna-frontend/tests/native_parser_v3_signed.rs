@@ -54,25 +54,27 @@ fn two_file_signed_literals_match_pinned_worker_and_verify() {
 }
 
 #[test]
-fn other_negation_and_noncanonical_signed_forms_remain_outside_this_candidate() {
-    for expression in ["- 1", "-/*gap*/1", "-0", "+1", "--1", "(-1)"] {
+fn noncanonical_signed_forms_remain_outside_this_candidate() {
+    for expression in ["-01", "-00", "+1", "--1", "(-1)"] {
         let text = format!("function value(x: i32): i32 {{ return {expression}; }}");
         assert_eq!(one(&text), Err("ZRYNA-F2002".to_owned()), "{expression}");
     }
 }
 
 #[test]
-fn signed_spelling_accepts_exact_64_bytes_and_rejects_65() {
-    for (bytes, accepted) in
-        [(syntax_v3::MAX_LITERAL_BYTES, true), (syntax_v3::MAX_LITERAL_BYTES + 1, false)]
-    {
+fn signed_spelling_uses_one_node_at_64_two_at_65_and_rejects_66() {
+    for (bytes, expression_count) in [
+        (syntax_v3::MAX_LITERAL_BYTES, Some(1)),
+        (syntax_v3::MAX_LITERAL_BYTES + 1, Some(2)),
+        (syntax_v3::MAX_LITERAL_BYTES + 2, None),
+    ] {
         let spelling = format!("-{}", "1".repeat(bytes - 1));
         let text = format!("function value(): i32 {{ return {spelling}; }}");
         let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
         let result = parse(&sources);
-        if accepted {
+        if let Some(expression_count) = expression_count {
             let native = result.expect("exact signed spelling");
-            assert_eq!(native.files[0].functions[0].body.expressions.len(), 1);
+            assert_eq!(native.files[0].functions[0].body.expressions.len(), expression_count);
             syntax_v3::verify_snapshot(native, &sources).expect("exact spelling verifies");
         } else {
             assert_eq!(result, Err("ZRYNA-F2002".to_owned()));
@@ -83,12 +85,12 @@ fn signed_spelling_accepts_exact_64_bytes_and_rejects_65() {
 #[test]
 fn malformed_later_function_or_file_cannot_expose_signed_literals() {
     assert_eq!(
-        one("function good(): i32 { return -1; } function bad(): i32 { return - 1; }"),
+        one("function good(): i32 { return -1; } function bad(): i32 { return -01; }"),
         Err("ZRYNA-F2002".to_owned())
     );
     let sources = SourceMap::build(vec![
         source("a.zry", "function good(): i32 { return -1; }"),
-        source("z.zry", "function bad(): i32 { return - 1; }"),
+        source("z.zry", "function bad(): i32 { return -01; }"),
     ])
     .expect("two sources");
     assert_eq!(parse(&sources), Err("ZRYNA-F2002".to_owned()));

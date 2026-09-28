@@ -3,11 +3,76 @@
 use zryna_source::UntrustedSpan;
 use zryna_syntax::v3 as syntax;
 
-use crate::native_lexer::{Keyword, TokenKind};
+use crate::native_lexer::{Keyword, Token, TokenKind};
 
 use super::{FileParser, ParseError, function_error_at, raw, resource};
 
 impl FileParser<'_> {
+    fn negation(
+        &self,
+        expressions: &mut Vec<syntax::RawExpressionSyntax>,
+        previous_expressions: usize,
+        operator: Token,
+        operand: u32,
+        end: u32,
+    ) -> Result<(u32, u32), ParseError> {
+        let index = push_expression(
+            expressions,
+            previous_expressions,
+            syntax::RawExpressionSyntax {
+                span: UntrustedSpan { file: self.file, start: operator.span().start(), end },
+                kind: syntax::RawExpressionKind::Negation { operator_span: raw(operator), operand },
+            },
+        )?;
+        Ok((index, 2))
+    }
+
+    fn numeric_negation(
+        &mut self,
+        expressions: &mut Vec<syntax::RawExpressionSyntax>,
+        previous_expressions: usize,
+        operator: Token,
+    ) -> Result<(u32, u32), ParseError> {
+        let digits = self.function_take(TokenKind::DecimalInteger)?;
+        let digits_spelling = self.spelling(digits);
+        if digits_spelling.len() > syntax::MAX_LITERAL_BYTES
+            || (digits_spelling != "0" && digits_spelling.starts_with('0'))
+        {
+            return Err(function_error_at(operator, "noncanonical integer literal"));
+        }
+        if operator.span().end() == digits.span().start()
+            && digits_spelling != "0"
+            && digits_spelling.len() < syntax::MAX_LITERAL_BYTES
+        {
+            let spelling =
+                &self.text[operator.span().start() as usize..digits.span().end() as usize];
+            return push_expression(
+                expressions,
+                previous_expressions,
+                syntax::RawExpressionSyntax {
+                    span: UntrustedSpan {
+                        file: self.file,
+                        start: operator.span().start(),
+                        end: digits.span().end(),
+                    },
+                    kind: syntax::RawExpressionKind::I32Literal { spelling: spelling.to_owned() },
+                },
+            )
+            .map(|index| (index, 1));
+        }
+        let operand = push_expression(
+            expressions,
+            previous_expressions,
+            syntax::RawExpressionSyntax {
+                span: raw(digits),
+                kind: syntax::RawExpressionKind::I32Literal {
+                    spelling: digits_spelling.to_owned(),
+                },
+            },
+        )?;
+        self.negation(expressions, previous_expressions, operator, operand, digits.span().end())
+    }
+
     pub(super) fn addition(
         &mut self,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
@@ -96,44 +161,15 @@ impl FileParser<'_> {
                         kind: syntax::RawExpressionKind::Reference { name },
                     },
                 )?;
-                let negation = push_expression(
+                return self.negation(
                     expressions,
                     previous_expressions,
-                    syntax::RawExpressionSyntax {
-                        span: UntrustedSpan {
-                            file: self.file,
-                            start: token.span().start(),
-                            end: operand_span.end,
-                        },
-                        kind: syntax::RawExpressionKind::Negation {
-                            operator_span: raw(token),
-                            operand,
-                        },
-                    },
-                )?;
-                return Ok((negation, 2));
+                    token,
+                    operand,
+                    operand_span.end,
+                );
             }
-            let digits = self.function_take(TokenKind::DecimalInteger)?;
-            if token.span().end() != digits.span().start() {
-                return Err(function_error_at(token, "signed integer has intervening trivia"));
-            }
-            let spelling = &self.text[token.span().start() as usize..digits.span().end() as usize];
-            if spelling.len() > syntax::MAX_LITERAL_BYTES || spelling.starts_with("-0") {
-                return Err(function_error_at(token, "noncanonical integer literal"));
-            }
-            return push_expression(
-                expressions,
-                previous_expressions,
-                syntax::RawExpressionSyntax {
-                    span: UntrustedSpan {
-                        file: self.file,
-                        start: token.span().start(),
-                        end: digits.span().end(),
-                    },
-                    kind: syntax::RawExpressionKind::I32Literal { spelling: spelling.to_owned() },
-                },
-            )
-            .map(|index| (index, 1));
+            return self.numeric_negation(expressions, previous_expressions, token);
         }
         if token.kind() == TokenKind::Identifier
             && self

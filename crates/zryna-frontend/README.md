@@ -102,12 +102,13 @@ explicit `i32` or `bool` parameter and result annotations, zero or more interlea
 `let` or `const` declarations with explicit `i32` or `bool` annotations and initializers and
 simple `name = expression;` assignments, and one final semicolon-terminated return. Initializers,
 assignment values, and returns use identifiers, Boolean literals, canonical nonnegative integers,
-compact canonical negative decimal integers (one literal node with no trivia after `-`),
+compact canonical negative decimal integers through 64 total bytes (one literal node), numeric
+negation of one canonical nonnegative decimal token of at most 64 bytes in other cases (two nodes),
 zero-argument direct identifier calls, one unary minus over a direct identifier (including
 intervening trivia), or left-associative addition of those atoms. It emits one
 canonical root block with source-ordered statement and postorder expression arenas. Frozen
-two-file TypeScript 6 v3 function, local, assignment, zero-argument call, signed-literal, and
-identifier-negation snapshots, the M2 use-before-declaration source's
+two-file TypeScript 6 v3 function, local, assignment, zero-argument call, signed-literal,
+identifier-negation, and numeric-negation snapshots, the M2 use-before-declaration source's
 syntax snapshot, and the import-plus-helper prefix of the existing complete v3 fixture are exact
 DTO oracles; the v3 verifier remains authoritative. Syntax acceptance of a name before its
 declaration, assignment to a `const`, or call to an unresolved function gives it no semantic

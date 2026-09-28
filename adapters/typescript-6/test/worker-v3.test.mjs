@@ -277,6 +277,33 @@ test('native identifier-negation fixtures are exact TypeScript 6 responses', asy
   }
 });
 
+test('native numeric-negation fixtures preserve the signed-literal boundary', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_numeric_negation/', import.meta.url);
+  const main = (await readFile(new URL('main.zry', fixture), 'utf8')).replace(/\r?\n/g, '\r\n');
+  const math = await readFile(new URL('math.zry', fixture), 'utf8');
+  const rejected = await readFile(new URL('rejected.zry', fixture), 'utf8');
+  const expected = JSON.parse(await readFile(new URL('numeric.snapshot.json', fixture), 'utf8'));
+  const rejectedExpected = JSON.parse(await readFile(new URL('rejected.response.json', fixture), 'utf8'));
+  const analyzeWidth = (id, digitCount) => analyze(id, [{
+    path: 'src/main.zry', text: `function f(): i32 { return -${'1'.repeat(digitCount)}; }`,
+  }]);
+  const [numeric, rejectedResponse, compact, fallback, overflow] = await exchange([
+    analyze(1, [{ path: 'src/math.zry', text: math }, { path: 'src/main.zry', text: main }]),
+    analyze(2, [{ path: 'src/main.zry', text: rejected }]),
+    analyzeWidth(3, 63), analyzeWidth(4, 64), analyzeWidth(5, 65),
+  ]);
+  assert.deepEqual(numeric.result, expected);
+  assert.equal(validateSnapshot(numeric.result), true, JSON.stringify(validateSnapshot.errors));
+  assert.deepEqual(rejectedResponse, rejectedExpected);
+  assert.equal(rejectedResponse.error.code, 'ZRYNA-F2002');
+  const compactNodes = compact.result.files[0].functions[0].body.expressions;
+  const fallbackNodes = fallback.result.files[0].functions[0].body.expressions;
+  assert.deepEqual(compactNodes.map(({ kind }) => kind.kind), ['i32-literal']);
+  assert.deepEqual(fallbackNodes.map(({ kind }) => kind.kind), ['i32-literal', 'negation']);
+  assert.equal(fallbackNodes[0].kind.spelling.length, 64);
+  assert.equal(overflow.error.code, 'ZRYNA-F2002');
+});
+
 test('file IDs and UTF-8 spans remain deterministic for shuffled batches', async () => {
   const prefix = '// 😀\r\n';
   const source = `${prefix}export function value(): i32 { return 1; }`;
