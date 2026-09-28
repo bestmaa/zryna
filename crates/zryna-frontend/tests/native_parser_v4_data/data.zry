@@ -1,0 +1,9 @@
+// π checks UTF-8 source spans.
+export interface Pair extends ZrynaStruct {
+  left: i32;
+  right: Shared<FixedArray<i32, 2>>;
+}
+interface Maybe extends ZrynaEnum {
+  none: ZrynaNone;
+  some: Pair;
+}

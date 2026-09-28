@@ -1,0 +1,15 @@
+interface Pair extends ZrynaStruct {
+  left: i32;
+  right: i32;
+}
+interface Choice extends ZrynaEnum {
+  none: ZrynaNone;
+  some: i32;
+}
+export function inspect(value: Pair, items: Vec<i32>): i32 {
+  const copy: Pair = clone(value);
+  const held: Shared<Pair> = shared(copy);
+  const maybe: Choice = Choice.some(value.left);
+  push(items, 2);
+  return items[0] + value.right;
+}

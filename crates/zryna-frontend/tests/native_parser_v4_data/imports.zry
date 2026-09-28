@@ -1,0 +1,2 @@
+import { source as local, other } from "./dep.zry";
+export interface Pair extends ZrynaStruct { value: i32; }
