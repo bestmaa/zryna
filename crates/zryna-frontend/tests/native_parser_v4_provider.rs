@@ -1,7 +1,6 @@
 //! Live differential evidence for the native protocol-v4 candidate.
 
 use std::{
-    fs,
     io::Write,
     path::Path,
     process::{Command, Stdio},
@@ -9,28 +8,16 @@ use std::{
 };
 
 use serde_json::{Value, json};
-use zryna_frontend::{native_lexer::lex, native_parser::v4::parse_v4_candidate};
+use zryna_frontend::{native_lexer::lex, native_parser::v4::parse_v4_candidate, syntax_v4};
 use zryna_source::{SourceFileInput, SourceMap};
+
+#[path = "native_parser_v4_corpus/fixtures.rs"]
+mod fixtures;
 
 #[test]
 #[ignore = "requires the exact pinned TypeScript provider"]
 fn pinned_provider_and_native_v4_parser_match_m3_corpus_and_rejections() {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/m3-fixtures");
-    let mut paths = fs::read_dir(root)
-        .expect("M3 fixtures")
-        .map(|entry| entry.expect("M3 fixture").path())
-        .filter(|path| path.extension().is_some_and(|extension| extension == "zry"))
-        .collect::<Vec<_>>();
-    paths.sort();
-    assert_eq!(paths.len(), 68, "frozen M3 source fixture count");
-
-    let mut inputs = paths
-        .iter()
-        .map(|path| {
-            let name = path.file_name().expect("fixture name").to_string_lossy();
-            (format!("src/{name}"), fs::read_to_string(path).expect("UTF-8 fixture"))
-        })
-        .collect::<Vec<_>>();
+    let mut inputs = fixtures::sources();
     let positive_count = inputs.len();
     inputs.extend(
         [
@@ -81,18 +68,39 @@ fn pinned_provider_and_native_v4_parser_match_m3_corpus_and_rejections() {
             }
         }
     }
+
+    let project = inputs
+        .iter()
+        .take(positive_count)
+        .filter(|(path, _)| {
+            matches!(
+                path.as_str(),
+                "src/candidate-modules/main.zry"
+                    | "src/candidate-modules/math.zry"
+                    | "src/conformance/enum-body.zry"
+                    | "src/conformance/owned-aggregate-body.zry"
+            )
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    assert_eq!(project.len(), 4, "cross-module and nominal source set");
+    let sources = SourceMap::build(
+        project
+            .iter()
+            .rev()
+            .map(|(path, text)| SourceFileInput { path: path.clone(), text: text.clone() })
+            .collect(),
+    )
+    .expect("multi-file source map");
+    let lexed = lex(&sources).expect("multi-file native tokens");
+    let native = parse_v4_candidate(&sources, &lexed).expect("multi-file native candidate");
+    let worker = provider_project_response(&project);
+    assert!(worker.get("error").is_none(), "multi-file provider error: {worker}");
+    assert_eq!(serde_json::to_value(&native).expect("native JSON"), worker["result"]);
+    syntax_v4::verify_snapshot(native, &sources).expect("multi-file verifier");
 }
 
 fn provider_responses(inputs: &[(String, String)]) -> Vec<Value> {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let mut child = Command::new("node")
-        .arg("src/worker-v4.mjs")
-        .current_dir(root.join("adapters/typescript-6"))
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("spawn pinned v4 worker");
     let requests = inputs
         .iter()
         .enumerate()
@@ -102,11 +110,36 @@ fn provider_responses(inputs: &[(String, String)]) -> Vec<Value> {
                 "method": "analyze",
                 "params": { "schema_version": 4, "files": [{ "path": path, "text": text }] },
             })
-            .to_string()
         })
-        .collect::<Vec<_>>()
-        .join("\n")
-        + "\n";
+        .collect::<Vec<_>>();
+    worker_responses(&requests)
+}
+
+fn provider_project_response(inputs: &[(String, String)]) -> Value {
+    let files = inputs
+        .iter()
+        .rev()
+        .map(|(path, text)| json!({ "path": path, "text": text }))
+        .collect::<Vec<_>>();
+    let request = json!({
+        "id": 1,
+        "method": "analyze",
+        "params": { "schema_version": 4, "files": files },
+    });
+    worker_responses(&[request]).pop().expect("multi-file worker response")
+}
+
+fn worker_responses(requests: &[Value]) -> Vec<Value> {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut child = Command::new("node")
+        .arg("src/worker-v4.mjs")
+        .current_dir(root.join("adapters/typescript-6"))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawn pinned v4 worker");
+    let requests = requests.iter().map(Value::to_string).collect::<Vec<_>>().join("\n") + "\n";
     let mut stdin = child.stdin.take().expect("worker stdin");
     let writer = thread::spawn(move || stdin.write_all(requests.as_bytes()));
     let output = child.wait_with_output().expect("worker output");

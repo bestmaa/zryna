@@ -82,7 +82,7 @@ need independent differential recovery evidence.
 | Unsupported parenthesized return before a valid function | Exact frozen bootstrap diagnostic and retained function; verified error snapshot | Parenthesized syntax remains unsupported. |
 | Unsupported direct calls, simple multiplication, and string literals with a later valid function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Other unsupported expressions retain generic rejection. |
 | Multiple unsupported primitive annotations in one well-formed signature, then a named-type function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Mixed error kinds in one function and other unsupported type forms remain unproven. |
-| First-extra functions, parameters, expression depth, and recovery diagnostics | Bounded focused tests | Full resource and fuzz corpus remains pending. |
+| First-extra functions, parameters, expression depth, and recovery diagnostics | Bounded focused tests and 128 deterministic expression mutations | Other unsupported grammar axes remain excluded. |
 
 `native_parser::v3::parse_v3_import_candidate` is a separate internal M2 candidate for
 functionless modules containing named imports only. It consumes every nontrivia native token or
@@ -121,9 +121,12 @@ must be consumed, including after a valid function, or the complete candidate fa
 parameter, block, statement, and expression boundaries have exact and first-extra tests. Source
 delimiter nesting and statement-context expression depth follow the pinned worker's 128-depth
 boundary, including its flat-addition 127/128 split. The original import-only entry retains its
-closed behavior for source closure. Compound or property assignment, parenthesized expressions or
-callees, indirect, generic, optional, or spread calls, other operators, recovery, full diagnostic
-parity, provider selection, and module resolution remain outside this parser slice.
+closed behavior for source closure. A live pinned-worker test compares all 14 public M2 source
+files (13 exact candidates and one equivalent rejection), four further rejected forms, and 128
+deterministic accepted or atomic-rejection grammar mutations. Compound or property assignment,
+parenthesized expressions or callees, indirect, generic, optional, or spread calls, other
+operators, recovery, full diagnostic parity, provider selection, and module resolution remain
+outside this parser slice.
 
 `native_parser::v4::parse_v4_candidate` constructs an untrusted protocol-v4 candidate from the
 same bound lexical stream. It admits named imports; source-ordered struct and enum declarations;
@@ -135,11 +138,11 @@ UTF-8 and CRLF spans, interleaved declarations, two-file order, nested type cons
 new expression and statement forms. Generated expression mutations are also checked by the
 existing `zryna_syntax::v4::verify_snapshot`, which remains the only syntax authority. The
 `provider:conformance:v4` gate compares native candidates with the pinned TypeScript 6 worker for
-all 68 frozen M3 source fixtures and seven rejected forms, requiring identical raw candidates,
-rejection codes, and source locations within the provider's rejected constructs. The entry does
-not register a provider, perform semantic checks, resolve imports, or activate a public
-profile. Unsupported source fails as a whole while differential recovery and diagnostic parity
-remain separate work.
+all 95 frozen M3 source fixtures, one four-file composition, and seven rejected forms. It requires
+identical raw candidates, rejection codes, and source locations within the provider's rejected
+constructs. The entry does not register a provider, perform semantic checks, resolve imports, or
+activate a public profile. Unsupported source fails as a whole while differential recovery and
+diagnostic parity remain separate work.
 
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
 executable-syntax contract owned by `zryna-syntax`; it does not change v1 semantics in place. The

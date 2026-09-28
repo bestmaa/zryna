@@ -236,7 +236,7 @@ fn block_and_expression_depth_share_the_worker_limit() {
 }
 
 #[test]
-fn bounded_expression_grammar_mutations_verify() {
+fn bounded_expression_grammar_mutations_verify_or_reject_atomically() {
     let atoms = [
         "x",
         "1",
@@ -250,6 +250,8 @@ fn bounded_expression_grammar_mutations_verify() {
     ];
     let operators = ["+", "-", "*", "===", "!==", "<", "<=", ">", ">="];
     let mut seed = 0x412_u32;
+    let mut accepted = 0;
+    let mut rejected = 0;
     for case in 0..128 {
         seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
         let left = atoms[(seed as usize) % atoms.len()];
@@ -257,16 +259,30 @@ fn bounded_expression_grammar_mutations_verify() {
         let right = atoms[(seed as usize) % atoms.len()];
         seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
         let operator = operators[(seed as usize) % operators.len()];
+        let trailing = if case % 5 == 0 { " export class Unsupported {}" } else { "" };
         let text = format!(
-            "// π case {case}\nfunction f(x: i32): i32 {{ return {left} {operator} {right}; }}"
+            "// π case {case}\nfunction f(x: i32): i32 {{ return {left} {operator} {right}; }}{trailing}"
         );
         let sources =
             SourceMap::build(vec![SourceFileInput { path: "src/mutated.zry".to_owned(), text }])
                 .expect("source map");
         let lexed = lex(&sources).expect("native tokens");
-        let native = parse_v4_candidate(&sources, &lexed).expect("generated syntax");
-        syntax_v4::verify_snapshot(native, &sources).expect("source-bound generated candidate");
+        match parse_v4_candidate(&sources, &lexed) {
+            Ok(native) => {
+                assert_ne!(case % 5, 0, "unsupported trailing declaration was admitted");
+                syntax_v4::verify_snapshot(native, &sources)
+                    .expect("source-bound generated candidate");
+                accepted += 1;
+            }
+            Err(error) => {
+                assert_eq!(case % 5, 0, "valid generated syntax was rejected");
+                assert_eq!(error.diagnostic().code(), "ZRYNA-F2002");
+                rejected += 1;
+            }
+        }
     }
+    assert_eq!(accepted + rejected, 128);
+    assert!(accepted > 75 && rejected > 25, "both grammar outcomes exercised");
 }
 
 #[test]
