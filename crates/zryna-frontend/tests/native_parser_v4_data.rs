@@ -5,6 +5,7 @@ use zryna_source::{SourceFileInput, SourceMap};
 
 const DATA: &str = include_str!("native_parser_v4_data/data.zry");
 const SNAPSHOT: &[u8] = include_bytes!("native_parser_v4_data/data.snapshot.json");
+const DATA_CRLF_SNAPSHOT: &[u8] = include_bytes!("native_parser_v4_data/data-crlf.snapshot.json");
 const IMPORTS: &str = include_str!("native_parser_v4_data/imports.zry");
 const IMPORT_SNAPSHOT: &[u8] = include_bytes!("native_parser_v4_data/imports.snapshot.json");
 const FUNCTION: &str = include_str!("native_parser_v4_data/function.zry");
@@ -25,6 +26,9 @@ const UPGRADE: &str = include_str!("native_parser_v4_data/upgrade.zry");
 const UPGRADE_SNAPSHOT: &[u8] = include_bytes!("native_parser_v4_data/upgrade.snapshot.json");
 const MATCH: &str = include_str!("native_parser_v4_data/match.zry");
 const MATCH_SNAPSHOT: &[u8] = include_bytes!("native_parser_v4_data/match.snapshot.json");
+const INTERLEAVED: &str = include_str!("native_parser_v4_data/interleaved.zry");
+const INTERLEAVED_SNAPSHOT: &[u8] =
+    include_bytes!("native_parser_v4_data/interleaved.snapshot.json");
 const RESERVED_REFERENCE: &str = include_str!("native_parser_v4_data/reserved-reference.zry");
 const RESERVED_REFERENCE_SNAPSHOT: &[u8] =
     include_bytes!("native_parser_v4_data/reserved-reference.snapshot.json");
@@ -52,6 +56,12 @@ fn nominal_data_and_nested_type_arena_match_worker() {
     let native = assert_exact("src/data.zry", DATA, SNAPSHOT);
     assert_eq!(native.files[0].data_declarations.len(), 2);
     assert_eq!(native.files[0].type_syntax.len(), 5);
+}
+
+#[test]
+fn utf8_crlf_data_spans_match_worker() {
+    let text = DATA.replace("\r\n", "\n").replace('\n', "\r\n");
+    assert_exact("src/data-crlf.zry", &text, DATA_CRLF_SNAPSHOT);
 }
 
 #[test]
@@ -115,6 +125,13 @@ fn match_arms_match_worker() {
 }
 
 #[test]
+fn interleaved_declarations_preserve_module_type_order() {
+    let native = assert_exact("src/interleaved.zry", INTERLEAVED, INTERLEAVED_SNAPSHOT);
+    assert_eq!(native.files[0].data_declarations.len(), 2);
+    assert_eq!(native.files[0].functions.len(), 2);
+}
+
+#[test]
 fn reserved_form_name_without_call_remains_a_reference() {
     assert_exact("src/reserved-reference.zry", RESERVED_REFERENCE, RESERVED_REFERENCE_SNAPSHOT);
 }
@@ -173,6 +190,48 @@ fn first_extra_source_nesting_and_array_length_reject() {
         let lexed = lex(&sources).expect("native tokens");
         let error = parse_v4_candidate(&sources, &lexed).expect_err(&text);
         assert_eq!(error.diagnostic().code(), "ZRYNA-F1002");
+    }
+}
+
+#[test]
+fn block_and_expression_depth_share_the_worker_limit() {
+    for (children, accepted) in [(126, true), (127, false)] {
+        let text = format!(
+            "function f(): i32 {{ {}return 1;{} }}",
+            "{".repeat(children),
+            "}".repeat(children),
+        );
+        let sources =
+            SourceMap::build(vec![SourceFileInput { path: "src/depth.zry".to_owned(), text }])
+                .expect("source map");
+        let lexed = lex(&sources).expect("native tokens");
+        let result = parse_v4_candidate(&sources, &lexed);
+        if accepted {
+            syntax_v4::verify_snapshot(result.expect("exact depth"), &sources)
+                .expect("source-bound exact depth");
+        } else {
+            assert_eq!(result.expect_err("first extra depth").diagnostic().code(), "ZRYNA-F2002");
+        }
+    }
+    for (terms, accepted) in [(127, true), (128, false)] {
+        let expression = vec!["1"; terms].join(" + ");
+        let text = format!("function f(): i32 {{ return {expression}; }}");
+        let sources = SourceMap::build(vec![SourceFileInput {
+            path: "src/addition-depth.zry".to_owned(),
+            text,
+        }])
+        .expect("source map");
+        let lexed = lex(&sources).expect("native tokens");
+        let result = parse_v4_candidate(&sources, &lexed);
+        if accepted {
+            syntax_v4::verify_snapshot(result.expect("exact addition depth"), &sources)
+                .expect("source-bound addition depth");
+        } else {
+            assert_eq!(
+                result.expect_err("first extra addition depth").diagnostic().code(),
+                "ZRYNA-F2002"
+            );
+        }
     }
 }
 

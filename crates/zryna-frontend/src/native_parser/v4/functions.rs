@@ -161,7 +161,8 @@ impl FileParser<'_> {
                     self.weak_upgrade(&mut body, &mut frames, token, id)?;
                 }
                 _ => {
-                    let statement = self.statement(&mut body)?;
+                    let block_depth = u32::try_from(frames.len()).expect("bounded block depth");
+                    let statement = self.statement(&mut body, block_depth)?;
                     body.statements.push(statement);
                 }
             }
@@ -177,7 +178,8 @@ impl FileParser<'_> {
     ) -> Result<(), ParseError> {
         self.position += 1;
         let open_paren = self.take(TokenKind::OpenParen)?;
-        let condition = self.expression(body)?;
+        let block_depth = u32::try_from(frames.len()).expect("bounded block depth");
+        let condition = self.expression(body, block_depth)?;
         let close_paren = self.take(TokenKind::CloseParen)?;
         let block = u32::try_from(body.blocks.len()).expect("bounded blocks");
         let is_if = token.kind() == TokenKind::Keyword(Keyword::If);
@@ -279,7 +281,8 @@ impl FileParser<'_> {
     ) -> Result<(), ParseError> {
         self.position += 1;
         self.take(TokenKind::OpenParen)?;
-        let weak = self.expression(body)?;
+        let block_depth = u32::try_from(frames.len()).expect("bounded block depth");
+        let weak = self.expression(body, block_depth)?;
         self.take(TokenKind::Comma)?;
         self.take(TokenKind::OpenParen)?;
         let binding = self.identifier()?;
@@ -326,12 +329,16 @@ impl FileParser<'_> {
         Ok(())
     }
 
-    fn statement(&mut self, body: &mut Body) -> Result<syntax::RawStatementSyntax, ParseError> {
+    fn statement(
+        &mut self,
+        body: &mut Body,
+        block_depth: u32,
+    ) -> Result<syntax::RawStatementSyntax, ParseError> {
         let first = self.current().ok_or_else(|| unsupported(None, "missing statement"))?;
         let kind = match first.kind() {
             TokenKind::Keyword(Keyword::Return) => {
                 self.position += 1;
-                let value = self.expression(body)?;
+                let value = self.expression(body, block_depth)?;
                 let semicolon = self.take(TokenKind::Semicolon)?;
                 syntax::RawStatementKind::Return {
                     keyword_span: raw(first),
@@ -349,7 +356,7 @@ impl FileParser<'_> {
                 self.take(TokenKind::Colon)?;
                 let type_syntax = self.type_syntax()?;
                 let equals = self.take(TokenKind::Equals)?;
-                let initializer = self.expression(body)?;
+                let initializer = self.expression(body, block_depth)?;
                 let semicolon = self.take(TokenKind::Semicolon)?;
                 syntax::RawStatementKind::LocalDeclaration {
                     keyword_span: raw(first),
@@ -362,9 +369,9 @@ impl FileParser<'_> {
                 }
             }
             _ => {
-                let target = self.expression(body)?;
+                let target = self.expression(body, block_depth)?;
                 if let Some(equals) = self.maybe(TokenKind::Equals) {
-                    let value = self.expression(body)?;
+                    let value = self.expression(body, block_depth)?;
                     let semicolon = self.take(TokenKind::Semicolon)?;
                     syntax::RawStatementKind::Assignment {
                         target,

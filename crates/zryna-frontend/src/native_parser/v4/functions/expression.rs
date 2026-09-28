@@ -9,8 +9,17 @@ use super::super::{FileParser, ParseError, raw, resource, unsupported};
 use super::Body;
 
 impl FileParser<'_> {
-    pub(super) fn expression(&mut self, body: &mut Body) -> Result<u32, ParseError> {
-        self.binary_expression(body, 1).map(|(id, _)| id)
+    pub(super) fn expression(
+        &mut self,
+        body: &mut Body,
+        block_depth: u32,
+    ) -> Result<u32, ParseError> {
+        let first = self.current().ok_or_else(|| unsupported(None, "missing expression"))?;
+        let (id, depth) = self.binary_expression(body, 1)?;
+        if depth + block_depth > syntax::MAX_NESTING_DEPTH {
+            return Err(unsupported(Some(first), "expression depth exceeds protocol-v4 limit"));
+        }
+        Ok(id)
     }
 
     pub(super) fn binary_expression(

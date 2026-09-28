@@ -125,6 +125,19 @@ closed behavior for source closure. Compound or property assignment, parenthesiz
 callees, indirect, generic, optional, or spread calls, other operators, recovery, full diagnostic
 parity, provider selection, and module resolution remain outside this parser slice.
 
+`native_parser::v4::parse_v4_candidate` constructs an untrusted protocol-v4 candidate from the
+same bound lexical stream. It admits named imports; source-ordered struct and enum declarations;
+module-wide postorder type syntax; functions with preorder blocks and statements; scalar and
+control-flow syntax; and the documented data, collection, ownership, match, and weak-upgrade
+forms. It enforces source, declaration, type, function, block, statement, expression, local,
+aggregate, and match-arm limits before exposing a candidate. Frozen TypeScript 6 snapshots cover
+UTF-8 and CRLF spans, interleaved declarations, two-file order, nested type construction, and the
+new expression and statement forms. Generated expression mutations are also checked by the
+existing `zryna_syntax::v4::verify_snapshot`, which remains the only syntax authority. The entry
+does not register a provider, perform semantic checks, resolve imports, or activate a public
+profile. Unsupported source fails as a whole while differential recovery and diagnostic parity
+remain separate work.
+
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
 executable-syntax contract owned by `zryna-syntax`; it does not change v1 semantics in place. The
 TypeScript 6 adapter implements the protocol-v2 executable-syntax contract. Protocol v3 has its own
