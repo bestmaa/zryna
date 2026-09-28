@@ -1,0 +1,5 @@
+export function rejected(): i32 {
+  let value: i32 = 1;
+  value += 1;
+  return value;
+}

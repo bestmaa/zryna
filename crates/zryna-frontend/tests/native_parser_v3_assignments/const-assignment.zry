@@ -1,0 +1,5 @@
+export function constant(): i32 {
+  const value: i32 = 1;
+  value = 2;
+  return value;
+}

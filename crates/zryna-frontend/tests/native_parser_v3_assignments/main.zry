@@ -1,0 +1,14 @@
+// 😀 native assignment spans
+import { helper as alias } from "./math.zry";
+function update(x: i32): i32 {
+  let total: i32 = x;
+  total = total + 1;
+  const step: i32 = 2;
+  total = step + total;
+  return total;
+}
+export function choose(flag: bool): bool {
+  let current: bool = flag;
+  current = true;
+  return current;
+}

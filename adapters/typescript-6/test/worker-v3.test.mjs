@@ -174,6 +174,35 @@ test('native local-declaration fixtures are exact TypeScript 6 responses', async
   assert.deepEqual(rejectedResponse, rejectedSnapshot);
 });
 
+test('native root-assignment fixtures are exact TypeScript 6 responses', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_assignments/', import.meta.url);
+  const main = (await readFile(new URL('main.zry', fixture), 'utf8')).replace(/\r?\n/g, '\r\n');
+  const math = await readFile(new URL('math.zry', fixture), 'utf8');
+  const constant = await readFile(new URL('const-assignment.zry', fixture), 'utf8');
+  const rejected = await readFile(new URL('rejected.zry', fixture), 'utf8');
+  const [assignmentResponse, constResponse, rejectedResponse] = await exchange([
+    analyze(1, [{ path: 'src/math.zry', text: math }, { path: 'src/main.zry', text: main }]),
+    analyze(2, [{ path: 'src/main.zry', text: constant }]),
+    analyze(3, [{ path: 'src/rejected.zry', text: rejected }]),
+  ]);
+  const assignmentSnapshot = JSON.parse(await readFile(new URL('assignments.snapshot.json', fixture), 'utf8'));
+  const constSnapshot = JSON.parse(await readFile(new URL('const-assignment.snapshot.json', fixture), 'utf8'));
+  const rejectedSnapshot = JSON.parse(await readFile(new URL('rejected.response.json', fixture), 'utf8'));
+  assert.deepEqual(assignmentResponse.result, assignmentSnapshot);
+  assert.deepEqual(constResponse.result, constSnapshot);
+  assert.deepEqual(rejectedResponse, rejectedSnapshot);
+});
+
+test('root assignments count toward the pinned worker statement budget', async () => {
+  const root = (count) => `export function value(): i32 { ${'value = 1; '.repeat(count)}return 1; }`;
+  await assertBudgetBoundary(
+    [{ path: 'src/main.zry', text: root(2) }],
+    [{ path: 'src/main.zry', text: root(3) }],
+    { ZRYNA_TEST_STATEMENTS_PER_FUNCTION: '3' },
+    /function exceeds the statement limit/,
+  );
+});
+
 test('file IDs and UTF-8 spans remain deterministic for shuffled batches', async () => {
   const prefix = '// 😀\r\n';
   const source = `${prefix}export function value(): i32 { return 1; }`;

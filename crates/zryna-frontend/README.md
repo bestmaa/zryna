@@ -96,19 +96,20 @@ not resolve modules, admit a public profile, or change v2, v3, or v4 protocol co
 
 `native_parser::v3::parse_v3_straight_line_candidate` separately admits a named-import prefix
 followed by source-ordered exported or unexported functions. Its first function-body slice requires
-explicit `i32` or `bool` parameter and result annotations, zero or more root-block `let` or
-`const` declarations with explicit `i32` or `bool` annotations and initializers, and one final
-semicolon-terminated return. Initializers and returns use identifiers, Boolean literals,
+explicit `i32` or `bool` parameter and result annotations, zero or more interleaved root-block
+`let` or `const` declarations with explicit `i32` or `bool` annotations and initializers and
+simple `name = expression;` assignments, and one final semicolon-terminated return. Initializers,
+assignment values, and returns use identifiers, Boolean literals,
 canonical nonnegative integers, or left-associative addition of those atoms. It emits one
 canonical root block with source-ordered statement and postorder expression arenas. Frozen
-two-file TypeScript 6 v3 function and local snapshots, the M2 use-before-declaration source's
+two-file TypeScript 6 v3 function, local, and assignment snapshots, the M2 use-before-declaration source's
 syntax snapshot, and the import-plus-helper prefix of the existing complete v3 fixture are exact
 DTO oracles; the v3 verifier remains authoritative. Syntax acceptance of a name before its
-declaration gives it no semantic authority. Every
+declaration, or assignment to a `const`, gives it no semantic authority. Every
 nontrivia token must be consumed, including after a valid function, or the complete candidate
 fails. Function, parameter, statement, and expression-depth boundaries have exact and first-extra
-tests. The original import-only entry retains its closed behavior for source closure. Assignment,
-calls, other operators, nested blocks, `if`, `while`, recovery and full diagnostic parity, provider
+tests. The original import-only entry retains its closed behavior for source closure. Compound or
+property assignment, calls, other operators, nested blocks, `if`, `while`, recovery and full diagnostic parity, provider
 selection, and module resolution remain outside this parser slice.
 
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
