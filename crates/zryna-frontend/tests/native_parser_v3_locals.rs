@@ -82,7 +82,7 @@ fn unsupported_local_forms_match_worker_rejection_class_and_fail_atomically() {
         "function f(): i32 { let x: i32 = 1 * 2; return x; }",
         "function f(): i32 { let x: i32 = 1; return x; let y: i32 = 2; }",
         "function f(): i32 { let x: i32 = 1; { return x; } }",
-        "function f(): i32 { let x: i32 = 1; return x + call(); }",
+        "function f(): i32 { let x: i32 = 1; return x + call(1); }",
     ] {
         assert_eq!(one(text), Err("ZRYNA-F2002".to_owned()), "{text}");
     }

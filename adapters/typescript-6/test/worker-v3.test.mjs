@@ -203,6 +203,31 @@ test('root assignments count toward the pinned worker statement budget', async (
   );
 });
 
+test('native zero-argument call fixtures are exact TypeScript 6 responses', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_calls/', import.meta.url);
+  const main = (await readFile(new URL('main.zry', fixture), 'utf8')).replace(/\r?\n/g, '\r\n');
+  const math = await readFile(new URL('math.zry', fixture), 'utf8');
+  const unresolved = await readFile(new URL('unresolved.zry', fixture), 'utf8');
+  const rejected = await readFile(new URL('rejected.zry', fixture), 'utf8');
+  const argumented = await readFile(new URL('argumented.zry', fixture), 'utf8');
+  const [callsResponse, unresolvedResponse, rejectedResponse, argumentedResponse] = await exchange([
+    analyze(1, [{ path: 'src/math.zry', text: math }, { path: 'src/main.zry', text: main }]),
+    analyze(2, [{ path: 'src/main.zry', text: unresolved }]),
+    analyze(3, [{ path: 'src/rejected.zry', text: rejected }]),
+    analyze(4, [{ path: 'src/argumented.zry', text: argumented }]),
+  ]);
+  const callsSnapshot = JSON.parse(await readFile(new URL('calls.snapshot.json', fixture), 'utf8'));
+  const unresolvedSnapshot = JSON.parse(await readFile(new URL('unresolved.snapshot.json', fixture), 'utf8'));
+  const rejectedSnapshot = JSON.parse(await readFile(new URL('rejected.response.json', fixture), 'utf8'));
+  assert.deepEqual(callsResponse.result, callsSnapshot);
+  assert.deepEqual(unresolvedResponse.result, unresolvedSnapshot);
+  assert.deepEqual(rejectedResponse, rejectedSnapshot);
+  assert.equal(argumentedResponse.error, undefined, JSON.stringify(argumentedResponse.error));
+  assert.equal(validateSnapshot(argumentedResponse.result), true, JSON.stringify(validateSnapshot.errors));
+  const expressions = argumentedResponse.result.files[0].functions[1].body.expressions;
+  assert.equal(expressions.find(({ kind }) => kind.kind === 'call').kind.arguments.length, 1);
+});
+
 test('file IDs and UTF-8 spans remain deterministic for shuffled batches', async () => {
   const prefix = '// 😀\r\n';
   const source = `${prefix}export function value(): i32 { return 1; }`;

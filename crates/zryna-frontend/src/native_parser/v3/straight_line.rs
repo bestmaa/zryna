@@ -365,12 +365,47 @@ impl FileParser<'_> {
         Ok(left)
     }
 
+    fn zero_argument_call(
+        &mut self,
+        expressions: &mut Vec<syntax::RawExpressionSyntax>,
+        previous_expressions: usize,
+    ) -> Result<u32, ParseError> {
+        let callee = self.function_identifier()?;
+        let open = self.function_take(TokenKind::OpenParen)?;
+        let close = self.function_take(TokenKind::CloseParen)?;
+        push_expression(
+            expressions,
+            previous_expressions,
+            syntax::RawExpressionSyntax {
+                span: UntrustedSpan {
+                    file: self.file,
+                    start: callee.span.start,
+                    end: close.span().end(),
+                },
+                kind: syntax::RawExpressionKind::Call {
+                    callee,
+                    open_paren_span: raw(open),
+                    arguments: Vec::new(),
+                    close_paren_span: raw(close),
+                },
+            },
+        )
+    }
+
     fn atom(
         &mut self,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
     ) -> Result<u32, ParseError> {
         let token = self.current().ok_or_else(|| self.function_error_here("missing expression"))?;
+        if token.kind() == TokenKind::Identifier
+            && self
+                .tokens
+                .get(self.position + 1)
+                .is_some_and(|next| next.kind() == TokenKind::OpenParen)
+        {
+            return self.zero_argument_call(expressions, previous_expressions);
+        }
         let kind = match token.kind() {
             TokenKind::Identifier => {
                 syntax::RawExpressionKind::Reference { name: self.function_identifier()? }

@@ -1,0 +1,2 @@
+function helper(value: i32): i32 { return value; }
+export function argumented(): i32 { return helper(1); }

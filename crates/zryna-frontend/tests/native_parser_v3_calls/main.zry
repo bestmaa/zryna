@@ -1,0 +1,12 @@
+// 😀 native call spans
+import { truth } from "./math.zry";
+function helper(): i32 { return 1; }
+export function choose(): bool {
+  const selected: bool = truth();
+  return selected;
+}
+export function number(): i32 {
+  let value: i32 = helper();
+  value = helper() + 1;
+  return helper();
+}

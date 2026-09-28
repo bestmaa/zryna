@@ -1,0 +1,2 @@
+function helper(): i32 { return 1; }
+export function rejected(): i32 { return (helper)(); }
