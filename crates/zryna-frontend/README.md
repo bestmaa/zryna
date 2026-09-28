@@ -66,10 +66,12 @@ match bootstrap diagnostic spans, wording, guidance, and multiplicity. Rejected 
 simple multiplication chains, and string literals now have the same exact subtree spans and
 diagnostic text as the bootstrap provider. Unsupported primitive parameter and result annotations
 now preserve the pinned bootstrap keyword span, function or parameter index, diagnostic text, and
-guidance for one unsupported primitive annotation per rejected function. A distinct named type,
+guidance. A well-formed function signature with multiple unsupported primitive annotations now
+retains their source-ordered diagnostics, discards that function, and keeps a later valid sibling;
+that rejected signature counts toward the v2 function and parameter limits. A distinct named type,
 such as `String`, remains a candidate for semantic checking. A balanced call is scanned iteratively
 over the lexer's bounded token stream; recovery still resumes only at a genuine top-level export. Other
-unsupported annotation forms, multiple errors in one function, expressions, and declarations still
+unsupported annotation forms, mixed error kinds in one function, expressions, and declarations still
 need independent differential recovery evidence.
 
 | Checked M1 source set | Native candidate evidence | Remaining gap |
@@ -79,7 +81,7 @@ need independent differential recovery evidence.
 | Newline directly after `return` followed by `1;` | Both frozen bootstrap F2002 diagnostics and verified error snapshot | Other expression-statement forms remain unproven. |
 | Unsupported parenthesized return before a valid function | Exact frozen bootstrap diagnostic and retained function; verified error snapshot | Parenthesized syntax remains unsupported. |
 | Unsupported direct calls, simple multiplication, and string literals with a later valid function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Other unsupported expressions retain generic rejection. |
-| Unsupported primitive annotations with a later named-type function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Multiple errors in one function and other unsupported type forms remain unproven. |
+| Multiple unsupported primitive annotations in one well-formed signature, then a named-type function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Mixed error kinds in one function and other unsupported type forms remain unproven. |
 | First-extra functions, parameters, expression depth, and recovery diagnostics | Bounded focused tests | Full resource and fuzz corpus remains pending. |
 
 `native_parser::v3::parse_v3_import_candidate` is a separate internal M2 candidate for
