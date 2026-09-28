@@ -87,14 +87,14 @@ fn unsupported_or_later_tokens_reject_the_whole_project() {
         " function later(): i32 { return 1 }",
         " function later(): i32 { if (true) { return 1; } return 2; }",
         " function later(): i32 { let x: i32 = 1; x += 2; return x; }",
-        " function later(): i32 { return helper(1); }",
+        " function later(): i32 { return helper(1,,2); }",
     ] {
         assert_eq!(candidate(&format!("{prefix}{tail}")), Err("ZRYNA-F2002".to_owned()), "{tail}");
     }
     for text in [
         "export function f(): i32 { return (1); }",
-        "export function f(): i32 { return -true; }",
-        "export function f(): i32 { return 1 * 2; }",
+        "export function f(): i32 { return --1; }",
+        "export function f(): i32 { return 1 == 2; }",
         "export function f(): any { return 1; }",
         "export function f(x: i32): i32 { return x; return x; }",
         "export function f(x: i32,): i32 { return x; }",

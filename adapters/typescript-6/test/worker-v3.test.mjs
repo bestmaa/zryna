@@ -304,6 +304,40 @@ test('native numeric-negation fixtures preserve the signed-literal boundary', as
   assert.equal(overflow.error.code, 'ZRYNA-F2002');
 });
 
+test('native scalar-expression fixtures preserve worker precedence and call boundaries', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_expressions/', import.meta.url);
+  const main = (await readFile(new URL('main.zry', fixture), 'utf8')).replace(/\r?\n/g, '\r\n');
+  const math = await readFile(new URL('math.zry', fixture), 'utf8');
+  const rejected = await readFile(new URL('rejected.zry', fixture), 'utf8');
+  const rejectedPrefix = await readFile(new URL('rejected-prefix.zry', fixture), 'utf8');
+  const expected = JSON.parse(await readFile(new URL('expressions.snapshot.json', fixture), 'utf8'));
+  const rejectedExpected = JSON.parse(await readFile(new URL('rejected.response.json', fixture), 'utf8'));
+  const rejectedPrefixExpected = JSON.parse(await readFile(new URL('rejected-prefix.response.json', fixture), 'utf8'));
+  const call = (count) => `function f(): i32 { return helper(${'1, '.repeat(count)}); }`;
+  const flat = (count) => `function f(): i32 { return ${Array(count).fill('1').join(' + ')}; }`;
+  const [positive, decrement, prefixDecrement, exactCall, extraCall, workerDepth, workerOverflow] = await exchange([
+    analyze(1, [{ path: 'src/math.zry', text: math }, { path: 'src/main.zry', text: main }]),
+    analyze(2, [{ path: 'src/rejected.zry', text: rejected }]),
+    analyze(3, [{ path: 'src/rejected-prefix.zry', text: rejectedPrefix }]),
+    analyze(4, [{ path: 'src/main.zry', text: call(256) }]),
+    analyze(5, [{ path: 'src/main.zry', text: call(257) }]),
+    analyze(6, [{ path: 'src/main.zry', text: flat(127) }]),
+    analyze(7, [{ path: 'src/main.zry', text: flat(128) }]),
+  ]);
+  assert.deepEqual(positive.result, expected);
+  assert.equal(validateSnapshot(positive.result), true, JSON.stringify(validateSnapshot.errors));
+  assert.deepEqual(decrement, rejectedExpected);
+  assert.deepEqual(prefixDecrement, rejectedPrefixExpected);
+  const kinds = positive.result.files[0].functions.flatMap((fn) => fn.body.expressions.map(({ kind }) => kind.kind));
+  for (const kind of ['addition', 'subtraction', 'multiplication', 'equal', 'not-equal', 'less-than', 'less-equal', 'greater-than', 'greater-equal', 'call', 'negation']) {
+    assert.ok(kinds.includes(kind), kind);
+  }
+  assert.equal(exactCall.result.files[0].functions[0].body.expressions.at(-1).kind.arguments.length, 256);
+  assert.equal(extraCall.error.code, 'ZRYNA-F1002');
+  assert.equal(workerDepth.error, undefined);
+  assert.equal(workerOverflow.error.code, 'ZRYNA-F2002');
+});
+
 test('file IDs and UTF-8 spans remain deterministic for shuffled batches', async () => {
   const prefix = '// 😀\r\n';
   const source = `${prefix}export function value(): i32 { return 1; }`;

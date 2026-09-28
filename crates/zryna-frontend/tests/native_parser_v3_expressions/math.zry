@@ -1,0 +1,2 @@
+export function combine(left: i32, right: i32): i32 { return left + right; }
+export function zero(): i32 { return 0; }

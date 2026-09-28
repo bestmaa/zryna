@@ -104,21 +104,24 @@ simple `name = expression;` assignments, and one final semicolon-terminated retu
 assignment values, and returns use identifiers, Boolean literals, canonical nonnegative integers,
 compact canonical negative decimal integers through 64 total bytes (one literal node), numeric
 negation of one canonical nonnegative decimal token of at most 64 bytes in other cases (two nodes),
-zero-argument direct identifier calls, one unary minus over a direct identifier (including
-intervening trivia), or left-associative addition of those atoms. It emits one
-canonical root block with source-ordered statement and postorder expression arenas. Frozen
-two-file TypeScript 6 v3 function, local, assignment, zero-argument call, signed-literal,
-identifier-negation, and numeric-negation snapshots, the M2 use-before-declaration source's
-syntax snapshot, and the import-plus-helper prefix of the existing complete v3 fixture are exact
-DTO oracles; the v3 verifier remains authoritative. Syntax acceptance of a name before its
-declaration, assignment to a `const`, or call to an unresolved function gives it no semantic
-authority. Every
-nontrivia token must be consumed, including after a valid function, or the complete candidate
-fails. Function, parameter, statement, and expression-depth boundaries have exact and first-extra
-tests. The original import-only entry retains its closed behavior for source closure. Compound or
-property assignment, argumented calls, parenthesized callees, nested or general negation,
+direct identifier calls with up to 256 source-ordered arguments, and unary minus over
+nonparenthesized atoms. Binary operators are `*`, `+`, `-`, `<`, `<=`, `>`, `>=`, `===`, and `!==`,
+with the pinned worker's precedence and left associativity. A trailing call-argument comma is
+accepted. It emits one canonical root block with source-ordered statement and postorder expression
+arenas. Frozen two-file TypeScript 6 v3 function, local, assignment, zero-argument call,
+signed-literal, identifier-negation, numeric-negation, and scalar-expression snapshots, the M2
+use-before-declaration source's syntax snapshot, and the import-plus-helper prefix of the existing
+complete v3 fixture are exact DTO oracles; the v3 verifier remains authoritative. Syntax acceptance
+of a name before its declaration, assignment to a `const`, or call to an unresolved function gives
+it no semantic authority. Every nontrivia token must be consumed, including after a valid function,
+or the complete candidate fails. Function, parameter, statement, and expression-depth boundaries
+have exact and first-extra tests. The original import-only entry retains its closed behavior for
+source closure. Compound or
+property assignment, parenthesized expressions or callees, indirect/generic/optional/spread calls,
 other operators, nested blocks, `if`, `while`, recovery and full diagnostic parity, provider
-selection, and module resolution remain outside this parser slice.
+selection, and module resolution remain outside this parser slice. Native/verifier expression-tree
+depth accepts 128 and rejects 129; the pinned worker rejects a flat 128-atom addition source after
+accepting 127, so full worker resource parity remains an open part of the native-parser work.
 
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
 executable-syntax contract owned by `zryna-syntax`; it does not change v1 semantics in place. The
