@@ -152,45 +152,12 @@ impl FileParser<'_> {
                     self.open_child(&mut body, &mut frames, Owner::Standalone(id))?;
                 }
                 TokenKind::Keyword(Keyword::If | Keyword::While) => {
-                    self.position += 1;
-                    let open_paren = self.take(TokenKind::OpenParen)?;
-                    let condition = self.expression(&mut body)?;
-                    let close_paren = self.take(TokenKind::CloseParen)?;
-                    let block = u32::try_from(body.blocks.len()).expect("bounded blocks");
-                    let is_if = token.kind() == TokenKind::Keyword(Keyword::If);
-                    let kind = if is_if {
-                        syntax::RawStatementKind::If {
-                            keyword_span: raw(token),
-                            open_paren_span: raw(open_paren),
-                            condition,
-                            close_paren_span: raw(close_paren),
-                            then_block: block,
-                            else_clause: None,
-                        }
-                    } else {
-                        syntax::RawStatementKind::While {
-                            keyword_span: raw(token),
-                            open_paren_span: raw(open_paren),
-                            condition,
-                            close_paren_span: raw(close_paren),
-                            body_block: block,
-                        }
-                    };
-                    body.statements.push(syntax::RawStatementSyntax {
-                        span: UntrustedSpan {
-                            file: self.file,
-                            start: token.span().start(),
-                            end: close_paren.span().end(),
-                        },
-                        kind,
-                    });
-                    self.open_child(
-                        &mut body,
-                        &mut frames,
-                        if is_if { Owner::IfThen(id) } else { Owner::While(id) },
-                    )?;
+                    self.control_statement(&mut body, &mut frames, token, id)?;
                 }
-                TokenKind::Identifier if self.spelling(token) == "upgradeWeak" => {
+                TokenKind::Identifier
+                    if self.spelling(token) == "upgradeWeak"
+                        && self.next().is_some_and(|next| next.kind() == TokenKind::OpenParen) =>
+                {
                     self.weak_upgrade(&mut body, &mut frames, token, id)?;
                 }
                 _ => {
@@ -199,6 +166,52 @@ impl FileParser<'_> {
                 }
             }
         }
+    }
+
+    fn control_statement(
+        &mut self,
+        body: &mut Body,
+        frames: &mut Vec<Frame>,
+        token: Token,
+        statement: usize,
+    ) -> Result<(), ParseError> {
+        self.position += 1;
+        let open_paren = self.take(TokenKind::OpenParen)?;
+        let condition = self.expression(body)?;
+        let close_paren = self.take(TokenKind::CloseParen)?;
+        let block = u32::try_from(body.blocks.len()).expect("bounded blocks");
+        let is_if = token.kind() == TokenKind::Keyword(Keyword::If);
+        let kind = if is_if {
+            syntax::RawStatementKind::If {
+                keyword_span: raw(token),
+                open_paren_span: raw(open_paren),
+                condition,
+                close_paren_span: raw(close_paren),
+                then_block: block,
+                else_clause: None,
+            }
+        } else {
+            syntax::RawStatementKind::While {
+                keyword_span: raw(token),
+                open_paren_span: raw(open_paren),
+                condition,
+                close_paren_span: raw(close_paren),
+                body_block: block,
+            }
+        };
+        body.statements.push(syntax::RawStatementSyntax {
+            span: UntrustedSpan {
+                file: self.file,
+                start: token.span().start(),
+                end: close_paren.span().end(),
+            },
+            kind,
+        });
+        self.open_child(
+            body,
+            frames,
+            if is_if { Owner::IfThen(statement) } else { Owner::While(statement) },
+        )
     }
 
     fn close_frame(

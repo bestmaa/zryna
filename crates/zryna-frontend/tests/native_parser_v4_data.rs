@@ -25,6 +25,9 @@ const UPGRADE: &str = include_str!("native_parser_v4_data/upgrade.zry");
 const UPGRADE_SNAPSHOT: &[u8] = include_bytes!("native_parser_v4_data/upgrade.snapshot.json");
 const MATCH: &str = include_str!("native_parser_v4_data/match.zry");
 const MATCH_SNAPSHOT: &[u8] = include_bytes!("native_parser_v4_data/match.snapshot.json");
+const RESERVED_REFERENCE: &str = include_str!("native_parser_v4_data/reserved-reference.zry");
+const RESERVED_REFERENCE_SNAPSHOT: &[u8] =
+    include_bytes!("native_parser_v4_data/reserved-reference.snapshot.json");
 const ORDER_A: &str =
     include_str!("../../../tests/provider-conformance-v4/fixtures/ordering-a.zry");
 const ORDER_Z: &str =
@@ -112,6 +115,11 @@ fn match_arms_match_worker() {
 }
 
 #[test]
+fn reserved_form_name_without_call_remains_a_reference() {
+    assert_exact("src/reserved-reference.zry", RESERVED_REFERENCE, RESERVED_REFERENCE_SNAPSHOT);
+}
+
+#[test]
 fn canonical_multi_file_order_matches_provider_corpus() {
     let sources = SourceMap::build(vec![
         SourceFileInput { path: "src/z.zry".to_owned(), text: ORDER_Z.to_owned() },
@@ -134,6 +142,10 @@ fn unsupported_syntax_rejects_atomically() {
         "function f(): i32 { return 1; } import { f } from \"./f.zry\";",
         "function f(): i32 { const value = 1; return value; }",
         "function f(): i32 { return match(1, { 'Pair.one': () => 1 }); }",
+        "function f(x: any): i32 { return 1; }",
+        "function f(x: string): i32 { return 1; }",
+        "function f(): i32 { return this; }",
+        "function f(): i32 { return clone({}); }",
     ] {
         let sources = SourceMap::build(vec![SourceFileInput {
             path: "src/rejected.zry".to_owned(),
@@ -161,5 +173,79 @@ fn first_extra_source_nesting_and_array_length_reject() {
         let lexed = lex(&sources).expect("native tokens");
         let error = parse_v4_candidate(&sources, &lexed).expect_err(&text);
         assert_eq!(error.diagnostic().code(), "ZRYNA-F1002");
+    }
+}
+
+#[test]
+fn bounded_expression_grammar_mutations_verify() {
+    let atoms = [
+        "x",
+        "1",
+        "true",
+        "'ok'",
+        "clone(x)",
+        "x[0]",
+        "Maybe.some(x)",
+        "Pair({ value: x })",
+        "Vec<i32>([1])",
+    ];
+    let operators = ["+", "-", "*", "===", "!==", "<", "<=", ">", ">="];
+    let mut seed = 0x412_u32;
+    for case in 0..128 {
+        seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+        let left = atoms[(seed as usize) % atoms.len()];
+        seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+        let right = atoms[(seed as usize) % atoms.len()];
+        seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+        let operator = operators[(seed as usize) % operators.len()];
+        let text = format!(
+            "// π case {case}\nfunction f(x: i32): i32 {{ return {left} {operator} {right}; }}"
+        );
+        let sources =
+            SourceMap::build(vec![SourceFileInput { path: "src/mutated.zry".to_owned(), text }])
+                .expect("source map");
+        let lexed = lex(&sources).expect("native tokens");
+        let native = parse_v4_candidate(&sources, &lexed).expect("generated syntax");
+        syntax_v4::verify_snapshot(native, &sources).expect("source-bound generated candidate");
+    }
+}
+
+#[test]
+fn first_extra_v4_block_statement_and_member_inventories_reject() {
+    fn fields(count: usize) -> String {
+        use std::fmt::Write as _;
+        let mut text = String::new();
+        for index in 0..count {
+            write!(text, "f{index}: i32;").expect("string write");
+        }
+        text
+    }
+    for (accepted, rejected) in [
+        (
+            format!("function f(): i32 {{ {} }}", "{}".repeat(4_095)),
+            format!("function f(): i32 {{ {} }}", "{}".repeat(4_096)),
+        ),
+        (
+            format!("function f(): i32 {{ {} }}", "return 1;".repeat(4_096)),
+            format!("function f(): i32 {{ {} }}", "return 1;".repeat(4_097)),
+        ),
+        (
+            format!("interface Pair extends ZrynaStruct {{ {} }}", fields(1_024)),
+            format!("interface Pair extends ZrynaStruct {{ {} }}", fields(1_025)),
+        ),
+    ] {
+        let parse = |text: String| {
+            let sources =
+                SourceMap::build(vec![SourceFileInput { path: "src/limit.zry".to_owned(), text }])
+                    .expect("source map");
+            let lexed = lex(&sources).expect("native tokens");
+            parse_v4_candidate(&sources, &lexed)
+        };
+        parse(accepted).expect("exact limit accepted");
+        let first_extra = parse(rejected);
+        assert_eq!(
+            first_extra.expect_err("first extra rejects").diagnostic().code(),
+            "ZRYNA-F1002"
+        );
     }
 }

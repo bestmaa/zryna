@@ -128,6 +128,17 @@ impl FileParser<'_> {
                 .tokens
                 .get(self.position + 2)
                 .is_some_and(|next| next.kind() == TokenKind::OpenBrace)
+            && !matches!(
+                self.spelling(first),
+                "clone"
+                    | "borrow"
+                    | "borrowMut"
+                    | "shared"
+                    | "downgrade"
+                    | "push"
+                    | "match"
+                    | "upgradeWeak"
+            )
         {
             self.struct_construction(body, nesting)?
         } else if first.kind() == TokenKind::Identifier
@@ -140,27 +151,7 @@ impl FileParser<'_> {
             && self.spelling(first) != "0"
         {
             let minus = minuses.pop().expect("numeric negation");
-            let spelling =
-                self.text[minus.span().start() as usize..first.span().end() as usize].to_owned();
-            if spelling.len() > 64 || spelling[1..].starts_with('0') {
-                return Err(unsupported(Some(first), "noncanonical integer literal"));
-            }
-            self.position += 1;
-            let span = UntrustedSpan {
-                file: self.file,
-                start: minus.span().start(),
-                end: first.span().end(),
-            };
-            (
-                self.push_expression(
-                    body,
-                    syntax::RawExpressionSyntax {
-                        span,
-                        kind: syntax::RawExpressionKind::I32Literal { spelling },
-                    },
-                )?,
-                1,
-            )
+            self.numeric_negation(body, minus, first)?
         } else {
             self.simple_operand(body, first)?
         };
@@ -187,6 +178,33 @@ impl FileParser<'_> {
             )?;
         }
         Ok((id, depth))
+    }
+
+    fn numeric_negation(
+        &mut self,
+        body: &mut Body,
+        minus: Token,
+        digits: Token,
+    ) -> Result<(u32, u32), ParseError> {
+        let spelling =
+            self.text[minus.span().start() as usize..digits.span().end() as usize].to_owned();
+        if spelling.len() > 64 || spelling[1..].starts_with('0') {
+            return Err(unsupported(Some(digits), "noncanonical integer literal"));
+        }
+        self.position += 1;
+        let span = UntrustedSpan {
+            file: self.file,
+            start: minus.span().start(),
+            end: digits.span().end(),
+        };
+        let id = self.push_expression(
+            body,
+            syntax::RawExpressionSyntax {
+                span,
+                kind: syntax::RawExpressionKind::I32Literal { spelling },
+            },
+        )?;
+        Ok((id, 1))
     }
 
     fn simple_operand(&mut self, body: &mut Body, first: Token) -> Result<(u32, u32), ParseError> {

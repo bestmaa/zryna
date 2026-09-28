@@ -137,6 +137,23 @@ impl FileParser<'_> {
             let less = self.take(TokenKind::LessThan)?;
             frames.push(TypeFrame { keyword: token, less, form });
         }
+        if let Some(token) = self.current()
+            && matches!(
+                self.spelling(token),
+                "any"
+                    | "unknown"
+                    | "never"
+                    | "number"
+                    | "string"
+                    | "boolean"
+                    | "symbol"
+                    | "bigint"
+                    | "undefined"
+                    | "object"
+            )
+        {
+            return Err(unsupported(Some(token), "unsupported primitive type annotation"));
+        }
         let name = self.identifier()?;
         let mut id = self.push_type(syntax::RawTypeSyntax {
             span: name.span,

@@ -70,7 +70,20 @@ fn raw(token: Token) -> UntrustedSpan {
 
 fn valid_name(name: &str) -> bool {
     name.len() <= 128
-        && !matches!(name, "__proto__" | "prototype" | "constructor")
+        && !matches!(
+            name,
+            "__proto__"
+                | "prototype"
+                | "constructor"
+                | "this"
+                | "null"
+                | "super"
+                | "new"
+                | "typeof"
+                | "void"
+                | "delete"
+                | "class"
+        )
         && name.as_bytes().first().is_some_and(|byte| byte.is_ascii_alphabetic() || *byte == b'_')
         && name.as_bytes()[1..].iter().all(|byte| byte.is_ascii_alphanumeric() || *byte == b'_')
 }
