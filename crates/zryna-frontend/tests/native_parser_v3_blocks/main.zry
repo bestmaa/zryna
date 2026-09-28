@@ -1,0 +1,13 @@
+// 😀 block spans
+import { step } from "./math.zry";
+export function value(input: i32): i32 {
+  let result: i32 = input;
+  {}
+  {
+    let result: i32 = step(input);
+    result = result + 1;
+    { const inner: bool = true; }
+  }
+  result = result + 2;
+  return result;
+}

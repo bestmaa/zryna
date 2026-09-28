@@ -338,6 +338,27 @@ test('native scalar-expression fixtures preserve worker precedence and call boun
   assert.equal(workerOverflow.error.code, 'ZRYNA-F2002');
 });
 
+test('native lexical-block fixtures preserve preorder and root-inclusive depth', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_blocks/', import.meta.url);
+  const main = (await readFile(new URL('main.zry', fixture), 'utf8')).replace(/\r?\n/g, '\r\n');
+  const math = await readFile(new URL('math.zry', fixture), 'utf8');
+  const rejected = await readFile(new URL('rejected.zry', fixture), 'utf8');
+  const expected = JSON.parse(await readFile(new URL('blocks.snapshot.json', fixture), 'utf8'));
+  const rejectedExpected = JSON.parse(await readFile(new URL('rejected.response.json', fixture), 'utf8'));
+  const nested = (depth) => `function f(): i32 { ${'{'.repeat(depth - 1)}${'}'.repeat(depth - 1)} return 1; }`;
+  const [positive, malformed, exact, overflow] = await exchange([
+    analyze(1, [{ path: 'src/math.zry', text: math }, { path: 'src/main.zry', text: main }]),
+    analyze(2, [{ path: 'src/rejected.zry', text: rejected }]),
+    analyze(3, [{ path: 'src/main.zry', text: nested(128) }]),
+    analyze(4, [{ path: 'src/main.zry', text: nested(129) }]),
+  ]);
+  assert.deepEqual(positive.result, expected);
+  assert.equal(validateSnapshot(positive.result), true, JSON.stringify(validateSnapshot.errors));
+  assert.deepEqual(malformed, rejectedExpected);
+  assert.equal(exact.result.files[0].functions[0].body.blocks.length, 128);
+  assert.equal(overflow.error.code, 'ZRYNA-F1002');
+});
+
 test('file IDs and UTF-8 spans remain deterministic for shuffled batches', async () => {
   const prefix = '// 😀\r\n';
   const source = `${prefix}export function value(): i32 { return 1; }`;

@@ -8,6 +8,7 @@ use crate::native_lexer::{Keyword, LexedProject, Token, TokenKind};
 
 use super::{FileParser, ParseError, raw};
 
+mod blocks;
 mod expression;
 
 /// Constructs an untrusted v3 candidate for an import prefix followed by straight-line functions.
@@ -35,6 +36,7 @@ pub fn parse_v3_straight_line_candidate(
     let mut total_bindings = 0_usize;
     let mut total_functions = 0_usize;
     let mut total_parameters = 0_usize;
+    let mut total_blocks = 0_usize;
     let mut total_statements = 0_usize;
     let mut total_locals = 0_usize;
     let mut total_expressions = 0_usize;
@@ -74,12 +76,14 @@ pub fn parse_v3_straight_line_candidate(
                     }
                     let function = parser.function(
                         total_parameters,
+                        total_blocks,
                         total_statements,
                         total_locals,
                         total_expressions,
                     )?;
                     total_functions += 1;
                     total_parameters += function.parameters.len();
+                    total_blocks += function.body.blocks.len();
                     total_statements += function.body.statements.len();
                     total_locals += function
                         .body
@@ -229,6 +233,7 @@ impl FileParser<'_> {
     fn function(
         &mut self,
         previous_parameters: usize,
+        previous_blocks: usize,
         previous_statements: usize,
         previous_locals: usize,
         previous_expressions: usize,
@@ -264,47 +269,13 @@ impl FileParser<'_> {
         self.function_take(TokenKind::CloseParen)?;
         let result_type = self.named_type()?;
         let open = self.function_take(TokenKind::OpenBrace)?;
-        let mut expressions = Vec::new();
-        let mut statements = Vec::new();
-        let mut locals = 0_usize;
-        while let Some(token) = self.current() {
-            let mutable = match token.kind() {
-                TokenKind::Keyword(Keyword::Let) => Some(true),
-                TokenKind::Keyword(Keyword::Const) => Some(false),
-                TokenKind::Identifier => None,
-                _ => break,
-            };
-            if statements.len() >= syntax::MAX_STATEMENTS_PER_FUNCTION
-                || previous_statements + statements.len() >= syntax::MAX_STATEMENTS_PER_PROJECT
-            {
-                return Err(resource("statement inventory exceeds protocol-v3 limit"));
-            }
-            if let Some(mutable) = mutable {
-                if locals >= syntax::MAX_LOCALS_PER_FUNCTION
-                    || previous_locals + locals >= syntax::MAX_LOCALS_PER_PROJECT
-                {
-                    return Err(resource("local inventory exceeds protocol-v3 limit"));
-                }
-                statements.push(self.local_declaration(
-                    token,
-                    mutable,
-                    &mut expressions,
-                    previous_expressions,
-                )?);
-                locals += 1;
-            } else {
-                statements.push(self.assignment(&mut expressions, previous_expressions)?);
-            }
-        }
-        if statements.len() >= syntax::MAX_STATEMENTS_PER_FUNCTION
-            || previous_statements + statements.len() >= syntax::MAX_STATEMENTS_PER_PROJECT
-        {
-            return Err(resource("statement inventory exceeds protocol-v3 limit"));
-        }
-        let (statement, close) = self.final_return(&mut expressions, previous_expressions)?;
-        statements.push(statement);
-        let body_span =
-            UntrustedSpan { file: self.file, start: open.span().start(), end: close.span().end() };
+        let (body, close) = self.body(
+            open,
+            previous_blocks,
+            previous_statements,
+            previous_locals,
+            previous_expressions,
+        )?;
         Ok(syntax::RawFunctionSyntax {
             span: UntrustedSpan {
                 file: self.file,
@@ -316,20 +287,7 @@ impl FileParser<'_> {
             name,
             parameters,
             result_type,
-            body: syntax::RawFunctionBodySyntax {
-                span: body_span,
-                root_block: 0,
-                blocks: vec![syntax::RawBlockSyntax {
-                    span: body_span,
-                    open_brace_span: raw(open),
-                    statements: (0..statements.len())
-                        .map(|index| u32::try_from(index).expect("bounded statement inventory"))
-                        .collect(),
-                    close_brace_span: raw(close),
-                }],
-                statements,
-                expressions,
-            },
+            body,
         })
     }
 }
