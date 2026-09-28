@@ -176,6 +176,30 @@ impl FileParser<'_> {
         })
     }
 
+    fn assignment(
+        &mut self,
+        expressions: &mut Vec<syntax::RawExpressionSyntax>,
+        previous_expressions: usize,
+    ) -> Result<syntax::RawStatementSyntax, ParseError> {
+        let target = self.function_identifier()?;
+        let equals = self.function_take(TokenKind::Equals)?;
+        let value = self.addition(expressions, previous_expressions)?;
+        let semicolon = self.function_take(TokenKind::Semicolon)?;
+        Ok(syntax::RawStatementSyntax {
+            span: UntrustedSpan {
+                file: self.file,
+                start: target.span.start,
+                end: semicolon.span().end(),
+            },
+            kind: syntax::RawStatementKind::Assignment {
+                target,
+                equals_span: raw(equals),
+                value,
+                semicolon_span: raw(semicolon),
+            },
+        })
+    }
+
     fn final_return(
         &mut self,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
@@ -243,8 +267,9 @@ impl FileParser<'_> {
         let mut locals = 0_usize;
         while let Some(token) = self.current() {
             let mutable = match token.kind() {
-                TokenKind::Keyword(Keyword::Let) => true,
-                TokenKind::Keyword(Keyword::Const) => false,
+                TokenKind::Keyword(Keyword::Let) => Some(true),
+                TokenKind::Keyword(Keyword::Const) => Some(false),
+                TokenKind::Identifier => None,
                 _ => break,
             };
             if statements.len() >= syntax::MAX_STATEMENTS_PER_FUNCTION
@@ -252,18 +277,22 @@ impl FileParser<'_> {
             {
                 return Err(resource("statement inventory exceeds protocol-v3 limit"));
             }
-            if locals >= syntax::MAX_LOCALS_PER_FUNCTION
-                || previous_locals + locals >= syntax::MAX_LOCALS_PER_PROJECT
-            {
-                return Err(resource("local inventory exceeds protocol-v3 limit"));
+            if let Some(mutable) = mutable {
+                if locals >= syntax::MAX_LOCALS_PER_FUNCTION
+                    || previous_locals + locals >= syntax::MAX_LOCALS_PER_PROJECT
+                {
+                    return Err(resource("local inventory exceeds protocol-v3 limit"));
+                }
+                statements.push(self.local_declaration(
+                    token,
+                    mutable,
+                    &mut expressions,
+                    previous_expressions,
+                )?);
+                locals += 1;
+            } else {
+                statements.push(self.assignment(&mut expressions, previous_expressions)?);
             }
-            statements.push(self.local_declaration(
-                token,
-                mutable,
-                &mut expressions,
-                previous_expressions,
-            )?);
-            locals += 1;
         }
         if statements.len() >= syntax::MAX_STATEMENTS_PER_FUNCTION
             || previous_statements + statements.len() >= syntax::MAX_STATEMENTS_PER_PROJECT

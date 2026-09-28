@@ -79,7 +79,6 @@ fn unsupported_local_forms_match_worker_rejection_class_and_fail_atomically() {
         "function f(): i32 { let x = 1; return x; }",
         "function f(): i32 { const x: i32 = 1 return x; }",
         "function f(): i32 { var x: i32 = 1; return x; }",
-        "function f(): i32 { let x: i32 = 1; x = 2; return x; }",
         "function f(): i32 { let x: i32 = 1 * 2; return x; }",
         "function f(): i32 { let x: i32 = 1; return x; let y: i32 = 2; }",
         "function f(): i32 { let x: i32 = 1; { return x; } }",
