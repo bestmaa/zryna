@@ -1,15 +1,18 @@
-use std::{ffi::OsString, fmt, path::Path};
+use std::{ffi::OsString, fmt, path::Path, time::Duration};
 
-use zryna_diagnostics::Diagnostic;
+use zryna_diagnostics::{Diagnostic, Severity};
 use zryna_frontend::{
-    FrontendCapabilities, ProviderExpectation, ProviderExpectationV3, WorkerFrontend,
-    WorkerFrontendV3, WorkerLimits, WorkerLimitsV3, WorkerSpec, WorkerSpecV3, syntax_v2,
+    FrontendCapabilities, ProviderExpectation, ProviderExpectationV3, ProviderExpectationV4,
+    WorkerFrontend, WorkerFrontendV3, WorkerFrontendV4, WorkerLimits, WorkerLimitsV3,
+    WorkerLimitsV4, WorkerSpec, WorkerSpecV3, WorkerSpecV4, syntax_v2,
 };
 use zryna_source::{NormalizedSourcePath, SourceMap};
 
 use super::tooling_execution::ToolingExecutionClosure;
 use super::{DiagnosticRevision, DiagnosticSession, DiagnosticSessionError};
+use crate::ownership_closure::discover_ownership_module_closure_with_overlays_bounded;
 use crate::runtime::{NodeRuntimeCapability, node_compatible_path};
+use crate::{WorkspaceSourceRoot, discover_ownership_module_closure_with_overlays};
 
 /// Pinned protocol-v2 and protocol-v3 compiler frontends retained by a tooling transport.
 #[derive(Debug)]
@@ -17,6 +20,7 @@ pub struct ToolingCompiler {
     node: NodeRuntimeCapability,
     frontend: WorkerFrontend,
     frontend_v3: WorkerFrontendV3,
+    frontend_v4: WorkerFrontendV4,
     execution: ToolingExecutionClosure,
 }
 
@@ -153,10 +157,30 @@ impl ToolingCompiler {
                 "restore the registered adapter and pinned runtime paths",
             )
         })?;
+        let expected_v4 = ProviderExpectationV4::new("typescript-6", "6.0.3").map_err(|_| {
+            configuration_error(
+                "the fixed data-ownership tooling frontend expectation is invalid",
+                "restore the registered protocol-v4 adapter contract",
+            )
+        })?;
+        let spec_v4 = WorkerSpecV4::new(
+            node.executable().map_err(ToolingCompilerError::Configuration)?,
+            vec![OsString::from(node_compatible_path(&execution.worker_v4()))],
+            node_compatible_path(execution.working_directory()),
+            expected_v4,
+            WorkerLimitsV4::default(),
+        )
+        .map_err(|_| {
+            configuration_error(
+                "the fixed data-ownership tooling frontend process could not be configured",
+                "restore the registered adapter and pinned runtime paths",
+            )
+        })?;
         Ok(Self {
             node,
             frontend: WorkerFrontend::new(spec),
             frontend_v3: WorkerFrontendV3::new(spec_v3),
+            frontend_v4: WorkerFrontendV4::new(spec_v4),
             execution,
         })
     }
@@ -214,6 +238,147 @@ impl ToolingCompiler {
         }
         .map_err(ToolingCompilerError::Session)
     }
+
+    /// Analyzes an exact in-memory M3 source map using the authenticated protocol-v4 worker.
+    ///
+    /// # Errors
+    /// Rejects runtime replacement or failed revision admission.
+    pub fn admit_data_ownership(
+        &self,
+        session: &mut DiagnosticSession,
+        sources: SourceMap,
+        entrypoint: &NormalizedSourcePath,
+    ) -> Result<DiagnosticRevision, ToolingCompilerError> {
+        if sources.file_id(entrypoint).is_none() {
+            return Err(ToolingCompilerError::Session(DiagnosticSessionError::SemanticAuthority));
+        }
+        self.node.revalidate().map_err(ToolingCompilerError::Configuration)?;
+        self.execution.revalidate().map_err(ToolingCompilerError::Configuration)?;
+        let analysis = self.frontend_v4.analyze_verified_v4(&sources);
+        self.execution.revalidate().map_err(ToolingCompilerError::Configuration)?;
+        self.node.revalidate().map_err(ToolingCompilerError::Configuration)?;
+        match analysis {
+            Ok(syntax) => session.admit_data_ownership_analysis(sources, &syntax, entrypoint),
+            Err(error) => session.admit_worker_failure(sources, &error),
+        }
+        .map_err(ToolingCompilerError::Session)
+    }
+
+    /// Discovers saved M3 imports under a retained root with exact open-buffer overlays.
+    ///
+    /// # Errors
+    /// Rejects source-graph, runtime, worker, semantic, or retained-revision failure.
+    pub fn admit_data_ownership_workspace(
+        &self,
+        session: &mut DiagnosticSession,
+        root: &WorkspaceSourceRoot,
+        overlays: &SourceMap,
+        entrypoint: &NormalizedSourcePath,
+    ) -> Result<DiagnosticRevision, ToolingCompilerError> {
+        self.node.revalidate().map_err(ToolingCompilerError::Configuration)?;
+        self.execution.revalidate().map_err(ToolingCompilerError::Configuration)?;
+        let closure = discover_ownership_module_closure_with_overlays(
+            root,
+            entrypoint.clone(),
+            overlays,
+            &self.frontend_v4,
+        );
+        self.execution.revalidate().map_err(ToolingCompilerError::Configuration)?;
+        self.node.revalidate().map_err(ToolingCompilerError::Configuration)?;
+        match closure {
+            Ok(closure) => session
+                .admit_data_ownership_analysis(
+                    closure.sources().clone(),
+                    closure.syntax(),
+                    entrypoint,
+                )
+                .map_err(ToolingCompilerError::Session),
+            Err(crate::ModuleClosureError::Frontend(error)) => {
+                if error.diagnostics().is_empty() {
+                    session
+                        .admit_worker_failure(overlays.clone(), &error)
+                        .map_err(ToolingCompilerError::Session)
+                } else {
+                    admit_closure_diagnostics(session, overlays, error.diagnostics())
+                }
+            }
+            Err(crate::ModuleClosureError::Rejected(diagnostics)) => {
+                admit_closure_diagnostics(session, overlays, &diagnostics)
+            }
+        }
+    }
+
+    /// Rechecks a saved-import graph against the immutable admitted source map before edits.
+    #[must_use]
+    pub fn revalidate_data_ownership_workspace(
+        &self,
+        root: &WorkspaceSourceRoot,
+        overlays: &SourceMap,
+        entrypoint: &NormalizedSourcePath,
+        admitted: &SourceMap,
+        budget: Duration,
+    ) -> bool {
+        if self.node.revalidate().is_err() || self.execution.revalidate().is_err() {
+            return false;
+        }
+        let Ok(closure) = discover_ownership_module_closure_with_overlays_bounded(
+            root,
+            entrypoint.clone(),
+            overlays,
+            &self.frontend_v4,
+            budget,
+        ) else {
+            return false;
+        };
+        if self.node.revalidate().is_err() || self.execution.revalidate().is_err() {
+            return false;
+        }
+        let actual = closure.sources();
+        actual.len() == admitted.len()
+            && (0..actual.len()).all(|raw| {
+                let Ok(index) = u32::try_from(raw) else { return false };
+                let (Ok(actual_id), Ok(admitted_id)) =
+                    (actual.verify_file_id(index), admitted.verify_file_id(index))
+                else {
+                    return false;
+                };
+                match (actual.source(actual_id), admitted.source(admitted_id)) {
+                    (Some(left), Some(right)) => {
+                        left.path() == right.path() && left.text() == right.text()
+                    }
+                    _ => false,
+                }
+            })
+    }
+}
+
+fn admit_closure_diagnostics(
+    session: &mut DiagnosticSession,
+    overlays: &SourceMap,
+    diagnostics: &[Diagnostic],
+) -> Result<DiagnosticRevision, ToolingCompilerError> {
+    // Discovery spans belong to temporary provider batches, not the retained open-buffer map.
+    let safe = diagnostics
+        .iter()
+        .map(|diagnostic| {
+            let path = diagnostic.path().map(str::to_owned);
+            match diagnostic.severity() {
+                Severity::Error => Diagnostic::error(
+                    diagnostic.code(),
+                    path,
+                    diagnostic.message(),
+                    diagnostic.guidance(),
+                ),
+                Severity::Warning => Diagnostic::warning(
+                    diagnostic.code(),
+                    path,
+                    diagnostic.message(),
+                    diagnostic.guidance(),
+                ),
+            }
+        })
+        .collect::<Vec<_>>();
+    session.admit_diagnostics(overlays.clone(), &safe).map_err(ToolingCompilerError::Session)
 }
 
 fn configuration_error(message: impl Into<String>, guidance: &'static str) -> ToolingCompilerError {

@@ -4,7 +4,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use zryna_driver::diagnostic_sessions::{DiagnosticRevision, FormattingError, QUERY_DEADLINE};
 
-use super::{RevisionCompiler, Server};
+use super::{AnalysisProfile, RevisionCompiler, Server};
 use crate::{
     coordinates::{Position, byte_range_to_positions, position_to_byte},
     params::decode_params,
@@ -109,6 +109,7 @@ impl<Compiler: RevisionCompiler> Server<Compiler> {
                 value,
                 pending.id.internal().to_owned(),
                 pending.revision,
+                pending.started,
             ));
         }
         output
@@ -132,6 +133,16 @@ impl<Compiler: RevisionCompiler> Server<Compiler> {
             Ok(edits) => edits,
             Err(error) => return format_error(&pending.id, error),
         };
+        if self.profile == AnalysisProfile::DataOwnership {
+            let budget = QUERY_DEADLINE.saturating_sub(pending.started.elapsed());
+            let current = self.m3_graph_current(pending.revision, budget);
+            if pending.started.elapsed() >= QUERY_DEADLINE {
+                return protocol::error(Some(&pending.id), -32803, "Formatting deadline exceeded");
+            }
+            if !current {
+                return format_error(&pending.id, FormattingError::Stale);
+            }
+        }
         let mut output = Vec::new();
         for edit in edits {
             let Some(range) =
@@ -146,6 +157,30 @@ impl<Compiler: RevisionCompiler> Server<Compiler> {
             return format_error(&pending.id, FormattingError::Limit);
         }
         response
+    }
+
+    pub(super) fn m3_graph_current(
+        &self,
+        revision: DiagnosticRevision,
+        budget: std::time::Duration,
+    ) -> bool {
+        if budget.is_zero() {
+            return false;
+        }
+        let Some(root) = self.source_root.as_ref() else { return false };
+        let Some(entry) =
+            self.entry_uri.as_ref().and_then(|uri| self.documents.get(uri)).and_then(|document| {
+                zryna_source::NormalizedSourcePath::new(document.path.clone()).ok()
+            })
+        else {
+            return false;
+        };
+        let (Ok(overlays), Some(admitted)) =
+            (crate::documents::source_map(&self.documents), self.session.active_sources(revision))
+        else {
+            return false;
+        };
+        self.compiler.revalidate_data_ownership_workspace(root, &overlays, &entry, admitted, budget)
     }
 }
 

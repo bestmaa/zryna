@@ -43,7 +43,7 @@ struct RetainedFile {
     sha256: [u8; 32],
 }
 
-/// Fixed seven-file stage. Unix owner permissions and Windows inherited private ACLs are trusted.
+/// Fixed nine-file stage. Unix owner permissions and Windows inherited private ACLs are trusted.
 #[derive(Debug)]
 pub(super) struct ToolingStage {
     path: PathBuf,
@@ -97,6 +97,20 @@ impl ToolingStage {
             stage_file(
                 &stage.directories,
                 &mut stage.files,
+                ROOT,
+                "worker-v4.mjs",
+                &captured.worker_v4,
+            )?;
+            stage_file(
+                &stage.directories,
+                &mut stage.files,
+                ROOT,
+                "limits-v4.mjs",
+                &captured.limits_v4,
+            )?;
+            stage_file(
+                &stage.directories,
+                &mut stage.files,
                 WRAPPER,
                 "package.json",
                 &captured.wrapper_manifest,
@@ -143,6 +157,10 @@ impl ToolingStage {
 
     pub(super) fn worker_v3(&self) -> PathBuf {
         self.working_directory.join("worker-v3.mjs")
+    }
+
+    pub(super) fn worker_v4(&self) -> PathBuf {
+        self.working_directory.join("worker-v4.mjs")
     }
 
     pub(super) fn working_directory(&self) -> &Path {
@@ -198,6 +216,8 @@ impl ToolingStage {
             "wrapper-manifest",
             "worker-v3",
             "limits-v3",
+            "worker-v4",
+            "limits-v4",
             "worker",
         ] {
             let Some(file) = self.files.remove(key) else { continue };
@@ -335,6 +355,8 @@ fn stage_file(
         (ROOT, "worker.mjs") => "worker",
         (ROOT, "worker-v3.mjs") => "worker-v3",
         (ROOT, "limits-v3.mjs") => "limits-v3",
+        (ROOT, "worker-v4.mjs") => "worker-v4",
+        (ROOT, "limits-v4.mjs") => "limits-v4",
         (WRAPPER, "package.json") => "wrapper-manifest",
         (WRAPPER_LIB, "typescript.js") => "wrapper-runtime",
         (OLD, "package.json") => "old-manifest",
@@ -353,6 +375,8 @@ fn file_name(key: &str) -> &'static str {
         "worker" => "worker.mjs",
         "worker-v3" => "worker-v3.mjs",
         "limits-v3" => "limits-v3.mjs",
+        "worker-v4" => "worker-v4.mjs",
+        "limits-v4" => "limits-v4.mjs",
         "wrapper-manifest" | "old-manifest" => "package.json",
         "wrapper-runtime" | "old-runtime" => "typescript.js",
         _ => "",
@@ -361,10 +385,17 @@ fn file_name(key: &str) -> &'static str {
 
 fn validate_inventory(key: &str, directory: &Dir) -> Result<(), Diagnostic> {
     let expected: BTreeSet<String> = match key {
-        ROOT => ["node_modules", "worker.mjs", "worker-v3.mjs", "limits-v3.mjs"]
-            .map(str::to_owned)
-            .into_iter()
-            .collect(),
+        ROOT => [
+            "node_modules",
+            "worker.mjs",
+            "worker-v3.mjs",
+            "limits-v3.mjs",
+            "worker-v4.mjs",
+            "limits-v4.mjs",
+        ]
+        .map(str::to_owned)
+        .into_iter()
+        .collect(),
         MODULES => ["@typescript"].map(str::to_owned).into_iter().collect(),
         SCOPE => ["old", "typescript6"].map(str::to_owned).into_iter().collect(),
         WRAPPER | OLD => ["lib", "package.json"].map(str::to_owned).into_iter().collect(),

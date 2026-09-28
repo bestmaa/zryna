@@ -22,6 +22,8 @@ fn installed_closure_rejects_missing_changed_worker_and_dependency_bytes() {
         ("adapters/typescript-6/src/worker.mjs", "worker.mjs"),
         ("adapters/typescript-6/src/worker-v3.mjs", "worker-v3.mjs"),
         ("adapters/typescript-6/src/limits-v3.mjs", "limits-v3.mjs"),
+        ("adapters/typescript-6/src/worker-v4.mjs", "worker-v4.mjs"),
+        ("adapters/typescript-6/src/limits-v4.mjs", "limits-v4.mjs"),
         (
             "node_modules/.pnpm/@typescript+typescript6@6.0.2/node_modules/@typescript/typescript6/package.json",
             "node_modules/@typescript/typescript6/package.json",

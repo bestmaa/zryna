@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::path::PathBuf;
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -27,6 +28,46 @@ pub(super) fn path_below_root(root: &str, uri: &str) -> Option<String> {
         return None;
     }
     percent_decode(remainder)
+}
+
+pub(super) fn root_path_from_uri(uri: &str) -> Option<PathBuf> {
+    let uri = normalize_root_uri(uri)?;
+    let encoded = uri.strip_prefix("file://")?;
+    if !encoded.starts_with('/') {
+        return None;
+    }
+    let decoded = percent_decode(encoded)?;
+    #[cfg(windows)]
+    let decoded = {
+        let drive = decoded.strip_prefix('/')?;
+        if !drive.as_bytes().first().is_some_and(u8::is_ascii_alphabetic)
+            || drive.as_bytes().get(1) != Some(&b':')
+            || drive.as_bytes().get(2) != Some(&b'/')
+        {
+            return None;
+        }
+        drive.to_owned()
+    };
+    let path = PathBuf::from(decoded);
+    path.is_absolute().then_some(path)
+}
+
+pub(super) fn same_trusted_root(configured: &std::path::Path, uri_path: &std::path::Path) -> bool {
+    #[cfg(windows)]
+    {
+        let configured = configured.to_string_lossy().replace('\\', "/");
+        let uri_path = uri_path.to_string_lossy().replace('\\', "/");
+        match (configured.get(..1), uri_path.get(..1), configured.get(1..), uri_path.get(1..)) {
+            (Some(left_drive), Some(right_drive), Some(left_rest), Some(right_rest)) => {
+                left_drive.eq_ignore_ascii_case(right_drive) && left_rest == right_rest
+            }
+            _ => false,
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        configured == uri_path
+    }
 }
 
 fn percent_decode(value: &str) -> Option<String> {

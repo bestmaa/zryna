@@ -43,6 +43,10 @@ impl ToolingExecutionClosure {
         self.stage.worker_v3()
     }
 
+    pub(super) fn worker_v4(&self) -> std::path::PathBuf {
+        self.stage.worker_v4()
+    }
+
     pub(super) fn working_directory(&self) -> &Path {
         self.stage.working_directory()
     }

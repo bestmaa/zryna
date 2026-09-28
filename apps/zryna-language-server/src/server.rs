@@ -1,7 +1,8 @@
 use std::{
     collections::{BTreeMap, VecDeque},
     fmt::Display,
-    time::Instant,
+    path::{Path, PathBuf},
+    time::{Duration, Instant},
 };
 
 mod definitions;
@@ -15,8 +16,10 @@ use outgoing::OutstandingRequests;
 pub use outgoing::{MAX_OUTSTANDING_REQUESTS, Outgoing};
 
 use serde_json::{Value, json};
+use zryna_driver::WorkspaceSourceRoot;
 use zryna_driver::diagnostic_sessions::{
     DiagnosticRevision, DiagnosticSession, PendingDefinitionQuery, ToolingCompiler,
+    ToolingCompilerError,
 };
 use zryna_source::{NormalizedSourcePath, SourceMap};
 
@@ -57,10 +60,37 @@ pub trait RevisionCompiler {
         sources: SourceMap,
         entrypoint: &NormalizedSourcePath,
     ) -> Result<DiagnosticRevision, Self::Error>;
+
+    /// Admits M3 with exact open buffers and authenticated saved imports below one root.
+    ///
+    /// # Errors
+    /// Returns stable source, provider, semantic or session rejection.
+    fn admit_data_ownership_workspace(
+        &mut self,
+        session: &mut DiagnosticSession,
+        root: &WorkspaceSourceRoot,
+        overlays: SourceMap,
+        entrypoint: &NormalizedSourcePath,
+    ) -> Result<DiagnosticRevision, Self::Error> {
+        let _ = root;
+        self.admit_control_flow(session, overlays, entrypoint)
+    }
+
+    /// Rechecks saved dependency authority immediately before formatting edits.
+    fn revalidate_data_ownership_workspace(
+        &self,
+        _root: &WorkspaceSourceRoot,
+        _overlays: &SourceMap,
+        _entrypoint: &NormalizedSourcePath,
+        _admitted: &SourceMap,
+        _budget: Duration,
+    ) -> bool {
+        true
+    }
 }
 
 impl RevisionCompiler for ToolingCompiler {
-    type Error = zryna_driver::diagnostic_sessions::ToolingCompilerError;
+    type Error = ToolingCompilerError;
 
     fn admit(
         &mut self,
@@ -77,6 +107,29 @@ impl RevisionCompiler for ToolingCompiler {
         entrypoint: &NormalizedSourcePath,
     ) -> Result<DiagnosticRevision, Self::Error> {
         ToolingCompiler::admit_control_flow(self, session, sources, entrypoint)
+    }
+
+    fn admit_data_ownership_workspace(
+        &mut self,
+        session: &mut DiagnosticSession,
+        root: &WorkspaceSourceRoot,
+        overlays: SourceMap,
+        entrypoint: &NormalizedSourcePath,
+    ) -> Result<DiagnosticRevision, Self::Error> {
+        ToolingCompiler::admit_data_ownership_workspace(self, session, root, &overlays, entrypoint)
+    }
+
+    fn revalidate_data_ownership_workspace(
+        &self,
+        root: &WorkspaceSourceRoot,
+        overlays: &SourceMap,
+        entrypoint: &NormalizedSourcePath,
+        admitted: &SourceMap,
+        budget: Duration,
+    ) -> bool {
+        ToolingCompiler::revalidate_data_ownership_workspace(
+            self, root, overlays, entrypoint, admitted, budget,
+        )
     }
 }
 
@@ -98,6 +151,9 @@ pub struct Server<Compiler> {
     compiler: Compiler,
     session: DiagnosticSession,
     root_uri: Option<String>,
+    root_path: Option<PathBuf>,
+    source_root: Option<WorkspaceSourceRoot>,
+    entry_uri: Option<String>,
     encoding: PositionEncoding,
     profile: AnalysisProfile,
     documents: BTreeMap<String, Document>,
@@ -123,6 +179,9 @@ impl<Compiler: RevisionCompiler> Server<Compiler> {
             compiler,
             session: DiagnosticSession::try_new()?,
             root_uri: None,
+            root_path: None,
+            source_root: None,
+            entry_uri: None,
             encoding: PositionEncoding::Utf16,
             profile: AnalysisProfile::Scalar,
             documents: BTreeMap::new(),
@@ -134,6 +193,20 @@ impl<Compiler: RevisionCompiler> Server<Compiler> {
             shutting_down: false,
             exit: false,
         })
+    }
+
+    /// Captures one trusted workspace root before protocol initialization.
+    ///
+    /// # Errors
+    /// Rejects unsafe, unavailable, or late root configuration.
+    pub fn configure_workspace_root(&mut self, root: &Path) -> Result<(), String> {
+        if self.initialized || self.root_path.is_some() || !self.documents.is_empty() {
+            return Err("workspace root must be configured before initialization".to_owned());
+        }
+        let source_root = WorkspaceSourceRoot::capture(root).map_err(|error| error.to_string())?;
+        self.root_path = Some(root.to_path_buf());
+        self.source_root = Some(source_root);
+        Ok(())
     }
 
     /// Decodes and handles one complete JSON-RPC payload.
@@ -225,13 +298,24 @@ impl<Compiler: RevisionCompiler> Server<Compiler> {
         let Some(path) = self.path_for_uri(&item.uri) else {
             return vec![log_invalid()];
         };
-        if item.language_id != "zryna" || item.version < 0 || !self.documents.is_empty() {
+        if item.language_id != "zryna"
+            || item.version < 0
+            || (self.profile != AnalysisProfile::DataOwnership && !self.documents.is_empty())
+            || self.documents.contains_key(&item.uri)
+        {
             return vec![log_invalid()];
+        }
+        if self.entry_uri.is_none() {
+            self.entry_uri = Some(item.uri.clone());
         }
         let mut candidate = self.documents.clone();
         candidate
             .insert(item.uri.clone(), Document { path, text: item.text, version: item.version });
-        self.admit_documents(candidate)
+        let output = self.admit_documents(candidate);
+        if !self.documents.contains_key(&item.uri) && self.entry_uri.as_deref() == Some(&item.uri) {
+            self.entry_uri = None;
+        }
+        output
     }
 
     fn did_change(&mut self, params: Option<Value>) -> Vec<Value> {
@@ -260,6 +344,9 @@ impl<Compiler: RevisionCompiler> Server<Compiler> {
         let Some(closed) = self.documents.remove(&params.text_document.uri) else {
             return vec![log_invalid()];
         };
+        if self.entry_uri.as_deref() == Some(&params.text_document.uri) {
+            self.entry_uri = self.documents.keys().next().cloned();
+        }
         let mut output = vec![protocol::notification(
             "textDocument/publishDiagnostics",
             &json!({
@@ -326,10 +413,33 @@ impl<Compiler: RevisionCompiler> Server<Compiler> {
                 };
                 self.compiler.admit_control_flow(&mut self.session, sources.clone(), &entrypoint)
             }
+            AnalysisProfile::DataOwnership => {
+                let Some(root) = self.source_root.as_ref() else {
+                    return vec![log_message("missing M3 workspace root")];
+                };
+                let Some(path) = self
+                    .entry_uri
+                    .as_ref()
+                    .and_then(|uri| self.documents.get(uri))
+                    .map(|document| &document.path)
+                else {
+                    return vec![log_message("missing M3 entrypoint")];
+                };
+                let Ok(entrypoint) = NormalizedSourcePath::new(path.clone()) else {
+                    return vec![log_message("invalid M3 entrypoint")];
+                };
+                self.compiler.admit_data_ownership_workspace(
+                    &mut self.session,
+                    root,
+                    sources.clone(),
+                    &entrypoint,
+                )
+            }
         };
         match admitted {
             Ok(revision) => {
-                self.active = Some(ActiveSnapshot { revision, sources });
+                let retained = self.session.active_sources(revision).cloned().unwrap_or(sources);
+                self.active = Some(ActiveSnapshot { revision, sources: retained });
                 self.publish_diagnostics(revision)
             }
             Err(error) => {

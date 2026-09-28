@@ -1,10 +1,16 @@
 //! Protocol coverage for revision, validation, and lifecycle behavior.
 
-use std::io::{self, Write};
+use std::{
+    io::{self, Write},
+    path::PathBuf,
+    process::Command,
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use serde_json::{Value, json};
 use zryna_driver::diagnostic_sessions::{
-    DiagnosticRevision, DiagnosticSession, DiagnosticSessionError, admit_single_function_fixture,
+    DiagnosticRevision, DiagnosticSession, DiagnosticSessionError, ToolingCompiler,
+    admit_single_function_fixture,
 };
 use zryna_language_server::{
     MAX_OUTSTANDING_REQUESTS, Outgoing, RevisionCompiler, Server, read_frame, write_frame,
@@ -191,7 +197,7 @@ fn explicit_m2_selects_entrypoint_and_rejects_unavailable_definition() {
 fn invalid_profile_cannot_initialize_or_admit_source() {
     let mut server = Server::new(EmptyCompiler).expect("session");
     for options in [
-        json!({"zrynaProfile":"data-ownership-v1"}),
+        json!({"zrynaProfile":"unsupported-v1"}),
         json!({"zrynaProfile":"control-flow-v1","other":true}),
         json!(1),
     ] {
@@ -204,6 +210,175 @@ fn invalid_profile_cannot_initialize_or_admit_source() {
     }
     let unopened = open(&mut server, 1, "export function f(): i32 { return 1; }\n");
     assert!(unopened.is_empty());
+}
+
+static NEXT_M3_WORKSPACE: AtomicU64 = AtomicU64::new(0);
+
+#[test]
+#[allow(clippy::too_many_lines)]
+fn m3_saved_import_and_open_entry_format_then_reject_changed_dependency() {
+    let workspace = std::env::temp_dir().join(format!(
+        "zryna-lsp-m3-{}-{}",
+        std::process::id(),
+        NEXT_M3_WORKSPACE.fetch_add(1, Ordering::Relaxed),
+    ));
+    std::fs::create_dir(&workspace).expect("workspace");
+    std::fs::write(workspace.join("main.zry"), "invalid saved entry").expect("saved entry");
+    std::fs::write(
+        workspace.join("math.zry"),
+        "export function double(value: i32): i32 { return value + value; }\n",
+    )
+    .expect("saved import");
+    let root_uri = if cfg!(windows) {
+        let mut uri = format!("file:///{}", workspace.to_string_lossy().replace('\\', "/"));
+        let drive = uri.as_bytes()[8];
+        let alternate = if drive.is_ascii_uppercase() {
+            drive.to_ascii_lowercase()
+        } else {
+            drive.to_ascii_uppercase()
+        };
+        uri.replace_range(8..9, &char::from(alternate).to_string());
+        uri
+    } else {
+        format!("file://{}", workspace.to_string_lossy())
+    };
+    let repository = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let output = Command::new("node").args(["-p", "process.execPath"]).output().expect("node path");
+    assert!(output.status.success());
+    let node = PathBuf::from(String::from_utf8(output.stdout).expect("UTF-8").trim());
+    let compiler =
+        ToolingCompiler::discover(&repository.canonicalize().expect("repository"), &node)
+            .expect("pinned compiler");
+    let mut server = Server::new(compiler).expect("server");
+    server.configure_workspace_root(&workspace).expect("trusted workspace root");
+    let rejected = request(
+        &mut server,
+        json!({"jsonrpc":"2.0","id":0,"method":"initialize",
+        "params":{"rootUri":"file:///different","capabilities":{},
+        "initializationOptions":{"zrynaProfile":"data-ownership-v1"}}}),
+    );
+    assert_eq!(rejected[0]["error"]["code"], -32602);
+    let initialized = request(
+        &mut server,
+        json!({"jsonrpc":"2.0","id":1,"method":"initialize",
+        "params":{"rootUri":root_uri,"capabilities":{},
+        "initializationOptions":{"zrynaProfile":"data-ownership-v1"}}}),
+    );
+    assert_eq!(
+        initialized[0]["result"]["capabilities"]["experimental"]["zrynaFormattingProfile"],
+        "data-ownership-format-v1"
+    );
+    let uri = format!("{root_uri}/main.zry");
+    let opened = request(
+        &mut server,
+        json!({"jsonrpc":"2.0","method":"textDocument/didOpen",
+        "params":{"textDocument":{"uri":uri,"languageId":"zryna","version":1,
+        "text":"import{double}from\"./math.zry\"; export function score(value:i32):i32{return double(value);}"}}}),
+    );
+    assert_eq!(opened[0]["method"], "zryna/publishDiagnostics");
+    assert_eq!(opened[0]["params"]["report"]["diagnostics"], json!([]));
+    assert_eq!(opened[1]["params"]["version"], 1);
+
+    let queued_output = queued(
+        &mut server,
+        json!({"jsonrpc":"2.0","id":7,
+        "method":"textDocument/formatting","params":{"textDocument":{"uri":uri},
+        "options":{"tabSize":2,"insertSpaces":true}}}),
+    );
+    assert!(queued_output.is_empty());
+    let pending = server.finish_pending();
+    let formatted = emit(&mut server, pending);
+    assert_eq!(formatted.len(), 1);
+    assert!(
+        formatted[0]["result"][0]["newText"]
+            .as_str()
+            .expect("text")
+            .contains("return double(value);")
+    );
+
+    let math_uri = format!("{root_uri}/math.zry");
+    let opened_dependency = request(
+        &mut server,
+        json!({"jsonrpc":"2.0",
+        "method":"textDocument/didOpen","params":{"textDocument":{
+        "uri":math_uri,"languageId":"zryna","version":1,
+        "text":"export function double(value:i32):i32{return value+value+1;}"}}}),
+    );
+    assert_eq!(opened_dependency[0]["params"]["documents"].as_array().expect("documents").len(), 2);
+    assert_eq!(opened_dependency[0]["params"]["report"]["diagnostics"], json!([]));
+    let queued_output = queued(
+        &mut server,
+        json!({"jsonrpc":"2.0","id":10,
+        "method":"textDocument/formatting","params":{"textDocument":{"uri":math_uri},
+        "options":{"tabSize":2,"insertSpaces":true}}}),
+    );
+    assert!(queued_output.is_empty());
+    let pending = server.finish_pending();
+    let dependency_edit = emit(&mut server, pending);
+    assert!(
+        dependency_edit[0]["result"][0]["newText"]
+            .as_str()
+            .expect("text")
+            .contains("value + value + 1")
+    );
+    let closed_dependency = request(
+        &mut server,
+        json!({"jsonrpc":"2.0",
+        "method":"textDocument/didClose","params":{"textDocument":{"uri":math_uri}}}),
+    );
+    assert_eq!(closed_dependency[0]["params"]["uri"], math_uri);
+
+    let queued_output = queued(
+        &mut server,
+        json!({"jsonrpc":"2.0","id":11,
+        "method":"textDocument/formatting","params":{"textDocument":{"uri":uri},
+        "options":{"tabSize":2,"insertSpaces":true}}}),
+    );
+    assert!(queued_output.is_empty());
+    let prepared = server.finish_pending().pop().expect("prepared formatting");
+    assert!(prepared.value().get("result").is_some());
+
+    std::fs::write(
+        workspace.join("math.zry"),
+        "export function double(value: i32): i32 { return value * 2; }\n",
+    )
+    .expect("changed dependency");
+    let mut bytes = Vec::new();
+    server.write_outgoing(&mut bytes, prepared).expect("emission");
+    let frame = read_frame(&mut io::Cursor::new(bytes)).expect("frame").expect("response");
+    let emitted: Value = serde_json::from_slice(&frame).expect("JSON");
+    assert_eq!(emitted["error"]["data"]["code"], "ZRYNA-D4002");
+    let queued_output = queued(
+        &mut server,
+        json!({"jsonrpc":"2.0","id":8,
+        "method":"textDocument/formatting","params":{"textDocument":{"uri":uri},
+        "options":{"tabSize":2,"insertSpaces":true}}}),
+    );
+    assert!(queued_output.is_empty());
+    let pending = server.finish_pending();
+    let stale = emit(&mut server, pending);
+    assert_eq!(stale[0]["error"]["data"]["code"], "ZRYNA-D4002");
+
+    let rejected = request(
+        &mut server,
+        json!({"jsonrpc":"2.0","method":"textDocument/didChange",
+        "params":{"textDocument":{"uri":uri,"version":2},
+        "contentChanges":[{"text":"export function score(): i32 {"}]}}),
+    );
+    assert_eq!(rejected[0]["method"], "zryna/publishDiagnostics");
+    assert_ne!(rejected[0]["params"]["report"]["diagnostics"], json!([]));
+    let queued_output = queued(
+        &mut server,
+        json!({"jsonrpc":"2.0","id":9,
+        "method":"textDocument/formatting","params":{"textDocument":{"uri":uri},
+        "options":{"tabSize":2,"insertSpaces":true}}}),
+    );
+    assert!(queued_output.is_empty());
+    let pending = server.finish_pending();
+    let unavailable = emit(&mut server, pending);
+    assert_eq!(unavailable[0]["error"]["data"]["code"], "ZRYNA-D4001");
+    drop(server);
+    std::fs::remove_dir_all(workspace).expect("workspace cleanup");
 }
 
 fn open<Compiler: RevisionCompiler>(

@@ -1,17 +1,20 @@
 # Language server protocol v1
 
 Status: bounded stdio transport for protocol-v2 scalar diagnostics, definition, and formatting,
-plus explicitly selected `control-flow-v1` diagnostics and formatting for the local M2 editor.
-The M2 selection adds no definition index, compiler execution method, or M3 support. Marketplace
-publication remains pending.
+plus explicitly selected M2 `control-flow-v1` and M3 `data-ownership-v1` diagnostics and
+formatting. The M2/M3 selections add no definition index or compiler execution method.
+Marketplace publication remains pending.
 
 ## Start and initialize
 
 Run `zryna-language-server --compiler-root <absolute-path> --node <absolute-path>`. The compiler
 root must contain the registered TypeScript 6 adapter and `--node` must identify the exact pinned
 Node.js 22.22.1 runtime. Both paths are configuration established before protocol input; LSP
-messages cannot select a worker, process, provider, filesystem root, build target, network endpoint,
-or executable action.
+messages cannot select a worker, process, provider, build target, network endpoint, or executable
+action. For M3 saved imports, also pass `--workspace-root <absolute-path>` from the trusted local
+workspace folder. The installed mode accepts the same option alongside `--installed-root`.
+The server captures this no-follow root before reading protocol input; the M3 `rootUri` must match
+it exactly. Protocol messages cannot select or expand that filesystem root.
 Pre-protocol root/adapter configuration failures use `ZRYNA-D3001`; existing pinned-runtime
 failures retain their `ZRYNA-R3xxx` codes. They are written as inert standard error text before
 the server accepts protocol input.
@@ -30,12 +33,13 @@ source-limit violations fail closed through URI or `zryna-source` validation.
 
 Without `initializationOptions`, the connection retains protocol-v2 scalar admission and
 `scalar-format-v1`. Exact `initializationOptions: {"zrynaProfile":"control-flow-v1"}` selects
-protocol-v3 M2 admission and `control-flow-format-v1`. Unknown profile values or additional option
+protocol-v3 M2 admission and `control-flow-format-v1`. Exact
+`initializationOptions: {"zrynaProfile":"data-ownership-v1"}` selects protocol-v4 M3 admission
+and `data-ownership-format-v1` under the separately captured workspace root. Unknown profile values or additional option
 fields reject initialization before any source is admitted. The initialize response echoes the
-selected `experimental.zrynaAnalysisProfile` (`scalar-v2` or `control-flow-v1`) and
-`experimental.zrynaFormattingProfile` (`scalar-format-v1` or `control-flow-format-v1`). It also
+selected `experimental.zrynaAnalysisProfile` and `experimental.zrynaFormattingProfile`. It also
 advertises `portable-setup-v1` and, in installed mode, the exact embedded source commit. The
-0.4.0 extension checks these fields, position encoding, method capabilities, and installed source
+The matching editor extension checks these fields, position encoding, method capabilities, and installed source
 identity before `didOpen` sends text.
 
 ## Supported methods
@@ -43,19 +47,20 @@ identity before `didOpen` sends text.
 | Method | Contract |
 | --- | --- |
 | `initialize`, `initialized` | Negotiate one connection and its exact position encoding. |
-| `textDocument/didOpen` | Admit one `zryna` full-text overlay with a nonnegative version. |
+| `textDocument/didOpen` | Admit one `zryna` full-text overlay with a nonnegative version; M3 accepts bounded additional open overlays. |
 | `textDocument/didChange` | Require exactly one full-text replacement and a strictly increasing version. |
 | `textDocument/didClose` | Remove the overlay, invalidate its revision, and clear published diagnostics. |
 | `textDocument/definition` | Resolve scalar function/parameter identifiers through the semantics-owned index. Unavailable in M2 connections. |
 | `textDocument/formatting` | Format a verified document under the selected profile. |
-| `textDocument/rangeFormatting` | Format only complete verified functions inside the selection. |
+| `textDocument/rangeFormatting` | Format only complete verified top-level units inside the selection (functions for scalar/M2; imports, data declarations, and functions for M3). |
 | `$/cancelRequest` | Cancel one admitted definition or formatting query by its exact JSON-RPC ID. |
 | `shutdown`, `exit` | End the connection in order without executing project code. |
 
-Both selected profiles admit at most one open document per connection. Full-text sync is
+Scalar and M2 admit at most one open document per connection. M3 accepts a bounded open-document
+set below the trusted root, with the first open document as its entrypoint until it closes. Full-text sync is
 deliberate; incremental range edits are not advertised or accepted. Hover,
 references, rename, completion, code actions, symbols/indexing, debugging, builds,
-execution, module resolution, M2 definition, data-ownership queries, and workspace mutation are not
+execution, M2/M3 definition, data-ownership queries, and workspace mutation are not
 implemented. Unknown requests receive `Method not found`; unknown notifications have no effect.
 
 ## Revisions, diagnostics, and definitions
@@ -78,6 +83,13 @@ Each ready revision emits two notifications:
   It preserves code/severity/message, derives the exact negotiated range from the retained text,
   and retains original guidance/location in inert `data`. It never invents a document range for a
   global or workspace label.
+
+M3 resolves imports through the driver's bounded fixed-point module closure. An open buffer shadows
+its saved file at the exact normalized path; unopened imports are read under the retained no-follow
+workspace root and revalidated with the final verified v4 source map. Before returning M3 edits,
+the server rediscovers the graph and requires every reachable path and byte to match the admitted
+revision. Changed or unsafe dependencies return `ZRYNA-D4002` with no edits. The server does not
+execute workspace code or write source files.
 
 Scalar definition requests use the active document and negotiated position to derive one exact UTF-8 byte
 offset. Token ends, whitespace, comments, and EOF return `null`; invalid lines/columns, UTF-8 scalar
@@ -111,8 +123,8 @@ functions with explicit i32 parameters/results and the admitted return, referenc
 addition expressions. It consumes the exact verified snapshot only after successful scalar semantic
 admission. Parenthesized expressions, classes, imports,
 incomplete syntax and semantic errors receive no edits. The separately selected M2 formatter
-handles its reviewed one-file control-flow surface; imports and M3 remain outside this editor
-connection. Issue #409 remains open for its full formatter and marketplace acceptance.
+handles its reviewed one-file control-flow surface. M3 uses the separate protocol-v4 connection.
+Issue #409 remains open for editor integration and marketplace acceptance.
 
 The canonical style uses two spaces inside function bodies, one space between words and around
 addition, no space before commas/colons/semicolons or inside parameter parentheses, a space after
@@ -168,6 +180,23 @@ unsupported, or semantically rejected input returns `ZRYNA-D4001` with no edits.
 return `ZRYNA-D4002`. Semantically accepted input whose canonical document exceeds 131,072
 UTF-8 bytes returns `ZRYNA-D4004` with no edits; the exact cap is accepted. Cancellation and
 source replacement cannot publish old edits.
+
+## Data-ownership format v1
+
+Selecting `data-ownership-v1` requires a trusted startup `--workspace-root` matching the
+initialization `rootUri`. The driver captures the fixed protocol-v4 worker, discovers reachable
+imports through the retained workspace source session, verifies the final syntax/source map, and
+runs the M3 semantic lowerer before retaining formatting plans. Open documents shadow their saved
+paths with exact versioned UTF-8 text. Missing, changed, unsafe, syntactically rejected, or
+semantically rejected modules yield diagnostics and no edits. The client does no import parsing.
+
+`data-ownership-format-v1` preserves every token and comment byte in source order and changes
+whitespace to two-space nesting and LF. Document formatting returns one replacement for the
+requested open file or no edit when canonical. Range formatting accepts complete imports, data
+declarations, and functions; partial intersections reject the whole selection with D4003, while
+bytes outside selected units remain unchanged. Each canonical document is bounded to 131,072
+UTF-8 bytes. Formatting never sorts imports, executes code, or writes a file. A saved import that
+changes after admission makes the formatting revision stale and returns D4002 without edits.
 
 ## Local editor installation and compatibility
 

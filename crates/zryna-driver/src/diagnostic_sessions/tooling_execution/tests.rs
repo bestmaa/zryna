@@ -29,6 +29,8 @@ impl CompilerFixture {
         copy(&repository, &fixture.root, "adapters/typescript-6/src/worker.mjs");
         copy(&repository, &fixture.root, "adapters/typescript-6/src/worker-v3.mjs");
         copy(&repository, &fixture.root, "adapters/typescript-6/src/limits-v3.mjs");
+        copy(&repository, &fixture.root, "adapters/typescript-6/src/worker-v4.mjs");
+        copy(&repository, &fixture.root, "adapters/typescript-6/src/limits-v4.mjs");
         for relative in [
             "node_modules/.pnpm/@typescript+typescript6@6.0.2/node_modules/@typescript/typescript6/package.json",
             "node_modules/.pnpm/@typescript+typescript6@6.0.2/node_modules/@typescript/typescript6/lib/typescript.js",
@@ -184,6 +186,29 @@ fn post_capture_substitute_and_deleted_dependency_never_execute() {
         serde_json::from_str(response.encoded().expect("report")).expect("JSON report");
     assert_eq!(json["result"]["report"]["diagnostics"], serde_json::json!([]));
     assert!(!marker_v3.exists(), "the replacement v3 worker must never execute");
+
+    let marker_v4 = fixture.root.join("v4-substitute-executed");
+    fs::write(
+        fixture.root.join("adapters/typescript-6/src/worker-v4.mjs"),
+        format!(
+            "import fs from 'node:fs'; fs.writeFileSync({}, 'executed');\n",
+            serde_json::to_string(&marker_v4).expect("marker path")
+        ),
+    )
+    .expect("replace original v4 worker after capture");
+    fs::write(fixture.root.join("adapters/typescript-6/src/limits-v4.mjs"), "throw 1;\n")
+        .expect("replace original v4 limits after capture");
+    let sources = SourceMap::build(vec![SourceFileInput {
+        path: "src/main.zry".to_owned(),
+        text: "export function identity(value: i32): i32 { return value; }\n".to_owned(),
+    }])
+    .expect("valid M3 source");
+    let mut session = DiagnosticSession::try_new().expect("M3 diagnostic session");
+    let revision = compiler
+        .admit_data_ownership(&mut session, sources, &entry)
+        .expect("staged v4 worker admission");
+    assert!(session.format_source(revision, "src/main.zry", None).is_ok());
+    assert!(!marker_v4.exists(), "the replacement v4 worker must never execute");
 }
 
 #[test]
@@ -203,7 +228,7 @@ fn capture_rejects_dependency_mapping_drift_and_worker_plus_one() {
     let fixture = CompilerFixture::create();
     fs::write(
         fixture.root.join("adapters/typescript-6/src/worker.mjs"),
-        vec![b'x'; 64 * 1_024 + 1],
+        vec![b'x'; 128 * 1_024 + 1],
     )
     .expect("worker over limit");
     assert!(CapturedToolingClosure::capture(&fixture.root).is_err());

@@ -3,7 +3,7 @@
 use std::{
     collections::{BTreeMap, BTreeSet, HashSet},
     path::Path,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use zryna_diagnostics::Diagnostic;
@@ -21,13 +21,16 @@ use crate::{
 const GRAPH_DOMAIN: &[u8] = b"ZRYNA-M3-GRAPH\0";
 const GRAPH_VERSION: u32 = 1;
 
+mod overlay;
 mod support;
+pub use overlay::discover_ownership_module_closure_with_overlays;
+pub(crate) use overlay::discover_ownership_module_closure_with_overlays_bounded;
 #[cfg(test)]
 mod tests;
 use support::{
-    account_provider, budget, diagnostic, enforce_time, final_edges, graph_identity, imports,
+    account_provider, budget, diagnostic, enforce_time_limit, final_edges, graph_identity, imports,
     imports_match, invalid_import, invariant, register_portable, reject_cycles,
-    reject_provider_errors, rejected, remaining,
+    reject_provider_errors, rejected, remaining_with_limit,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -159,7 +162,21 @@ pub(crate) fn discover_with_clock<Provider, Clock>(
     root: &impl ModuleSourceRoot,
     entrypoint: NormalizedSourcePath,
     frontend: &Provider,
+    now: Clock,
+) -> Result<VerifiedOwnershipModuleClosure, ModuleClosureError>
+where
+    Provider: VerifiedFrontendProviderV4 + ?Sized,
+    Clock: FnMut() -> Instant,
+{
+    discover_with_clock_limit(root, entrypoint, frontend, now, MAX_MODULE_DISCOVERY_WALL_TIME)
+}
+
+pub(crate) fn discover_with_clock_limit<Provider, Clock>(
+    root: &impl ModuleSourceRoot,
+    entrypoint: NormalizedSourcePath,
+    frontend: &Provider,
     mut now: Clock,
+    limit: Duration,
 ) -> Result<VerifiedOwnershipModuleClosure, ModuleClosureError>
 where
     Provider: VerifiedFrontendProviderV4 + ?Sized,
@@ -214,10 +231,10 @@ where
         let snapshot = frontend
             .analyze_verified_v4_with_timeout(
                 &source_map,
-                remaining(started, now(), frontend.minimum_analysis_timeout())?,
+                remaining_with_limit(started, now(), frontend.minimum_analysis_timeout(), limit)?,
             )
             .map_err(ModuleClosureError::Frontend)?;
-        enforce_time(started, now())?;
+        enforce_time_limit(started, now(), limit)?;
         reject_provider_errors(&snapshot)?;
         let imports = imports(&snapshot);
         for (path, source) in stable {
@@ -253,6 +270,7 @@ where
         started,
         &mut now,
         ClosureInputs { discovered, edge_ids, aggregate_bytes, provider_bytes, provider_calls },
+        limit,
     )
 }
 
@@ -263,6 +281,7 @@ fn finalize_closure<Provider, Clock>(
     started: Instant,
     now: &mut Clock,
     mut inputs: ClosureInputs,
+    limit: Duration,
 ) -> Result<VerifiedOwnershipModuleClosure, ModuleClosureError>
 where
     Provider: VerifiedFrontendProviderV4 + ?Sized,
@@ -287,10 +306,10 @@ where
     let syntax = frontend
         .analyze_verified_v4_with_timeout(
             &sources,
-            remaining(started, now(), frontend.minimum_analysis_timeout())?,
+            remaining_with_limit(started, now(), frontend.minimum_analysis_timeout(), limit)?,
         )
         .map_err(ModuleClosureError::Frontend)?;
-    enforce_time(started, now())?;
+    enforce_time_limit(started, now(), limit)?;
     reject_provider_errors(&syntax)?;
     session.revalidate_all().map_err(rejected)?;
     if !syntax.is_bound_to(&sources) {

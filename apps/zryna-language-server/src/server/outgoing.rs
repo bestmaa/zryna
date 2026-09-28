@@ -1,9 +1,9 @@
 use std::{collections::BTreeSet, io::Write, time::Instant};
 
 use serde_json::{Value, json};
-use zryna_driver::diagnostic_sessions::DiagnosticRevision;
+use zryna_driver::diagnostic_sessions::{DiagnosticRevision, QUERY_DEADLINE};
 
-use super::{RevisionCompiler, Server};
+use super::{AnalysisProfile, RevisionCompiler, Server};
 use crate::protocol::{self, Incoming};
 
 /// Maximum request IDs retained until their terminal responses are emitted.
@@ -17,7 +17,7 @@ pub const MAX_OUTSTANDING_REQUESTS: usize = 64;
 pub struct Outgoing {
     value: Value,
     completion: Option<String>,
-    formatting_revision: Option<DiagnosticRevision>,
+    formatting_revision: Option<(DiagnosticRevision, Instant)>,
 }
 
 impl Outgoing {
@@ -33,8 +33,9 @@ impl Outgoing {
         value: Value,
         request_id: String,
         revision: DiagnosticRevision,
+        started: Instant,
     ) -> Self {
-        Self { value, completion: Some(request_id), formatting_revision: Some(revision) }
+        Self { value, completion: Some(request_id), formatting_revision: Some((revision, started)) }
     }
 
     /// Returns the JSON-RPC value that will be framed on the connection.
@@ -119,14 +120,28 @@ impl<Compiler: RevisionCompiler> Server<Compiler> {
         {
             return Err("language-server response completion is stale".to_owned());
         }
-        if outgoing
-            .formatting_revision
-            .is_some_and(|revision| self.session.active_revision() != Some(revision))
+        if let Some((revision, started)) = outgoing.formatting_revision
             && outgoing.value.get("result").is_some()
         {
             let id = outgoing.value.get("id").cloned().and_then(protocol::decode_id);
-            outgoing.value = protocol::error(id.as_ref(), -32801, "Content modified");
-            outgoing.value["error"]["data"] = json!({"code":"ZRYNA-D4002"});
+            if started.elapsed() >= QUERY_DEADLINE {
+                outgoing.value =
+                    protocol::error(id.as_ref(), -32803, "Formatting deadline exceeded");
+            } else {
+                let current = self.session.active_revision() == Some(revision)
+                    && (self.profile != AnalysisProfile::DataOwnership
+                        || self.m3_graph_current(
+                            revision,
+                            QUERY_DEADLINE.saturating_sub(started.elapsed()),
+                        ));
+                if started.elapsed() >= QUERY_DEADLINE {
+                    outgoing.value =
+                        protocol::error(id.as_ref(), -32803, "Formatting deadline exceeded");
+                } else if !current {
+                    outgoing.value = protocol::error(id.as_ref(), -32801, "Content modified");
+                    outgoing.value["error"]["data"] = json!({"code":"ZRYNA-D4002"});
+                }
+            }
         }
         let bytes = serde_json::to_vec(&outgoing.value).map_err(|error| error.to_string())?;
         crate::framing::write_frame(output, &bytes).map_err(|error| error.to_string())?;

@@ -4,7 +4,10 @@ use serde_json::{Value, json};
 use super::{RevisionCompiler, Server};
 use crate::{
     coordinates::PositionEncoding,
-    params::{InitializeParams, decode_params, normalize_root_uri, path_below_root},
+    params::{
+        InitializeParams, decode_params, normalize_root_uri, path_below_root, root_path_from_uri,
+        same_trusted_root,
+    },
     protocol::{self, Incoming},
 };
 
@@ -12,6 +15,7 @@ use crate::{
 pub(super) enum AnalysisProfile {
     Scalar,
     ControlFlow,
+    DataOwnership,
 }
 
 #[derive(Deserialize)]
@@ -24,6 +28,8 @@ struct InitializeOptions {
 enum RequestedProfile {
     #[serde(rename = "control-flow-v1")]
     ControlFlow,
+    #[serde(rename = "data-ownership-v1")]
+    DataOwnership,
 }
 
 impl AnalysisProfile {
@@ -35,6 +41,7 @@ impl AnalysisProfile {
                     .zryna_profile
                 {
                     RequestedProfile::ControlFlow => Self::ControlFlow,
+                    RequestedProfile::DataOwnership => Self::DataOwnership,
                 })
             }
         }
@@ -44,6 +51,7 @@ impl AnalysisProfile {
         match self {
             Self::Scalar => "scalar-v2",
             Self::ControlFlow => "control-flow-v1",
+            Self::DataOwnership => "data-ownership-v1",
         }
     }
 
@@ -51,6 +59,7 @@ impl AnalysisProfile {
         match self {
             Self::Scalar => "scalar-format-v1",
             Self::ControlFlow => "control-flow-format-v1",
+            Self::DataOwnership => "data-ownership-format-v1",
         }
     }
 }
@@ -77,6 +86,19 @@ impl<Compiler: RevisionCompiler> Server<Compiler> {
         ) else {
             return vec![protocol::invalid_params(Some(id))];
         };
+        if profile == AnalysisProfile::DataOwnership {
+            let Some(path) = root_path_from_uri(&root_uri) else {
+                return vec![protocol::invalid_params(Some(id))];
+            };
+            if !self
+                .root_path
+                .as_ref()
+                .is_some_and(|configured| same_trusted_root(configured, &path))
+                || self.source_root.is_none()
+            {
+                return vec![protocol::invalid_params(Some(id))];
+            }
+        }
         self.encoding = PositionEncoding::select(
             params.capabilities.general.as_ref().and_then(|g| g.position_encodings.as_deref()),
         );

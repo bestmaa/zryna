@@ -31,7 +31,21 @@ use zryna_driver::diagnostic_sessions::ToolingCompiler;
 pub fn run_stdio(compiler_root: &Path, node: &Path) -> Result<(), String> {
     let compiler =
         ToolingCompiler::discover(compiler_root, node).map_err(|error| error.to_string())?;
-    serve(compiler)
+    serve(compiler, None)
+}
+
+/// Runs a source-built server with one trusted, retained workspace source root.
+///
+/// # Errors
+/// Rejects unsafe root or compiler configuration and protocol or I/O failures.
+pub fn run_stdio_with_workspace_root(
+    compiler_root: &Path,
+    node: &Path,
+    workspace_root: &Path,
+) -> Result<(), String> {
+    let compiler =
+        ToolingCompiler::discover(compiler_root, node).map_err(|error| error.to_string())?;
+    serve(compiler, Some(workspace_root))
 }
 
 /// Serves scalar tooling with the fixed runtime from a verified installed distribution.
@@ -40,11 +54,27 @@ pub fn run_stdio(compiler_root: &Path, node: &Path) -> Result<(), String> {
 /// Rejects incompatible runtime bytes, malformed framing and protocol or I/O failures.
 pub fn run_installed_stdio(root: &Path) -> Result<(), String> {
     let compiler = ToolingCompiler::discover_installed(root).map_err(|error| error.to_string())?;
-    serve(compiler)
+    serve(compiler, None)
 }
 
-fn serve(compiler: ToolingCompiler) -> Result<(), String> {
+/// Runs installed tooling with one trusted, retained workspace source root.
+///
+/// # Errors
+/// Rejects unsafe root or installed configuration and protocol or I/O failures.
+pub fn run_installed_stdio_with_workspace_root(
+    installed_root: &Path,
+    workspace_root: &Path,
+) -> Result<(), String> {
+    let compiler =
+        ToolingCompiler::discover_installed(installed_root).map_err(|error| error.to_string())?;
+    serve(compiler, Some(workspace_root))
+}
+
+fn serve(compiler: ToolingCompiler, workspace_root: Option<&Path>) -> Result<(), String> {
     let mut server = Server::new(compiler).map_err(|error| error.to_string())?;
+    if let Some(root) = workspace_root {
+        server.configure_workspace_root(root)?;
+    }
     let (sender, receiver) = mpsc::sync_channel(32);
     let reader = thread::spawn(move || {
         let mut input = BufReader::new(io::stdin());

@@ -2,13 +2,15 @@
 
 use std::{fmt, ops::Range};
 
-use zryna_frontend::{syntax_v2, syntax_v3};
-use zryna_source::SourceMap;
+use zryna_frontend::{syntax_v2, syntax_v3, syntax_v4};
+use zryna_source::{NormalizedSourcePath, SourceMap};
 
 use super::{DiagnosticRevision, DiagnosticSession};
 
 #[cfg(test)]
 mod control_flow_tests;
+#[cfg(test)]
+mod data_ownership_tests;
 mod layout;
 
 /// A formatting failure never carries edits.
@@ -18,7 +20,7 @@ pub enum FormattingError {
     Unavailable,
     /// The requested revision is no longer active.
     Stale,
-    /// The selection is invalid or cuts through a function.
+    /// The selection is invalid or cuts through a top-level syntax unit.
     Range,
     /// The bounded formatting result is too large.
     Limit,
@@ -46,7 +48,7 @@ impl fmt::Display for FormattingError {
             match self {
                 Self::Unavailable => "formatting requires verified syntax and semantics",
                 Self::Stale => "formatting revision is no longer active",
-                Self::Range => "formatting range must contain complete functions",
+                Self::Range => "formatting range must contain complete syntax units",
                 Self::Limit => "formatting result exceeds the response limit",
             }
         )
@@ -72,6 +74,7 @@ pub(super) struct FormattingDocument {
     complete: Result<String, FormattingError>,
     functions: Vec<Range<u32>>,
     control_flow: bool,
+    data_ownership: bool,
 }
 
 impl FormattingDocument {
@@ -95,6 +98,7 @@ impl FormattingDocument {
             complete,
             functions: file.functions().iter().map(|f| f.span().start()..f.span().end()).collect(),
             control_flow: false,
+            data_ownership: false,
         })
     }
 
@@ -122,7 +126,49 @@ impl FormattingDocument {
             complete,
             functions: file.functions().iter().map(|f| f.span().start()..f.span().end()).collect(),
             control_flow: true,
+            data_ownership: false,
         })
+    }
+
+    pub(super) fn prepare_data_ownership(
+        syntax: &syntax_v4::ProjectSyntaxSnapshot,
+        sources: &SourceMap,
+    ) -> Option<Vec<Self>> {
+        if !syntax.is_bound_to(sources) {
+            return None;
+        }
+        syntax
+            .files()
+            .iter()
+            .map(|file| {
+                let source = sources.source(file.id())?;
+                let complete = match layout::format_data_ownership_bounded(
+                    source.text(),
+                    super::MAX_RESPONSE_BYTES / 8,
+                ) {
+                    Ok(complete) => Ok(complete),
+                    Err(layout::LayoutError::Limit) => Err(FormattingError::Limit),
+                    Err(layout::LayoutError::Invalid) => return None,
+                };
+                let mut units = file
+                    .imports()
+                    .iter()
+                    .map(|item| item.span.start..item.span.end)
+                    .chain(
+                        file.data_declarations().iter().map(|item| item.span.start..item.span.end),
+                    )
+                    .chain(file.functions().iter().map(|item| item.span.start..item.span.end))
+                    .collect::<Vec<_>>();
+                units.sort_by_key(|span| span.start);
+                Some(Self {
+                    path: file.path().as_str().to_owned(),
+                    complete,
+                    functions: units,
+                    control_flow: false,
+                    data_ownership: true,
+                })
+            })
+            .collect()
     }
 
     pub(super) fn cache_bytes(&self) -> usize {
@@ -133,8 +179,8 @@ impl FormattingDocument {
 impl DiagnosticSession {
     /// Returns edits only for the active semantically accepted formatting revision.
     ///
-    /// A range may surround whole functions and trivia, but may not intersect a partial function.
-    /// Edits stay inside the selection and preserve all text outside each selected function.
+    /// A range may surround whole top-level units and trivia, but may not intersect a partial
+    /// unit. Edits stay inside the selection and preserve all text outside each selected unit.
     ///
     /// # Errors
     ///
@@ -152,11 +198,13 @@ impl DiagnosticSession {
             .ok_or(FormattingError::Stale)?;
         let document = record
             .formatting
-            .as_ref()
-            .filter(|f| f.path == path)
+            .iter()
+            .find(|f| f.path == path)
             .ok_or(FormattingError::Unavailable)?;
         let complete = document.complete.as_ref().map_err(|error| *error)?;
-        let id = record.sources.verify_file_id(0).map_err(|_| FormattingError::Unavailable)?;
+        let normalized =
+            NormalizedSourcePath::new(path.to_owned()).map_err(|_| FormattingError::Unavailable)?;
+        let id = record.sources.file_id(&normalized).ok_or(FormattingError::Unavailable)?;
         let source = record.sources.source(id).ok_or(FormattingError::Unavailable)?.text();
         let end = u32::try_from(source.len()).map_err(|_| FormattingError::Limit)?;
         let Some(range) = range else {
@@ -177,7 +225,18 @@ impl DiagnosticSession {
                     return Err(FormattingError::Range);
                 }
                 let original = &source[function.start as usize..function.end as usize];
-                let text = if document.control_flow {
+                let text = if document.data_ownership {
+                    Some(
+                        layout::format_data_ownership_bounded(
+                            original,
+                            super::MAX_RESPONSE_BYTES / 8,
+                        )
+                        .map_err(|error| match error {
+                            layout::LayoutError::Limit => FormattingError::Limit,
+                            layout::LayoutError::Invalid => FormattingError::Unavailable,
+                        })?,
+                    )
+                } else if document.control_flow {
                     layout::format_control_flow(original)
                 } else {
                     layout::format(original)

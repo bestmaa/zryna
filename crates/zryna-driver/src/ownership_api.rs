@@ -7,6 +7,7 @@ pub use crate::native::{
 };
 pub use crate::ownership_closure::{
     VerifiedOwnershipModuleClosure, discover_ownership_module_closure,
+    discover_ownership_module_closure_with_overlays,
 };
 pub use crate::ownership_commands::{build_data_ownership_candidate, run_data_ownership_candidate};
 pub use crate::ownership_manifest::{

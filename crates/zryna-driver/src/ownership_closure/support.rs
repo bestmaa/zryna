@@ -10,8 +10,8 @@ use zryna_source::{NormalizedSourcePath, SourceMap, Span, UntrustedSpan};
 
 use super::{
     DiscoveredSource, GRAPH_DOMAIN, GRAPH_VERSION, Import, ImportBinding,
-    MAX_MODULE_DISCOVERY_WALL_TIME, MAX_MODULE_PROVIDER_CALLS, MAX_MODULE_PROVIDER_SOURCE_BYTES,
-    ModuleClosureError, ModuleEdge, ModuleRecord, add,
+    MAX_MODULE_PROVIDER_CALLS, MAX_MODULE_PROVIDER_SOURCE_BYTES, ModuleClosureError, ModuleEdge,
+    ModuleRecord, add,
 };
 
 pub(super) fn imports(
@@ -238,13 +238,14 @@ pub(super) fn account_provider(
     Ok(())
 }
 
-pub(super) fn remaining(
+pub(super) fn remaining_with_limit(
     started: Instant,
     now: Instant,
     minimum: Duration,
+    limit: Duration,
 ) -> Result<Duration, ModuleClosureError> {
     let elapsed = now.checked_duration_since(started).ok_or_else(invariant)?;
-    let remaining = MAX_MODULE_DISCOVERY_WALL_TIME
+    let remaining = limit
         .checked_sub(elapsed)
         .ok_or_else(|| budget("ownership module discovery exceeded its wall-clock budget"))?;
     if remaining < minimum {
@@ -253,8 +254,12 @@ pub(super) fn remaining(
     Ok(remaining)
 }
 
-pub(super) fn enforce_time(started: Instant, now: Instant) -> Result<(), ModuleClosureError> {
-    remaining(started, now, Duration::ZERO).map(|_| ())
+pub(super) fn enforce_time_limit(
+    started: Instant,
+    now: Instant,
+    limit: Duration,
+) -> Result<(), ModuleClosureError> {
+    remaining_with_limit(started, now, Duration::ZERO, limit).map(|_| ())
 }
 
 pub(super) fn invalid_import(path: &NormalizedSourcePath) -> ModuleClosureError {

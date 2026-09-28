@@ -15,7 +15,7 @@ use zryna_diagnostics::Diagnostic;
 
 use super::execution_error;
 
-const MAX_WORKER_BYTES: usize = 64 * 1_024;
+const MAX_WORKER_BYTES: usize = 128 * 1_024;
 const MAX_MANIFEST_BYTES: usize = 8 * 1_024;
 const MAX_WRAPPER_BYTES: usize = 1_024;
 const MAX_TYPESCRIPT_BYTES: usize = 12 * 1_024 * 1_024;
@@ -30,6 +30,8 @@ const TYPESCRIPT_SHA256: &str = "569177652966bd528c319171c7dd22860dbf72bde116cbc
 const WORKER: &[&str] = &["adapters", "typescript-6", "src", "worker.mjs"];
 const WORKER_V3: &[&str] = &["adapters", "typescript-6", "src", "worker-v3.mjs"];
 const LIMITS_V3: &[&str] = &["adapters", "typescript-6", "src", "limits-v3.mjs"];
+const WORKER_V4: &[&str] = &["adapters", "typescript-6", "src", "worker-v4.mjs"];
+const LIMITS_V4: &[&str] = &["adapters", "typescript-6", "src", "limits-v4.mjs"];
 const WRAPPER_MANIFEST: &[&str] = &[
     "node_modules",
     ".pnpm",
@@ -70,6 +72,8 @@ pub(super) struct CapturedToolingClosure {
     pub(super) worker: CapturedFile,
     pub(super) worker_v3: CapturedFile,
     pub(super) limits_v3: CapturedFile,
+    pub(super) worker_v4: CapturedFile,
+    pub(super) limits_v4: CapturedFile,
     pub(super) wrapper_manifest: CapturedFile,
     pub(super) wrapper: CapturedFile,
     pub(super) typescript_manifest: CapturedFile,
@@ -91,6 +95,9 @@ impl CapturedToolingClosure {
         let worker_v3 = capture_file(&bootstrap, &["worker-v3.mjs"], MAX_WORKER_BYTES)?;
         let limits_v3 = capture_file(&bootstrap, &["limits-v3.mjs"], MAX_WORKER_BYTES)?;
         verify_v3_workers(&worker_v3, &limits_v3)?;
+        let worker_v4 = capture_file(&bootstrap, &["worker-v4.mjs"], MAX_WORKER_BYTES)?;
+        let limits_v4 = capture_file(&bootstrap, &["limits-v4.mjs"], MAX_WORKER_BYTES)?;
+        verify_v4_workers(&worker_v4, &limits_v4)?;
         let wrapper_manifest = capture_file(
             &bootstrap,
             &["node_modules", "@typescript", "typescript6", "package.json"],
@@ -124,6 +131,8 @@ impl CapturedToolingClosure {
             worker,
             worker_v3,
             limits_v3,
+            worker_v4,
+            limits_v4,
             wrapper_manifest,
             wrapper,
             typescript_manifest,
@@ -142,6 +151,9 @@ impl CapturedToolingClosure {
         let worker_v3 = capture_file(&root, WORKER_V3, MAX_WORKER_BYTES)?;
         let limits_v3 = capture_file(&root, LIMITS_V3, MAX_WORKER_BYTES)?;
         verify_v3_workers(&worker_v3, &limits_v3)?;
+        let worker_v4 = capture_file(&root, WORKER_V4, MAX_WORKER_BYTES)?;
+        let limits_v4 = capture_file(&root, LIMITS_V4, MAX_WORKER_BYTES)?;
+        verify_v4_workers(&worker_v4, &limits_v4)?;
         let wrapper_manifest = capture_file(&root, WRAPPER_MANIFEST, MAX_MANIFEST_BYTES)?;
         let wrapper = capture_file(&root, WRAPPER, MAX_WRAPPER_BYTES)?;
         let typescript_manifest = capture_file(&root, TYPESCRIPT_MANIFEST, MAX_MANIFEST_BYTES)?;
@@ -150,6 +162,8 @@ impl CapturedToolingClosure {
             &worker,
             &worker_v3,
             &limits_v3,
+            &worker_v4,
+            &limits_v4,
             &wrapper_manifest,
             &wrapper,
             &typescript_manifest,
@@ -178,6 +192,8 @@ impl CapturedToolingClosure {
             worker,
             worker_v3,
             limits_v3,
+            worker_v4,
+            limits_v4,
             wrapper_manifest,
             wrapper,
             typescript_manifest,
@@ -191,6 +207,15 @@ fn verify_v3_workers(worker: &CapturedFile, limits: &CapturedFile) -> Result<(),
         || limits.bytes != include_bytes!("../../../../../adapters/typescript-6/src/limits-v3.mjs")
     {
         return Err(execution_error("protocol-v3 tooling worker differs from this tooling build"));
+    }
+    Ok(())
+}
+
+fn verify_v4_workers(worker: &CapturedFile, limits: &CapturedFile) -> Result<(), Diagnostic> {
+    if worker.bytes != include_bytes!("../../../../../adapters/typescript-6/src/worker-v4.mjs")
+        || limits.bytes != include_bytes!("../../../../../adapters/typescript-6/src/limits-v4.mjs")
+    {
+        return Err(execution_error("protocol-v4 tooling worker differs from this tooling build"));
     }
     Ok(())
 }
