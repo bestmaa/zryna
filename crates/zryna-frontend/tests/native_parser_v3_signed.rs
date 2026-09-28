@@ -54,8 +54,8 @@ fn two_file_signed_literals_match_pinned_worker_and_verify() {
 }
 
 #[test]
-fn value_negation_and_noncanonical_signed_forms_remain_outside_this_candidate() {
-    for expression in ["-x", "- 1", "-/*gap*/1", "-0", "+1", "--1", "(-1)"] {
+fn other_negation_and_noncanonical_signed_forms_remain_outside_this_candidate() {
+    for expression in ["- 1", "-/*gap*/1", "-0", "+1", "--1", "(-1)"] {
         let text = format!("function value(x: i32): i32 {{ return {expression}; }}");
         assert_eq!(one(&text), Err("ZRYNA-F2002".to_owned()), "{expression}");
     }
@@ -83,7 +83,7 @@ fn signed_spelling_accepts_exact_64_bytes_and_rejects_65() {
 #[test]
 fn malformed_later_function_or_file_cannot_expose_signed_literals() {
     assert_eq!(
-        one("function good(): i32 { return -1; } function bad(): i32 { return -x; }"),
+        one("function good(): i32 { return -1; } function bad(): i32 { return - 1; }"),
         Err("ZRYNA-F2002".to_owned())
     );
     let sources = SourceMap::build(vec![

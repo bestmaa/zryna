@@ -1,0 +1,9 @@
+// 😀 negation spans
+import { other as alias } from "./math.zry";
+export function flip(input: i32): i32 {
+  let current: i32 = -input;
+  current = 1 + - /* gap */ current;
+  const saved: i32 = -current + -1;
+  return - saved;
+}
+function right(input: i32): i32 { return input + -input; }

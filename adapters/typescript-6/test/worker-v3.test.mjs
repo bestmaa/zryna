@@ -251,6 +251,32 @@ test('native compact signed-literal fixtures are exact TypeScript 6 responses', 
   }
 });
 
+test('native identifier-negation fixtures are exact TypeScript 6 responses', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_negation/', import.meta.url);
+  const main = (await readFile(new URL('main.zry', fixture), 'utf8')).replace(/\r?\n/g, '\r\n');
+  const math = await readFile(new URL('math.zry', fixture), 'utf8');
+  const rejected = await readFile(new URL('rejected.zry', fixture), 'utf8');
+  const expected = JSON.parse(await readFile(new URL('negation.snapshot.json', fixture), 'utf8'));
+  const rejectedExpected = JSON.parse(await readFile(new URL('rejected.response.json', fixture), 'utf8'));
+  const [negation, rejectedResponse, zero, spaced, commented, call, boolean] = await exchange([
+    analyze(1, [{ path: 'src/math.zry', text: math }, { path: 'src/main.zry', text: main }]),
+    analyze(2, [{ path: 'src/main.zry', text: rejected }]),
+    analyze(3, [{ path: 'src/main.zry', text: 'function f(): i32 { return -0; }' }]),
+    analyze(4, [{ path: 'src/main.zry', text: 'function f(): i32 { return - 1; }' }]),
+    analyze(5, [{ path: 'src/main.zry', text: 'function f(): i32 { return -/*gap*/1; }' }]),
+    analyze(6, [{ path: 'src/main.zry', text: 'function f(): i32 { return -helper(); }' }]),
+    analyze(7, [{ path: 'src/main.zry', text: 'function f(): i32 { return -true; }' }]),
+  ]);
+  assert.deepEqual(negation.result, expected);
+  assert.equal(validateSnapshot(negation.result), true, JSON.stringify(validateSnapshot.errors));
+  assert.deepEqual(rejectedResponse, rejectedExpected);
+  assert.equal(rejectedResponse.error.code, 'ZRYNA-F2002');
+  for (const response of [zero, spaced, commented, call, boolean]) {
+    assert.equal(response.error, undefined, JSON.stringify(response.error));
+    assert.equal(response.result.files[0].functions[0].body.expressions.at(-1).kind.kind, 'negation');
+  }
+});
+
 test('file IDs and UTF-8 spans remain deterministic for shuffled batches', async () => {
   const prefix = '// 😀\r\n';
   const source = `${prefix}export function value(): i32 { return 1; }`;

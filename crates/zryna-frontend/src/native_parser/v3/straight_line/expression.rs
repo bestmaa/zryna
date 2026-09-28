@@ -13,13 +13,16 @@ impl FileParser<'_> {
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
     ) -> Result<u32, ParseError> {
-        let mut left = self.atom(expressions, previous_expressions)?;
-        let mut depth = 1;
+        let (mut left, mut depth) = self.atom(expressions, previous_expressions)?;
         while let Some(operator) = self.maybe(TokenKind::Plus) {
             if depth >= syntax::MAX_NESTING_DEPTH {
                 return Err(resource("expression nesting exceeds protocol-v3 limit"));
             }
-            let right = self.atom(expressions, previous_expressions)?;
+            let (right, right_depth) = self.atom(expressions, previous_expressions)?;
+            let next_depth = depth.max(right_depth) + 1;
+            if next_depth > syntax::MAX_NESTING_DEPTH {
+                return Err(resource("expression nesting exceeds protocol-v3 limit"));
+            }
             let span = UntrustedSpan {
                 file: self.file,
                 start: expressions[left as usize].span.start,
@@ -37,7 +40,7 @@ impl FileParser<'_> {
                     },
                 },
             )?;
-            depth += 1;
+            depth = next_depth;
         }
         Ok(left)
     }
@@ -73,10 +76,43 @@ impl FileParser<'_> {
         &mut self,
         expressions: &mut Vec<syntax::RawExpressionSyntax>,
         previous_expressions: usize,
-    ) -> Result<u32, ParseError> {
+    ) -> Result<(u32, u32), ParseError> {
         let token = self.current().ok_or_else(|| self.function_error_here("missing expression"))?;
         if token.kind() == TokenKind::Minus {
             self.position += 1;
+            if self.current().is_some_and(|next| next.kind() == TokenKind::Identifier)
+                && !self
+                    .tokens
+                    .get(self.position + 1)
+                    .is_some_and(|next| next.kind() == TokenKind::OpenParen)
+            {
+                let name = self.function_identifier()?;
+                let operand_span = name.span;
+                let operand = push_expression(
+                    expressions,
+                    previous_expressions,
+                    syntax::RawExpressionSyntax {
+                        span: operand_span,
+                        kind: syntax::RawExpressionKind::Reference { name },
+                    },
+                )?;
+                let negation = push_expression(
+                    expressions,
+                    previous_expressions,
+                    syntax::RawExpressionSyntax {
+                        span: UntrustedSpan {
+                            file: self.file,
+                            start: token.span().start(),
+                            end: operand_span.end,
+                        },
+                        kind: syntax::RawExpressionKind::Negation {
+                            operator_span: raw(token),
+                            operand,
+                        },
+                    },
+                )?;
+                return Ok((negation, 2));
+            }
             let digits = self.function_take(TokenKind::DecimalInteger)?;
             if token.span().end() != digits.span().start() {
                 return Err(function_error_at(token, "signed integer has intervening trivia"));
@@ -96,7 +132,8 @@ impl FileParser<'_> {
                     },
                     kind: syntax::RawExpressionKind::I32Literal { spelling: spelling.to_owned() },
                 },
-            );
+            )
+            .map(|index| (index, 1));
         }
         if token.kind() == TokenKind::Identifier
             && self
@@ -104,7 +141,9 @@ impl FileParser<'_> {
                 .get(self.position + 1)
                 .is_some_and(|next| next.kind() == TokenKind::OpenParen)
         {
-            return self.zero_argument_call(expressions, previous_expressions);
+            return self
+                .zero_argument_call(expressions, previous_expressions)
+                .map(|index| (index, 1));
         }
         let kind = match token.kind() {
             TokenKind::Identifier => {
@@ -134,6 +173,7 @@ impl FileParser<'_> {
             previous_expressions,
             syntax::RawExpressionSyntax { span: raw(token), kind },
         )
+        .map(|index| (index, 1))
     }
 }
 
