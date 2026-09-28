@@ -107,38 +107,45 @@ fn parse_v2_internal(
         let mut functions = Vec::new();
         let mut function_index = 0_usize;
         while parser.current().is_some() {
-            if functions.len() >= syntax::MAX_FUNCTIONS_PER_FILE
-                || total_functions >= syntax::MAX_FUNCTIONS_PER_PROJECT
-            {
-                return Err(parser
-                    .error_here("ZRYNA-F2003", "function inventory exceeds protocol-v2 limit"));
-            }
             let checkpoint = parser.position;
             let index = function_index;
-            if parser
-                .tokens
-                .get(checkpoint + 1)
-                .is_some_and(|token| token.kind() == TokenKind::Keyword(Keyword::Function))
-            {
+            if parser.starts_function() {
+                reserve_function(&parser, function_index, total_functions)?;
                 function_index += 1;
+                total_functions += 1;
             }
             let function = match parser.function(index) {
                 Ok(function) => function,
                 Err(error) if recovering && error.diagnostic().code() == "ZRYNA-F2002" => {
-                    let needed = 1 + usize::from(error.following.is_some());
-                    if diagnostics.len() + needed > syntax::MAX_PROVIDER_DIAGNOSTICS {
+                    let signature = recovery::primitive_annotations(&parser, checkpoint, index);
+                    let mut recovered = match signature {
+                        Some(Err(resource)) => return Err(resource),
+                        Some(Ok(signature))
+                            if signature.diagnostics.first()
+                                == Some(&recovery::raw_diagnostic(&error)) =>
+                        {
+                            total_parameters += signature.parameter_count;
+                            if total_parameters > syntax::MAX_PARAMETERS_PER_PROJECT {
+                                return Err(resource(
+                                    "project syntax inventory exceeds protocol-v2 limit",
+                                ));
+                            }
+                            signature.diagnostics
+                        }
+                        _ => vec![recovery::raw_diagnostic(&error)],
+                    };
+                    if let Some(following) = error.following {
+                        recovered.push(*following);
+                    }
+                    if diagnostics.len() + recovered.len() > syntax::MAX_PROVIDER_DIAGNOSTICS {
                         return Err(resource("parser diagnostics exceed protocol-v2 limit"));
                     }
-                    diagnostics.push(recovery::raw_diagnostic(&error));
-                    if let Some(following) = error.following {
-                        diagnostics.push(*following);
-                    }
+                    diagnostics.extend(recovered);
                     recovery::skip_to_next_function(&mut parser, checkpoint);
                     continue;
                 }
                 Err(error) => return Err(error),
             };
-            total_functions += 1;
             total_parameters += function.parameters.len();
             total_statements += function.body.statements.len();
             total_expressions += function.body.expressions.len();
@@ -178,6 +185,14 @@ enum AnnotationContext {
 }
 
 impl FileParser<'_> {
+    fn starts_function(&self) -> bool {
+        self.current().is_some_and(|token| token.kind() == TokenKind::Keyword(Keyword::Export))
+            && self
+                .tokens
+                .get(self.position + 1)
+                .is_some_and(|token| token.kind() == TokenKind::Keyword(Keyword::Function))
+    }
+
     fn error_between(&self, first: Token, last: Token, message: &'static str) -> ParseError {
         let span =
             UntrustedSpan { file: self.file, start: first.span().start(), end: last.span().end() };
@@ -259,18 +274,7 @@ impl FileParser<'_> {
             TokenKind::Identifier => {}
             _ => return Err(self.error_here("ZRYNA-F2002", "unsupported type annotation")),
         }
-        if let Some(kind) = match self.spelling(token) {
-            "unknown" => Some("UnknownKeyword"),
-            "never" => Some("NeverKeyword"),
-            "number" => Some("NumberKeyword"),
-            "string" => Some("StringKeyword"),
-            "boolean" => Some("BooleanKeyword"),
-            "symbol" => Some("SymbolKeyword"),
-            "bigint" => Some("BigIntKeyword"),
-            "undefined" => Some("UndefinedKeyword"),
-            "object" => Some("ObjectKeyword"),
-            _ => None,
-        } {
+        if let Some(kind) = recovery::primitive_kind(self.spelling(token)) {
             let context = match context {
                 AnnotationContext::Parameter(index) => format!("parameter {index} annotation"),
                 AnnotationContext::Result(index) => format!("function {index} result annotation"),
@@ -444,4 +448,19 @@ fn error_at(token: Token, code: &'static str, message: &'static str) -> ParseErr
 
 fn resource(message: &'static str) -> ParseError {
     failure("ZRYNA-F2003", message)
+}
+
+fn reserve_function(
+    parser: &FileParser<'_>,
+    file_count: usize,
+    project_count: usize,
+) -> Result<(), ParseError> {
+    if file_count >= syntax::MAX_FUNCTIONS_PER_FILE
+        || project_count >= syntax::MAX_FUNCTIONS_PER_PROJECT
+    {
+        return Err(
+            parser.error_here("ZRYNA-F2003", "function inventory exceeds protocol-v2 limit")
+        );
+    }
+    Ok(())
 }
