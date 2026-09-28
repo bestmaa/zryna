@@ -126,8 +126,9 @@ async function run() {
     await vscode.window.showTextDocument(m3Document);
     await vscode.commands.executeCommand('zryna.selectEditorProfile', 'data-ownership-v1');
     await until(() => vscode.languages.getDiagnostics(m3Uri).length === 0, 'M3 diagnostics');
-    assert.equal(await format(m3Document),
-      'import {\n  double\n}\nfrom "./math.zry";\nexport function score(value: i32): i32 {\n  return double(value);\n}\n');
+    const expectedM3 = 'import {\n  double\n}\nfrom "./math.zry";\nexport function score(value: i32): i32 {\n  return double(value);\n}\n';
+    const newline = m3Document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+    assert.equal(await format(m3Document), expectedM3.replaceAll('\n', newline));
     result.checks.push('M3 saved-import formatting and idempotence');
     result.outcomes = [scalarRun, js, wasm].map(item => ({ profile: item.selection.profile,
       target: item.target, outcome: item.results[0].outcome }));
