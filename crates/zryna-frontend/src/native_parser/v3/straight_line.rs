@@ -66,11 +66,17 @@ pub fn parse_v3_straight_line_candidate(
         if source.path() != file.path() {
             return Err(failure("native source path differs from the source map"));
         }
+        let end = u32::try_from(source.text().len())
+            .map_err(|_| resource("source length exceeds protocol-v3 limit"))?;
+        let eof = sources
+            .verify_span(UntrustedSpan { file: file.id().index(), start: end, end })
+            .map_err(|_| failure("native source EOF is unavailable"))?;
         let mut parser = FileParser {
             text: source.text(),
             tokens: file.tokens().collect(),
             position: 0,
             file: file.id().index(),
+            eof,
         };
         enforce_source_nesting(&parser.tokens)?;
         let mut imports = Vec::new();
@@ -138,9 +144,17 @@ pub fn parse_v3_straight_line_candidate(
 
 impl FileParser<'_> {
     fn function_error_here(&self, message: &'static str) -> ParseError {
-        self.current()
-            .or_else(|| self.tokens.last().copied())
-            .map_or_else(|| failure(message), |token| function_error_at(token, message))
+        self.current().map_or_else(
+            || ParseError {
+                diagnostic: Diagnostic::error_at(
+                    "ZRYNA-F2002",
+                    self.eof,
+                    message,
+                    "use the supported straight-line protocol-v3 syntax",
+                ),
+            },
+            |token| function_error_at(token, message),
+        )
     }
 
     fn function_take(&mut self, kind: TokenKind) -> Result<Token, ParseError> {

@@ -90,7 +90,13 @@ pub(super) fn parse(
                 next.kind() == token.kind() && token.span().end() == next.span().start()
             })
         {
-            return Err(parser.function_error_here("unsupported increment or decrement"));
+            let rejected = parser
+                .tokens
+                .get(parser.position + 1)
+                .copied()
+                .or_else(|| parser.current())
+                .expect("adjacent operator token");
+            return Err(function_error_at(rejected, "unsupported increment or decrement"));
         }
         while operators.last().is_some_and(|(_, current)| *current >= next_precedence) {
             let (operator, _) = operators.pop().expect("pending operator");

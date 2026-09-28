@@ -138,6 +138,48 @@ fn deterministic_v3_grammar_mutations_verify_or_reject_atomically() {
     assert!(accepted > 75 && rejected > 25, "both grammar outcomes exercised");
 }
 
+#[test]
+fn frozen_v3_rejections_have_source_bound_locations() {
+    let names = [
+        "native_parser_v3_assignments/rejected",
+        "native_parser_v3_blocks/rejected",
+        "native_parser_v3_calls/rejected",
+        "native_parser_v3_expressions/rejected",
+        "native_parser_v3_expressions/rejected-prefix",
+        "native_parser_v3_functions/rejected",
+        "native_parser_v3_locals/rejected",
+        "native_parser_v3_negation/rejected",
+        "native_parser_v3_numeric_negation/rejected",
+    ];
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
+    for name in names {
+        let text = fs::read_to_string(root.join(format!("{name}.zry"))).expect("frozen source");
+        let response: Value = serde_json::from_slice(
+            &fs::read(root.join(format!("{name}.response.json"))).expect("frozen response"),
+        )
+        .expect("closed worker response");
+        let sources =
+            SourceMap::build(vec![SourceFileInput { path: "src/main.zry".to_owned(), text }])
+                .expect("source map");
+        let lexed = lex(&sources).expect("native tokens");
+        let native =
+            parse_v3_straight_line_candidate(&sources, &lexed).expect_err("rejected source");
+        assert_eq!(
+            native.diagnostic().code(),
+            response["error"]["code"],
+            "{name}: rejection class"
+        );
+        let message = response["error"]["message"].as_str().expect("worker message");
+        let (start, end) = provider_source_range(message).expect("worker source range");
+        let span = native.diagnostic().primary_span().expect("native source location");
+        assert_eq!(span.file().index(), 0, "{name}: source file");
+        assert!(
+            span.start() >= start && span.end() <= end,
+            "{name}: native location within worker rejected construct"
+        );
+    }
+}
+
 fn provider_responses(inputs: &[(String, String)]) -> Vec<Value> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mut child = Command::new("node")
@@ -179,5 +221,6 @@ fn provider_responses(inputs: &[(String, String)]) -> Vec<Value> {
 fn provider_source_range(message: &str) -> Option<(u32, u32)> {
     let range = message.rsplit_once(" at file 0 bytes ")?.1;
     let (start, end) = range.split_once("..")?;
+    let end = end.chars().take_while(char::is_ascii_digit).collect::<String>();
     Some((start.parse().ok()?, end.parse().ok()?))
 }

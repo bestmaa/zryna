@@ -6,7 +6,7 @@
 use std::fmt;
 
 use zryna_diagnostics::Diagnostic;
-use zryna_source::{SourceMap, UntrustedSpan};
+use zryna_source::{SourceMap, Span, UntrustedSpan};
 use zryna_syntax::v3 as syntax;
 
 use crate::native_lexer::{Keyword, LexedProject, Token, TokenKind};
@@ -67,11 +67,17 @@ pub fn parse_v3_import_candidate(
         if source.path() != file.path() {
             return Err(failure("ZRYNA-F2002", "native source path differs from the source map"));
         }
+        let end = u32::try_from(source.text().len())
+            .map_err(|_| failure("ZRYNA-F1002", "source length exceeds protocol-v3 limit"))?;
+        let eof = sources
+            .verify_span(UntrustedSpan { file: file.id().index(), start: end, end })
+            .map_err(|_| failure("ZRYNA-F2002", "native source EOF is unavailable"))?;
         let mut parser = FileParser {
             text: source.text(),
             tokens: file.tokens().collect(),
             position: 0,
             file: file.id().index(),
+            eof,
         };
         let mut imports = Vec::new();
         while let Some(token) = parser.current() {
@@ -109,6 +115,7 @@ struct FileParser<'a> {
     tokens: Vec<Token>,
     position: usize,
     file: u32,
+    eof: Span,
 }
 
 impl FileParser<'_> {

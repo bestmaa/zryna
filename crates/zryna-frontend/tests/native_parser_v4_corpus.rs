@@ -18,9 +18,13 @@ fn checked_in_m3_sources_form_verifiable_native_candidates() {
         match parse_v4_candidate(&sources, &lexed) {
             Ok(raw) => {
                 if let Err(error) = syntax_v4::verify_snapshot(raw, &sources) {
-                    if path == "src/borrow-exclusive-nonreference.zry"
-                        && error.iter().any(|diagnostic| diagnostic.code() == "ZRYNA-Y4002")
-                    {
+                    if path == "src/borrow-exclusive-nonreference.zry" {
+                        assert_eq!(error.len(), 1, "known hostile source diagnostic count");
+                        assert_eq!(
+                            error[0].code(),
+                            "ZRYNA-Y4002",
+                            "known hostile source verifier diagnostic"
+                        );
                         verifier_hostile += 1;
                     } else {
                         failures.push(format!("{path}: verifier: {error:?}"));
