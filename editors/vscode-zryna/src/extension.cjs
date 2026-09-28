@@ -108,7 +108,9 @@ async function connect(document, revision) {
   const state = { document, uri: document.uri.toString(), profile: editorProfile };
   const version = document.version;
   const config = configuration();
-  state.connection = new Connection(config, (method, params) => publish(state, method, params), () => {
+  const m3 = state.profile === 'data-ownership-v1';
+  state.connection = new Connection(m3 ? { ...config, workspaceRoot: folder.uri.fsPath } : config,
+    (method, params) => publish(state, method, params), () => {
     diagnostics.delete(document.uri);
     state.globalMessages = [];
     if (active === state) globalOutput.clear();
@@ -118,18 +120,21 @@ async function connect(document, revision) {
   try {
     const result = await state.connection.request('initialize', {
       rootUri: folder.uri.toString(), capabilities: { general: { positionEncodings: ['utf-16'] } },
-      ...(state.profile === 'control-flow-v1' ? { initializationOptions: { zrynaProfile: 'control-flow-v1' } } : {}),
+      ...(state.profile !== 'i32-v1' ? { initializationOptions: { zrynaProfile: state.profile } } : {}),
     });
     const cap = result?.capabilities;
     const m2 = state.profile === 'control-flow-v1';
-    if (result?.serverInfo?.name !== 'zryna-language-server' || result.serverInfo.version !== '0.4.0'
+    const analysisProfile = m3 ? 'data-ownership-v1' : m2 ? 'control-flow-v1' : 'scalar-v2';
+    const formattingProfile = m3 ? 'data-ownership-format-v1'
+      : m2 ? 'control-flow-format-v1' : 'scalar-format-v1';
+    if (result?.serverInfo?.name !== 'zryna-language-server' || result.serverInfo.version !== '0.5.0'
       || cap?.experimental?.zrynaInstallationProfile !== 'portable-setup-v1'
       || (config.installed && cap?.experimental?.zrynaSourceCommit !== config.manifest.sourceCommit)
-      || cap?.experimental?.zrynaAnalysisProfile !== (m2 ? 'control-flow-v1' : 'scalar-v2')
-      || cap?.experimental?.zrynaFormattingProfile !== (m2 ? 'control-flow-format-v1' : 'scalar-format-v1')
-      || cap.positionEncoding !== 'utf-16' || cap.definitionProvider !== !m2
+      || cap?.experimental?.zrynaAnalysisProfile !== analysisProfile
+      || cap?.experimental?.zrynaFormattingProfile !== formattingProfile
+      || cap.positionEncoding !== 'utf-16' || cap.definitionProvider !== !(m2 || m3)
       || !cap.documentFormattingProvider || !cap.documentRangeFormattingProvider) {
-      throw new Error('This extension requires a matching Zryna 0.4.0 server and editor profile.');
+      throw new Error('This extension requires a matching Zryna 0.5.0 server and editor profile.');
     }
     if (active !== state || revision !== configurationRevision || editorProfile !== state.profile
       || document.version !== version || document.isClosed || !vscode.workspace.isTrusted
@@ -196,7 +201,8 @@ async function disconnect() {
 }
 
 function activate(context) {
-  editorProfile = context.workspaceState?.get('zryna.editorProfile') === 'control-flow-v1' ? 'control-flow-v1' : 'i32-v1';
+  const savedProfile = context.workspaceState?.get('zryna.editorProfile');
+  editorProfile = ['control-flow-v1', 'data-ownership-v1'].includes(savedProfile) ? savedProfile : 'i32-v1';
   registerRun(vscode, context);
   diagnostics = vscode.languages.createDiagnosticCollection('zryna');
   globalOutput = vscode.window.createOutputChannel('Zryna Diagnostics');
@@ -227,11 +233,14 @@ function activate(context) {
           const choice = await vscode.window.showQuickPick([
             { label: 'Scalar (i32-v1)', profile: 'i32-v1' },
             { label: 'M2 control flow (control-flow-v1)', profile: 'control-flow-v1' },
+            { label: 'M3 data ownership (data-ownership-v1)', profile: 'data-ownership-v1' },
           ], { placeHolder: 'Select the Zryna editor profile' });
           if (!choice) return;
           selected = choice.profile;
         }
-        if (selected !== 'i32-v1' && selected !== 'control-flow-v1') throw new Error('Invalid Zryna editor profile.');
+        if (!['i32-v1', 'control-flow-v1', 'data-ownership-v1'].includes(selected)) {
+          throw new Error('Invalid Zryna editor profile.');
+        }
         if (selected === editorProfile) {
           const document = vscode.window.activeTextEditor?.document;
           if (document?.languageId === 'zryna') await ensure(document);

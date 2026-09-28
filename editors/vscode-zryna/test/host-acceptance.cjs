@@ -73,7 +73,7 @@ async function run() {
     const extension = vscode.extensions.getExtension('zryna.zryna');
     assert.ok(extension, 'development extension must load');
     await extension.activate();
-    assert.equal(extension.packageJSON.version, '0.4.0');
+    assert.equal(extension.packageJSON.version, '0.5.0');
     result.checks.push('extension activation and verified installation');
 
     const uri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, 'main.zry');
@@ -116,6 +116,19 @@ async function run() {
     await delay(500);
     assert.equal(vscode.languages.getDiagnostics(uri).length, 0, 'stale diagnostic must not return');
     result.checks.push('invalid-to-valid diagnostics and stale recovery');
+    const mathUri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, 'math.zry');
+    const m3Uri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, 'm3.zry');
+    await vscode.workspace.fs.writeFile(mathUri,
+      Buffer.from('export function double(value:i32):i32{return value+value;}'));
+    await vscode.workspace.fs.writeFile(m3Uri, Buffer.from(
+      'import{double}from"./math.zry";export function score(value:i32):i32{return double(value);}'));
+    const m3Document = await vscode.workspace.openTextDocument(m3Uri);
+    await vscode.window.showTextDocument(m3Document);
+    await vscode.commands.executeCommand('zryna.selectEditorProfile', 'data-ownership-v1');
+    await until(() => vscode.languages.getDiagnostics(m3Uri).length === 0, 'M3 diagnostics');
+    assert.equal(await format(m3Document),
+      'import {\n  double\n}\nfrom "./math.zry";\nexport function score(value: i32): i32 {\n  return double(value);\n}\n');
+    result.checks.push('M3 saved-import formatting and idempotence');
     result.outcomes = [scalarRun, js, wasm].map(item => ({ profile: item.selection.profile,
       target: item.target, outcome: item.results[0].outcome }));
     result.passed = true;

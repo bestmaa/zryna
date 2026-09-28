@@ -1,8 +1,8 @@
 {
   "name": "zryna",
   "displayName": "Zryna Developer Preview",
-  "description": "Syntax highlighting, control-flow formatting and explicit JavaScript/WebAssembly Run for Zryna.",
-  "version": "0.4.0",
+  "description": "Syntax highlighting, M1–M3 formatting and explicit JavaScript/WebAssembly Run for Zryna.",
+  "version": "0.5.0",
   "publisher": "zryna",
   "license": "Apache-2.0",
   "repository": {
@@ -95,15 +95,17 @@
     "compilerVersion": "0.2.3",
     "requiredCapabilities": {
       "scalar-v2": "scalar-format-v1",
-      "control-flow-v1": "control-flow-format-v1"
+      "control-flow-v1": "control-flow-format-v1",
+      "data-ownership-v1": "data-ownership-format-v1"
     },
-    "serverVersion": "0.4.0",
+    "serverVersion": "0.5.0",
     "installationCapability": "portable-setup-v1",
     "sourceBuildRequired": false,
     "releasedCompilerCompatible": true,
     "profiles": [
       "scalar-v2",
-      "control-flow-v1"
+      "control-flow-v1",
+      "data-ownership-v1"
     ]
   },
   "scripts": {

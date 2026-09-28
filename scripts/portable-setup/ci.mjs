@@ -34,7 +34,7 @@ for (const [number, cwd] of [[1, source], [2, second]]) {
   binaries.push(join(build, 'target', target, 'release', `zryna-language-server${suffix}`));
 }
 if (digest(binaries[0]) !== digest(binaries[1])) throw new Error('Server replicas differ.');
-const vsix = join(output, 'zryna-0.4.0.vsix');
+const vsix = join(output, 'zryna-0.5.0.vsix');
 run(process.execPath, ['scripts/package-editor.mjs', '--out', vsix]);
 const repeated = join(output, 'zryna-repeated.vsix');
 run(process.execPath, ['scripts/package-editor.mjs', '--out', repeated]);

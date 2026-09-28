@@ -27,7 +27,7 @@ function main() {
   const root = __dirname;
   const installation = verifyInstallation(root, args[1]);
   if (args.length === 2) {
-    console.log(`Verified ${installation.manifest.candidate}; compiler 0.2.3; server/editor 0.4.0.`);
+    console.log(`Verified ${installation.manifest.candidate}; compiler 0.2.3; server/editor 0.5.0.`);
   } else {
     if (![args[3], args[5]].every(value => path.isAbsolute(value))) {
       throw new Error('Select absolute editor and profile paths.');
@@ -52,7 +52,7 @@ function main() {
       '[zryna]': { 'editor.defaultFormatter': 'zryna.zryna' },
     }, null, 2)}\n`, { flag: 'wx' });
     const executableArgs = ['--user-data-dir', userData, '--extensions-dir', extensions,
-      '--install-extension', path.join(root, 'editor', 'zryna-0.4.0.vsix')];
+      '--install-extension', path.join(root, 'editor', 'zryna-0.5.0.vsix')];
     const electron = process.platform === 'win32'
       ? [cli, ...executableArgs] : executableArgs;
     const result = spawnSync(editor, electron, { shell: false, windowsHide: true, stdio: 'inherit',
