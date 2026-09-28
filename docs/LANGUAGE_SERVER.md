@@ -203,7 +203,8 @@ changes after admission makes the formatting revision stale and returns D4002 wi
 The VS Code/Open VSX package lives in editors/vscode-zryna. It is a local installable Developer
 Preview, not a marketplace publication. It provides diagnostics, scalar definition, document formatting
 and range formatting for one active local file at a time. Switching files starts a fresh bounded
-connection; it does not enable module resolution. It has no runtime package dependencies, telemetry,
+connection. Explicit M3 formatting resolves saved imports through the trusted project root;
+the client does not parse imports. It has no runtime package dependencies, telemetry,
 download/update behavior, debugging or general filesystem write service. A separate explicit
 editor Run command is described below; it does not add execution to the language-server protocol.
 Diagnostic messages render as plain text, and edits/definitions are validated against the same
@@ -211,16 +212,17 @@ document and version before returning them to VS Code.
 
 | Extension | Editor engine | Required compiler | Source profile |
 | --- | --- | --- | --- |
-| 0.4.0 | VS Code-compatible API >=1.82.0 | Server 0.4.0 advertising scalar-v2, scalar-format-v1, and portable-setup-v1 | One-file scalar; definition available |
-| 0.4.0 | Same | Server 0.4.0 advertising control-flow-v1, control-flow-format-v1, and portable-setup-v1 | One-file M2; definition unavailable |
-| 0.4.0 | Same | Server 0.3.0 or public immutable v0.2.3 server | Incompatible |
+| 0.5.0 | VS Code-compatible API >=1.82.0 | Server 0.5.0 advertising scalar-v2, scalar-format-v1, and portable-setup-v1 | One-file scalar; definition available |
+| 0.5.0 | Same | Server 0.5.0 advertising control-flow-v1, control-flow-format-v1, and portable-setup-v1 | One-file M2; definition unavailable |
+| 0.5.0 | Same | Server 0.5.0 advertising data-ownership-v1, data-ownership-format-v1, and portable-setup-v1 | M3 saved imports under the trusted workspace root; definition unavailable |
+| 0.5.0 | Same | Server 0.4.0 or public immutable v0.2.3 server | Incompatible |
 
 The package version alone is insufficient: the extension verifies server name/version, UTF-16
 positions, both formatting methods, the exact selected analysis/formatting capability and installed
 source revision before sending document contents. The editor profile defaults to `i32-v1` for
-scalar definition compatibility. **Zryna: Select Editor Profile** offers `i32-v1` and
-`control-flow-v1`; it stores the choice per workspace and reconnects before admitting the active
-document. The explicit Run picker selects the same editor profile before execution. Neither
+scalar definition compatibility. **Zryna: Select Editor Profile** offers `i32-v1`,
+`control-flow-v1`, and `data-ownership-v1`; it stores the choice per workspace and reconnects
+before admitting the active document. The explicit Run picker accepts scalar and M2 only. Neither
 selection nor formatting executes source. No new compiler release or tag is created by this work.
 
 From the matching reviewed source checkout, use the pinned toolchains:
@@ -232,7 +234,7 @@ pnpm m0:check
 cargo build --locked -p zryna-language-server
 pnpm editor:check
 pnpm editor:package
-code --install-extension /absolute/compiler/checkout/.zryna/out/zryna-0.4.0.vsix
+code --install-extension /absolute/compiler/checkout/.zryna/out/zryna-0.5.0.vsix
 ~~~
 
 Set zryna.serverPath, zryna.compilerRoot and zryna.nodePath in USER settings to absolute paths.

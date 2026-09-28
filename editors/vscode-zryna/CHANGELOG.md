@@ -35,5 +35,6 @@
 - Cancellation, stale-result rejection, bounded transport and inert diagnostic rendering.
 
 The original packages required a matching source build; public v0.2.3 servers lack formatting.
-M3 formatting and marketplace publication remain pending. A built or installed VSIX is not a
-marketplace release. No new compiler tag or binary release accompanies this package.
+Cross-platform clean-install acceptance is required before marketplace publication of the M3
+package. A built or installed VSIX is not a marketplace release. No new compiler tag or binary
+release accompanies this package.

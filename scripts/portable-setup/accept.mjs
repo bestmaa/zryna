@@ -171,12 +171,11 @@ try {
     textDocument: { uri }, options: { tabSize: 2, insertSpaces: true },
   }), []);
   writeFileSync(join(m3Project, 'math.zry'), 'export function double(value:i32):i32{return missing;}');
-  try {
-    const stale = await m3Connection.request('textDocument/formatting', {
+  await assert.rejects(
+    m3Connection.request('textDocument/formatting', {
       textDocument: { uri }, options: { tabSize: 2, insertSpaces: true },
-    });
-    assert.equal(stale.length, 0);
-  } catch (error) { assert.match(error.message, /ZRYNA|format|revision|rejected/i); }
+    }), /ZRYNA-D4002/,
+  );
 } finally {
   writeFileSync(join(m3Project, 'math.zry'), m3ImportBytes);
   await m3Connection.stop();

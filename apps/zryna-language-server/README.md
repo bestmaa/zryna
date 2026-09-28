@@ -1,7 +1,8 @@
 # Zryna language server
 
 Thin, fail-closed stdio transport for compiler-owned protocol-v2 scalar diagnostics/definition
-and explicitly selected protocol-v3 M2 or protocol-v4 M3 diagnostics and formatting. The component owns LSP framing, document lifecycle, revision correlation,
+and explicitly selected protocol-v3 M2 or protocol-v4 M3 diagnostics and formatting. The component
+owns LSP framing, document lifecycle, revision correlation,
 position conversion, cancellation routing, and inert rendering only. `zryna-driver` retains
 frontend execution, session scheduling, diagnostic publication, and semantic query authority;
 `zryna-source` validates the exact in-memory UTF-8 text and coordinates. The integration tests use
@@ -38,9 +39,9 @@ Exact `data-ownership-v1` selects M3 diagnostics and `data-ownership-format-v1`,
 trusted startup `--workspace-root <absolute-path>` matching the initialization root URI. M3
 retains a bounded set of open overlays, resolves unopened saved imports through the driver's
 authenticated no-follow source session, and revalidates the graph before returning edits. M2/M3
-definition is not advertised. Data-ownership queries, hover, references, rename,
+definition is not advertised. Hover, references, rename,
 completion, code actions, indexing, debugging, and execution are unsupported.
 
 Each formatting capability accepts only its separately verified profile. See the
-[format contract and editor guide](../../docs/LANGUAGE_SERVER.md). Editor integration and marketplace
-publication remain outstanding under #409.
+[format contract and editor guide](../../docs/LANGUAGE_SERVER.md). Cross-platform clean-install
+acceptance and marketplace publication require separate evidence under #409.
