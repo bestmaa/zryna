@@ -8,6 +8,8 @@ use crate::native_lexer::{Keyword, LexedProject, Token, TokenKind};
 
 use super::{FileParser, ParseError, raw};
 
+mod expression;
+
 /// Constructs an untrusted v3 candidate for an import prefix followed by straight-line functions.
 ///
 /// Every nontrivia token in every file must belong to the supported grammar. This entry is
@@ -330,127 +332,6 @@ impl FileParser<'_> {
             },
         })
     }
-
-    fn addition(
-        &mut self,
-        expressions: &mut Vec<syntax::RawExpressionSyntax>,
-        previous_expressions: usize,
-    ) -> Result<u32, ParseError> {
-        let mut left = self.atom(expressions, previous_expressions)?;
-        let mut depth = 1;
-        while let Some(operator) = self.maybe(TokenKind::Plus) {
-            if depth >= syntax::MAX_NESTING_DEPTH {
-                return Err(resource("expression nesting exceeds protocol-v3 limit"));
-            }
-            let right = self.atom(expressions, previous_expressions)?;
-            let span = UntrustedSpan {
-                file: self.file,
-                start: expressions[left as usize].span.start,
-                end: expressions[right as usize].span.end,
-            };
-            left = push_expression(
-                expressions,
-                previous_expressions,
-                syntax::RawExpressionSyntax {
-                    span,
-                    kind: syntax::RawExpressionKind::Addition {
-                        operator_span: raw(operator),
-                        lhs: left,
-                        rhs: right,
-                    },
-                },
-            )?;
-            depth += 1;
-        }
-        Ok(left)
-    }
-
-    fn zero_argument_call(
-        &mut self,
-        expressions: &mut Vec<syntax::RawExpressionSyntax>,
-        previous_expressions: usize,
-    ) -> Result<u32, ParseError> {
-        let callee = self.function_identifier()?;
-        let open = self.function_take(TokenKind::OpenParen)?;
-        let close = self.function_take(TokenKind::CloseParen)?;
-        push_expression(
-            expressions,
-            previous_expressions,
-            syntax::RawExpressionSyntax {
-                span: UntrustedSpan {
-                    file: self.file,
-                    start: callee.span.start,
-                    end: close.span().end(),
-                },
-                kind: syntax::RawExpressionKind::Call {
-                    callee,
-                    open_paren_span: raw(open),
-                    arguments: Vec::new(),
-                    close_paren_span: raw(close),
-                },
-            },
-        )
-    }
-
-    fn atom(
-        &mut self,
-        expressions: &mut Vec<syntax::RawExpressionSyntax>,
-        previous_expressions: usize,
-    ) -> Result<u32, ParseError> {
-        let token = self.current().ok_or_else(|| self.function_error_here("missing expression"))?;
-        if token.kind() == TokenKind::Identifier
-            && self
-                .tokens
-                .get(self.position + 1)
-                .is_some_and(|next| next.kind() == TokenKind::OpenParen)
-        {
-            return self.zero_argument_call(expressions, previous_expressions);
-        }
-        let kind = match token.kind() {
-            TokenKind::Identifier => {
-                syntax::RawExpressionKind::Reference { name: self.function_identifier()? }
-            }
-            TokenKind::Keyword(Keyword::True | Keyword::False) => {
-                self.position += 1;
-                syntax::RawExpressionKind::BoolLiteral {
-                    value: token.kind() == TokenKind::Keyword(Keyword::True),
-                }
-            }
-            TokenKind::DecimalInteger => {
-                let spelling = self.spelling(token);
-                if spelling.len() > syntax::MAX_LITERAL_BYTES
-                    || (spelling != "0" && spelling.starts_with('0'))
-                {
-                    return Err(self.function_error_here("noncanonical integer literal"));
-                }
-                let spelling = spelling.to_owned();
-                self.position += 1;
-                syntax::RawExpressionKind::I32Literal { spelling }
-            }
-            _ => return Err(self.function_error_here("unsupported expression")),
-        };
-        push_expression(
-            expressions,
-            previous_expressions,
-            syntax::RawExpressionSyntax { span: raw(token), kind },
-        )
-    }
-}
-
-fn push_expression(
-    expressions: &mut Vec<syntax::RawExpressionSyntax>,
-    previous_expressions: usize,
-    expression: syntax::RawExpressionSyntax,
-) -> Result<u32, ParseError> {
-    if expressions.len() >= syntax::MAX_EXPRESSIONS_PER_FUNCTION
-        || previous_expressions + expressions.len() >= syntax::MAX_EXPRESSIONS_PER_PROJECT
-    {
-        return Err(resource("expression inventory exceeds protocol-v3 limit"));
-    }
-    let index = u32::try_from(expressions.len())
-        .map_err(|_| resource("expression inventory exceeds protocol-v3 limit"))?;
-    expressions.push(expression);
-    Ok(index)
 }
 
 fn failure(message: &'static str) -> ParseError {

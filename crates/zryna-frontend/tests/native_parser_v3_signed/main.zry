@@ -1,0 +1,7 @@
+// 😀 signed source spans
+export function signed(): i32 {
+  const minimum: i32 = -2147483648;
+  let current: i32 = -1 + 2;
+  current = 1 + -2;
+  return -3;
+}

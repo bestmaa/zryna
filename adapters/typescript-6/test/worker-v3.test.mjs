@@ -228,6 +228,29 @@ test('native zero-argument call fixtures are exact TypeScript 6 responses', asyn
   assert.equal(expressions.find(({ kind }) => kind.kind === 'call').kind.arguments.length, 1);
 });
 
+test('native compact signed-literal fixtures are exact TypeScript 6 responses', async () => {
+  const fixture = new URL('../../../crates/zryna-frontend/tests/native_parser_v3_signed/', import.meta.url);
+  const main = (await readFile(new URL('main.zry', fixture), 'utf8')).replace(/\r?\n/g, '\r\n');
+  const math = await readFile(new URL('math.zry', fixture), 'utf8');
+  const expected = JSON.parse(await readFile(new URL('signed.snapshot.json', fixture), 'utf8'));
+  const [signed, valueNegation, spacedNegation, commentNegation, negativeZero] = await exchange([
+    analyze(1, [{ path: 'src/math.zry', text: math }, { path: 'src/main.zry', text: main }]),
+    analyze(2, [{ path: 'src/main.zry', text: 'function f(x: i32): i32 { return -x; }' }]),
+    analyze(3, [{ path: 'src/main.zry', text: 'function f(): i32 { return - 1; }' }]),
+    analyze(4, [{ path: 'src/main.zry', text: 'function f(): i32 { return -/*gap*/1; }' }]),
+    analyze(5, [{ path: 'src/main.zry', text: 'function f(): i32 { return -0; }' }]),
+  ]);
+  assert.deepEqual(signed.result, expected);
+  assert.equal(validateSnapshot(signed.result), true, JSON.stringify(validateSnapshot.errors));
+  assert.deepEqual(signed.result.files.map(({ id, path }) => [id, path]), [
+    [0, 'src/main.zry'], [1, 'src/math.zry'],
+  ]);
+  for (const response of [valueNegation, spacedNegation, commentNegation, negativeZero]) {
+    assert.equal(response.error, undefined, JSON.stringify(response.error));
+    assert.equal(response.result.files[0].functions[0].body.expressions.at(-1).kind.kind, 'negation');
+  }
+});
+
 test('file IDs and UTF-8 spans remain deterministic for shuffled batches', async () => {
   const prefix = '// 😀\r\n';
   const source = `${prefix}export function value(): i32 { return 1; }`;
