@@ -35,6 +35,7 @@ pub(super) fn call(
     function: VerifiedFunction<'_>,
     instruction: VerifiedInstruction<'_>,
     index: u32,
+    enabled: bool,
     body: &mut Function,
 ) -> Result<(), zryna_diagnostics::Diagnostic> {
     let prefix = match instruction.kind() {
@@ -52,18 +53,20 @@ pub(super) fn call(
         if prefix.kind() == VerifiedDropActionKind::Place {
             return Err(index_error());
         }
-        for (global, value) in [
-            (MODULE, 0x2000_0000 + function.id().module()),
-            (DECLARATION, function.id().declaration()),
-            (ROOT, prefix.root().index()),
-            (PENDING, 1),
-        ] {
-            body.instruction(&I::I32Const(i32::try_from(value).map_err(|_| index_error())?));
-            body.instruction(&I::GlobalSet(global));
+        if enabled {
+            for (global, value) in [
+                (MODULE, 0x2000_0000 + function.id().module()),
+                (DECLARATION, function.id().declaration()),
+                (ROOT, prefix.root().index()),
+                (PENDING, 1),
+            ] {
+                body.instruction(&I::I32Const(i32::try_from(value).map_err(|_| index_error())?));
+                body.instruction(&I::GlobalSet(global));
+            }
         }
     }
     body.instruction(&I::Call(index));
-    if prefix.is_some() {
+    if enabled && prefix.is_some() {
         clear(true, body);
     }
     failure::operation_check(body);

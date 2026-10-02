@@ -35,7 +35,7 @@ fn encode(
     command: Option<&zryna_ir::command_h1_v1::VerifiedProgram>,
 ) -> Result<Vec<u8>, zryna_diagnostics::Diagnostic> {
     let type_count = u32::try_from(layouts.types().len()).map_err(|_| index_error())?;
-    let clone_frontier = super::clone_frontier::required(functions);
+    let clone_frontier = command.is_some() && super::clone_frontier::required(functions);
     let mut arities = vec![1_usize];
     for function in functions {
         let arity = function.parameters().len() + function.borrow_parameters().len();

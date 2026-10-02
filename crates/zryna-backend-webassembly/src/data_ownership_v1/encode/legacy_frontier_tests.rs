@@ -274,7 +274,6 @@ impl Ordinary {
         let expected = ordinary.expected(kind);
         let mut failed = Vec::new();
         if !prefix.is_empty() {
-            failed.extend([expected.module, expected.declaration, expected.destination]);
             failed.extend(prefix.iter().map(|kind| 0x1000_0000 + kind));
         }
         failed.extend(&expected.survivor);
@@ -295,11 +294,14 @@ impl Ordinary {
             ordinary.observation.call(&mut ordinary.store, 0).expect("ordinary retained status"),
             2
         );
-        assert_eq!(
-            ordinary.trace(),
-            failed,
-            "destination prefix precedes exact reverse source cleanup"
+        let trace = ordinary.trace();
+        assert!(
+            !trace
+                .windows(3)
+                .any(|words| words == [expected.module, expected.declaration, expected.destination]),
+            "an unpublished destination has no logical cleanup label"
         );
+        assert_eq!(trace, failed, "prefix drops precede exact reverse source cleanup");
         assert_eq!(
             ordinary
                 .observation

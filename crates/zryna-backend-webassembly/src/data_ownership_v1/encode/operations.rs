@@ -164,6 +164,7 @@ pub(super) fn instruction(
                 function,
                 instruction,
                 context.clone_index(instruction.result_type().ok_or_else(index_error)?),
+                context.clone_frontier,
                 body,
             )?;
         }
@@ -298,7 +299,13 @@ pub(super) fn instruction(
             let ty = instruction.result_type().ok_or_else(index_error)?;
             memory::load_value(context.layouts.type_by_id(ty).ok_or_else(index_error)?, body);
             if kind != K::BorrowRead {
-                super::clone_frontier::call(function, instruction, context.clone_index(ty), body)?;
+                super::clone_frontier::call(
+                    function,
+                    instruction,
+                    context.clone_index(ty),
+                    context.clone_frontier,
+                    body,
+                )?;
             }
         }
         (K::BorrowWrite | K::BorrowReplace, B::BorrowValue { borrow, value }) => {
