@@ -87,11 +87,11 @@ fn registered_native_c_ir_has_exact_real_manifest_edges_and_compiler_kind() {
     .map(str::to_owned)
     .collect();
     assert_eq!(graph[MEMBER], expected);
-    let manifest: toml::Value =
-        fs::read_to_string(root().join("crates/zryna-native-c-ir/Cargo.toml"))
-            .expect("actual manifest")
-            .parse()
-            .expect("TOML");
+    let manifest: toml::Value = toml::from_str(
+        &fs::read_to_string(root().join("crates/zryna-native-c-ir/Cargo.toml"))
+            .expect("actual manifest"),
+    )
+    .expect("TOML");
     let actual: BTreeSet<String> = manifest["dependencies"]
         .as_table()
         .expect("normal dependencies")
@@ -126,19 +126,17 @@ fn base_ir_and_semantics_backedges_are_detected_as_real_graph_cycles() {
 #[test]
 fn cargo_workspace_lock_and_test_directories_register_the_same_component() {
     let document = registry();
-    let cargo: toml::Value = fs::read_to_string(root().join("Cargo.toml"))
-        .expect("workspace Cargo")
-        .parse()
-        .expect("TOML");
+    let cargo: toml::Value =
+        toml::from_str(&fs::read_to_string(root().join("Cargo.toml")).expect("workspace Cargo"))
+            .expect("TOML");
     let members = cargo["workspace"]["members"].as_array().expect("Cargo members");
     assert_eq!(
         members.iter().filter(|m| m.as_str() == Some("crates/zryna-native-c-ir")).count(),
         1
     );
-    let lock: toml::Value = fs::read_to_string(root().join("Cargo.lock"))
-        .expect("local lock entry")
-        .parse()
-        .expect("lock TOML");
+    let lock: toml::Value =
+        toml::from_str(&fs::read_to_string(root().join("Cargo.lock")).expect("local lock entry"))
+            .expect("lock TOML");
     let packages = lock["package"].as_array().expect("packages");
     let entries =
         packages.iter().filter(|p| p["name"].as_str() == Some(MEMBER)).collect::<Vec<_>>();
