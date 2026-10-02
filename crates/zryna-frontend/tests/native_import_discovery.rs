@@ -1,3 +1,5 @@
+//! Native import discovery preserves source identity, spans and exact binding limits.
+
 use zryna_frontend::{native_lexer, native_parser::v3::discover_import_candidates};
 use zryna_source::{SourceFileInput, SourceMap};
 
