@@ -10,6 +10,7 @@ pub(super) enum Language {
     I32V1,
     ControlFlowV1,
     DataOwnershipV1,
+    CommandH1V1,
 }
 
 // Declaration vocabulary only. Actual source admission remains with the corresponding IR verifier.

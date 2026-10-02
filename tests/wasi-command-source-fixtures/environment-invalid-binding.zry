@@ -1,0 +1,7 @@
+export function main(): bool {
+  const result: EnvLookupV1 = environmentLookup("MODE");
+  return match(result, {
+    "EnvLookupV1.Found": () => true,
+    "EnvLookupV1.Missing": () => false,
+  });
+}

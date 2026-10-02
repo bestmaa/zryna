@@ -135,6 +135,7 @@ pub(super) fn build_graph(
             });
         }
     }
+    super::command_support::append_builtin(input, &mut graph, &mut declarations);
     let mut interners = TypeInterners::default();
     for module in 0..input.syntax().files().len() {
         let file = &input.syntax().files()[module];

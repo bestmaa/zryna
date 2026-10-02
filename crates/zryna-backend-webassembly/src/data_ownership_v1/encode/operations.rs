@@ -160,10 +160,12 @@ pub(super) fn instruction(
             B::Place(place),
         ) => {
             place_value(function, place.index(), locals, context.layouts, body)?;
-            super::failure::operation_call(
-                Context::clone_index(instruction.result_type().ok_or_else(index_error)?),
+            super::clone_frontier::call(
+                function,
+                instruction,
+                context.clone_index(instruction.result_type().ok_or_else(index_error)?),
                 body,
-            );
+            )?;
         }
         (K::EnumDiscriminant, B::Place(place)) => {
             place_value(function, place.index(), locals, context.layouts, body)?;
@@ -199,6 +201,14 @@ pub(super) fn instruction(
         }
         (K::StringFromUtf8, B::String(bytes)) => {
             super::values::string_value(bytes, locals.scratch, body)?;
+        }
+        (K::EnvironmentLookup, B::EnvironmentLookup(key)) => {
+            let command = context
+                .command
+                .as_ref()
+                .filter(|command| command.key == key)
+                .ok_or_else(index_error)?;
+            super::failure::operation_call(command.environment, body);
         }
         (K::StringConcat, B::StringConcat { left, right }) => super::values::string_concat(
             function,
@@ -236,7 +246,7 @@ pub(super) fn instruction(
         (K::SharedClone | K::WeakClone | K::WeakDowngrade, B::Place(place)) => {
             place_value(function, place.index(), locals, context.layouts, body)?;
             super::failure::operation_call(
-                Context::clone_index(instruction.result_type().ok_or_else(index_error)?),
+                context.clone_index(instruction.result_type().ok_or_else(index_error)?),
                 body,
             );
         }
@@ -288,7 +298,7 @@ pub(super) fn instruction(
             let ty = instruction.result_type().ok_or_else(index_error)?;
             memory::load_value(context.layouts.type_by_id(ty).ok_or_else(index_error)?, body);
             if kind != K::BorrowRead {
-                super::failure::operation_call(Context::clone_index(ty), body);
+                super::clone_frontier::call(function, instruction, context.clone_index(ty), body)?;
             }
         }
         (K::BorrowWrite | K::BorrowReplace, B::BorrowValue { borrow, value }) => {
@@ -339,11 +349,7 @@ fn emit_instruction_drops(
     body: &mut Function,
 ) -> Result<(), zryna_diagnostics::Diagnostic> {
     for action in instruction.derived_drop_actions() {
-        let root = action.root().index();
-        super::observation::root(function, root, context, body);
-        let ty = place_type(function, root, context.layouts)?;
-        place_value(function, root, locals, context.layouts, body)?;
-        body.instruction(&Instruction::Call(context.drop_index(ty.id())));
+        super::cleanup::action(function, &action, locals, context, body)?;
     }
     Ok(())
 }
@@ -356,11 +362,7 @@ pub(super) fn emit_terminator_drops(
     body: &mut Function,
 ) -> Result<(), zryna_diagnostics::Diagnostic> {
     for action in terminator.derived_drop_actions() {
-        let root = action.root().index();
-        super::observation::root(function, root, context, body);
-        let ty = place_type(function, root, context.layouts)?;
-        place_value(function, root, locals, context.layouts, body)?;
-        body.instruction(&Instruction::Call(context.drop_index(ty.id())));
+        super::cleanup::action(function, &action, locals, context, body)?;
     }
     Ok(())
 }

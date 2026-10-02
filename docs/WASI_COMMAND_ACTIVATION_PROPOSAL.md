@@ -5,7 +5,8 @@ Status: **proposed, unaccepted**. This is a review input for
 manifest version, or support claim. It changes none of the accepted WIT sources, registry,
 schemas, or existing public M1–M3 behavior.
 The [bounded H1 contract draft](WASI_COMMAND_H1_CONTRACT_DRAFT.md) develops the recommended
-choice and its unresolved pinned-interface denial transport. Its one-run grant/manifest
+choice with selected pinned-interface host-trap transport A. That selection does not accept
+the remaining source, conversion or public runtime contract. Its one-run grant/manifest
 decision supersedes the value-commitment question below; durable secret-value attestation is
 separate optional scope.
 

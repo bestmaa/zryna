@@ -11,7 +11,7 @@ use zryna_diagnostics::Diagnostic;
 use super::type_indices::{Interface, Shape, TypeIndices};
 
 #[derive(Default)]
-pub(super) struct TypeBudget {
+pub(crate) struct TypeBudget {
     indices: TypeIndices,
     entries: usize,
 }
@@ -21,7 +21,7 @@ impl TypeBudget {
         self.indices.identities()
     }
 
-    pub(super) fn section(&mut self, bytes: &[u8], offset: u64) -> Result<(), Diagnostic> {
+    pub(crate) fn section(&mut self, bytes: &[u8], offset: u64) -> Result<(), Diagnostic> {
         let mut reader = BinaryReader::new(bytes, offset);
         let count = self.count(&mut reader)?;
         for _ in 0..count {
@@ -34,14 +34,14 @@ impl TypeBudget {
         Ok(())
     }
 
-    pub(super) fn alias(&mut self, alias: &ComponentAlias<'_>) -> Result<(), Diagnostic> {
+    pub(crate) fn alias(&mut self, alias: &ComponentAlias<'_>) -> Result<(), Diagnostic> {
         self.indices.charge(1)?;
         let shape = self.indices.alias(None, alias)?;
         self.indices.outer.push(shape);
         Ok(())
     }
 
-    pub(super) fn interface_use(&mut self, index: u32, import: bool) -> Result<(), Diagnostic> {
+    pub(crate) fn interface_use(&mut self, index: u32, import: bool) -> Result<(), Diagnostic> {
         self.indices.interface_use(index, import)
     }
 
@@ -185,7 +185,7 @@ impl TypeBudget {
     }
 }
 
-pub(super) fn external_name(name: ComponentExternName<'_>) -> Result<(), Diagnostic> {
+pub(crate) fn external_name(name: ComponentExternName<'_>) -> Result<(), Diagnostic> {
     if name.implements.is_some() || name.version_suffix.is_some() || name.external_id.is_some() {
         return Err(invalid("command names contain unreviewed identity options"));
     }

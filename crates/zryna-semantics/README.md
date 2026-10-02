@@ -249,3 +249,18 @@ internal single-return function with scalar literal, parameter, or active-payloa
 a general expression-level match implementation. No runtime, backend, driver, CLI, or public
 `data-ownership-v1` profile selects this module. See
 [M3 Copy aggregate semantics](../../docs/M3_COPY_AGGREGATE_SEMANTICS.md).
+
+## Command H1 compiler candidate
+
+`command_h1_v1::lower` accepts only the complete command source witness from `zryna-syntax`.
+It derives dual layouts, appends the reserved closed `EnvLookupV1` outcome when used, and lowers
+the authenticated environment operation through existing owned preparation and reverse cleanup.
+Owned helper calls and exhaustive Found/Missing matches retain mandatory command IR verification.
+The returned wrapper exposes the distinct command IR and shared ownership ABI declaration;
+it cannot supply an ordinary M3 verified program.
+
+The ordinary M3 entry still uses its existing verifier and resource limits. Command source retains
+the 4096 declaration ceiling, with one separate builtin slot. The command entry must be the sole
+exported zero-parameter `main(): bool`. These are compiler obligations in the
+[runtime contract candidate](../../docs/WASI_COMMAND_H1_CONTRACT_DRAFT.md),
+not WASI execution, host permission, backend activation, or public CLI support.

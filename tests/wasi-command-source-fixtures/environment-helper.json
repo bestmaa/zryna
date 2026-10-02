@@ -1,0 +1,420 @@
+{
+  "schema_version": 4,
+  "files": [
+    {
+      "id": 0,
+      "path": "src/main.zry",
+      "imports": [],
+      "type_syntax": [
+        {
+          "span": {
+            "file": 0,
+            "start": 19,
+            "end": 30
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "EnvLookupV1",
+              "span": {
+                "file": 0,
+                "start": 19,
+                "end": 30
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 93,
+            "end": 97
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "bool",
+              "span": {
+                "file": 0,
+                "start": 93,
+                "end": 97
+              }
+            }
+          }
+        }
+      ],
+      "data_declarations": [],
+      "functions": [
+        {
+          "span": {
+            "file": 0,
+            "start": 0,
+            "end": 68
+          },
+          "export_span": null,
+          "function_span": {
+            "file": 0,
+            "start": 0,
+            "end": 8
+          },
+          "name": {
+            "text": "lookup",
+            "span": {
+              "file": 0,
+              "start": 9,
+              "end": 15
+            }
+          },
+          "parameters": [],
+          "result_type": 0,
+          "body": {
+            "span": {
+              "file": 0,
+              "start": 31,
+              "end": 68
+            },
+            "root_block": 0,
+            "blocks": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 31,
+                  "end": 68
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 31,
+                  "end": 32
+                },
+                "statements": [
+                  0
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 67,
+                  "end": 68
+                }
+              }
+            ],
+            "statements": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 33,
+                  "end": 66
+                },
+                "kind": {
+                  "kind": "return",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 33,
+                    "end": 39
+                  },
+                  "value": 1,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 65,
+                    "end": 66
+                  }
+                }
+              }
+            ],
+            "expressions": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 58,
+                  "end": 64
+                },
+                "kind": {
+                  "kind": "string-literal",
+                  "spelling": "\"MODE\""
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 40,
+                  "end": 65
+                },
+                "kind": {
+                  "kind": "call",
+                  "callee": {
+                    "text": "environmentLookup",
+                    "span": {
+                      "file": 0,
+                      "start": 40,
+                      "end": 57
+                    }
+                  },
+                  "open_paren_span": {
+                    "file": 0,
+                    "start": 57,
+                    "end": 58
+                  },
+                  "arguments": [
+                    0
+                  ],
+                  "close_paren_span": {
+                    "file": 0,
+                    "start": 64,
+                    "end": 65
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 69,
+            "end": 216
+          },
+          "export_span": {
+            "file": 0,
+            "start": 69,
+            "end": 75
+          },
+          "function_span": {
+            "file": 0,
+            "start": 76,
+            "end": 84
+          },
+          "name": {
+            "text": "main",
+            "span": {
+              "file": 0,
+              "start": 85,
+              "end": 89
+            }
+          },
+          "parameters": [],
+          "result_type": 1,
+          "body": {
+            "span": {
+              "file": 0,
+              "start": 98,
+              "end": 216
+            },
+            "root_block": 0,
+            "blocks": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 98,
+                  "end": 216
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 98,
+                  "end": 99
+                },
+                "statements": [
+                  0
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 215,
+                  "end": 216
+                }
+              }
+            ],
+            "statements": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 102,
+                  "end": 214
+                },
+                "kind": {
+                  "kind": "return",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 102,
+                    "end": 108
+                  },
+                  "value": 3,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 213,
+                    "end": 214
+                  }
+                }
+              }
+            ],
+            "expressions": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 115,
+                  "end": 123
+                },
+                "kind": {
+                  "kind": "call",
+                  "callee": {
+                    "text": "lookup",
+                    "span": {
+                      "file": 0,
+                      "start": 115,
+                      "end": 121
+                    }
+                  },
+                  "open_paren_span": {
+                    "file": 0,
+                    "start": 121,
+                    "end": 122
+                  },
+                  "arguments": [],
+                  "close_paren_span": {
+                    "file": 0,
+                    "start": 122,
+                    "end": 123
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 163,
+                  "end": 167
+                },
+                "kind": {
+                  "kind": "bool-literal",
+                  "value": true
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 202,
+                  "end": 207
+                },
+                "kind": {
+                  "kind": "bool-literal",
+                  "value": false
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 109,
+                  "end": 213
+                },
+                "kind": {
+                  "kind": "match",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 109,
+                    "end": 114
+                  },
+                  "open_paren_span": {
+                    "file": 0,
+                    "start": 114,
+                    "end": 115
+                  },
+                  "scrutinee": 0,
+                  "close_paren_span": {
+                    "file": 0,
+                    "start": 212,
+                    "end": 213
+                  },
+                  "open_brace_span": {
+                    "file": 0,
+                    "start": 125,
+                    "end": 126
+                  },
+                  "arms": [
+                    {
+                      "span": {
+                        "file": 0,
+                        "start": 131,
+                        "end": 167
+                      },
+                      "type_name": {
+                        "text": "EnvLookupV1",
+                        "span": {
+                          "file": 0,
+                          "start": 132,
+                          "end": 143
+                        }
+                      },
+                      "dot_span": {
+                        "file": 0,
+                        "start": 143,
+                        "end": 144
+                      },
+                      "variant": {
+                        "text": "Found",
+                        "span": {
+                          "file": 0,
+                          "start": 144,
+                          "end": 149
+                        }
+                      },
+                      "binding": {
+                        "text": "value",
+                        "span": {
+                          "file": 0,
+                          "start": 153,
+                          "end": 158
+                        }
+                      },
+                      "arrow_span": {
+                        "file": 0,
+                        "start": 160,
+                        "end": 162
+                      },
+                      "value": 1
+                    },
+                    {
+                      "span": {
+                        "file": 0,
+                        "start": 173,
+                        "end": 207
+                      },
+                      "type_name": {
+                        "text": "EnvLookupV1",
+                        "span": {
+                          "file": 0,
+                          "start": 174,
+                          "end": 185
+                        }
+                      },
+                      "dot_span": {
+                        "file": 0,
+                        "start": 185,
+                        "end": 186
+                      },
+                      "variant": {
+                        "text": "Missing",
+                        "span": {
+                          "file": 0,
+                          "start": 186,
+                          "end": 193
+                        }
+                      },
+                      "binding": null,
+                      "arrow_span": {
+                        "file": 0,
+                        "start": 199,
+                        "end": 201
+                      },
+                      "value": 2
+                    }
+                  ],
+                  "close_brace_span": {
+                    "file": 0,
+                    "start": 211,
+                    "end": 212
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

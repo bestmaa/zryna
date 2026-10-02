@@ -1,0 +1,31 @@
+# Read-only observation; no state reset, allocation, memory access or host effect.
+local.get 0
+i32.const 0
+i32.eq
+if
+global.get 6
+return
+end
+local.get 0
+i32.const 1
+i32.eq
+if
+global.get 7
+return
+end
+local.get 0
+i32.const 2
+i32.eq
+if
+global.get 8
+return
+end
+local.get 0
+i32.const 3
+i32.eq
+if
+global.get 9
+return
+end
+i32.const -1
+end

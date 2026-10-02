@@ -2,6 +2,13 @@
 
 The only compiler component allowed to orchestrate frontend, verification, and backend phases.
 
+The separate [bounded WASI command candidate](../../docs/WASI_COMMAND_GETTING_STARTED.md)
+retains real semantic lowering, one exact root-approved private input, audited component and
+composition authorities through consuming execution and create-only publication. Its
+`command_request`, `command_h1_runtime` and `command_h1_workspace` modules own those boundaries;
+the distinct [manifest](../../docs/WASI_COMMAND_MANIFEST_V1.md) cannot recreate run authority.
+Complete platform acceptance and independent final review remain pending.
+
 The source-only package route owns retained no-follow filesystem capabilities for declared local
 roots and prepopulated exact-commit Git-cache entries. It passes bounded bytes to
 `zryna-package`, revalidates every retained input before publishing, and atomically writes only the

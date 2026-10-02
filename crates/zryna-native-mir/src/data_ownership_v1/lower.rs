@@ -9,6 +9,8 @@ use zryna_layout::{TypeCategory, VerifiedLayouts};
 use zryna_ownership_runtime_abi::{LogicalOperation, VerifiedOwnershipRuntimeAbi};
 
 use super::{VerifiedMirModule, raw, verify};
+mod operands;
+use operands::lower_operands;
 
 /// Lowers sealed target-neutral ownership IR and independently verifies every native claim.
 ///
@@ -271,6 +273,7 @@ fn lower_operation(
 ) -> Result<raw::Operation, Vec<zryna_diagnostics::Diagnostic>> {
     let kind = instruction.kind();
     let opcode = match kind {
+        K::EnvironmentLookup => return Err(lowering_error()),
         K::BoolLiteral => raw::Opcode::BoolLiteral,
         K::I32Literal => raw::Opcode::I32Literal,
         K::I32Add => raw::Opcode::I32Add,
@@ -320,7 +323,7 @@ fn lower_operation(
         .map(|operation| symbols.get(&operation).cloned().ok_or_else(lowering_error))
         .transpose()?;
     let backend = instruction.backend_instruction();
-    let (values, places, borrows, callee, call_arguments) = lower_operands(backend.clone());
+    let (values, places, borrows, callee, call_arguments) = lower_operands(backend.clone())?;
     let immediate = match backend {
         B::BoolLiteral(value) => raw::Immediate::Bool(value),
         B::I32Literal(value) => raw::Immediate::I32(value),
@@ -351,77 +354,6 @@ fn lower_operation(
             VerifiedBorrowAccess::Exclusive => raw::BorrowAccess::Exclusive,
         }),
     })
-}
-
-type LoweredOperands = (Vec<u32>, Vec<u32>, Vec<u32>, Option<(u32, u32)>, Vec<raw::CallArgument>);
-
-fn lower_operands(instruction: B<'_>) -> LoweredOperands {
-    let mut values = Vec::new();
-    let mut places = Vec::new();
-    let mut borrows = Vec::new();
-    let mut callee = None;
-    let mut call_arguments = Vec::new();
-    match instruction {
-        B::BoolLiteral(_) | B::I32Literal(_) | B::String(_) => {}
-        B::Binary(left, right) => values.extend([left.index(), right.index()]),
-        B::Unary(value) => values.push(value.index()),
-        B::DirectCall { callee: target, arguments } => {
-            callee = Some((target.module(), target.declaration()));
-            for argument in arguments {
-                match argument {
-                    VerifiedCallArgument::Value(value) => {
-                        values.push(value.index());
-                        call_arguments.push(raw::CallArgument::Value(value.index()));
-                    }
-                    VerifiedCallArgument::Borrow(borrow) => {
-                        borrows.push(borrow.index());
-                        call_arguments.push(raw::CallArgument::Borrow(borrow.index()));
-                    }
-                }
-            }
-        }
-        B::Construct { operands, .. } | B::VecConstruct(operands) => {
-            values.extend(
-                operands.into_iter().map(zryna_ir::data_ownership_v1::ValueIdentity::index),
-            );
-        }
-        B::Place(place) => places.push(place.index()),
-        B::PlaceValue { place, value } => {
-            places.push(place.index());
-            values.push(value.index());
-        }
-        B::IndexedPlace { place, index } => {
-            places.push(place.index());
-            values.push(index.index());
-        }
-        B::StringConcat { left, right } => places.extend([left.index(), right.index()]),
-        B::VecPush { vector, value } => {
-            places.push(vector.index());
-            values.push(value.index());
-        }
-        B::BeginBorrow(definition) => {
-            places.push(definition.place().index());
-            borrows.push(definition.id().index());
-        }
-        B::IndexedBorrow { definition, index } => {
-            places.push(definition.place().index());
-            values.push(index.index());
-            borrows.push(definition.id().index());
-        }
-        B::ProjectIndexedBorrow { parent, borrow, index } => {
-            values.push(index.index());
-            borrows.extend([parent.index(), borrow.index()]);
-        }
-        B::BindIndexedBorrow { parent, borrow } => {
-            borrows.extend([parent.index(), borrow.index()]);
-        }
-        B::BorrowValue { borrow, value } => {
-            borrows.push(borrow.index());
-            values.push(value.index());
-        }
-        B::BorrowUse(borrow) => borrows.push(borrow.index()),
-    }
-    (values, places, borrows, callee, call_arguments)
 }
 
 fn lower_terminator(

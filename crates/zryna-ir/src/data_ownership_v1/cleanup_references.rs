@@ -86,6 +86,7 @@ pub(super) fn instruction_cleanup(kind: &raw::InstructionKind) -> Option<raw::Cl
         | I::EnumConstruct { cleanup, .. }
         | I::FixedArrayConstruct { cleanup, .. } => *cleanup,
         I::DirectCall { cleanup, .. }
+        | I::EnvironmentLookup { cleanup, .. }
         | I::ClonePlace { cleanup, .. }
         | I::GenericClonePlace { cleanup, .. }
         | I::GenericCloneBorrow { cleanup, .. }

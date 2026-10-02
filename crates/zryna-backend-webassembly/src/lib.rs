@@ -13,6 +13,8 @@ use zryna_ir::control_flow_v1::{
 };
 use zryna_ir::{ExprKind, Type, VerifiedFunction, VerifiedProgram};
 mod artifact;
+mod bounded_bytes;
+use bounded_bytes::BoundedBytes;
 mod scalar_audit;
 pub use artifact::ValidatedWebAssemblyArtifact;
 use scalar_audit::{audit_profile, seal};
@@ -22,6 +24,12 @@ mod wit_world_audit;
 pub use wit_world_audit::{
     ResolvedWitWorld, WitSource, WitWorldAudit, audit_pinned_wit_worlds, pinned_wit_sources,
 };
+mod command_h1_v1;
+pub use command_h1_v1::{
+    Artifact as ValidatedCommandH1Artifact, InterfaceTrapSite as CommandInterfaceTrapSite,
+    TrapSite as CommandTrapSite,
+};
+mod command_world_types;
 mod component_command;
 pub use component_command::{ValidatedCommandComponent, emit_command_self_check};
 mod scalar_component;
@@ -528,104 +536,6 @@ fn encode_control_flow_edge(
     }
     body.i32_const(i32::try_from(target).map_err(|_| control_flow_index_error())?)?;
     body.local_set(locals.state)
-}
-
-struct BoundedBytes {
-    bytes: Vec<u8>,
-    limit: usize,
-}
-
-impl BoundedBytes {
-    const fn new(limit: usize) -> Self {
-        Self { bytes: Vec::new(), limit }
-    }
-
-    fn finish(self) -> Vec<u8> {
-        self.bytes
-    }
-
-    fn byte(&mut self, byte: u8) -> Result<(), Diagnostic> {
-        self.extend(&[byte])
-    }
-
-    fn instruction(&mut self, opcode: u8) -> Result<(), Diagnostic> {
-        self.byte(opcode)
-    }
-
-    fn extend(&mut self, bytes: &[u8]) -> Result<(), Diagnostic> {
-        let length = self
-            .bytes
-            .len()
-            .checked_add(bytes.len())
-            .ok_or_else(|| control_flow_budget_error(self.limit))?;
-        if length > self.limit {
-            return Err(control_flow_budget_error(self.limit));
-        }
-        self.bytes.try_reserve(bytes.len()).map_err(|_| control_flow_budget_error(self.limit))?;
-        self.bytes.extend_from_slice(bytes);
-        Ok(())
-    }
-
-    fn section(&mut self, id: u8, payload: &[u8]) -> Result<(), Diagnostic> {
-        self.byte(id)?;
-        self.u32(u32::try_from(payload.len()).map_err(|_| control_flow_index_error())?)?;
-        self.extend(payload)
-    }
-
-    fn name(&mut self, name: &str) -> Result<(), Diagnostic> {
-        self.u32(u32::try_from(name.len()).map_err(|_| control_flow_index_error())?)?;
-        self.extend(name.as_bytes())
-    }
-
-    fn local_get(&mut self, index: u32) -> Result<(), Diagnostic> {
-        self.instruction(0x20)?;
-        self.u32(index)
-    }
-
-    fn local_set(&mut self, index: u32) -> Result<(), Diagnostic> {
-        self.instruction(0x21)?;
-        self.u32(index)
-    }
-
-    fn branch(&mut self, opcode: u8, depth: u32) -> Result<(), Diagnostic> {
-        self.instruction(opcode)?;
-        self.u32(depth)
-    }
-
-    fn u32(&mut self, mut value: u32) -> Result<(), Diagnostic> {
-        loop {
-            let mut byte = (value & 0x7f) as u8;
-            value >>= 7;
-            if value != 0 {
-                byte |= 0x80;
-            }
-            self.byte(byte)?;
-            if value == 0 {
-                return Ok(());
-            }
-        }
-    }
-
-    fn i32_const(&mut self, value: i32) -> Result<(), Diagnostic> {
-        self.instruction(0x41)?;
-        self.i32(value)
-    }
-
-    fn i32(&mut self, mut value: i32) -> Result<(), Diagnostic> {
-        loop {
-            let mut byte = value.to_le_bytes()[0] & 0x7f;
-            value >>= 7;
-            let sign = byte & 0x40 != 0;
-            let done = (value == 0 && !sign) || (value == -1 && sign);
-            if !done {
-                byte |= 0x80;
-            }
-            self.byte(byte)?;
-            if done {
-                return Ok(());
-            }
-        }
-    }
 }
 
 fn verify_signature(function: VerifiedFunction<'_>) -> Result<(), Diagnostic> {

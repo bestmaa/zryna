@@ -7,6 +7,11 @@ CLI selector or ABI, and does not revise the pinned
 be accepted before implementation. The earlier [readiness assessment](WASI_COMMAND_ACTIVATION_PROPOSAL.md)
 records the alternatives.
 
+The selected denial transport is **A: retain the pinned WASI host trap**. This resolves only
+denial transport. The source gate, F1 allocation/conversion, grant capture, run mapping and
+manifest below remain one complete review candidate; selection of A does not accept them or
+establish execution evidence. The matching narrow #357/#358 reconciliation already exists.
+
 ## Fixed inputs and proposed compatibility boundary
 
 The command world is exactly `zryna:capability-profiles/command@0.1.0`; its WASI interfaces are
@@ -91,7 +96,7 @@ success/error, never a raw `bool` or `i32`. Process exit, stdout, and the privat
 expected `i32` are not result channels. An unexpected scalar carrier, unhandled trap, or denied
 host import is a separate failed execution observation, not `Missing` or an ordinary `err`.
 
-**Denial transport gap.** The pinned `get-environment` returns only a list and cannot return a
+**Selected denial transport.** The pinned `get-environment` returns only a list and cannot return a
 typed permission error. If a grant is revoked at a mediated call, the host must perform no
 read, record the denial, trap, invalidate the instance, and report a command-boundary denial.
 Returning an empty list would falsely turn denial into `Missing`. The call cannot return a
@@ -99,20 +104,14 @@ typed WIT `err` after that trap either: `run` produced no result. Record `runRet
 `execution: host-denial`, and the exact denied interface/operation in a separate host-origin
 manifest observation. Never report a successful `run: err(())` for that event.
 
-There are two coherent decisions. **A (proposed for the smallest pinned-world slice):**
-retain `Found/Missing` in source and make revocation a fatal instance denial with no `run`
-return. This needs an explicit, reviewed H1-specific reconciliation of
-[#358's provisional E3 permission-denied outcome](../spec/libraries/MINIMAL_CORE_HOST_V0.md)
-and #357's revocation rule. The proposed reconciliation is: #357's "fail at the host boundary
-without performing the effect" is met by a no-effect trap; #358's permission-denied remains a
-distinct host-origin execution outcome in this pinned WIT slice, not a source enum case or a
-returned WIT `err`. This must be accepted as a narrow F2 transport rule, not silently inferred
-from the current contracts. **B:** add a reviewed
-error-bearing host interface so a source-level `Denied` case can be transported normally.
-B needs a new WIT package/world identity, registry/request revisions, component audit, and
-compatibility decision; it cannot be grafted onto `wasi:cli/environment@0.2.12` or the
-existing world. If reviewers require typed source denial, B is a prerequisite and A cannot
-activate #400. Neither choice is accepted by this draft.
+The selected A rule retains `Found/Missing` in source and makes revocation a fatal instance
+denial with no `run` return. It uses the narrow H1-specific
+[#358 E3 transport](../spec/libraries/MINIMAL_CORE_HOST_V0.md) and #357 revocation
+reconciliation: "fail at the host boundary without performing the effect" is a no-effect
+trap; permission-denied is a distinct host-origin execution outcome, never a source enum
+case or returned WIT `err`. This changes no pinned import, registry ceiling, or other host
+operation. A future typed source denial would require a separately reviewed error-bearing
+WIT identity and compatibility contract; it is outside this candidate.
 
 ## Explicit request, grant, and host behavior
 
@@ -133,9 +132,19 @@ snapshot as run authority. It never reopens or rereads a mutable pathname to sel
 A later path change cannot change this run; replacement of the sealed snapshot rejects. It
 does not source values from process environment, argv, cwd, or inherited descriptors. The
 caller retains ownership of the file: the driver neither modifies nor deletes it. The driver
-keeps no temporary disk copy, closes its retained handle after capture, and discards the
-in-memory value with the sealed policy after the run and manifest commit. No claim is made that
+keeps no temporary disk copy. It retains the original file and directory handles for
+same-handle privacy, identity and snapshot revalidation through the run and manifest commit,
+then closes them and discards the in-memory value with the sealed policy. No claim is made that
 ordinary memory disposal prevents operating-system swap or same-user process inspection.
+
+Unix capture verifies the caller owns a regular single-link file with no group/other
+permissions, and opens every ancestor and the file without following links. Windows capture
+uses retained no-reparse ancestor/file identities and denies write/delete sharing while
+reading. A narrowly scoped Windows filesystem authority must inspect the owner and DACL
+through that exact retained file handle and reject a file whose confidentiality cannot be
+proved; inherited privacy or a caller assertion is insufficient. It neither repairs ACLs
+nor grants the guest any filesystem authority. Identity, privacy and bounded immutable
+capture are required on both systems before request admission.
 
 The proposed request JSON has exactly one world, one environment grant and one literal key;
 the value is explicitly present or absent. For a present value:
@@ -163,6 +172,13 @@ same exact command world and host policy: no approved host operation, no request
 capability/interface/key, no value, and zero host quotas. The fixed fuel/deadline/memory
 execution envelope still applies. No empty file, implicit host context, or default environment
 entry substitutes for that request. A source that requires H1 cannot use it.
+
+For the first gate, a pure source with a nonempty H1 grant also rejects before engine/store
+creation: that grant has no matching verified operation. Thus the only admitted pairs are
+pure/empty and one exact H1 requirement/one matching grant. The supplied grant record is the
+root's explicit request/approval and current host input; the source requirement is derived
+independently and cannot be inferred from the record. Multiple approvals or host maps do not
+exist in this first one-node route.
 
 The compiler seals the source literal and exact interface requirement independently of runtime
 grant data. Before creating a store, the driver verifies the root's explicit approval,
@@ -223,6 +239,15 @@ memory, with no growth, additional memory, shared memory, or memory64.
 The command verifier and independent backend audit must reject any language allocation
 or pointer-producing instruction able to enter the transfer interval.
 
+The language path cannot produce a pointer into either canonical storage or allocator
+metadata. Static state contains only bounded compiler-owned constants, result scratch and
+the private transfer ledger; its exact offsets and helper instruction templates are sealed
+and independently audited before runtime. At most 16 nonempty ledger entries may be live;
+the seventeenth rejects before writing. This count is a command-specific bound, not an
+increase to any #167 quota. Resizing counts both old and prospective new allocations until
+copy and release commit. Retained padding and holes count against the arena cursor until
+all live entries drain; a release cannot prematurely recover untracked arena capacity.
+
 Only the command component's audited internal core exposes this memory and a canonical
 `realloc(oldPointer:i32, oldByteLength:i32, alignment:i32, newByteLength:i32) -> i32`
 to the component's selected canonical options. Neither is a public source or M3 scalar
@@ -254,9 +279,10 @@ exceeding either traps before writing. The 4,096-byte bound accommodates the pin
 UTF-8 Canonical ABI's at-most-four-times temporary string allocation for this 1,024-byte
 value. Only alignment 1 for string bytes and alignment 4 for list/tuple records is needed;
 the independent component audit rejects other result shapes. The command-only language
-allocation path must return a checked status to the bridge before emitting an E1 trap:
-the present M3 helper traps immediately, so it cannot by itself release outstanding
-transfer buffers. The bridge releases each transfer entry exactly once before a `Found`
+allocation path must return a checked status to the bridge before emitting an E1 trap.
+The current M3 helper already reports allocation failure through checked status, but it
+has no command transfer ledger or release path. The command bridge must drain outstanding
+transfer buffers before turning that status into E1. It releases each transfer entry exactly once before a `Found`
 value becomes visible. After a failed language allocation status, it releases those
 entries before emitting the existing E1 trap and publishes no `Found`. A trap during
 canonical allocation, lowering, lifting, or release is fatal:
@@ -330,6 +356,15 @@ identity for an interface violation. An unrelated raw Wasm trap or host/process 
 is `host-process-failure`, with `trapIdentity` absent and no arbitrary exception text.
 All three categories have no denial fields and no WIT run return.
 
+The candidate fixed interface identity is `zryna.command.interface-violation.v1`.
+It applies only to an exact `unreachable` location retained from the complete independent
+storage-core audit, translated into the authenticated storage-first component. Runtime
+classification also checks the originating compiled component and storage core. An
+exception string, trap opcode alone or unauthenticated byte offset cannot assign it.
+This identity includes fatal canonical allocation, live/count/byte-budget and transfer
+contract guard failures. They consume the store, publish no run return or denial fields,
+and do not become a language E1 identity. No guest cleanup retry follows such a failure.
+
 For a compact complete WIT closure identity, the candidate `witClosureDigest` is SHA-256 over
 all 34 audited files sorted by logical path. For each file, hash an unsigned 64-bit
 little-endian path-byte length, its UTF-8 path bytes, an unsigned 64-bit little-endian
@@ -338,6 +373,42 @@ the retained authenticated audit, not the manifest digest, is execution authorit
 manifest's source, program, composition and artifact identities are likewise observations
 of retained sealed authorities, not permission reconstructed from JSON.
 
+The candidate program fingerprint is a stable content binding, not a serialization of
+raw IR. Compute SHA-256 over the following closed byte sequence, in this order:
+
+1. ASCII `zryna.command-program-binding.v1` followed by one NUL byte.
+2. The UTF-8 profile `command-h1-v1`, prefixed by its unsigned 32-bit little-endian
+   byte length.
+3. Six raw 32-byte digests: source UTF-8 SHA-256, sealed language core SHA-256,
+   sealed storage core SHA-256, verified Linear32 layout fingerprint, verified Linux
+   x86-64 layout fingerprint, and the authenticated command WIT binding below.
+4. Seven unsigned 32-bit little-endian integers: `256`, `0`, `65536`, `65536`,
+   `15728640`, `15728640`, `16777216`. These encode memory pages and the static,
+   L and C half-open bounds.
+5. One optional-key tag: `0` for no environment requirement; otherwise `1`, followed
+   by the unsigned 32-bit little-endian byte length and exact verified key UTF-8 bytes.
+
+The command WIT binding is SHA-256 over ASCII `zryna.command-wit-binding.v1` followed
+by NUL; the length-prefixed world identity; the 32-bit little-endian file count; then,
+in logical-path order, each length-prefixed path and raw 32-byte SHA-256 of its exact
+pinned source bytes. Finish with the explicit import, resolved import and export name
+lists, in that order. Each list has a 32-bit little-endian count and each name has a
+32-bit little-endian UTF-8 byte length. Use the canonical order from the retained
+authenticated world audit. This binding is distinct from `witClosureDigest` above.
+
+The source, core, component and WIT observations remain separate manifest fields.
+The program binding excludes request values, request paths, unkeyed value hashes and
+process-local issuer IDs. Equal content from fresh verification may have the same
+fingerprint, while execution still requires the retained opaque program issuer,
+source-map binding, both layout witnesses and paired ownership runtime ABI. Neither
+fingerprint can reconstruct those authorities from a manifest.
+
+Driver execution must obtain its opaque command semantic result through authenticated
+protocol-v4 source admission and real semantic lowering. The independent IR verifier
+checks structural, type, ownership, entry, effect and match obligations; it is not a
+general proof that arbitrary supplied IR implements every source expression. The content
+fingerprint likewise makes no source semantic attestation claim.
+
 This durable JSON is an **execution record** of the grant set, limits, result and denial.
 It neither contains nor proves exact secret value bytes after the private snapshot is
 discarded, and it is not a third-party attestation or replay receipt. Exact-value
@@ -345,6 +416,37 @@ commitments, caller-supplied verification keys and HMAC/key storage are separate
 scope, not a #400 baseline gate. A reader may verify documented identities against the
 matching compiler artifacts and pins, but must not treat an editable manifest alone as an
 authenticated proof of the value that was supplied.
+
+## Complete implementation ownership and review boundary
+
+The syntax provider continues to emit ordinary authenticated v4 call/type/match records.
+Only the new semantic gate may recognize the reserved intrinsic/type. The IR authority must
+seal a distinct command program with an exact environment operation, literal source span,
+owned result layout and cleanup proof. It must independently reject missing, duplicated,
+forged or non-source-faithful operations and wrong result arms; an M3 program or externally
+supplied effect list is insufficient. Existing M3 constructors, verifier acceptance, runtime
+ABI identities, allocator capacity and scalar manifests remain unchanged.
+
+The backend accepts only that command authority. It seals a command-only language allocator
+with a checked allocation status, the transfer ledger and exact environment receiving bridge,
+then audits the complete emitted core instructions and component topology independently of
+the producer. The full command remains capped at the existing 1 MiB component envelope;
+exceeding it rejects rather than widening the private self-check limit. Source code reaches
+the literal-key wrapper only, never a raw memory/realloc symbol or a general host import.
+
+The driver owns architecture-first request validation, source/provider capture, independent
+one-node composition, immutable grant capture, pre-store revalidation, exact host callbacks,
+fresh store/deadline ownership and create-only publication. The CLI parses the explicit route
+and renders the sealed run observation. A build-only command artifact cannot carry execution
+authority and is outside this initial run-only CLI. Every unsupported profile/target/grant
+combination rejects before backend dispatch or runtime construction.
+
+Before implementation acceptance, review this document together with the existing #357/#358
+H1 reconciliation and #167 first-extra-byte test. Acceptance would authorize only this bounded
+one-file H1 command and its necessary pure/negative controls. It does not authorize H2-H5,
+servers, package dependencies, native FFI, public String/layout exports or general Result/Option.
+No runtime/public support state changes until the full acceptance matrix below is executed
+and the required exact-revision Linux/Windows gates and code review are complete.
 
 ## Fixed design and later execution fixtures
 

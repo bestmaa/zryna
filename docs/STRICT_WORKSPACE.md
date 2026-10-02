@@ -122,6 +122,12 @@ the architecture validator. The ownership-runtime ABI authority remains in the c
 because it consumes sealed compiler-owned layouts; the dependency-free scalar `zryna-abi`
 foundation remains unchanged.
 
+The distinct local H1 command verifier also consumes the syntax foundation's opaque,
+source-bound command requirement through a registered `zryna-ir -> zryna-syntax` edge.
+That source admission grants no effect or runtime capability. Command IR verification
+remains a separate compiler obligation; provider-specific representations and frontend
+dependencies remain forbidden at that boundary.
+
 ## Source-size and navigation policy
 
 `pnpm structure:check` runs the read-only `scripts/check-repository-structure.mjs` checker before

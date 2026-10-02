@@ -2,11 +2,14 @@
 
 #![forbid(unsafe_code)]
 
+pub mod command_h1_v1;
 pub mod control_flow_v1;
 pub mod data_ownership_v1;
 pub mod definition_queries;
 
-use std::{cmp::Ordering, collections::BTreeMap};
+use std::collections::BTreeMap;
+mod diagnostic_order;
+use diagnostic_order::compare_diagnostics;
 
 use zryna_abi::{AbiViolationKind, raw as raw_abi, verify_v1};
 use zryna_diagnostics::{Diagnostic, Severity};
@@ -472,34 +475,6 @@ impl SemanticErrors {
     fn finish(mut self) -> Vec<Diagnostic> {
         self.diagnostics.sort_by(compare_diagnostics);
         self.diagnostics
-    }
-}
-
-fn compare_diagnostics(left: &Diagnostic, right: &Diagnostic) -> Ordering {
-    match (left.primary_span(), right.primary_span()) {
-        (Some(left_span), Some(right_span)) => (
-            left_span.file().index(),
-            left_span.start(),
-            left_span.end(),
-            left.code(),
-            left.message(),
-            left.guidance(),
-        )
-            .cmp(&(
-                right_span.file().index(),
-                right_span.start(),
-                right_span.end(),
-                right.code(),
-                right.message(),
-                right.guidance(),
-            )),
-        (Some(_), None) => Ordering::Less,
-        (None, Some(_)) => Ordering::Greater,
-        (None, None) => (left.code(), left.message(), left.guidance()).cmp(&(
-            right.code(),
-            right.message(),
-            right.guidance(),
-        )),
     }
 }
 

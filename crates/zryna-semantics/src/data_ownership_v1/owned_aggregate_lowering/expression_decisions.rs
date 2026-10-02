@@ -46,6 +46,7 @@ pub(super) enum ExpressionKind<'f> {
     Bool(bool),
     I32(i32),
     String(&'f [u8]),
+    Environment(String),
     Reference(&'f syntax::RawIdentifierSyntax),
     Projection(u32),
     InferredClone(u32),
@@ -120,6 +121,24 @@ impl<'f> ExpressionDecisions<'_, 'f, '_> {
         let at = span(self.input.sources(), expression.span);
         if scalar && let Some(decision) = self.scalar_decision(&expression.kind, at) {
             return Some(decision);
+        }
+        if let Some(key) =
+            super::super::command_support::environment_key(self.input, self.function, id)
+        {
+            let ty = super::super::command_support::builtin_type(
+                self.input,
+                self.declarations,
+                self.node_types,
+            )?;
+            if expected.is_some_and(|expected| expected != ty) {
+                self.unsupported_prepared_expression(at);
+                return None;
+            }
+            return Some(ExpressionDecision {
+                at,
+                ty: Some(ty),
+                kind: ExpressionKind::Environment(key),
+            });
         }
         let mut ty = expected;
         let kind = match &expression.kind {

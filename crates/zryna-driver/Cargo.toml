@@ -14,7 +14,7 @@ cap-fs-ext.workspace = true
 cap-primitives.workspace = true
 cap-std.workspace = true
 libc.workspace = true
-nix.workspace = true
+nix = { workspace = true, features = ["user"] }
 object.workspace = true
 process-wrap.workspace = true
 same-file.workspace = true
@@ -35,6 +35,7 @@ zryna-native-mir = { path = "../zryna-native-mir" }
 zryna-package = { path = "../zryna-package" }
 zryna-semantics = { path = "../zryna-semantics" }
 zryna-source = { path = "../zryna-source" }
+zryna-syntax = { path = "../zryna-syntax" }
 
 [target.'cfg(windows)'.dependencies]
 zryna-windows-filesystem = { path = "../zryna-windows-filesystem" }
@@ -42,7 +43,6 @@ zryna-windows-filesystem = { path = "../zryna-windows-filesystem" }
 [dev-dependencies]
 wasm-encoder.workspace = true
 wasmparser.workspace = true
-zryna-syntax = { path = "../zryna-syntax" }
 
 [lints]
 workspace = true

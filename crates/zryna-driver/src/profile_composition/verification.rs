@@ -19,10 +19,11 @@ pub(super) fn verify(
 ) -> Result<ValidatedComposition, Vec<Diagnostic>> {
     let graph = graph::validate(input)?;
     let authorities = authorities.binding(&graph.ids())?;
+    authorities.validate_command_requirements(&graph.input)?;
     let policy = Policy::load()?;
     select(&graph, &policy, &authorities)?;
     profiles(&graph, &authorities)?;
-    let (summaries, witnesses) = derive(&graph)?;
+    let (summaries, witnesses) = derive(&graph, &authorities)?;
     restrictions(&graph, &policy, &summaries, &witnesses)?;
     if claim.binding != graph.binding(&authorities)?
         || claim.summaries != summaries
@@ -117,7 +118,10 @@ fn profiles(graph: &Graph, authorities: &super::authority::Binding) -> Result<()
 type Derived = (BTreeMap<String, Summary>, BTreeMap<Requirement, Vec<String>>);
 
 // Independently traverse each closure. No producer summary, quota, or claimed path enters this walk.
-fn derive(graph: &Graph) -> Result<Derived, Vec<Diagnostic>> {
+fn derive(
+    graph: &Graph,
+    authorities: &super::authority::Binding,
+) -> Result<Derived, Vec<Diagnostic>> {
     let mut summaries = BTreeMap::new();
     let mut witnesses: BTreeMap<Requirement, Vec<String>> = BTreeMap::new();
     let root_paths = graph.paths(&graph.input.root);
@@ -127,7 +131,8 @@ fn derive(graph: &Graph) -> Result<Derived, Vec<Diagnostic>> {
             graph.input.instances.iter().filter(|child| paths.contains_key(&child.id)).collect();
         let requirements =
             closure.iter().flat_map(|child| child.requirements.iter().cloned()).collect();
-        let quota = quota::aggregate(closure.into_iter())?;
+        let mut quota = quota::aggregate(closure.iter().copied())?;
+        authorities.command_quota(closure.iter().map(|node| node.id.as_str()), &mut quota)?;
         summaries.insert(node.id.clone(), Summary { requirements, quota });
         for requirement in &node.requirements {
             let path = &root_paths[&node.id];

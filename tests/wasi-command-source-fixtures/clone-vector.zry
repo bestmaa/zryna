@@ -1,0 +1,5 @@
+export function main(): bool {
+  const source: Vec<String> = Vec<String>(["one", "two",]);
+  const copied: Vec<String> = clone(source);
+  return true;
+}

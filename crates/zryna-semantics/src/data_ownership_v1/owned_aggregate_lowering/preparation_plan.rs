@@ -65,6 +65,10 @@ pub(super) enum Leaf<'f> {
         bytes: &'f [u8],
         cleanup: raw::CleanupPlanId,
     },
+    Environment {
+        key: String,
+        cleanup: raw::CleanupPlanId,
+    },
     Reference(ReferenceDecision),
     Projection {
         source: OwnedAggregatePlace,

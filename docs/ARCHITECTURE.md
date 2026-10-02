@@ -135,6 +135,12 @@ The permanent direction is `frontend -> syntax -> semantics -> IR`. `zryna-seman
 component and cannot depend on `zryna-frontend`; backends cannot depend on either provider layer.
 The architecture engine has a negative graph fixture for both forbidden edges.
 
+The local H1 command candidate additionally allows `zryna-ir -> zryna-syntax` solely to
+authenticate the distinct opaque command source requirement. This is a compiler-to-foundation
+edge; it introduces no frontend dependency or provider semantics. Syntax authenticates source
+occurrences, while the mandatory command IR verifier must independently prove the exact effect,
+owned layout and cleanup. Existing M3 IR acceptance and public command support remain unchanged.
+
 ## Source and diagnostic authority
 
 `zryna-source` is below diagnostics and every provider. One immutable bounded `SourceMap` owns

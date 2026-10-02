@@ -10,15 +10,15 @@ pub(in super::super) fn clone_helper(
     let mut body = Function::new([(5, ValType::I32)]);
     if let Some(kind) = super::super::observation::value_kind(ty.category()) {
         super::super::observation::probe(if kind < 4 { 2 } else { 4 }, context, &mut body);
-        super::super::failure::helper_check(&mut body);
+        super::super::failure::helper_check(context, &mut body);
     }
     match ty.category() {
         TypeCategory::Bool | TypeCategory::I32 => {
             body.instruction(&Instruction::LocalGet(0));
         }
-        TypeCategory::String => clone_bytes(4, &mut body),
+        TypeCategory::String => clone_bytes(4, context, &mut body),
         TypeCategory::Struct => {
-            clone_fixed(ty, &mut body)?;
+            clone_fixed(ty, context, &mut body)?;
             for (index, field) in ty.fields().iter().enumerate() {
                 clone_child(
                     field.ty(),
@@ -35,7 +35,7 @@ pub(in super::super) fn clone_helper(
             body.instruction(&Instruction::LocalGet(2));
         }
         TypeCategory::FixedArray => {
-            clone_fixed(ty, &mut body)?;
+            clone_fixed(ty, context, &mut body)?;
             let child_id = ty.referenced_type().ok_or_else(index_error)?;
             let child = context.layouts.type_by_id(child_id).ok_or_else(index_error)?;
             if child.drop_kind() != 0 {
@@ -48,7 +48,7 @@ pub(in super::super) fn clone_helper(
             body.instruction(&Instruction::LocalGet(2));
         }
         TypeCategory::Enum => {
-            clone_fixed(ty, &mut body)?;
+            clone_fixed(ty, context, &mut body)?;
             let payload_offset = ty.enum_payload_layout().ok_or_else(index_error)?.0;
             for variant in ty.variants() {
                 let Some(payload) = variant.payload() else { continue };
@@ -65,14 +65,14 @@ pub(in super::super) fn clone_helper(
             body.instruction(&Instruction::LocalGet(2));
         }
         TypeCategory::Vec => clone_vec(ty, context, &mut body)?,
-        TypeCategory::Shared => clone_count(0, &mut body),
-        TypeCategory::Weak => clone_count(4, &mut body),
+        TypeCategory::Shared => clone_count(0, context, &mut body),
+        TypeCategory::Weak => clone_count(4, context, &mut body),
     }
     body.instruction(&Instruction::End);
     Ok(body)
 }
 
-fn clone_bytes(length_offset: u64, body: &mut Function) {
+fn clone_bytes(length_offset: u64, context: &Context<'_>, body: &mut Function) {
     body.instruction(&Instruction::LocalGet(0));
     body.instruction(&Instruction::I32Const(i32::try_from(length_offset).unwrap_or(4)));
     body.instruction(&Instruction::I32Add);
@@ -82,7 +82,7 @@ fn clone_bytes(length_offset: u64, body: &mut Function) {
     body.instruction(&Instruction::I32Const(12));
     body.instruction(&Instruction::I32Add);
     body.instruction(&Instruction::Call(0));
-    super::super::failure::helper_check(body);
+    super::super::failure::helper_check(context, body);
     body.instruction(&Instruction::LocalTee(2));
     body.instruction(&Instruction::LocalGet(0));
     body.instruction(&Instruction::LocalGet(1));
@@ -99,13 +99,15 @@ fn clone_bytes(length_offset: u64, body: &mut Function) {
 
 fn clone_fixed(
     ty: VerifiedType<'_>,
+    context: &Context<'_>,
     body: &mut Function,
 ) -> Result<(), zryna_diagnostics::Diagnostic> {
     body.instruction(&Instruction::I32Const(
         i32::try_from(ty.size().max(1)).map_err(|_| index_error())?,
     ));
     body.instruction(&Instruction::Call(0));
-    super::super::failure::helper_check(body);
+    super::super::failure::helper_check(context, body);
+    super::super::clone_frontier::acquired(context, body);
     body.instruction(&Instruction::LocalTee(2));
     body.instruction(&Instruction::LocalGet(0));
     body.instruction(&Instruction::I32Const(i32::try_from(ty.size()).map_err(|_| index_error())?));
@@ -128,13 +130,16 @@ fn clone_child(
     address(2, offset, body)?;
     address(0, offset, body)?;
     load_value(ty, body);
-    body.instruction(&Instruction::Call(Context::clone_index(child)));
+    body.instruction(&Instruction::Call(context.clone_index(child)));
     body.instruction(&Instruction::GlobalGet(1));
     body.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
+    super::super::clone_frontier::failed(context, body);
     body.instruction(&Instruction::LocalGet(2));
     body.instruction(&Instruction::LocalSet(0));
     if sequence {
         super::super::observation::record(0x1000_0002, context, body);
+    } else if context.clone_frontier {
+        super::super::observation::record(0x1000_0003, context, body);
     }
     for (ty, offset) in prefix.iter().rev() {
         drop_child(*ty, *offset, context, body)?;
@@ -146,13 +151,14 @@ fn clone_child(
     Ok(())
 }
 
-fn clone_count(offset: u64, body: &mut Function) {
+fn clone_count(offset: u64, context: &Context<'_>, body: &mut Function) {
     address(0, offset, body).expect("constant offset");
     body.instruction(&Instruction::I32Load(WORD));
     body.instruction(&Instruction::LocalTee(1));
     body.instruction(&Instruction::I32Const(-1));
     body.instruction(&Instruction::I32Eq);
     body.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
+    super::super::clone_frontier::failed(context, body);
     super::super::failure::helper_trap(4, body);
     body.instruction(&Instruction::End);
     address(0, offset, body).expect("constant offset");
@@ -182,7 +188,8 @@ fn clone_vec(
     body.instruction(&Instruction::I32Const(12));
     body.instruction(&Instruction::I32Add);
     body.instruction(&Instruction::Call(0));
-    super::super::failure::helper_check(body);
+    super::super::failure::helper_check(context, body);
+    super::super::clone_frontier::acquired(context, body);
     body.instruction(&Instruction::LocalTee(2));
     body.instruction(&Instruction::LocalGet(0));
     body.instruction(&Instruction::LocalGet(1));
@@ -208,7 +215,7 @@ fn clone_vec(
         indexed(2, 3, stride, body);
         indexed(0, 3, stride, body);
         load_value(child, body);
-        body.instruction(&Instruction::Call(Context::clone_index(child_id)));
+        body.instruction(&Instruction::Call(context.clone_index(child_id)));
         cleanup_sequence(child_id, child, stride, true, context, body);
         store_value(child, body);
         body.instruction(&Instruction::LocalGet(3));
@@ -242,7 +249,7 @@ fn clone_elements(
     raw_indexed(2, 3, stride, body);
     raw_indexed(0, 3, stride, body);
     load_value(child, body);
-    body.instruction(&Instruction::Call(Context::clone_index(child_id)));
+    body.instruction(&Instruction::Call(context.clone_index(child_id)));
     cleanup_sequence(child_id, child, stride, false, context, body);
     store_value(child, body);
     body.instruction(&Instruction::LocalGet(3));
@@ -264,6 +271,7 @@ fn cleanup_sequence(
 ) {
     body.instruction(&Instruction::GlobalGet(1));
     body.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
+    super::super::clone_frontier::failed(context, body);
     super::super::observation::record(0x1000_0002, context, body);
     body.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
     body.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));

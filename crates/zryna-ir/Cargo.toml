@@ -12,6 +12,7 @@ zryna-abi.workspace = true
 zryna-diagnostics = { path = "../zryna-diagnostics" }
 zryna-layout = { path = "../zryna-layout" }
 zryna-source = { path = "../zryna-source" }
+zryna-syntax = { path = "../zryna-syntax" }
 
 [lints]
 workspace = true

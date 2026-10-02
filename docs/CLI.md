@@ -1,5 +1,16 @@
 # Zryna CLI reference
 
+## Bounded command review candidate
+
+The source-checkout route `run ENTRY --target wasi-command --profile command-h1-v1
+--export main --node PINNED [--grant-file ABSOLUTE_FILE]` executes the separately verified
+command profile. It accepts no scalar arguments, project root, installed package invocation or
+build-only selection. The [command walkthrough](WASI_COMMAND_GETTING_STARTED.md) covers private
+input creation, the initial grant table, typed WIT results, limits and create-only bundles;
+the [manifest reference](WASI_COMMAND_MANIFEST_V1.md) specifies its distinct execution record.
+This candidate still requires complete acceptance and final review before public support is
+declared. Existing M1–M3 profiles retain their contracts below.
+
 ## Public M3 profile
 
 Exact `--profile data-ownership-v1` on `build` and `run` selects the authenticated protocol-v4
@@ -29,6 +40,7 @@ zryna doctor             [--root <PATH>] [--json]
 zryna package resolve <PACKAGE> --source-root <PATH> --mode <frozen|update> [--git-cache <PATH>] [--json]
 zryna build <ENTRYPOINT> --target <javascript|webassembly|native|component|all> --node <PATH> [--profile <control-flow-v1|data-ownership-v1|browser-component-v1>] [--root <PATH>] [--name <STEM>] [--json]
 zryna run   <ENTRYPOINT> --target <javascript|webassembly|native|all> --export <NAME> --node <PATH> [--profile control-flow-v1] [--arg=<i32|bool>:<VALUE> ...] [--root <PATH>] [--name <STEM>] [--json]
+zryna run   <ENTRYPOINT> --target wasi-command --profile command-h1-v1 --export main --node <PATH> [--grant-file <ABSOLUTE_PATH>] [--root <PATH>] [--name <STEM>] [--json]
 ```
 
 `architecture check` and `doctor` run the same mandatory fail-closed workspace gate. Every
@@ -207,7 +219,13 @@ consumers must use its structured fields rather than parse text output.
 | `6` | cleanup could not be confirmed |
 
 Stable diagnostic codes are the precise failure identity. Clap parse errors retain status `2`.
-No failure status advertises a partial bundle.
+No failure status advertises a partial bundle. The command candidate commits a complete execution
+record for a declared WIT `err`, denied callback or trap when publication succeeds: these use
+status `5`, or `6` if teardown is unconfirmed. Its version-1 JSON response uses `execution`
+instead of the ordinary target `results` array, plus exact `profile` and `target` selectors.
+Command flags and invocation-mode validation use status `2`. Private grant-file capture,
+decoding and source/grant admission belong to source preparation and use status `3`, including
+an omitted lookup grant, a wrong environment key or a grant supplied to pure source.
 
 ## Runtime and process limits
 
@@ -266,6 +284,8 @@ M1 differential suite requires those observations and the manifest to agree. Pac
 non-relative/package imports, watch mode, incremental or remote builds, general browser APIs, WASI,
 Windows or macOS native execution, static native executables, overwrite behavior, and
 runtime-enforced comparison inside an ordinary end-user command remain outside the current slice.
+The separate bounded command candidate described above is under review and does not enlarge
+those scalar target contracts.
 The repository-owned [M2 conformance gate](M2_CONFORMANCE.md) performs fixed-oracle three-target
 comparison. M2 closure evidence includes authenticated compiler documentation plus website and live
 provenance recorded by Issue #57; those publication checks do not change command semantics.

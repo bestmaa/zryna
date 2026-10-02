@@ -1,0 +1,6 @@
+function keep(value: bool,): bool { return value; }
+export function main(): bool {
+  let active: bool = true;
+  while (active) { active = false; }
+  if (active) { return false; } else { return keep(true,); }
+}

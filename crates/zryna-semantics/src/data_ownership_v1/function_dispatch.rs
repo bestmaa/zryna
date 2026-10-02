@@ -1,4 +1,6 @@
 use zryna_syntax::v4::RawTypeSyntaxKind;
+mod source_features;
+use source_features::{has_root_borrow_syntax, uses_owned_function};
 
 use super::copy_enum_match::lower_enum_match_function;
 use super::copy_function_lowering::lower_copy_function;
@@ -83,12 +85,7 @@ pub(super) fn lower_function<'a>(
     let file = &input.syntax().files()[module];
     let result =
         semantic_type(file, function.result_type, module, declarations, graph, node_types, errors)?;
-    if function
-        .body
-        .statements
-        .iter()
-        .any(|statement| matches!(statement.kind, RawStatementKind::WeakUpgrade { .. }))
-    {
+    if uses_owned_function(input, function) {
         return lower_private_owned_aggregate_function(
             input,
             module,
@@ -180,28 +177,6 @@ pub(super) fn lower_function<'a>(
         catalog,
         errors,
     )
-}
-
-fn has_root_borrow_syntax(file: &syntax::SourceUnit, function: &syntax::RawFunctionSyntax) -> bool {
-    function.body.statements.iter().any(|statement| {
-        let RawStatementKind::LocalDeclaration { type_syntax, .. } = statement.kind else {
-            return false;
-        };
-        usize::try_from(type_syntax)
-            .ok()
-            .and_then(|index| file.type_syntax().get(index))
-            .is_some_and(|ty| {
-                matches!(
-                    ty.kind,
-                    RawTypeSyntaxKind::Borrow { .. } | RawTypeSyntaxKind::BorrowMut { .. }
-                )
-            })
-    }) || function.body.expressions.iter().any(|expression| {
-        matches!(
-            expression.kind,
-            RawExpressionKind::Borrow { .. } | RawExpressionKind::BorrowMut { .. }
-        )
-    })
 }
 
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]

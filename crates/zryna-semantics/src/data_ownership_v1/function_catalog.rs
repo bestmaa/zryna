@@ -281,7 +281,9 @@ pub(super) fn build_function_catalog(
                     borrow_parameters,
                     parameter_order,
                     result,
-                    private: function.export_span.is_none() || file.id() != input.entry(),
+                    private: input.command.is_some()
+                        || function.export_span.is_none()
+                        || file.id() != input.entry(),
                 },
             ));
         }

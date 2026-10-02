@@ -1,0 +1,11 @@
+interface Pair extends ZrynaStruct { first: String; second: String; }
+function copied(): Pair {
+  const source: Pair = Pair({ first: "one", second: "two", });
+  const result: Pair = clone(source);
+  return result;
+}
+function consumed(): bool {
+  const result: Pair = copied();
+  return true;
+}
+export function main(): bool { return consumed(); }

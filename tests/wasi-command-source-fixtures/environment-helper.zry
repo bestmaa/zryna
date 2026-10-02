@@ -1,0 +1,7 @@
+function lookup(): EnvLookupV1 { return environmentLookup("MODE"); }
+export function main(): bool {
+  return match(lookup(), {
+    "EnvLookupV1.Found": (value) => true,
+    "EnvLookupV1.Missing": () => false,
+  });
+}
