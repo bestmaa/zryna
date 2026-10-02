@@ -1,0 +1,29 @@
+import { true as read } from "./keyword-values.zry";
+
+export interface Label extends ZrynaStruct { return: i32; true: i32; await: i32; eval: i32; }
+
+export interface Choice extends ZrynaEnum { true: i32; return: ZrynaNone; }
+
+export
+function score(await: i32, value: Label): i32 {
+  const from: i32 = await;
+  eval(from);
+  arguments(from);
+  value.eval = from;
+  const choice: Choice = Choice.true(7);
+  return value.return;
+}
+
+export function identity<await extends ZrynaValue>(value: await): await {
+  return value;
+}
+
+export
+function probe(value: return): i32 {
+  return 1;
+}
+
+export
+function matcher(value: Label): i32 {
+  return match(value, { "from.return": (await) => await });
+}

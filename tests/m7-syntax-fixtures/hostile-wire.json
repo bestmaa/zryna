@@ -1,0 +1,27 @@
+[
+  {
+    "id": "duplicate-version",
+    "wire": "{\"schema_version\":5,\"schema_version\":5,\"files\":[],\"diagnostics\":[]}",
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "duplicate-nested-code",
+    "wire": "{\"schema_version\":5,\"files\":[],\"diagnostics\":[{\"code\":\"P0001\",\"code\":\"P0001\",\"severity\":\"warning\",\"location\":{\"kind\":\"global\"},\"message\":\"message\",\"guidance\":\"guidance\"}]}",
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "trailing-value",
+    "wire": "{\"schema_version\":5,\"files\":[],\"diagnostics\":[]} {}",
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "unknown-root-field",
+    "wire": "{\"schema_version\":5,\"files\":[],\"diagnostics\":[],\"resolved_instances\":[]}",
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "wrong-version",
+    "wire": "{\"schema_version\":4,\"files\":[],\"diagnostics\":[]}",
+    "code": "ZRYNA-Y5001"
+  }
+]

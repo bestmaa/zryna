@@ -1,0 +1,31 @@
+interface Pair extends ZrynaStruct { value: i32; }
+
+function operations(owner: String, values: Vec<i32>, weakValue: Weak<String>): i32 {
+  const value: i32 = 7;
+  const message: String = "x";
+  const negative: i32 = -7;
+  const truth: bool = true;
+  false;
+  const copied: String = clone(owner);
+  const sharedValue: Shared<String> = shared(copied);
+  const weakAgain: Weak<String> = downgrade(sharedValue);
+  const loan: Borrow<String> = borrow(owner);
+  const exclusive: BorrowMut<Vec<i32>> = borrowMut(values);
+  push(values, 7);
+  const pair: Pair = Pair({ value });
+  const array: FixedArray<i32, 2> = FixedArray<i32, 2>([7, 8]);
+  const vector: Vec<i32> = Vec<i32>([7, 8]);
+  value === 7;
+  value !== 7;
+  value < 7;
+  value <= 7;
+  value > 7;
+  value >= 7;
+  -value;
+  upgradeWeak(weakValue, (strong) => {
+  sink(strong);
+  }, () => {
+  expired();
+  });
+  return pair.value + array[0];
+}

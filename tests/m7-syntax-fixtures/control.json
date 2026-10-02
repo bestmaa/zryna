@@ -1,0 +1,744 @@
+{
+  "schema_version": 5,
+  "files": [
+    {
+      "id": 0,
+      "path": "control.zry",
+      "imports": [],
+      "type_syntax": [
+        {
+          "span": {
+            "file": 0,
+            "start": 23,
+            "end": 27
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "bool",
+              "span": {
+                "file": 0,
+                "start": 23,
+                "end": 27
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 30,
+            "end": 33
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "i32",
+              "span": {
+                "file": 0,
+                "start": 30,
+                "end": 33
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 45,
+            "end": 48
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "i32",
+              "span": {
+                "file": 0,
+                "start": 45,
+                "end": 48
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 69,
+            "end": 72
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "i32",
+              "span": {
+                "file": 0,
+                "start": 69,
+                "end": 72
+              }
+            }
+          }
+        }
+      ],
+      "data_declarations": [],
+      "functions": [
+        {
+          "span": {
+            "file": 0,
+            "start": 0,
+            "end": 187
+          },
+          "export_span": null,
+          "function_span": {
+            "file": 0,
+            "start": 0,
+            "end": 8
+          },
+          "name": {
+            "text": "control",
+            "span": {
+              "file": 0,
+              "start": 9,
+              "end": 16
+            }
+          },
+          "type_parameters": null,
+          "parameters": [
+            {
+              "span": {
+                "file": 0,
+                "start": 17,
+                "end": 27
+              },
+              "name": {
+                "text": "flag",
+                "span": {
+                  "file": 0,
+                  "start": 17,
+                  "end": 21
+                }
+              },
+              "type_syntax": 0
+            }
+          ],
+          "result_type": 1,
+          "body": {
+            "span": {
+              "file": 0,
+              "start": 34,
+              "end": 187
+            },
+            "root_block": 0,
+            "blocks": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 34,
+                  "end": 187
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 34,
+                  "end": 35
+                },
+                "statements": [
+                  0,
+                  1,
+                  3,
+                  6,
+                  8,
+                  9
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 186,
+                  "end": 187
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 56,
+                  "end": 81
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 56,
+                  "end": 57
+                },
+                "statements": [
+                  2
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 80,
+                  "end": 81
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 94,
+                  "end": 108
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 94,
+                  "end": 95
+                },
+                "statements": [
+                  4
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 107,
+                  "end": 108
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 114,
+                  "end": 128
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 114,
+                  "end": 115
+                },
+                "statements": [
+                  5
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 127,
+                  "end": 128
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 144,
+                  "end": 162
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 144,
+                  "end": 145
+                },
+                "statements": [
+                  7
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 161,
+                  "end": 162
+                }
+              }
+            ],
+            "statements": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 38,
+                  "end": 53
+                },
+                "kind": {
+                  "kind": "local-declaration",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 38,
+                    "end": 41
+                  },
+                  "mutable": true,
+                  "name": {
+                    "text": "x",
+                    "span": {
+                      "file": 0,
+                      "start": 42,
+                      "end": 43
+                    }
+                  },
+                  "type_syntax": 2,
+                  "equals_span": {
+                    "file": 0,
+                    "start": 49,
+                    "end": 50
+                  },
+                  "initializer": 0,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 52,
+                    "end": 53
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 56,
+                  "end": 81
+                },
+                "kind": {
+                  "kind": "block",
+                  "block": 1
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 60,
+                  "end": 77
+                },
+                "kind": {
+                  "kind": "local-declaration",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 60,
+                    "end": 65
+                  },
+                  "mutable": false,
+                  "name": {
+                    "text": "y",
+                    "span": {
+                      "file": 0,
+                      "start": 66,
+                      "end": 67
+                    }
+                  },
+                  "type_syntax": 3,
+                  "equals_span": {
+                    "file": 0,
+                    "start": 73,
+                    "end": 74
+                  },
+                  "initializer": 1,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 76,
+                    "end": 77
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 84,
+                  "end": 128
+                },
+                "kind": {
+                  "kind": "if",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 84,
+                    "end": 86
+                  },
+                  "open_paren_span": {
+                    "file": 0,
+                    "start": 87,
+                    "end": 88
+                  },
+                  "condition": 2,
+                  "close_paren_span": {
+                    "file": 0,
+                    "start": 92,
+                    "end": 93
+                  },
+                  "then_block": 2,
+                  "else_clause": {
+                    "keyword_span": {
+                      "file": 0,
+                      "start": 109,
+                      "end": 113
+                    },
+                    "block": 3
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 98,
+                  "end": 104
+                },
+                "kind": {
+                  "kind": "assignment",
+                  "target": 3,
+                  "equals_span": {
+                    "file": 0,
+                    "start": 100,
+                    "end": 101
+                  },
+                  "value": 4,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 103,
+                    "end": 104
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 118,
+                  "end": 124
+                },
+                "kind": {
+                  "kind": "assignment",
+                  "target": 5,
+                  "equals_span": {
+                    "file": 0,
+                    "start": 120,
+                    "end": 121
+                  },
+                  "value": 6,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 123,
+                    "end": 124
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 131,
+                  "end": 162
+                },
+                "kind": {
+                  "kind": "while",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 131,
+                    "end": 136
+                  },
+                  "open_paren_span": {
+                    "file": 0,
+                    "start": 137,
+                    "end": 138
+                  },
+                  "condition": 7,
+                  "close_paren_span": {
+                    "file": 0,
+                    "start": 142,
+                    "end": 143
+                  },
+                  "body_block": 4
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 148,
+                  "end": 158
+                },
+                "kind": {
+                  "kind": "assignment",
+                  "target": 8,
+                  "equals_span": {
+                    "file": 0,
+                    "start": 150,
+                    "end": 151
+                  },
+                  "value": 11,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 157,
+                    "end": 158
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 165,
+                  "end": 173
+                },
+                "kind": {
+                  "kind": "expression-statement",
+                  "expression": 13,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 172,
+                    "end": 173
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 176,
+                  "end": 185
+                },
+                "kind": {
+                  "kind": "return",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 176,
+                    "end": 182
+                  },
+                  "value": 14,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 184,
+                    "end": 185
+                  }
+                }
+              }
+            ],
+            "expressions": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 51,
+                  "end": 52
+                },
+                "kind": {
+                  "kind": "i32-literal",
+                  "spelling": "0"
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 75,
+                  "end": 76
+                },
+                "kind": {
+                  "kind": "i32-literal",
+                  "spelling": "1"
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 88,
+                  "end": 92
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "flag",
+                    "span": {
+                      "file": 0,
+                      "start": 88,
+                      "end": 92
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 98,
+                  "end": 99
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "x",
+                    "span": {
+                      "file": 0,
+                      "start": 98,
+                      "end": 99
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 102,
+                  "end": 103
+                },
+                "kind": {
+                  "kind": "i32-literal",
+                  "spelling": "2"
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 118,
+                  "end": 119
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "x",
+                    "span": {
+                      "file": 0,
+                      "start": 118,
+                      "end": 119
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 122,
+                  "end": 123
+                },
+                "kind": {
+                  "kind": "i32-literal",
+                  "spelling": "3"
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 138,
+                  "end": 142
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "flag",
+                    "span": {
+                      "file": 0,
+                      "start": 138,
+                      "end": 142
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 148,
+                  "end": 149
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "x",
+                    "span": {
+                      "file": 0,
+                      "start": 148,
+                      "end": 149
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 152,
+                  "end": 153
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "x",
+                    "span": {
+                      "file": 0,
+                      "start": 152,
+                      "end": 153
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 156,
+                  "end": 157
+                },
+                "kind": {
+                  "kind": "i32-literal",
+                  "spelling": "1"
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 152,
+                  "end": 157
+                },
+                "kind": {
+                  "kind": "addition",
+                  "operator_span": {
+                    "file": 0,
+                    "start": 154,
+                    "end": 155
+                  },
+                  "lhs": 9,
+                  "rhs": 10
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 170,
+                  "end": 171
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "x",
+                    "span": {
+                      "file": 0,
+                      "start": 170,
+                      "end": 171
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 165,
+                  "end": 172
+                },
+                "kind": {
+                  "kind": "call",
+                  "callee": {
+                    "text": "sink",
+                    "span": {
+                      "file": 0,
+                      "start": 165,
+                      "end": 169
+                    }
+                  },
+                  "type_arguments": null,
+                  "open_paren_span": {
+                    "file": 0,
+                    "start": 169,
+                    "end": 170
+                  },
+                  "arguments": [
+                    12
+                  ],
+                  "close_paren_span": {
+                    "file": 0,
+                    "start": 171,
+                    "end": 172
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 183,
+                  "end": 184
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "x",
+                    "span": {
+                      "file": 0,
+                      "start": 183,
+                      "end": 184
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

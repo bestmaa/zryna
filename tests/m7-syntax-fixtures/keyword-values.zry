@@ -1,0 +1,1 @@
+export interface Remote extends ZrynaStruct { true: i32; }

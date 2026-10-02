@@ -2,6 +2,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod bounded_generics_v1;
 pub mod control_flow_v1;
 pub mod data_ownership_v1;
 pub mod definition_queries;
@@ -99,9 +100,8 @@ pub type SemanticResult = Result<Program, Vec<Diagnostic>>;
 
 /// Resolves names, checks the strict source subset, and lowers it to unverified Universal IR.
 ///
-/// This phase owns source-language meaning. It accepts only verified provider-neutral syntax and
-/// never consumes provider syntax kinds, node identities, symbols, or inferred types. The returned
-/// [`Program`] remains untrusted until `zryna_ir::verify` accepts it.
+/// Provider-neutral syntax supplies source facts. This phase resolves and checks their meaning.
+/// Provider kinds, IDs, symbols and inferred types are excluded; [`Program`] needs IR verification.
 ///
 /// # Errors
 ///

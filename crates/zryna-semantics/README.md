@@ -46,6 +46,28 @@ future universal profile implemented consistently by every active backend.
 
 This crate owns language meaning and must never depend on a replaceable frontend provider.
 
+## Internal bounded-generics declaration context
+
+`bounded_generics_v1::SemanticInput` accepts only complete verified protocol-v5 syntax bound to
+its original immutable `SourceMap`, an original selected entry, and provider success.
+`resolve_declarations` retains that input and resolves the complete exact module closure,
+original function/data declarations, named imports and declaration-owned type parameters.
+An import alias keeps its target's original module, kind and source index; source template
+visibility creates no executable export. Independently constructed equal-text maps cannot
+reuse these identities.
+
+Original imported data targets are computed before module/name diagnostics. The complete
+project-wide imported-type shadow check returns D7001 before any M3002/M3016 candidate can
+consume diagnostic slots. Missing, private, wrong-case or function targets do not create visible
+data types. Context errors are source-bound, canonically ordered and capped at 255 ordinary
+entries plus the M7201 terminal diagnostic; failures return no partial context.
+
+This isolated phase establishes declaration bindings only. Opaque template-body checking,
+closed arguments/instantiation, successor layouts and mandatory IR, runtime declarations,
+provider parity, target execution and driver/profile admission remain separate requirements.
+It provides no conversion to existing M3 authority. Its focused tests and compile-fail
+obligations require execution evidence before this implementation can be considered verified.
+
 ## Internal M2 semantics boundary
 
 The separate `control_flow_v1` module consumes only an exact source-map-bound verified
