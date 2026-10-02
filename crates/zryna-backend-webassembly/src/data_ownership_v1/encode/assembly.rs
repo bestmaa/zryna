@@ -35,7 +35,8 @@ fn encode(
     command: Option<&zryna_ir::command_h1_v1::VerifiedProgram>,
 ) -> Result<Vec<u8>, zryna_diagnostics::Diagnostic> {
     let type_count = u32::try_from(layouts.types().len()).map_err(|_| index_error())?;
-    let clone_frontier = command.is_some() && super::clone_frontier::required(functions);
+    let clone_storage = super::clone_frontier::required(functions);
+    let clone_frontier = command.is_some() && clone_storage;
     let mut arities = vec![1_usize];
     for function in functions {
         let arity = function.parameters().len() + function.borrow_parameters().len();
@@ -118,7 +119,7 @@ fn encode(
             GlobalType { val_type: ValType::I32, mutable: true, shared: false },
             &ConstExpr::i32_const(observation::ARENA_START),
         );
-        for _ in 0..if clone_frontier { 9 } else { 5 } {
+        for _ in 0..if clone_storage { 9 } else { 5 } {
             globals.global(
                 GlobalType { val_type: ValType::I32, mutable: true, shared: false },
                 &ConstExpr::i32_const(0),
