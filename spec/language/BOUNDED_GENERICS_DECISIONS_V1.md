@@ -1,10 +1,11 @@
 # Bounded generic decisions and acceptance v1
 
-Status: **proposed, unaccepted**. This is the normative completion of the
-[language proposal](BOUNDED_GENERICS_OPTION_RESULT_V1.md) for Issue #415.
+State: **specified-only**. This is the normative completion of the
+[language contract](BOUNDED_GENERICS_OPTION_RESULT_V1.md) for Issue #415.
 The fixture schema below is a specification-review format, not a syntax protocol,
-IR wire format, CLI selector or executable compiler. Every decision remains
-subject to acceptance of the complete proposal at one reviewed revision.
+IR wire format, CLI selector or executable compiler. Normal PR integration
+records the complete reviewed packet as the specified-only future contract;
+implementation and public admission require separate exact-revision evidence.
 
 ## Exact source forms and exclusions
 
@@ -133,7 +134,7 @@ and memory corruption have no controlled-cleanup promise, as in runtime ABI v1.
 
 ## Diagnostic selection and resource interpretation
 
-Add candidate codes M7006 for exact value/field/call/arm type or payload-arity
+The specified codes are M7006 for exact value/field/call/arm type or payload-arity
 mismatch, and M7007 for move, borrow, initialization or cleanup misuse introduced
 by generic/standard-enum operations. By-value closed-type cycles retain L3002;
 checked object-size/alignment arithmetic retains L3005. Existing errors on an
@@ -174,7 +175,7 @@ they do not claim those synthetic inputs are source-admissible programs.
 
 ## Compatibility, dependencies and delivery
 
-This candidate is one future universal internal language contract under #357;
+This specification is one future universal internal language contract under #357;
 it is not a subtype/relabeling of existing DataOwnershipV1 authorities. A pure
 generic dependency chain has an explicit verified empty capability set. A
 transitive host operation still fails #357 profile validation before IR;
@@ -195,13 +196,14 @@ Recorded semantic observations and cleanup traces are frozen requirements for
 
 | #416 slice | Prerequisite and owner | Measurable exit |
 | --- | --- | --- |
-| Syntax | Accepted entire #415 revision; syntax foundation then bootstrap/native providers | New separately versioned closed schema, source-faithful DTOs, exact spans, malformed DTO rejection, all catalogue forms; v2/v3/v4 bytes/diagnostics unchanged |
+| Syntax | Normally integrated reviewed #415 revision; syntax foundation then bootstrap/native providers | New separately versioned closed schema, source-faithful DTOs, exact spans, malformed DTO rejection, all catalogue forms; v2/v3/v4 bytes/diagnostics unchanged |
 | Instantiation | Verified syntax and final module graph; semantics | Opaque bodies, deterministic complete keys/IDs/edges, recursion decisions, cross-module dedup, every exact/extra ceiling with no partial result |
 | Layout/IR | Closed inventory; layout, IR and ownership-runtime ABI authorities | Successor sealed layouts and hostile raw IR/records, owned/nested digests on both storage targets, independent failure/cleanup verification |
 | Owned operations | Verified instance/layout authorities; semantics and ownership IR | All four standard constructors, exact value/shared/exclusive match, Copy/Clone derivation, moves/returns and all controlled fault traces |
 | Targets | Same sealed program; independent JS, core Wasm and admitted native backends/runtimes | Fixed scalar observations and logical drop/release traces; every trap ordinal, deterministic artifact replay, supported Linux/Windows host gates |
 | Driver admission | All preceding exact-revision proofs; driver/profile authority | Explicit separately reviewed selection/versioning, authenticated manifest/interface and compatibility, no grants/export widening |
 
-No slice starts from unaccepted decisions. #415 acceptance approves the contract
-and review evidence, not any #416 execution or public support. Every unchanged
+No implementation slice starts before the reviewed #415 specification is
+normally integrated. Its specified-only state establishes the contract and
+reference evidence, not any #416 execution or public support. Every unchanged
 existing profile retains byte/diagnostic compatibility, including `upgradeWeak`.

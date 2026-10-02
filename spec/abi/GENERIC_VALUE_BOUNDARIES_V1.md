@@ -1,6 +1,7 @@
-# Generic value boundary proposal
+# Generic value boundaries v1
 
-Status: specified candidate for [Issue #415](https://github.com/zryna/zryna/issues/415).
+State: **specified-only** for [Issue #415](https://github.com/zryna/zryna/issues/415).
+Normal integration records the reviewed future internal ABI restrictions, not runtime proof.
 This document owns the boundary decision for the initial internal feature; it
 does not change [scalar ABI v1](SCALAR_V1.md) or
 [ownership runtime ABI v1](OWNERSHIP_RUNTIME_V1.md).

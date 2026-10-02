@@ -1,6 +1,7 @@
-# Generic instantiation verified IR v1 proposal
+# Generic instantiation verified IR v1
 
-Status: specified candidate for [Issue #415](https://github.com/zryna/zryna/issues/415).
+State: **specified-only** for [Issue #415](https://github.com/zryna/zryna/issues/415).
+Normal integration records this reviewed future contract; it provides no runtime proof.
 This is a future versioned extension; current `DataOwnershipV1` verified IR must
 continue rejecting user generics, `Option` and `Result`.
 
@@ -33,7 +34,7 @@ discriminants are rejected at any future authenticated aggregate boundary before
 constructing a verified value.
 
 Resource preflight must bound the complete substituted graph, dense IDs, edges,
-drop actions and diagnostics before sealing. The exact candidate ceilings are in
+drop actions and diagnostics before sealing. The exact specified ceilings are in
 the language contract; existing IR/ownership ceilings remain effective. Exhaustion
 returns no partially verified module. Traversal and diagnostic selection use
 canonical key order and source spans, independent of hash-map or backend order.
@@ -43,7 +44,8 @@ instantiations of one function and one nominal type; separate hostile raw-IR
 mutations of key, substitution, target ID, variant, payload and cleanup; and
 exact/first-extra, overflow and replay fixtures. A valid producer output alone
 does not prove the verifier boundary. The eventual implementation must freeze
-exact new IR tags and diagnostic codes before executable use.
+its separately versioned raw-IR wire tags before executable use; diagnostic
+codes and logical operation semantics are fixed by this contract.
 
 The successor's logical operations are `ClosedGenericCall(instanceId,
 arguments)`, `ClosedEnumConstruct(typeId, ordinal, payload?)` and
