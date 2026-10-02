@@ -7,16 +7,24 @@ First verify its archive SHA-256 against the independently supplied digest, then
 Record the exact archive digest and `setup.json` digest in the
 [local report template](BETA_PILOT_REPORT.md). Never execute an unverified archive.
 
-The candidate.2 setup advertises the installed default M1 CLI and scalar/M2 editor
-exercise. Repository-local M2/M3 CLI commands below are a **comparison baseline** for
+Setup **0.1.0-candidate.3** combines compiler **0.2.3**, language server **0.5.0** and
+editor **0.5.0**. It remains an internal review candidate with production admission forbidden.
+It advertises the installed default M1 CLI and scalar/M2 editor exercise.
+Repository-local M2/M3 CLI commands below are a **comparison baseline** for
 the source-checkout Developer Preview; they do not count as candidate distribution
-passes. On the verified Windows candidate, `run src/main.zry --project-root
+passes. The retained Windows candidate.2 invocation, `run src/main.zry --project-root
 <generated-M1-project> --profile control-flow-v1 --target javascript --export
-main` rejected with `ZRYNA-P4009` because that generated project's frozen package
-names the default M1 profile. This observation is limited to that invocation.
+main`, rejected with `ZRYNA-P4009` because that generated project's frozen package
+names the default M1 profile. This historical observation is limited to that invocation;
+it does not supply candidate.3 acceptance evidence.
 See [standalone projects](STANDALONE_PROJECTS.md) and
 [M3 public profile](M3_PUBLIC_PROFILE.md) for the respective boundaries. Do not infer
 class, global, native Windows, or production support from any result here.
+
+The nested compiler's immutable v0.2.3 release has its own completed
+[installation and upgrade evidence](BETA_INSTALLATION.md). That evidence authenticates
+the compiler release, not the outer setup, server or editor composition. Record the exact
+candidate.3 archive and setup digests from the reviewed handoff before using this exercise.
 
 ## Fixed candidate exercise
 
@@ -43,8 +51,10 @@ host are required; this fixed portable exercise does not require native.
 For the editor, follow the exact [editor exercise](PORTABLE_SETUP.md#editor-exercise):
 default scalar `add(13, -4)` on JavaScript yields `i32 9`, and explicit **M2 control
 flow** `accumulate(true, 5)` on JavaScript yields `i32 10`. Repeat the guide's
-WebAssembly cases and diagnostic/format checks. Editor M3 is unavailable. Record
-the editor profile, target, input, output and diagnostic separately from CLI rows.
+WebAssembly cases and diagnostic/format checks. Candidate.3 also provides explicit M3
+formatting and diagnostics with authenticated saved imports, as described in the guide;
+M3 Run remains unavailable. Record editor M3 format/diagnostic observations separately
+from scalar/M2 Run and from CLI rows.
 
 ## Repository-local CLI comparison
 
