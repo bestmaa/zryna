@@ -103,9 +103,11 @@ fn valid_specifier(value: &str) -> bool {
 }
 
 struct FileParser<'a> {
+    sources: &'a SourceMap,
     text: &'a str,
     tokens: Vec<Token>,
     position: usize,
+    pending_type_equals: bool,
     file: u32,
     types: Vec<syntax::RawTypeSyntax>,
     previous_types: usize,
@@ -161,6 +163,15 @@ impl FileParser<'_> {
         Ok(token)
     }
 
+    fn initializer_equals(&mut self) -> Result<UntrustedSpan, ParseError> {
+        if self.pending_type_equals {
+            let token = self.take(TokenKind::GreaterEqual)?;
+            self.pending_type_equals = false;
+            return Ok(UntrustedSpan { start: token.span().start() + 1, ..raw(token) });
+        }
+        self.take(TokenKind::Equals).map(raw)
+    }
+
     fn maybe(&mut self, kind: TokenKind) -> Option<Token> {
         if self.current().is_some_and(|token| token.kind() == kind) {
             let token = self.current();
@@ -183,6 +194,17 @@ impl FileParser<'_> {
     fn import(&mut self) -> Result<syntax::RawImportSyntax, ParseError> {
         let keyword = self.take(TokenKind::Keyword(Keyword::Import))?;
         self.take(TokenKind::OpenBrace)?;
+        let count = super::collections::bounds(&self.tokens, self.position - 1)
+            .map_or(0, |(_, count)| count);
+        if count > syntax::MAX_IMPORTED_NAMES_PER_DECLARATION
+            || self.previous_bindings + count > syntax::MAX_IMPORTED_NAMES_PER_PROJECT
+        {
+            return Err(resource(if count > syntax::MAX_IMPORTED_NAMES_PER_DECLARATION {
+                "import exceeds the imported-name limit"
+            } else {
+                "project exceeds the imported-name limit"
+            }));
+        }
         let mut bindings = Vec::new();
         loop {
             if self.current().is_some_and(|token| token.kind() == TokenKind::CloseBrace) {
@@ -194,7 +216,13 @@ impl FileParser<'_> {
             if bindings.len() >= syntax::MAX_IMPORTED_NAMES_PER_DECLARATION
                 || self.previous_bindings + bindings.len() >= syntax::MAX_IMPORTED_NAMES_PER_PROJECT
             {
-                return Err(resource("imported-name inventory exceeds protocol-v4 limit"));
+                return Err(resource(
+                    if bindings.len() >= syntax::MAX_IMPORTED_NAMES_PER_DECLARATION {
+                        "import exceeds the imported-name limit"
+                    } else {
+                        "project exceeds the imported-name limit"
+                    },
+                ));
             }
             let imported = self.identifier()?;
             let as_span = self.maybe(TokenKind::Keyword(Keyword::As)).map(raw);
@@ -257,6 +285,15 @@ pub fn parse_v4_candidate(
     sources: &SourceMap,
     lexed: &LexedProject,
 ) -> Result<syntax::RawProjectSyntaxSnapshot, ParseError> {
+    parse_candidate(sources, lexed).map_err(|error| ParseError {
+        diagnostic: super::rejection::diagnostic(sources, lexed, error.diagnostic, 4),
+    })
+}
+
+fn parse_candidate(
+    sources: &SourceMap,
+    lexed: &LexedProject,
+) -> Result<syntax::RawProjectSyntaxSnapshot, ParseError> {
     if !lexed.is_bound_to(sources) || lexed.files().len() != sources.len() {
         return Err(unsupported(None, "native tokens do not belong to this source map"));
     }
@@ -273,9 +310,11 @@ pub fn parse_v4_candidate(
             return Err(unsupported(None, "native source path differs from the source map"));
         }
         let mut parser = FileParser {
+            sources,
             text: source.text(),
             tokens: file.tokens().collect(),
             position: 0,
+            pending_type_equals: false,
             file: file.id().index(),
             types: Vec::new(),
             previous_types: totals.types,
@@ -290,6 +329,15 @@ pub fn parse_v4_candidate(
             match_arms: totals.match_arms,
         };
         enforce_source_nesting(&parser.tokens)?;
+        if let Some(diagnostic) = super::rejection::malformed_file(
+            sources,
+            source.text(),
+            &parser.tokens,
+            file.id().index(),
+            4,
+        ) {
+            return Err(ParseError { diagnostic });
+        }
         files.push(parse_module(&mut parser, file.path().as_str(), &mut totals)?);
     }
     Ok(syntax::RawProjectSyntaxSnapshot {
@@ -315,7 +363,11 @@ fn parse_module(
             if imports.len() >= syntax::MAX_IMPORTS_PER_MODULE
                 || totals.imports + imports.len() >= syntax::MAX_IMPORTS_PER_PROJECT
             {
-                return Err(resource("import inventory exceeds protocol-v4 limit"));
+                return Err(resource(if imports.len() >= syntax::MAX_IMPORTS_PER_MODULE {
+                    "module exceeds the import-declaration limit"
+                } else {
+                    "project exceeds the import-declaration limit"
+                }));
             }
             let import = parser.import()?;
             parser.previous_bindings += import.bindings.len();
@@ -337,7 +389,11 @@ fn parse_module(
             if functions.len() >= syntax::MAX_FUNCTIONS_PER_MODULE
                 || totals.functions + functions.len() >= syntax::MAX_FUNCTIONS_PER_PROJECT
             {
-                return Err(resource("function inventory exceeds protocol-v4 limit"));
+                return Err(resource(if functions.len() >= syntax::MAX_FUNCTIONS_PER_MODULE {
+                    "module exceeds the function limit"
+                } else {
+                    "project exceeds the function limit"
+                }));
             }
             let function = parser.function()?;
             parser.previous_parameters += function.parameters.len();
@@ -362,7 +418,7 @@ fn parse_module(
             continue;
         }
         if declarations.len() >= syntax::MAX_DATA_DECLARATIONS_PER_MODULE {
-            return Err(resource("module exceeds the data-declaration limit"));
+            return Err(resource("module exceeds the nominal-declaration limit"));
         }
         let declaration = parser.data_declaration(totals.declarations + declarations.len())?;
         totals.members += match &declaration.kind {
@@ -396,7 +452,7 @@ fn enforce_source_nesting(tokens: &[Token]) -> Result<(), ParseError> {
             TokenKind::OpenBrace | TokenKind::OpenBracket | TokenKind::OpenParen => {
                 depth += 1;
                 if depth > syntax::MAX_NESTING_DEPTH {
-                    return Err(resource("source exceeds protocol-v4 nesting limit"));
+                    return Err(resource("source exceeds the nesting limit"));
                 }
             }
             TokenKind::CloseBrace | TokenKind::CloseBracket | TokenKind::CloseParen => {

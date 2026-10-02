@@ -57,7 +57,7 @@ fn multiple_annotation_recovery_is_bounded_and_keeps_malformed_signatures_reject
         } else {
             assert_eq!(
                 result.expect_err("first extra parameter").diagnostic().code(),
-                "ZRYNA-F2003"
+                "ZRYNA-F1002"
             );
         }
     }
@@ -70,9 +70,12 @@ fn multiple_annotation_recovery_is_bounded_and_keeps_malformed_signatures_reject
     let lexed = lex(&sources).expect("lexical stream");
     assert_eq!(
         parse_v2_recovering_candidate(&sources, &lexed)
-            .expect_err("first extra diagnostic")
-            .diagnostic()
-            .code(),
+            .expect("diagnostic truncation retains a rejected function")
+            .diagnostics
+            .last()
+            .expect("terminal diagnostic")
+            .code
+            .as_str(),
         "ZRYNA-F2003"
     );
 
@@ -85,9 +88,12 @@ fn multiple_annotation_recovery_is_bounded_and_keeps_malformed_signatures_reject
     let lexed = lex(&sources).expect("lexical stream");
     assert_eq!(
         parse_v2_recovering_candidate(&sources, &lexed)
-            .expect_err("second diagnostic crosses project diagnostic limit")
-            .diagnostic()
-            .code(),
+            .expect("project diagnostic truncation")
+            .diagnostics
+            .last()
+            .expect("terminal diagnostic")
+            .code
+            .as_str(),
         "ZRYNA-F2003"
     );
 
@@ -133,7 +139,7 @@ fn rejected_signature_counts_toward_the_exact_file_function_limit() {
             .expect_err("rejected function consumes a slot")
             .diagnostic()
             .code(),
-        "ZRYNA-F2003"
+        "ZRYNA-F1002"
     );
 }
 

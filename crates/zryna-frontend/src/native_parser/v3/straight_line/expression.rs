@@ -19,9 +19,6 @@ impl FileParser<'_> {
         operand_depth: u32,
         end: u32,
     ) -> Result<(u32, u32), ParseError> {
-        if operand_depth >= syntax::MAX_NESTING_DEPTH {
-            return Err(function_error_at(operator, "expression depth exceeds protocol-v3 limit"));
-        }
         let index = push_expression(
             expressions,
             previous_expressions,
@@ -85,10 +82,32 @@ impl FileParser<'_> {
         previous_expressions: usize,
         block_depth: u32,
     ) -> Result<u32, ParseError> {
-        let start = self.current().ok_or_else(|| self.function_error_here("missing expression"))?;
+        self.current().ok_or_else(|| self.function_error_here("missing expression"))?;
+        if let Some(diagnostic) = crate::native_parser::depth::source_diagnostic(
+            self.sources,
+            self.text,
+            &self.tokens[self.position..],
+            block_depth,
+            3,
+            crate::native_parser::depth::ExpressionBudgets {
+                function: expressions.len(),
+                project: previous_expressions + expressions.len(),
+                aggregate: 0,
+            },
+        ) {
+            return Err(ParseError { diagnostic });
+        }
         let (index, depth) = operators::parse(self, expressions, previous_expressions, 1)?;
         if depth + block_depth > syntax::MAX_NESTING_DEPTH {
-            return Err(function_error_at(start, "expression depth exceeds protocol-v3 limit"));
+            return Err(ParseError {
+                diagnostic: crate::native_parser::depth::v3_diagnostic(
+                    self.sources,
+                    expressions,
+                    index,
+                    block_depth,
+                )
+                .expect("overflowing expression depth"),
+            });
         }
         Ok(index)
     }
@@ -99,15 +118,19 @@ impl FileParser<'_> {
         previous_expressions: usize,
         call_nesting: u32,
     ) -> Result<(u32, u32), ParseError> {
-        let callee_token = self.current().expect("call starts with identifier");
         let callee = self.function_identifier()?;
         let open = self.function_take(TokenKind::OpenParen)?;
+        if super::super::super::collections::bounds(&self.tokens, self.position - 1)
+            .is_some_and(|(_, count)| count > syntax::MAX_PARAMETERS_PER_FUNCTION)
+        {
+            return Err(resource("call exceeds the argument limit"));
+        }
         let mut arguments = Vec::new();
         let mut argument_depth = 0;
         if self.current().is_some_and(|token| token.kind() != TokenKind::CloseParen) {
             loop {
                 if arguments.len() >= syntax::MAX_PARAMETERS_PER_FUNCTION {
-                    return Err(resource("call exceeds protocol-v3 argument limit"));
+                    return Err(resource("call exceeds the argument limit"));
                 }
                 if call_nesting >= syntax::MAX_NESTING_DEPTH {
                     return Err(resource("expression nesting exceeds protocol-v3 limit"));
@@ -124,12 +147,6 @@ impl FileParser<'_> {
             }
         }
         let close = self.function_take(TokenKind::CloseParen)?;
-        if argument_depth >= syntax::MAX_NESTING_DEPTH {
-            return Err(function_error_at(
-                callee_token,
-                "expression depth exceeds protocol-v3 limit",
-            ));
-        }
         let index = push_expression(
             expressions,
             previous_expressions,
@@ -165,9 +182,6 @@ impl FileParser<'_> {
                 return Err(function_error_at(token, "unsupported decrement"));
             }
             minuses.push(token);
-            if minuses.len() > syntax::MAX_NESTING_DEPTH as usize {
-                return Err(function_error_at(token, "expression depth exceeds protocol-v3 limit"));
-            }
             self.position += 1;
         }
         let token = self.current().ok_or_else(|| self.function_error_here("missing expression"))?;
@@ -233,7 +247,11 @@ fn push_expression(
     if expressions.len() >= syntax::MAX_EXPRESSIONS_PER_FUNCTION
         || previous_expressions + expressions.len() >= syntax::MAX_EXPRESSIONS_PER_PROJECT
     {
-        return Err(resource("expression inventory exceeds protocol-v3 limit"));
+        return Err(resource(if expressions.len() >= syntax::MAX_EXPRESSIONS_PER_FUNCTION {
+            "function exceeds the expression limit"
+        } else {
+            "project exceeds the expression limit"
+        }));
     }
     let index = u32::try_from(expressions.len())
         .map_err(|_| resource("expression inventory exceeds protocol-v3 limit"))?;

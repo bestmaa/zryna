@@ -73,6 +73,7 @@ pub fn parse_v3_import_candidate(
             .verify_span(UntrustedSpan { file: file.id().index(), start: end, end })
             .map_err(|_| failure("ZRYNA-F2002", "native source EOF is unavailable"))?;
         let mut parser = FileParser {
+            sources,
             text: source.text(),
             tokens: file.tokens().collect(),
             position: 0,
@@ -89,7 +90,11 @@ pub fn parse_v3_import_candidate(
             if imports.len() >= syntax::MAX_IMPORTS_PER_MODULE
                 || total_imports >= syntax::MAX_IMPORTS_PER_PROJECT
             {
-                return Err(resource("import inventory exceeds protocol-v3 limit"));
+                return Err(resource(if imports.len() >= syntax::MAX_IMPORTS_PER_MODULE {
+                    "module exceeds the import-declaration limit"
+                } else {
+                    "project exceeds the import-declaration limit"
+                }));
             }
             let import = parser.import(total_bindings)?;
             total_imports += 1;
@@ -111,6 +116,7 @@ pub fn parse_v3_import_candidate(
 }
 
 struct FileParser<'a> {
+    sources: &'a SourceMap,
     text: &'a str,
     tokens: Vec<Token>,
     position: usize,
@@ -168,6 +174,17 @@ impl FileParser<'_> {
     fn import(&mut self, previous_bindings: usize) -> Result<syntax::RawImportSyntax, ParseError> {
         let keyword = self.take(TokenKind::Keyword(Keyword::Import))?;
         self.take(TokenKind::OpenBrace)?;
+        let count = super::collections::bounds(&self.tokens, self.position - 1)
+            .map_or(0, |(_, count)| count);
+        if count > syntax::MAX_IMPORTED_NAMES_PER_DECLARATION
+            || previous_bindings + count > syntax::MAX_IMPORTED_NAMES_PER_PROJECT
+        {
+            return Err(resource(if count > syntax::MAX_IMPORTED_NAMES_PER_DECLARATION {
+                "import exceeds the imported-name limit"
+            } else {
+                "project exceeds the imported-name limit"
+            }));
+        }
         let mut bindings = Vec::new();
         loop {
             if self.current().is_some_and(|token| token.kind() == TokenKind::CloseBrace) {
@@ -179,7 +196,13 @@ impl FileParser<'_> {
             if bindings.len() >= syntax::MAX_IMPORTED_NAMES_PER_DECLARATION
                 || previous_bindings + bindings.len() >= syntax::MAX_IMPORTED_NAMES_PER_PROJECT
             {
-                return Err(resource("imported-name inventory exceeds protocol-v3 limit"));
+                return Err(resource(
+                    if bindings.len() >= syntax::MAX_IMPORTED_NAMES_PER_DECLARATION {
+                        "import exceeds the imported-name limit"
+                    } else {
+                        "project exceeds the imported-name limit"
+                    },
+                ));
             }
             let imported = self.identifier()?;
             let as_span = self.maybe(TokenKind::Keyword(Keyword::As)).map(raw);

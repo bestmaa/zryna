@@ -22,6 +22,17 @@ fn pinned_provider_and_native_lexer_match_exact_lexical_boundaries() {
     compare_positive(&[("src/main.zry", POSITIVE)]);
     compare_positive(&[("src/z.zry", ORDERING_Z), ("src/a.zry", ORDERING_A)]);
     compare_negative();
+    for character in [
+        '\u{0085}', '\u{00a0}', '\u{1680}', '\u{2000}', '\u{200b}', '\u{202f}', '\u{205f}',
+        '\u{3000}', '\u{feff}',
+    ] {
+        let text = format!("export{character}function f(x: i32,): i32 {{return x;}}");
+        compare_positive(&[("src/main.zry", &text)]);
+    }
+    for character in ['\r', '\n', '\u{2028}', '\u{2029}'] {
+        let text = format!("// comment{character}export function f(): i32 {{return 1;}}");
+        compare_positive(&[("src/main.zry", &text)]);
+    }
 }
 
 fn compare_positive(inputs: &[(&str, &str)]) {
