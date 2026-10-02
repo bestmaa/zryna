@@ -149,7 +149,7 @@ jobs:
   rust:
     name: rust (${{ matrix.os }})
     # The complete cold Windows closure can exceed 30 minutes.
-    timeout-minutes: 40
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 60 || 40 }}
     strategy:
       fail-fast: false
       matrix:

@@ -1,7 +1,8 @@
-# Closed generic and standard enum layout v1 proposal
+# Closed generic and standard enum layout v1
 
-Status: specified candidate for [Issue #415](https://github.com/zryna/zryna/issues/415).
-This is a proposed successor to [aggregate layout v1](AGGREGATE_LAYOUT_V1.md),
+State: **specified-only** for [Issue #415](https://github.com/zryna/zryna/issues/415).
+Normal integration records this reviewed future encoding contract, not runtime proof.
+This is a specified successor to [aggregate layout v1](AGGREGATE_LAYOUT_V1.md),
 not an interpretation of its existing tags or SHA-256 fingerprint. Existing
 layout records remain byte-for-byte unchanged and reject these new forms.
 
@@ -10,8 +11,8 @@ A closed generic nominal instance is identified by declaration kind,
 and `Result<T,E>` use separate compiler-reserved family tags and ordered complete
 argument keys. No source declaration can claim either family identity. These
 keys are leaves with respect to nominal fields, as in v1; argument keys are
-recursively length-prefixed and must be complete, finite and within the proposed
-4,096-byte and depth-64 instantiation limits. The candidate successor key
+recursively length-prefixed and must be complete, finite and within the specified
+4,096-byte and depth-64 instantiation limits. The specified successor key
 encoding retains v1 primitive/container tags and assigns these unused tags:
 
 ```text
@@ -28,8 +29,8 @@ All lanes are unsigned little-endian. The count is one or two for user nominal
 types, exactly one for Option, exactly two for Result. A mismatch is invalid.
 The language contract's function tags `40` and `41` are disjoint from these
 type keys and never enter the layout type universe or its fingerprint.
-These tags are candidate assignments awaiting maintainer acceptance, not an
-extension to the currently implemented v1 key parser. Two fixed key fixtures
+These tags are fixed for the future contract, not an extension to the
+currently implemented v1 key parser. Two fixed key fixtures
 are `Option<i32>` = `14010000000100000001` and `Result<i32,bool>` =
 `150200000001000000010100000000`. Their respective SHA-256 digests are
 `0e0115ef9544b1acda88ad090f8c060ee9e3e90788d6d216d82667753f3944c3`
@@ -49,7 +50,7 @@ LinuxX8664V1. Only the selected payload bytes are initialized or dropped.
 
 The successor sealed record includes a family/nominal instance key, closed
 argument IDs, substituted field/variant records, sizes, alignment, offsets,
-drop/runtime metadata and StorageTarget. The candidate fingerprint document uses
+drop/runtime metadata and StorageTarget. The specified fingerprint document uses
 the v1 record prefix and target/count encoding with domain separator ASCII
 `ZRYNA-GENERIC-AGGREGATE-LAYOUT-V1\0`; unchanged v1 records keep their exact
 tag-specific payloads. New record tags are `10=generic struct`,
@@ -74,8 +75,8 @@ The companion [fixed-fixture file](generic-enum-layout-v1-fixtures.json) also pi
 complete generic `Box<i32>`, `Choice<i32,bool>` and `Result<i32,bool>` record
 bytes and both storage target digests for all four cases. Independent encoders must reproduce every
 record and digest and reject a mutated tag, argument, target or ordinal. These
-proposed bytes still require maintainer acceptance; current v1 fingerprints
-cannot be reused.
+bytes are fixed reference encodings for this future contract; current v1
+fingerprints cannot be reused.
 Consumers require the exact matching successor fingerprint. Invalid target,
 unknown argument, cross-target fingerprint, changed ordinal, wrong payload,
 overflow, excessive depth and by-value cycle all fail before code generation.
@@ -86,3 +87,18 @@ type/depth/key/object limits, checked arithmetic with synthetic small targets,
 and a one-byte key/fingerprint mutation. The four fixed records cover both
 generic nominal kinds and both compiler-owned enum families; mutation and
 independent encoder fixtures remain implementation gates.
+
+The [owned/nested review fixtures](generic-owned-layout-v1-fixtures.json) and
+their [closed review schema](generic-owned-layout-v1.schema.json) additionally
+freeze Option<String>, Option<Option<String>> and Result<Option<String>,String>.
+Each case includes the complete canonical type-universe prefix, exact record
+bytes, size/alignment/offset/payload area and whole-document SHA-256 for both
+targets. Option<String> uses aggregate drop/runtime kind 1 with String payload
+type 2; all three owned standard enums have aggregate kind 1, never String kind
+2 on the wrapper. The ordered universe is bool=0, i32=1, String=2,
+Option<String>=3, Option<Option<String>>=4, Result<Option<String>,String>=5.
+Each listed case fingerprints its complete prefix, not an isolated record that
+omits a referenced type. `tests/m7-generic-owned-layout-spec.test.mjs` derives
+the layout formulas independently and reproduces the fixed bytes/digests.
+These are reference-encoding review results; executable layout authority and
+hostile runtime boundary rejection remain #416 requirements.

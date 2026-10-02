@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Proposed owned generic layout review fixtures",
+  "type": "object", "additionalProperties": false,
+  "required": ["format", "status", "universe", "cases"],
+  "properties": {
+    "format": { "const": "zryna.generic-owned-layout-v1.proposed-fixtures" },
+    "status": { "const": "candidate-only" },
+    "universe": { "type": "string", "minLength": 1 },
+    "cases": {
+      "type": "array", "minItems": 3, "maxItems": 3,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["name", "typeKeyHex", "typeKeySha256", "typeId", "targets"],
+        "properties": {
+          "name": { "enum": ["Option<String>", "Option<Option<String>>", "Result<Option<String>,String>"] },
+          "typeKeyHex": { "$ref": "#/$defs/hex" },
+          "typeKeySha256": { "$ref": "#/$defs/digest" },
+          "typeId": { "type": "integer", "minimum": 3, "maximum": 5 },
+          "targets": {
+            "type": "array", "minItems": 2, "maxItems": 2,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["target", "size", "alignment", "payloadOffset", "payloadAreaSize", "recordHex", "documentBytes", "sha256"],
+              "properties": {
+                "target": { "enum": [1, 2] },
+                "size": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+                "alignment": { "enum": [4, 8] },
+                "payloadOffset": { "type": "integer", "minimum": 4, "maximum": 8 },
+                "payloadAreaSize": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+                "recordHex": { "$ref": "#/$defs/hex" },
+                "documentBytes": { "type": "integer", "minimum": 1, "maximum": 4096 },
+                "sha256": { "$ref": "#/$defs/digest" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hex": { "type": "string", "pattern": "^([0-9a-f]{2})+$" },
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}
