@@ -8,6 +8,12 @@ source revision. The editor requires `scalar-format-v1` for its default scalar p
 `control-flow-format-v1` for explicit M2, plus `portable-setup-v1` and the exact server source
 revision. An older released server with the same compiler version is incompatible.
 
+Editor extension 0.5.0 is separately published on the
+[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=zryna.zryna) and
+[Open VSX](https://open-vsx.org/extension/zryna/zryna). Registry installation does not supply
+or authenticate this outer setup. Its review-candidate status and forbidden production admission
+remain unchanged; see the [editor publication evidence](LANGUAGE_SERVER.md#publication-and-installed-host-evidence).
+
 The explicit M3 editor profile requires the exact data-ownership formatting capability. It
 authenticates saved imports beneath the trusted workspace folder and never runs project code
 during formatting. Explicit Run remains limited to scalar and M2.
@@ -35,8 +41,8 @@ A checksum found only beside an untrusted download is not publisher authenticati
 candidate has no public publisher signature: use only the exact reviewer-delivered archive
 identity. The builder independently verifies the nested compiler's signed release and records its
 archive identity and provenance. That signature does **not** authenticate the new outer setup,
-server or VSIX. Public distribution needs separately reviewed protected publication and signed
-outer provenance; no existing tag or release is replaced.
+server or VSIX. Public distribution of the outer setup needs separately reviewed protected publication
+and signed outer provenance; no existing tag or release is replaced.
 
 Extract into a new user-owned directory, keeping all files together. Do not merge files into an
 old installation. Projects and editor profiles must live outside this directory. Neither Rust,
@@ -159,5 +165,6 @@ node scripts/portable-setup/build.mjs --release <assets-directory> --cosign <abs
 The builder verifies signatures, exact source/VSIX correspondence, embedded server revision and
 the complete compiler archive before assembling a deterministic outer archive and candidate
 receipt. Local unsigned receipts establish only the identities observed in that build. Required
-hosted checks, independent binary replicas and user acceptance are separate evidence. Publication,
-marketplace delivery and external pilot recruitment remain separately authorized work.
+hosted checks, independent binary replicas and user acceptance are separate evidence. The editor's
+registry publication and installed-host verification are recorded in the editor guide; protected
+outer-setup publication and external pilot recruitment remain separately authorized work.

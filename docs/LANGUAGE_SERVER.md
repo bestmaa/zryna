@@ -3,7 +3,10 @@
 Status: bounded stdio transport for protocol-v2 scalar diagnostics, definition, and formatting,
 plus explicitly selected M2 `control-flow-v1` and M3 `data-ownership-v1` diagnostics and
 formatting. The M2/M3 selections add no definition index or compiler execution method.
-Marketplace publication remains pending.
+Zryna Developer Preview 0.5.0 is published on the
+[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=zryna.zryna) and
+[Open VSX](https://open-vsx.org/extension/zryna/zryna). See the installation and publication
+evidence below; extension publication does not promote the portable setup candidate.
 
 ## Start and initialize
 
@@ -124,7 +127,8 @@ addition expressions. It consumes the exact verified snapshot only after success
 admission. Parenthesized expressions, classes, imports,
 incomplete syntax and semantic errors receive no edits. The separately selected M2 formatter
 handles its reviewed one-file control-flow surface. M3 uses the separate protocol-v4 connection.
-Issue #409 remains open for editor integration and marketplace acceptance.
+The matching 0.5.0 editor provides these formatting profiles; its publication and installed-host
+acceptance are recorded below for #409.
 
 The canonical style uses two spaces inside function bodies, one space between words and around
 addition, no space before commas/colons/semicolons or inside parameter parentheses, a space after
@@ -198,11 +202,11 @@ bytes outside selected units remain unchanged. Each canonical document is bounde
 UTF-8 bytes. Formatting never sorts imports, executes code, or writes a file. A saved import that
 changes after admission makes the formatting revision stale and returns D4002 without edits.
 
-## Local editor installation and compatibility
+## Editor installation and compatibility
 
-The VS Code/Open VSX package lives in editors/vscode-zryna. It is a local installable Developer
-Preview, not a marketplace publication. It provides diagnostics, scalar definition, document formatting
-and range formatting for one active local file at a time. Switching files starts a fresh bounded
+The VS Code/Open VSX package lives in editors/vscode-zryna. Zryna Developer Preview 0.5.0 is
+available from both registries as `zryna.zryna`. It provides diagnostics, scalar definition,
+document and range formatting for one active local file at a time. Switching files starts a fresh bounded
 connection. Explicit M3 formatting resolves saved imports through the trusted project root;
 the client does not parse imports. It has no runtime package dependencies, telemetry,
 download/update behavior, debugging or general filesystem write service. A separate explicit
@@ -225,7 +229,21 @@ scalar definition compatibility. **Zryna: Select Editor Profile** offers `i32-v1
 before admitting the active document. The explicit Run picker accepts scalar and M2 only. Neither
 selection nor formatting executes source. No new compiler release or tag is created by this work.
 
-From the matching reviewed source checkout, use the pinned toolchains:
+Install the published extension in VS Code:
+
+~~~text
+code --install-extension zryna.zryna@0.5.0
+code --list-extensions --show-versions
+~~~
+
+The extension list must include `zryna.zryna@0.5.0`. In an Open VSX-compatible client, select
+the [Zryna listing](https://open-vsx.org/extension/zryna/zryna), or obtain the exact 0.5.0 VSIX
+from that listing and use **Install from VSIX**. The extension contains no compiler or server.
+Configure the matching server and runtime using the user settings below, or use an independently
+verified [portable setup candidate](PORTABLE_SETUP.md). Registry installation alone does not
+establish a working compiler connection.
+
+For source development, use the matching reviewed checkout and pinned toolchains:
 
 ~~~text
 pnpm install --frozen-lockfile
@@ -250,7 +268,42 @@ Packaging uses pinned @vscode/vsce 4.0.0 without dependencies or signing. Its op
 executable installer is explicitly disabled; the VSIX contains only its manifest, client/Run
 modules, lexical grammar, README, changelog and license. Publication requires reviewed exact-package provenance,
 a configured marketplace publisher/namespace and its credentials. None are provisioned or embedded
-by this package. See the package changelog for the initial release notes.
+by this package. See the [package changelog](../editors/vscode-zryna/CHANGELOG.md) for release notes.
+
+### Publication and installed-host evidence
+
+On 2 October 2026, the reviewed 0.5.0 VSIX was published under the existing `zryna` publisher
+and verified Open VSX namespace. The
+[exact Open VSX metadata](https://open-vsx.org/api/zryna/zryna/0.5.0) reports version 0.5.0,
+publication by `bestmaa` in the verified namespace, and a downloadable package. Its downloaded
+VSIX has SHA-256
+`cc7ba5e53083adfd35e1398ce9ab009587ff4e90c4b8c479f02f34cae5245254`, equal to the reviewed package.
+
+Two new isolated Windows profiles installed 0.5.0 successfully: one directly from the VS Code
+gallery, and one from the verified Open VSX download. Both installation commands exited 0 and
+listed `zryna.zryna@0.5.0`. The gallery's 12 installed extension payload files match the reviewed
+VSIX; its package manifest differs only by registry installation metadata.
+
+Each installed extension separately passed all nine real-host checks in VS Code 1.138.0:
+explicit workspace trust, activation and verified installation, scalar definition, scalar
+JavaScript result 9, M2 formatting/idempotence, M2 JavaScript result 13 and output opening, M2
+WebAssembly result -13, invalid-to-valid/stale diagnostic recovery, and M3 saved-import
+formatting/idempotence. Only the acceptance runner was loaded as a development extension; each
+Zryna extension's installed path was asserted. The tests reused the previously trusted isolated
+workspace and did not change a normal editor profile.
+
+The acceptance tests came from `2f2f64e723924cd329a987e7ac9833149fd0811b`. The matching reviewed
+setup retained source `bf8706ab4a8a606ec99d816e8df90d1c4c1f0f31` and independently checked
+`setup.json` SHA-256 `b0713306edc989c83c72c8bb5044fc192f88ee8649db168b7ff6e30038701f0a`.
+Earlier #500 checks on exact source `3fadcbd3d0112dd8cd79bfaa10bd334a18594acc` passed all 33
+hosted checks, including Linux/Windows reproducible setup and fresh portable acceptance. Those
+checks are separate from the Windows installed-marketplace host observations; no Linux graphical
+extension-host acceptance is claimed.
+
+No compiler/server rebuild, new compiler tag, or portable beta/stable release accompanied this
+publication. Setup `0.1.0-candidate.3` remains a review candidate with production admission
+forbidden. The immutable 0.5.0 VSIX retains its pre-publication README/changelog; this current
+guide and repository release notes supersede their publication-pending statements.
 
 ## Explicit editor Run
 
@@ -289,4 +342,5 @@ rewritten. The output channel identifies the snapshot and reports actual compile
 Open Generated JavaScript and Reveal Run Output use the latest successful invocation's actual
 artifact after checking the manifest source/invocation and emitted bytes/hash. JavaScript opens
 as source; Wasm is revealed in the OS file explorer. This is an editor package update, with no
-compiler release/tag or marketplace publication. Broader formatting and publication remain #409.
+new compiler release or tag. Extension 0.5.0 publication and installed-host acceptance are
+recorded above; explicit Run remains limited to scalar and M2.

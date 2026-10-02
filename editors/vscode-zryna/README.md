@@ -8,10 +8,24 @@ Unsupported or incomplete input receives no edits. Explicit Run remains limited 
 
 ## Installation
 
+Zryna Developer Preview **0.5.0** is available on the
+[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=zryna.zryna) and
+[Open VSX](https://open-vsx.org/extension/zryna/zryna). In VS Code, install the exact version:
+
+```text
+code --install-extension zryna.zryna@0.5.0
+code --list-extensions --show-versions
+```
+
+The list must include `zryna.zryna@0.5.0`. Open VSX-compatible clients can install from the
+linked listing or use **Install from VSIX** with its exact 0.5.0 download. The extension includes
+no compiler or language server: configure the matching 0.5.0 server and runtime using the user
+settings below, or use an independently verified complete portable setup candidate.
+
 The portable **0.1.0-candidate.3** setup combines the unchanged compiler 0.2.3 with server/editor
 0.5.0 and a pinned runtime. Follow the [portable setup guide](https://github.com/zryna/zryna/blob/main/docs/PORTABLE_SETUP.md).
-Verify the reviewer-delivered archive identity before execution. This is a review candidate, not
-a public beta or marketplace release. Its isolated installer creates a new profile with user
+Verify the reviewer-delivered archive identity before execution. This setup remains a review
+candidate without a public beta/stable release. Its isolated installer creates a new profile with user
 settings `zryna.installationPath` and `zryna.installationDigest`. The entire installation is checked
 against that independently supplied digest before source transmission. Existing profiles and
 projects remain untouched. No checkout, Rust or separately installed Node is needed.
@@ -88,7 +102,14 @@ On a local Windows run against the earlier 0.4.0 `cb60922` candidate, the one-ti
 23.0 seconds; two consecutive cached, unattended acceptance runs completed in 24.0 and 24.0
 seconds. The first VS Code download in an earlier probe took 102 seconds including a failed trust
 check, so a complete cold acceptance duration has not been measured. These are observations,
-not duration guarantees or 0.5.0 host acceptance evidence. Linux and CI behavior remain unverified.
+not duration guarantees or 0.5.0 host acceptance evidence. Separately, on 2 October 2026, clean
+installations from the VS Code gallery and verified Open VSX 0.5.0 download each passed all nine
+checks in the real Windows VS Code 1.138.0 host, with the installed extension path asserted and
+only the acceptance runner loaded as a development extension. Real results were scalar
+JavaScript 9, M2 JavaScript 13 and M2 WebAssembly -13. Both runs also passed diagnostic recovery
+and M3 saved-import formatting/idempotence. See the [exact publication evidence](https://github.com/zryna/zryna/blob/main/docs/LANGUAGE_SERVER.md#publication-and-installed-host-evidence)
+for source/setup identities and the separate prior Linux/Windows CI evidence. Linux graphical
+extension-host acceptance remains unverified.
 
 ## Compatibility
 
@@ -99,8 +120,11 @@ not duration guarantees or 0.5.0 host acceptance evidence. Linux and CI behavior
 
 The extension verifies the exact capability before sending source. A package-version match alone
 is insufficient. The VSIX alone contains no compiler; the portable candidate supplies the matched
-setup. The package is VSIX-compatible with VS Code/Open VSX clients, but
-marketplace publication requires a configured publisher and credentials and is still pending.
+setup. The published package is available from both registries. Marketplace installation does
+not authenticate or promote the outer portable candidate into a public beta or production release.
+The immutable 0.5.0 VSIX contains the earlier pre-publication documentation; this current guide
+and [release notes](https://github.com/zryna/zryna/blob/main/editors/vscode-zryna/CHANGELOG.md)
+record completed publication.
 
 ## Boundaries
 
@@ -155,4 +179,4 @@ Run state is retained for inspection, including failed/cancelled scaffolds; the 
 identifies the project. Remove old run directories manually when no run is active.
 
 This explicit execution scope follows #457 and supersedes #409's earlier no-execution boundary
-only for this command. Marketplace publication remains open in #409.
+only for this command. The published extension's Run surface remains limited to scalar and M2.
