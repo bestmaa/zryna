@@ -137,6 +137,13 @@ impl PureSourceCompiler for DependencyOutputCompiler {
 fn dependency_root_output_is_denied_before_cache_fill_or_publication() {
     let (sources, resolution) = fixture();
     let (_cache_project, cache, _output_project, output) = roots("dependency-output-denial");
+    // A Windows cache miss may prepare this empty namespace. Provision it before
+    // snapshotting so full-tree equality still rejects every entry and stage write.
+    drop(
+        cache
+            .retained_build_namespace_with_substitution_hook(|| {})
+            .expect("empty cache namespace"),
+    );
     let before_sources = tree(sources.path());
     let before_cache = tree(cache.path());
     let before_output = tree(output.path());
