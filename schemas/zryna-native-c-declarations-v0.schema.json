@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zryna.com/schemas/zryna-native-c-declarations-v0.schema.json",
+  "title": "Native C v0 source-bound declarations (specified-only)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "target", "abi", "convention", "carriers", "ownership", "runtimeContract", "sources", "libraries", "operations", "sites"],
+  "properties": {
+    "format": { "const": "zryna.native-c-declarations.v0" },
+    "version": { "const": 0 },
+    "target": { "const": "x86_64-unknown-linux-gnu" },
+    "abi": { "const": "zryna-native-c-interop-v0" },
+    "convention": { "const": "sysv-amd64-c-v0" },
+    "carriers": { "const": "native-c-interop-v0-carriers" },
+    "ownership": { "const": "native-c-interop-v0-resources" },
+    "runtimeContract": { "const": "zryna-ownership-runtime-v1" },
+    "sources": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "$ref": "#/$defs/source" } },
+    "libraries": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/library" } },
+    "operations": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "$ref": "#/$defs/operation" } },
+    "sites": { "type": "array", "maxItems": 4096, "items": { "$ref": "#/$defs/site" } }
+  },
+  "$defs": {
+    "key": { "type": "string", "minLength": 1, "maxLength": 257, "pattern": "^[A-Za-z0-9_/@.-]+$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "path": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9_/-]+\\.zry$" },
+    "index": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "source": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+      "properties": { "path": { "$ref": "#/$defs/path" }, "sha256": { "$ref": "#/$defs/digest" } }
+    },
+    "allocator": {
+      "type": "object", "additionalProperties": false, "required": ["id", "kind", "category", "create", "release"],
+      "properties": {
+        "id": { "$ref": "#/$defs/key" }, "kind": { "$ref": "#/$defs/key" },
+        "category": { "enum": ["handle", "bytes"] },
+        "create": { "$ref": "#/$defs/key" }, "release": { "$ref": "#/$defs/key" }
+      }
+    },
+    "library": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "version", "headerSha256", "policySha256", "kinds", "allocators"],
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z][A-Za-z0-9_-]*@[A-Za-z0-9_.-]+$" },
+        "version": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9_.-]+$" },
+        "headerSha256": { "$ref": "#/$defs/digest" }, "policySha256": { "$ref": "#/$defs/digest" },
+        "kinds": { "type": "array", "maxItems": 16, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } },
+        "allocators": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/allocator" } }
+      }
+    },
+    "parameter": {
+      "type": "object", "additionalProperties": false, "required": ["name", "abi", "resource"],
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "abi": { "enum": ["c-i32", "c-int", "bool32", "count", "bytes-in", "bytes-owned-out", "count-out", "i32-out", "handle-in", "handle-out", "bytes-release"] },
+        "resource": { "type": ["integer", "null"], "minimum": 0, "maximum": 7 }
+      }
+    },
+    "resource": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "slots", "access", "ownerBefore", "ownerAfter", "borrowEnd", "nullRule", "maxBytes", "encoding", "allocator", "release", "validPointerGuarantee", "releasableOnMalformed", "fresh", "expectedLengthSlot"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/key" },
+        "slots": { "type": "array", "minItems": 1, "maxItems": 4, "uniqueItems": true, "items": { "type": "integer", "minimum": 0, "maximum": 15 } },
+        "access": { "enum": ["read", "create", "consume"] },
+        "ownerBefore": { "enum": ["none", "caller"] }, "ownerAfter": { "enum": ["none", "caller", "consumed"] },
+        "borrowEnd": { "enum": ["return", "none"] }, "nullRule": { "enum": ["null-zero", "nonnull"] },
+        "maxBytes": { "type": ["integer", "null"], "minimum": 0, "maximum": 4096 },
+        "encoding": { "enum": ["bytes", "utf8", "none"] },
+        "allocator": { "$ref": "#/$defs/key" }, "release": { "$ref": "#/$defs/key" },
+        "validPointerGuarantee": { "type": "boolean" }, "releasableOnMalformed": { "type": "boolean" },
+        "fresh": { "type": "boolean" },
+        "expectedLengthSlot": { "type": ["integer", "null"], "minimum": 0, "maximum": 15 }
+      }
+    },
+    "status": {
+      "type": "object", "additionalProperties": false, "required": ["code", "kind", "initialized", "newOwners", "condition", "preservesInputs"],
+      "properties": {
+        "code": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+        "kind": { "enum": ["success", "recoverable"] },
+        "initialized": { "type": "array", "maxItems": 16, "uniqueItems": true, "items": { "type": "integer", "minimum": 0, "maximum": 15 } },
+        "newOwners": { "type": "array", "maxItems": 8, "uniqueItems": true, "items": { "type": "integer", "minimum": 0, "maximum": 7 } },
+        "condition": { "enum": ["success", "negative-first-i32", "allocation-failure", "raw-over-limit", "raw-over-limit-or-allocation"] },
+        "preservesInputs": { "const": true }
+      }
+    },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key", "direction", "library", "logicalName", "symbol", "parameters", "result", "resources", "mode", "statuses", "effects", "execution", "sourceBinding"],
+      "properties": {
+        "key": { "$ref": "#/$defs/key" }, "direction": { "enum": ["import", "export"] },
+        "library": { "$ref": "#/$defs/key" }, "logicalName": { "$ref": "#/$defs/name" }, "symbol": { "$ref": "#/$defs/name" },
+        "parameters": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/parameter" } },
+        "result": { "enum": ["c-i32", "c-int", "bool32", "unit"] },
+        "resources": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/resource" } },
+        "mode": { "enum": ["direct", "status", "void"] },
+        "statuses": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/status" } },
+        "effects": { "enum": ["total", "foreign"] },
+        "execution": { "const": "sync-invoking-thread-no-retention-callback-reentry-concurrency-unwind" },
+        "sourceBinding": { "$ref": "#/$defs/binding" }
+      }
+    },
+    "binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "start", "end", "ordinal"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" }, "sha256": { "$ref": "#/$defs/digest" },
+        "start": { "$ref": "#/$defs/index" }, "end": { "$ref": "#/$defs/index" }, "ordinal": { "$ref": "#/$defs/index" }
+      }
+    },
+    "site": {
+      "type": "object", "additionalProperties": false,
+      "required": ["primitive", "safety", "operation", "path", "sourceSha256", "start", "end", "spelling"],
+      "properties": {
+        "primitive": { "enum": ["rawCall", "borrowBytes", "borrowUtf8", "byteLength", "outI32", "outHandle", "outBytes", "outCount", "readI32", "takeHandle", "takeBytes", "copyBytes", "release", "foreignError"] },
+        "safety": { "enum": ["unsafe-raw", "safe"] },
+        "operation": { "type": ["string", "null"], "minLength": 1, "maxLength": 257, "pattern": "^[A-Za-z0-9_/@.-]+$" },
+        "path": { "$ref": "#/$defs/path" }, "sourceSha256": { "$ref": "#/$defs/digest" },
+        "start": { "$ref": "#/$defs/index" }, "end": { "$ref": "#/$defs/index" },
+        "spelling": { "type": "string", "minLength": 1, "maxLength": 4096, "pattern": "^Ffi\\.[A-Za-z][A-Za-z0-9]*\\(" }
+      }
+    }
+  }
+}

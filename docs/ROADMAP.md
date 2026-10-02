@@ -567,7 +567,12 @@ Completion gate: editor and playground behavior is driven by compiler contracts 
   is reviewed: freeze provider syntax and fixtures, then closed-type semantics and
   instance budgets, versioned layout/IR/ABI authorities, owned match/cleanup,
   three-target conformance, and finally a separate public activation gate;
-- native-only FFI profile;
+- native-only FFI under the [#364 ABI contract](../spec/abi/NATIVE_C_INTEROP_V0.md)
+  and [complete declaration contract](../spec/abi/NATIVE_C_INTEROP_V0_REVIEW.md):
+  specified-only syntax, exact identities, owner/failure policy and limits;
+  then separate tiny prototype, independent IR/MIR verification, import/export
+  and driver linking, checked wrappers, per-platform conformance and public
+  activation. The specified contract supplies no foreign-call runtime support;
 - compatibility, performance, and security gates;
 - additional platforms after conformance gates exist;
 - documented 1.0 stability criteria.
