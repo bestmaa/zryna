@@ -36,7 +36,7 @@
       "root": "crates/zryna-architecture",
       "kind": "foundation",
       "dependencies": ["zryna-diagnostics"],
-      "allowedEntries": ["Cargo.toml", "README.md", "src"]
+      "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
     },
     {
       "id": "zryna-syntax",
@@ -91,6 +91,13 @@
       "id": "zryna-backend-javascript",
       "root": "crates/zryna-backend-javascript",
       "kind": "backend",
+      "dependencies": ["zryna-diagnostics", "zryna-ir", "zryna-layout", "zryna-ownership-runtime-abi", "zryna-semantics", "zryna-source", "zryna-syntax"],
+      "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
+    },
+    {
+      "id": "zryna-native-c-ir",
+      "root": "crates/zryna-native-c-ir",
+      "kind": "compiler",
       "dependencies": ["zryna-diagnostics", "zryna-ir", "zryna-layout", "zryna-ownership-runtime-abi", "zryna-semantics", "zryna-source", "zryna-syntax"],
       "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
     },

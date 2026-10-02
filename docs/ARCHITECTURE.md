@@ -131,7 +131,14 @@ syscall module is the workspace's sole approved unsafe-Rust exception. The repos
 gate enforces the exact exception manifest and module; all other components retain the workspace
 forbid.
 
-The permanent direction is `frontend -> syntax -> semantics -> IR`. `zryna-semantics` is a compiler
+The permanent direction is `frontend -> syntax -> semantics -> IR`. The separately registered
+`zryna-native-c-ir` compiler component implements the native-requirement IR extension downstream
+of the actual source-bound semantic/private issuer. It depends on semantics and base IR; neither
+has a reverse edge. Its independent raw-to-verified boundary retains original bodies/materials,
+both layouts and the runtime declaration issuer, with complete source/value/call/storage/exit
+replay. This authority supplies no MIR, object, runtime, linker or public selector capability.
+See [its component contract](../crates/zryna-native-c-ir/README.md).
+`zryna-semantics` is a compiler
 component and cannot depend on `zryna-frontend`; backends cannot depend on either provider layer.
 The architecture engine has a negative graph fixture for both forbidden edges.
 

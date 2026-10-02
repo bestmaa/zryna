@@ -178,6 +178,10 @@ jobs:
         run: cargo fetch --locked
       - name: Verify M2 semantics
         run: cargo test --locked -p zryna-semantics --lib control_flow_v1
+      - name: Verify native C IR admission and hostile claims
+        run: cargo test --locked -p zryna-native-c-ir
+      - name: Verify native C IR graph registration
+        run: cargo test --locked -p zryna-architecture --test native_c_ir_graph
       - name: Verify M2 driver security
         run: cargo test --locked -p zryna-driver --lib
       - name: Verify exact Windows directory lifecycle

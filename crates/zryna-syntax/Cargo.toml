@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 zryna-diagnostics = { path = "../zryna-diagnostics" }
 zryna-source = { path = "../zryna-source" }
 
