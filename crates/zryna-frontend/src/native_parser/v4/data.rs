@@ -10,13 +10,30 @@ use crate::native_lexer::{Keyword, TokenKind};
 use super::{FileParser, ParseError, raw, resource, unsupported};
 
 impl FileParser<'_> {
+    fn member_inventory(&self) -> Result<(), ParseError> {
+        let count = super::super::collections::separated_bounds(
+            &self.tokens,
+            self.position - 1,
+            TokenKind::Semicolon,
+            true,
+        )
+        .map_or(0, |(_, count)| count);
+        if count > syntax::MAX_MEMBERS_PER_DECLARATION
+            || self.previous_members + count > syntax::MAX_MEMBERS_PER_PROJECT
+        {
+            return Err(resource(if count > syntax::MAX_MEMBERS_PER_DECLARATION {
+                "data declaration exceeds the member limit"
+            } else {
+                "project exceeds the data-member limit"
+            }));
+        }
+        Ok(())
+    }
+
     pub(super) fn data_declaration(
         &mut self,
         previous_declarations: usize,
     ) -> Result<syntax::RawDataDeclaration, ParseError> {
-        if previous_declarations >= syntax::MAX_DATA_DECLARATIONS_PER_PROJECT {
-            return Err(resource("data-declaration inventory exceeds protocol-v4 limit"));
-        }
         let export = self.maybe(TokenKind::Keyword(Keyword::Export));
         let interface = self.take(TokenKind::Keyword(Keyword::Interface))?;
         let name = self.identifier()?;
@@ -28,16 +45,11 @@ impl FileParser<'_> {
             _ => return Err(unsupported(Some(interface), "unsupported data-declaration marker")),
         };
         let open = self.take(TokenKind::OpenBrace)?;
+        self.member_inventory()?;
         let mut fields = Vec::new();
         let mut variants = Vec::new();
         let mut seen = BTreeSet::new();
         while self.current().is_some_and(|token| token.kind() != TokenKind::CloseBrace) {
-            let count = fields.len() + variants.len();
-            if count >= syntax::MAX_MEMBERS_PER_DECLARATION
-                || self.previous_members + count >= syntax::MAX_MEMBERS_PER_PROJECT
-            {
-                return Err(resource("data-member inventory exceeds protocol-v4 limit"));
-            }
             let member = self.identifier()?;
             if !seen.insert(member.text.clone()) {
                 return Err(unsupported(self.current(), "duplicate data member"));
@@ -83,6 +95,9 @@ impl FileParser<'_> {
             return Err(unsupported(self.current(), "empty data declaration"));
         }
         let close = self.take(TokenKind::CloseBrace)?;
+        if previous_declarations >= syntax::MAX_DATA_DECLARATIONS_PER_PROJECT {
+            return Err(resource("project exceeds the nominal-declaration limit"));
+        }
         let kind = if is_struct {
             syntax::RawDataDeclarationKind::Struct {
                 interface_span: raw(interface),

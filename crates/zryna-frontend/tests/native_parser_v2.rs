@@ -157,27 +157,8 @@ fn unsupported_primitive_annotations_match_frozen_bootstrap_and_retain_sibling()
 }
 
 #[test]
-fn primitive_annotation_diagnostics_respect_the_first_extra_limit() {
-    let rejected = "export function f(x: string): i32 { return 1; }\n";
-    for (count, within_limit) in [
-        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS, true),
-        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS + 1, false),
-    ] {
-        let text = rejected.repeat(count);
-        let sources =
-            SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
-        let lexed = lex(&sources).expect("bounded lexical stream");
-        let result = parse_v2_recovering_candidate(&sources, &lexed);
-        if within_limit {
-            let raw = result.expect("exact diagnostic limit");
-            assert_eq!(raw.diagnostics.len(), count);
-            assert!(raw.files[0].functions.is_empty());
-            syntax_v2::verify_snapshot(raw, &sources).expect("source-bound error snapshot");
-        } else {
-            let error = result.expect_err("first extra diagnostic is atomic");
-            assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
-        }
-    }
+fn primitive_annotation_diagnostics_preserve_bootstrap_truncation() {
+    assert_capped_diagnostics("export function f(x: string): i32 { return 1; }\n", 1);
 }
 
 #[test]
@@ -210,61 +191,18 @@ fn mismatched_recovery_delimiters_cannot_promote_later_exports() {
 }
 
 #[test]
-fn first_extra_recovery_diagnostic_fails_atomically() {
-    let rejected = "export function rejected(): i32 { return (1); }\n";
-    let text = rejected.repeat(syntax_v2::MAX_PROVIDER_DIAGNOSTICS + 1);
-    let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
-    let lexed = lex(&sources).expect("bounded lexical stream");
-    let error = parse_v2_recovering_candidate(&sources, &lexed)
-        .expect_err("first-extra recovery diagnostic");
-    assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
+fn first_extra_recovery_diagnostic_retains_terminal_error_and_later_sibling() {
+    assert_capped_diagnostics("export function f(): i32 { return (1); }\n", 1);
 }
 
 #[test]
-fn return_newline_diagnostic_pairs_respect_the_first_extra_limit() {
-    let rejected = "export function f(): i32 { return\n1; }\n";
-    for (count, within_limit) in [
-        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS / 2, true),
-        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS / 2 + 1, false),
-    ] {
-        let text = rejected.repeat(count);
-        let sources =
-            SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
-        let lexed = lex(&sources).expect("bounded lexical stream");
-        let result = parse_v2_recovering_candidate(&sources, &lexed);
-        if within_limit {
-            let raw = result.expect("exact diagnostic limit");
-            assert_eq!(raw.diagnostics.len(), syntax_v2::MAX_PROVIDER_DIAGNOSTICS);
-            syntax_v2::verify_snapshot(raw, &sources).expect("source-bound error snapshot");
-        } else {
-            let error = result.expect_err("first extra diagnostic is atomic");
-            assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
-        }
-    }
+fn return_newline_diagnostic_pairs_preserve_bootstrap_truncation() {
+    assert_capped_diagnostics("export function f(): i32 { return\n1; }\n", 2);
 }
 
 #[test]
-fn unsupported_call_diagnostics_respect_the_first_extra_limit() {
-    let rejected = "export function f(): i32 { return f(1); }\n";
-    for (count, within_limit) in [
-        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS, true),
-        (syntax_v2::MAX_PROVIDER_DIAGNOSTICS + 1, false),
-    ] {
-        let text = rejected.repeat(count);
-        let sources =
-            SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
-        let lexed = lex(&sources).expect("bounded lexical stream");
-        let result = parse_v2_recovering_candidate(&sources, &lexed);
-        if within_limit {
-            let raw = result.expect("exact diagnostic limit");
-            assert_eq!(raw.diagnostics.len(), count);
-            assert!(raw.files[0].functions.is_empty());
-            syntax_v2::verify_snapshot(raw, &sources).expect("source-bound error snapshot");
-        } else {
-            let error = result.expect_err("first extra diagnostic is atomic");
-            assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
-        }
-    }
+fn unsupported_call_diagnostics_preserve_bootstrap_truncation() {
+    assert_capped_diagnostics("export function f(): i32 { return f(1); }\n", 1);
 }
 
 #[test]
@@ -410,7 +348,7 @@ fn first_extra_function_exceeds_the_frozen_function_limit() {
     let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("bounded source");
     let lexed = lex(&sources).expect("bounded lexical inventory");
     let error = parse_v2_candidate(&sources, &lexed).expect_err("first-extra function");
-    assert_eq!(error.diagnostic().code(), "ZRYNA-F2003");
+    assert_eq!(error.diagnostic().code(), "ZRYNA-F1002");
 }
 
 #[test]
@@ -429,5 +367,27 @@ fn first_extra_parameter_exceeds_the_frozen_parameter_limit() {
         if let Ok(raw) = result {
             syntax_v2::verify_snapshot(raw, &sources).expect("parameter-bound candidate verifies");
         }
+    }
+}
+
+fn assert_capped_diagnostics(rejected: &str, per_function: usize) {
+    for count in [254 / per_function, 256 / per_function, 258 / per_function] {
+        let text = rejected.repeat(count) + "export function retained(): i32 { return 2; }";
+        let sources = SourceMap::build(vec![source("src/main.zry", &text)]).expect("source");
+        let lexed = lex(&sources).expect("tokens");
+        let raw =
+            parse_v2_recovering_candidate(&sources, &lexed).expect("bounded diagnostic retention");
+        let emitted = count * per_function;
+        assert_eq!(raw.diagnostics.len(), emitted.min(256));
+        assert_eq!(raw.files[0].functions.len(), 1);
+        assert_eq!(raw.files[0].functions[0].name.text, "retained");
+        if emitted >= 256 {
+            assert_eq!(raw.diagnostics[255].code, "ZRYNA-F2003");
+            assert_eq!(raw.diagnostics[255].location, syntax_v2::RawDiagnosticLocation::Global);
+            assert!(
+                raw.diagnostics[..255].iter().all(|diagnostic| diagnostic.code == "ZRYNA-F2002")
+            );
+        }
+        syntax_v2::verify_snapshot(raw, &sources).expect("error snapshot verifies");
     }
 }

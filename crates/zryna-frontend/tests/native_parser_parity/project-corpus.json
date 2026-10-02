@@ -1,0 +1,4165 @@
+[
+  {
+    "name": "v2-multifile-mixed-errors",
+    "version": 2,
+    "files": [
+      {
+        "path": "src/p02.zry",
+        "text": "export function retained(): i32 {return 2;}"
+      },
+      {
+        "path": "src/p00.zry",
+        "text": "export function rejected(x: string): number {return (1);}\nexport function first(): i32 {return 1;}"
+      },
+      {
+        "path": "src/p01.zry",
+        "text": "export function malformed(): i32 {return 1 + ;}"
+      }
+    ],
+    "response": {
+      "result": {
+        "schema_version": 2,
+        "files": [
+          {
+            "id": 0,
+            "path": "src/p00.zry",
+            "functions": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 58,
+                  "end": 98
+                },
+                "export_span": {
+                  "file": 0,
+                  "start": 58,
+                  "end": 64
+                },
+                "function_span": {
+                  "file": 0,
+                  "start": 65,
+                  "end": 73
+                },
+                "name": {
+                  "text": "first",
+                  "span": {
+                    "file": 0,
+                    "start": 74,
+                    "end": 79
+                  }
+                },
+                "parameters": [],
+                "result_type": {
+                  "span": {
+                    "file": 0,
+                    "start": 83,
+                    "end": 86
+                  },
+                  "kind": {
+                    "kind": "named",
+                    "name": "i32"
+                  }
+                },
+                "body": {
+                  "span": {
+                    "file": 0,
+                    "start": 87,
+                    "end": 98
+                  },
+                  "statements": [
+                    {
+                      "span": {
+                        "file": 0,
+                        "start": 88,
+                        "end": 97
+                      },
+                      "kind": {
+                        "kind": "return",
+                        "keyword_span": {
+                          "file": 0,
+                          "start": 88,
+                          "end": 94
+                        },
+                        "value": 0
+                      }
+                    }
+                  ],
+                  "expressions": [
+                    {
+                      "span": {
+                        "file": 0,
+                        "start": 95,
+                        "end": 96
+                      },
+                      "kind": {
+                        "kind": "i32-literal",
+                        "spelling": "1"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": 1,
+            "path": "src/p01.zry",
+            "functions": []
+          },
+          {
+            "id": 2,
+            "path": "src/p02.zry",
+            "functions": [
+              {
+                "span": {
+                  "file": 2,
+                  "start": 0,
+                  "end": 43
+                },
+                "export_span": {
+                  "file": 2,
+                  "start": 0,
+                  "end": 6
+                },
+                "function_span": {
+                  "file": 2,
+                  "start": 7,
+                  "end": 15
+                },
+                "name": {
+                  "text": "retained",
+                  "span": {
+                    "file": 2,
+                    "start": 16,
+                    "end": 24
+                  }
+                },
+                "parameters": [],
+                "result_type": {
+                  "span": {
+                    "file": 2,
+                    "start": 28,
+                    "end": 31
+                  },
+                  "kind": {
+                    "kind": "named",
+                    "name": "i32"
+                  }
+                },
+                "body": {
+                  "span": {
+                    "file": 2,
+                    "start": 32,
+                    "end": 43
+                  },
+                  "statements": [
+                    {
+                      "span": {
+                        "file": 2,
+                        "start": 33,
+                        "end": 42
+                      },
+                      "kind": {
+                        "kind": "return",
+                        "keyword_span": {
+                          "file": 2,
+                          "start": 33,
+                          "end": 39
+                        },
+                        "value": 0
+                      }
+                    }
+                  ],
+                  "expressions": [
+                    {
+                      "span": {
+                        "file": 2,
+                        "start": 40,
+                        "end": 41
+                      },
+                      "kind": {
+                        "kind": "i32-literal",
+                        "spelling": "2"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 28,
+                "end": 34
+              }
+            },
+            "message": "parameter 0 annotation uses unsupported syntax 'StringKeyword'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 37,
+                "end": 43
+              }
+            },
+            "message": "function 0 result annotation uses unsupported syntax 'NumberKeyword'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 52,
+                "end": 55
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "TS1109",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 45,
+                "end": 46
+              }
+            },
+            "message": "Expression expected.",
+            "guidance": "fix the TypeScript parse error before Zryna analysis"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "v2-multifile-diagnostic-truncation",
+    "version": 2,
+    "files": [
+      {
+        "path": "src/p02.zry",
+        "text": "export function retained(): i32 {return 2;}"
+      },
+      {
+        "path": "src/p01.zry",
+        "text": "export function strings(): i32 {return \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\nreturn \"x\";\n}"
+      },
+      {
+        "path": "src/p00.zry",
+        "text": "export function parentheses(): i32 {return (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\nreturn (1);\n}"
+      }
+    ],
+    "response": {
+      "result": {
+        "schema_version": 2,
+        "files": [
+          {
+            "id": 0,
+            "path": "src/p00.zry",
+            "functions": []
+          },
+          {
+            "id": 1,
+            "path": "src/p01.zry",
+            "functions": []
+          },
+          {
+            "id": 2,
+            "path": "src/p02.zry",
+            "functions": [
+              {
+                "span": {
+                  "file": 2,
+                  "start": 0,
+                  "end": 43
+                },
+                "export_span": {
+                  "file": 2,
+                  "start": 0,
+                  "end": 6
+                },
+                "function_span": {
+                  "file": 2,
+                  "start": 7,
+                  "end": 15
+                },
+                "name": {
+                  "text": "retained",
+                  "span": {
+                    "file": 2,
+                    "start": 16,
+                    "end": 24
+                  }
+                },
+                "parameters": [],
+                "result_type": {
+                  "span": {
+                    "file": 2,
+                    "start": 28,
+                    "end": 31
+                  },
+                  "kind": {
+                    "kind": "named",
+                    "name": "i32"
+                  }
+                },
+                "body": {
+                  "span": {
+                    "file": 2,
+                    "start": 32,
+                    "end": 43
+                  },
+                  "statements": [
+                    {
+                      "span": {
+                        "file": 2,
+                        "start": 33,
+                        "end": 42
+                      },
+                      "kind": {
+                        "kind": "return",
+                        "keyword_span": {
+                          "file": 2,
+                          "start": 33,
+                          "end": 39
+                        },
+                        "value": 0
+                      }
+                    }
+                  ],
+                  "expressions": [
+                    {
+                      "span": {
+                        "file": 2,
+                        "start": 40,
+                        "end": 41
+                      },
+                      "kind": {
+                        "kind": "i32-literal",
+                        "spelling": "2"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 43,
+                "end": 46
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 55,
+                "end": 58
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 67,
+                "end": 70
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 79,
+                "end": 82
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 91,
+                "end": 94
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 103,
+                "end": 106
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 115,
+                "end": 118
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 127,
+                "end": 130
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 139,
+                "end": 142
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 151,
+                "end": 154
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 163,
+                "end": 166
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 175,
+                "end": 178
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 187,
+                "end": 190
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 199,
+                "end": 202
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 211,
+                "end": 214
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 223,
+                "end": 226
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 235,
+                "end": 238
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 247,
+                "end": 250
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 259,
+                "end": 262
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 271,
+                "end": 274
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 283,
+                "end": 286
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 295,
+                "end": 298
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 307,
+                "end": 310
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 319,
+                "end": 322
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 331,
+                "end": 334
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 343,
+                "end": 346
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 355,
+                "end": 358
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 367,
+                "end": 370
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 379,
+                "end": 382
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 391,
+                "end": 394
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 403,
+                "end": 406
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 415,
+                "end": 418
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 427,
+                "end": 430
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 439,
+                "end": 442
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 451,
+                "end": 454
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 463,
+                "end": 466
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 475,
+                "end": 478
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 487,
+                "end": 490
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 499,
+                "end": 502
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 511,
+                "end": 514
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 523,
+                "end": 526
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 535,
+                "end": 538
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 547,
+                "end": 550
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 559,
+                "end": 562
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 571,
+                "end": 574
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 583,
+                "end": 586
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 595,
+                "end": 598
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 607,
+                "end": 610
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 619,
+                "end": 622
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 631,
+                "end": 634
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 643,
+                "end": 646
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 655,
+                "end": 658
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 667,
+                "end": 670
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 679,
+                "end": 682
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 691,
+                "end": 694
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 703,
+                "end": 706
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 715,
+                "end": 718
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 727,
+                "end": 730
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 739,
+                "end": 742
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 751,
+                "end": 754
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 763,
+                "end": 766
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 775,
+                "end": 778
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 787,
+                "end": 790
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 799,
+                "end": 802
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 811,
+                "end": 814
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 823,
+                "end": 826
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 835,
+                "end": 838
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 847,
+                "end": 850
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 859,
+                "end": 862
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 871,
+                "end": 874
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 883,
+                "end": 886
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 895,
+                "end": 898
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 907,
+                "end": 910
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 919,
+                "end": 922
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 931,
+                "end": 934
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 943,
+                "end": 946
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 955,
+                "end": 958
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 967,
+                "end": 970
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 979,
+                "end": 982
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 991,
+                "end": 994
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1003,
+                "end": 1006
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1015,
+                "end": 1018
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1027,
+                "end": 1030
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1039,
+                "end": 1042
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1051,
+                "end": 1054
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1063,
+                "end": 1066
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1075,
+                "end": 1078
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1087,
+                "end": 1090
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1099,
+                "end": 1102
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1111,
+                "end": 1114
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1123,
+                "end": 1126
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1135,
+                "end": 1138
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1147,
+                "end": 1150
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1159,
+                "end": 1162
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1171,
+                "end": 1174
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1183,
+                "end": 1186
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1195,
+                "end": 1198
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1207,
+                "end": 1210
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1219,
+                "end": 1222
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1231,
+                "end": 1234
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1243,
+                "end": 1246
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1255,
+                "end": 1258
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1267,
+                "end": 1270
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1279,
+                "end": 1282
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1291,
+                "end": 1294
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1303,
+                "end": 1306
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1315,
+                "end": 1318
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1327,
+                "end": 1330
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1339,
+                "end": 1342
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1351,
+                "end": 1354
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1363,
+                "end": 1366
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1375,
+                "end": 1378
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1387,
+                "end": 1390
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1399,
+                "end": 1402
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1411,
+                "end": 1414
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1423,
+                "end": 1426
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1435,
+                "end": 1438
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1447,
+                "end": 1450
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1459,
+                "end": 1462
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1471,
+                "end": 1474
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1483,
+                "end": 1486
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1495,
+                "end": 1498
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1507,
+                "end": 1510
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1519,
+                "end": 1522
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1531,
+                "end": 1534
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1543,
+                "end": 1546
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1555,
+                "end": 1558
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1567,
+                "end": 1570
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1579,
+                "end": 1582
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1591,
+                "end": 1594
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1603,
+                "end": 1606
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1615,
+                "end": 1618
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1627,
+                "end": 1630
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1639,
+                "end": 1642
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1651,
+                "end": 1654
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1663,
+                "end": 1666
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1675,
+                "end": 1678
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1687,
+                "end": 1690
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1699,
+                "end": 1702
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1711,
+                "end": 1714
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1723,
+                "end": 1726
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1735,
+                "end": 1738
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1747,
+                "end": 1750
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1759,
+                "end": 1762
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1771,
+                "end": 1774
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1783,
+                "end": 1786
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1795,
+                "end": 1798
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1807,
+                "end": 1810
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1819,
+                "end": 1822
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 0,
+                "start": 1831,
+                "end": 1834
+              }
+            },
+            "message": "expression uses unsupported syntax 'ParenthesizedExpression'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 39,
+                "end": 42
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 51,
+                "end": 54
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 63,
+                "end": 66
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 75,
+                "end": 78
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 87,
+                "end": 90
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 99,
+                "end": 102
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 111,
+                "end": 114
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 123,
+                "end": 126
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 135,
+                "end": 138
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 147,
+                "end": 150
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 159,
+                "end": 162
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 171,
+                "end": 174
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 183,
+                "end": 186
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 195,
+                "end": 198
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 207,
+                "end": 210
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 219,
+                "end": 222
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 231,
+                "end": 234
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 243,
+                "end": 246
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 255,
+                "end": 258
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 267,
+                "end": 270
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 279,
+                "end": 282
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 291,
+                "end": 294
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 303,
+                "end": 306
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 315,
+                "end": 318
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 327,
+                "end": 330
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 339,
+                "end": 342
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 351,
+                "end": 354
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 363,
+                "end": 366
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 375,
+                "end": 378
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 387,
+                "end": 390
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 399,
+                "end": 402
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 411,
+                "end": 414
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 423,
+                "end": 426
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 435,
+                "end": 438
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 447,
+                "end": 450
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 459,
+                "end": 462
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 471,
+                "end": 474
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 483,
+                "end": 486
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 495,
+                "end": 498
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 507,
+                "end": 510
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 519,
+                "end": 522
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 531,
+                "end": 534
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 543,
+                "end": 546
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 555,
+                "end": 558
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 567,
+                "end": 570
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 579,
+                "end": 582
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 591,
+                "end": 594
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 603,
+                "end": 606
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 615,
+                "end": 618
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 627,
+                "end": 630
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 639,
+                "end": 642
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 651,
+                "end": 654
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 663,
+                "end": 666
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 675,
+                "end": 678
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 687,
+                "end": 690
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 699,
+                "end": 702
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 711,
+                "end": 714
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 723,
+                "end": 726
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 735,
+                "end": 738
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 747,
+                "end": 750
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 759,
+                "end": 762
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 771,
+                "end": 774
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 783,
+                "end": 786
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 795,
+                "end": 798
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 807,
+                "end": 810
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 819,
+                "end": 822
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 831,
+                "end": 834
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 843,
+                "end": 846
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 855,
+                "end": 858
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 867,
+                "end": 870
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 879,
+                "end": 882
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 891,
+                "end": 894
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 903,
+                "end": 906
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 915,
+                "end": 918
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 927,
+                "end": 930
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 939,
+                "end": 942
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 951,
+                "end": 954
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 963,
+                "end": 966
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 975,
+                "end": 978
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 987,
+                "end": 990
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 999,
+                "end": 1002
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1011,
+                "end": 1014
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1023,
+                "end": 1026
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1035,
+                "end": 1038
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1047,
+                "end": 1050
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1059,
+                "end": 1062
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1071,
+                "end": 1074
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1083,
+                "end": 1086
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1095,
+                "end": 1098
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1107,
+                "end": 1110
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1119,
+                "end": 1122
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1131,
+                "end": 1134
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1143,
+                "end": 1146
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1155,
+                "end": 1158
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1167,
+                "end": 1170
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1179,
+                "end": 1182
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1191,
+                "end": 1194
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1203,
+                "end": 1206
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1215,
+                "end": 1218
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1227,
+                "end": 1230
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1239,
+                "end": 1242
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1251,
+                "end": 1254
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1263,
+                "end": 1266
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1275,
+                "end": 1278
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2002",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 1287,
+                "end": 1290
+              }
+            },
+            "message": "expression uses unsupported syntax 'StringLiteral'",
+            "guidance": "use only the documented protocol-v2 bootstrap syntax"
+          },
+          {
+            "code": "ZRYNA-F2003",
+            "severity": "error",
+            "location": {
+              "kind": "global"
+            },
+            "message": "frontend diagnostics exceeded the deterministic limit",
+            "guidance": "reduce unsupported or malformed source before analysis"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "v2-multifile-parse-diagnostics",
+    "version": 2,
+    "files": [
+      {
+        "path": "src/p01.zry",
+        "text": "export function malformed(): i32 {return +; return 1 + ;}"
+      },
+      {
+        "path": "src/p00.zry",
+        "text": "export function retained(): i32 {return 2;}"
+      }
+    ],
+    "response": {
+      "result": {
+        "schema_version": 2,
+        "files": [
+          {
+            "id": 0,
+            "path": "src/p00.zry",
+            "functions": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 0,
+                  "end": 43
+                },
+                "export_span": {
+                  "file": 0,
+                  "start": 0,
+                  "end": 6
+                },
+                "function_span": {
+                  "file": 0,
+                  "start": 7,
+                  "end": 15
+                },
+                "name": {
+                  "text": "retained",
+                  "span": {
+                    "file": 0,
+                    "start": 16,
+                    "end": 24
+                  }
+                },
+                "parameters": [],
+                "result_type": {
+                  "span": {
+                    "file": 0,
+                    "start": 28,
+                    "end": 31
+                  },
+                  "kind": {
+                    "kind": "named",
+                    "name": "i32"
+                  }
+                },
+                "body": {
+                  "span": {
+                    "file": 0,
+                    "start": 32,
+                    "end": 43
+                  },
+                  "statements": [
+                    {
+                      "span": {
+                        "file": 0,
+                        "start": 33,
+                        "end": 42
+                      },
+                      "kind": {
+                        "kind": "return",
+                        "keyword_span": {
+                          "file": 0,
+                          "start": 33,
+                          "end": 39
+                        },
+                        "value": 0
+                      }
+                    }
+                  ],
+                  "expressions": [
+                    {
+                      "span": {
+                        "file": 0,
+                        "start": 40,
+                        "end": 41
+                      },
+                      "kind": {
+                        "kind": "i32-literal",
+                        "spelling": "2"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": 1,
+            "path": "src/p01.zry",
+            "functions": []
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "TS1109",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 42,
+                "end": 43
+              }
+            },
+            "message": "Expression expected.",
+            "guidance": "fix the TypeScript parse error before Zryna analysis"
+          },
+          {
+            "code": "TS1109",
+            "severity": "error",
+            "location": {
+              "kind": "source",
+              "span": {
+                "file": 1,
+                "start": 55,
+                "end": 56
+              }
+            },
+            "message": "Expression expected.",
+            "guidance": "fix the TypeScript parse error before Zryna analysis"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "v3-multifile-malformed-atomic",
+    "version": 3,
+    "files": [
+      {
+        "path": "src/p02.zry",
+        "text": "function retained(): i32 {return 2;}"
+      },
+      {
+        "path": "src/p01.zry",
+        "text": "function malformed(): i32 {return 1 + ;}"
+      },
+      {
+        "path": "src/p00.zry",
+        "text": "function first(): i32 {return 1;}"
+      }
+    ],
+    "response": {
+      "error": {
+        "code": "ZRYNA-F2002",
+        "message": "TypeScript parse error TS1109: Expression expected.",
+        "span": {
+          "file": 1,
+          "start": 38,
+          "end": 39
+        }
+      }
+    }
+  },
+  {
+    "name": "v4-multifile-callback-atomic",
+    "version": 4,
+    "files": [
+      {
+        "path": "src/p02.zry",
+        "text": "function retained(): i32 {return 2;}"
+      },
+      {
+        "path": "src/p00.zry",
+        "text": "interface Data extends ZrynaStruct {x: i32;}"
+      },
+      {
+        "path": "src/p01.zry",
+        "text": "function rejected(x: Weak<Data>): i32 {upgradeWeak(x, 1, () => {});return 1;}"
+      }
+    ],
+    "response": {
+      "error": {
+        "code": "ZRYNA-F2002",
+        "message": "weak upgrade uses unsupported syntax 'CallExpression'",
+        "span": {
+          "file": 1,
+          "start": 39,
+          "end": 66
+        }
+      }
+    }
+  },
+  {
+    "name": "v2-multifile-parameter-fatal",
+    "version": 2,
+    "files": [
+      {
+        "path": "src/p01.zry",
+        "text": "export function retained(): i32 {return 2;}"
+      },
+      {
+        "path": "src/p00.zry",
+        "text": "export function rejected(p0: string,p1: string,p2: string,p3: string,p4: string,p5: string,p6: string,p7: string,p8: string,p9: string,p10: string,p11: string,p12: string,p13: string,p14: string,p15: string,p16: string,p17: string,p18: string,p19: string,p20: string,p21: string,p22: string,p23: string,p24: string,p25: string,p26: string,p27: string,p28: string,p29: string,p30: string,p31: string,p32: string,p33: string,p34: string,p35: string,p36: string,p37: string,p38: string,p39: string,p40: string,p41: string,p42: string,p43: string,p44: string,p45: string,p46: string,p47: string,p48: string,p49: string,p50: string,p51: string,p52: string,p53: string,p54: string,p55: string,p56: string,p57: string,p58: string,p59: string,p60: string,p61: string,p62: string,p63: string,p64: string,p65: string,p66: string,p67: string,p68: string,p69: string,p70: string,p71: string,p72: string,p73: string,p74: string,p75: string,p76: string,p77: string,p78: string,p79: string,p80: string,p81: string,p82: string,p83: string,p84: string,p85: string,p86: string,p87: string,p88: string,p89: string,p90: string,p91: string,p92: string,p93: string,p94: string,p95: string,p96: string,p97: string,p98: string,p99: string,p100: string,p101: string,p102: string,p103: string,p104: string,p105: string,p106: string,p107: string,p108: string,p109: string,p110: string,p111: string,p112: string,p113: string,p114: string,p115: string,p116: string,p117: string,p118: string,p119: string,p120: string,p121: string,p122: string,p123: string,p124: string,p125: string,p126: string,p127: string,p128: string,p129: string,p130: string,p131: string,p132: string,p133: string,p134: string,p135: string,p136: string,p137: string,p138: string,p139: string,p140: string,p141: string,p142: string,p143: string,p144: string,p145: string,p146: string,p147: string,p148: string,p149: string,p150: string,p151: string,p152: string,p153: string,p154: string,p155: string,p156: string,p157: string,p158: string,p159: string,p160: string,p161: string,p162: string,p163: string,p164: string,p165: string,p166: string,p167: string,p168: string,p169: string,p170: string,p171: string,p172: string,p173: string,p174: string,p175: string,p176: string,p177: string,p178: string,p179: string,p180: string,p181: string,p182: string,p183: string,p184: string,p185: string,p186: string,p187: string,p188: string,p189: string,p190: string,p191: string,p192: string,p193: string,p194: string,p195: string,p196: string,p197: string,p198: string,p199: string,p200: string,p201: string,p202: string,p203: string,p204: string,p205: string,p206: string,p207: string,p208: string,p209: string,p210: string,p211: string,p212: string,p213: string,p214: string,p215: string,p216: string,p217: string,p218: string,p219: string,p220: string,p221: string,p222: string,p223: string,p224: string,p225: string,p226: string,p227: string,p228: string,p229: string,p230: string,p231: string,p232: string,p233: string,p234: string,p235: string,p236: string,p237: string,p238: string,p239: string,p240: string,p241: string,p242: string,p243: string,p244: string,p245: string,p246: string,p247: string,p248: string,p249: string,p250: string,p251: string,p252: string,p253: string,p254: string,p255: string,p256: string): i32 {return 1;}"
+      }
+    ],
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the parameter limit",
+        "span": null
+      }
+    }
+  }
+]

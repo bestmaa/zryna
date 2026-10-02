@@ -5,9 +5,121 @@ use zryna_syntax::v2 as syntax;
 use super::{FileParser, ParseError};
 use crate::native_lexer::{Keyword, TokenKind};
 
-pub(super) struct SignatureDiagnostics {
-    pub(super) diagnostics: Vec<syntax::RawProviderDiagnostic>,
-    pub(super) parameter_count: usize,
+impl FileParser<'_> {
+    pub(super) fn retain_error(&mut self, error: &ParseError) {
+        self.retain_diagnostic(raw_diagnostic(error));
+    }
+
+    pub(super) fn retain_diagnostic(&mut self, diagnostic: syntax::RawProviderDiagnostic) {
+        self.diagnostics.add(diagnostic);
+    }
+}
+
+/// Retain the same earliest 255 source diagnostics as the bootstrap collector.
+#[derive(Default)]
+pub(super) struct Diagnostics {
+    retained: Vec<syntax::RawProviderDiagnostic>,
+    truncated: bool,
+}
+
+impl Diagnostics {
+    pub(super) fn is_empty(&self) -> bool {
+        self.retained.is_empty()
+    }
+
+    pub(super) fn add(&mut self, diagnostic: syntax::RawProviderDiagnostic) {
+        if self.retained.len() < syntax::MAX_PROVIDER_DIAGNOSTICS - 1 {
+            self.retained.push(diagnostic);
+            return;
+        }
+        self.truncated = true;
+        let (worst, _) = self
+            .retained
+            .iter()
+            .enumerate()
+            .max_by(|(_, left), (_, right)| compare_diagnostics(left, right))
+            .expect("nonempty retained diagnostics");
+        if compare_diagnostics(&diagnostic, &self.retained[worst]).is_lt() {
+            self.retained[worst] = diagnostic;
+        }
+    }
+
+    pub(super) fn append(&mut self, other: &mut Self) {
+        self.truncated |= other.truncated;
+        other.truncated = false;
+        for diagnostic in other.retained.drain(..) {
+            self.add(diagnostic);
+        }
+    }
+
+    pub(super) fn finish(mut self) -> Vec<syntax::RawProviderDiagnostic> {
+        self.retained.sort_by(compare_diagnostics);
+        if self.truncated {
+            self.retained.push(syntax::RawProviderDiagnostic {
+                code: "ZRYNA-F2003".to_owned(),
+                severity: zryna_diagnostics::Severity::Error,
+                location: syntax::RawDiagnosticLocation::Global,
+                message: "frontend diagnostics exceeded the deterministic limit".to_owned(),
+                guidance: "reduce unsupported or malformed source before analysis".to_owned(),
+            });
+        }
+        self.retained
+    }
+}
+
+fn compare_diagnostics(
+    left: &syntax::RawProviderDiagnostic,
+    right: &syntax::RawProviderDiagnostic,
+) -> std::cmp::Ordering {
+    fn key(diagnostic: &syntax::RawProviderDiagnostic) -> (i64, i64, i64, &str, &str, &str) {
+        let (file, start, end) = match &diagnostic.location {
+            syntax::RawDiagnosticLocation::Source { span } => {
+                (i64::from(span.file), i64::from(span.start), i64::from(span.end))
+            }
+            syntax::RawDiagnosticLocation::Global => (-1, -1, -1),
+        };
+        (file, start, end, &diagnostic.code, &diagnostic.message, &diagnostic.guidance)
+    }
+    key(left).cmp(&key(right))
+}
+
+/// Consume one rejected statement without crossing a containing or mismatched delimiter.
+pub(super) fn skip_statement(
+    parser: &mut FileParser<'_>,
+    checkpoint: usize,
+) -> Result<(), ParseError> {
+    parser.position = checkpoint;
+    let mut closers = Vec::new();
+    while let Some(token) = parser.current() {
+        if closers.is_empty() && token.kind() == TokenKind::CloseBrace {
+            return Ok(());
+        }
+        match token.kind() {
+            TokenKind::OpenBrace => closers.push(TokenKind::CloseBrace),
+            TokenKind::OpenBracket => closers.push(TokenKind::CloseBracket),
+            TokenKind::OpenParen => closers.push(TokenKind::CloseParen),
+            TokenKind::CloseBrace | TokenKind::CloseBracket | TokenKind::CloseParen => {
+                if closers.pop() != Some(token.kind()) {
+                    return Err(parser.error_here("ZRYNA-F2002", "mismatched recovery delimiter"));
+                }
+            }
+            TokenKind::Semicolon if closers.is_empty() => {
+                parser.position += 1;
+                return Ok(());
+            }
+            _ => {}
+        }
+        parser.position += 1;
+        if closers.is_empty()
+            && parser.current().is_some_and(|next| {
+                next.kind() == TokenKind::Keyword(Keyword::Return)
+                    && super::has_line_break(parser.text, token.span().end(), next.span().start())
+            })
+        {
+            return Ok(());
+        }
+    }
+    Ok(())
 }
 
 pub(super) fn primitive_kind(spelling: &str) -> Option<&'static str> {
@@ -23,100 +135,6 @@ pub(super) fn primitive_kind(spelling: &str) -> Option<&'static str> {
         "object" => "ObjectKeyword",
         _ => return None,
     })
-}
-
-/// Rescan only a structurally complete signature after its first primitive-type error.
-/// The function remains rejected; this supplies the worker's additional diagnostic spans.
-pub(super) fn primitive_annotations(
-    parser: &FileParser<'_>,
-    checkpoint: usize,
-    function_index: usize,
-) -> Option<Result<SignatureDiagnostics, ParseError>> {
-    let mut position = checkpoint;
-    take(parser, &mut position, TokenKind::Keyword(Keyword::Export))?;
-    take(parser, &mut position, TokenKind::Keyword(Keyword::Function))?;
-    take(parser, &mut position, TokenKind::Identifier)?;
-    take(parser, &mut position, TokenKind::OpenParen)?;
-    let mut diagnostics = Vec::new();
-    let mut parameter_count = 0;
-    if parser.tokens.get(position)?.kind() != TokenKind::CloseParen {
-        loop {
-            if parameter_count >= syntax::MAX_PARAMETERS_PER_FUNCTION {
-                return Some(Err(super::resource(
-                    "function parameter inventory exceeds protocol-v2 limit",
-                )));
-            }
-            take(parser, &mut position, TokenKind::Identifier)?;
-            if parser.tokens.get(position)?.kind() == TokenKind::Colon {
-                position += 1;
-                let annotation = take(parser, &mut position, TokenKind::Identifier)?;
-                if let Some(kind) = primitive_kind(parser.spelling(annotation)) {
-                    if diagnostics.len() >= syntax::MAX_PROVIDER_DIAGNOSTICS {
-                        return Some(Err(super::resource(
-                            "parser diagnostics exceed protocol-v2 limit",
-                        )));
-                    }
-                    diagnostics.push(primitive_diagnostic(
-                        annotation,
-                        &format!("parameter {parameter_count} annotation"),
-                        kind,
-                    ));
-                }
-            }
-            parameter_count += 1;
-            if parser.tokens.get(position)?.kind() != TokenKind::Comma {
-                break;
-            }
-            position += 1;
-            if parser.tokens.get(position)?.kind() == TokenKind::CloseParen {
-                break;
-            }
-        }
-    }
-    take(parser, &mut position, TokenKind::CloseParen)?;
-    if parser.tokens.get(position)?.kind() == TokenKind::Colon {
-        position += 1;
-        let annotation = take(parser, &mut position, TokenKind::Identifier)?;
-        if let Some(kind) = primitive_kind(parser.spelling(annotation)) {
-            if diagnostics.len() >= syntax::MAX_PROVIDER_DIAGNOSTICS {
-                return Some(Err(super::resource("parser diagnostics exceed protocol-v2 limit")));
-            }
-            diagnostics.push(primitive_diagnostic(
-                annotation,
-                &format!("function {function_index} result annotation"),
-                kind,
-            ));
-        }
-    }
-    take(parser, &mut position, TokenKind::OpenBrace)?;
-    Some(Ok(SignatureDiagnostics { diagnostics, parameter_count }))
-}
-
-fn take(
-    parser: &FileParser<'_>,
-    position: &mut usize,
-    expected: TokenKind,
-) -> Option<crate::native_lexer::Token> {
-    let token = *parser.tokens.get(*position)?;
-    if token.kind() != expected {
-        return None;
-    }
-    *position += 1;
-    Some(token)
-}
-
-fn primitive_diagnostic(
-    token: crate::native_lexer::Token,
-    context: &str,
-    kind: &str,
-) -> syntax::RawProviderDiagnostic {
-    syntax::RawProviderDiagnostic {
-        code: "ZRYNA-F2002".to_owned(),
-        severity: zryna_diagnostics::Severity::Error,
-        location: syntax::RawDiagnosticLocation::Source { span: super::raw(token) },
-        message: format!("{context} uses unsupported syntax '{kind}'"),
-        guidance: "use only the documented protocol-v2 bootstrap syntax".to_owned(),
-    }
 }
 
 pub(super) fn newline_expression_statement(
