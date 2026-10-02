@@ -1,0 +1,58 @@
+name: Restricted playground contracts
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/playground.yml'
+      - 'apps/zryna-playground-compiler/**'
+      - 'crates/zryna-driver/**'
+      - 'examples/playground/**'
+      - 'tests/playground*'
+      - 'tests/m6*'
+      - 'tests/m6/**'
+      - 'scripts/m6/**'
+      - 'scripts/distribution/**'
+      - 'scripts/distribution-release/**'
+      - 'schemas/zryna-distribution-release-v1.schema.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'zryna.workspace.json'
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    name: Portable playground transport (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.22.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: 11.18.0
+      - name: Restore pinned root validation dependencies
+        run: pnpm install --filter zryna-workspace --frozen-lockfile --ignore-scripts
+      - name: Closed transport and revision lifecycle
+        run: pnpm playground:contract
+      - name: Detached M6 evidence contracts
+        run: pnpm m6:contract
+      - name: Linux admission and sealed-file units
+        if: runner.os == 'Linux'
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 tests/playground-host-unit.py
+          python3 tests/playground-cgroup-unit.py
+          python3 tests/playground-join-unit.py
+          python3 tests/playground-helper-policy-unit.py
+      # Actual authenticated CLI/browser/isolation gates remain required separately.

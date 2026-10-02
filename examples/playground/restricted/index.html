@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zryna source playground</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./main.mjs"></script>
+</head>
+<body>
+  <main>
+    <h1>Zryna source playground</h1>
+    <p>Edit one scalar source, compile it, then run an admitted export with signed i32 arguments.</p>
+    <p id="scope">Source limit: 4096 UTF-8 bytes. Compilation: 10 seconds. Evaluation: 5 seconds.
+      Packages, native execution and source-selected host capabilities are unavailable.</p>
+    <label for="preset">Examples</label>
+    <select id="preset" disabled></select>
+    <label for="source">Source</label>
+    <textarea id="source" rows="12" spellcheck="false" autocapitalize="off"
+      aria-describedby="scope byte-count source-error source-help" disabled></textarea>
+    <p id="source-help">Compile with Control+Enter or Command+Enter.</p>
+    <p id="byte-count">0 / 4096 UTF-8 bytes</p>
+    <p id="source-error" class="input-error" role="status" aria-live="polite"></p>
+    <div class="actions">
+      <button id="compile" type="button" disabled>Compile source</button>
+      <button id="cancel" type="button" disabled>Cancel</button>
+    </div>
+    <p id="status" role="status" aria-live="polite">Connecting to the supervised compiler…</p>
+    <section aria-labelledby="diagnostic-heading">
+      <h2 id="diagnostic-heading">Compiler diagnostics</h2>
+      <p id="diagnostic-empty">Compile to receive diagnostics.</p>
+      <ul id="diagnostics"></ul>
+    </section>
+    <section aria-labelledby="run-heading">
+      <h2 id="run-heading">Run an export</h2>
+      <label for="export">Export</label>
+      <select id="export" disabled></select>
+      <p id="argument-help">Use whole decimal numbers from -2147483648 to 2147483647,
+        without spaces, a plus sign, leading zeros, or negative zero.</p>
+      <div id="arguments"></div>
+      <button id="run" type="button" disabled>Run export</button>
+      <p id="observation" role="status" aria-live="polite">No observation.</p>
+      <p id="identity"></p>
+    </section>
+    <noscript>This playground needs JavaScript in the dedicated supervised browser.</noscript>
+  </main>
+</body>
+</html>

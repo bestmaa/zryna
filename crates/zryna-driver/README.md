@@ -173,6 +173,16 @@ requires the exact component hash before instantiating the retained import-free 
 module; guest code receives no DOM, network, filesystem, clock or random import. See the
 [browser contract](../../docs/BROWSER_COMPONENT_V1.md).
 
+`RestrictedBrowserCompiler` is a separate in-memory facade for a restricted source transport.
+It reuses the captured installed provider, exact `SourceMap`, scalar semantic/IR verification,
+audited component and existing binding producer; it does not publish or execute a target.
+`apps/zryna-playground-compiler` supplies only closed stdio decoding and bounded framing.
+The caller must authenticate the new executable/toolkit and establish OS process-tree confinement
+before dispatch. Actual structured diagnostic schema 1 preserves provider syntax codes and source
+coordinates without altering the diagnostics-v2/LSP contract. See the
+[implementation boundaries](../../examples/playground/restricted/README.md); these code paths
+do not independently establish a supported public playground or M6 acceptance.
+
 Node.js 22.22.1 exercises the published module with the standard WebAssembly API as a conformance
 harness and as the public CLI host. This remains core, import-free WebAssembly execution, not a
 browser or DOM claim.

@@ -13,6 +13,8 @@ use zryna_diagnostics::Diagnostic;
 
 use super::execution_error;
 
+#[cfg(test)]
+mod aggregate_tests;
 mod pins;
 
 use pins::{require_digest, validate_graph};
@@ -129,7 +131,7 @@ impl CapturedToolingClosure {
         )?;
         require_digest(&typescript, TYPESCRIPT_SHA256, "TypeScript runtime")?;
         validate_graph(&wrapper_manifest.bytes, &wrapper.bytes, &typescript_manifest.bytes)?;
-        Ok(Self {
+        let captured = Self {
             worker,
             worker_v3,
             limits_v3,
@@ -139,7 +141,9 @@ impl CapturedToolingClosure {
             wrapper,
             typescript_manifest,
             typescript,
-        })
+        };
+        captured.validate_size()?;
+        Ok(captured)
     }
 
     pub(super) fn capture(root: &Path) -> Result<Self, Diagnostic> {
@@ -160,23 +164,6 @@ impl CapturedToolingClosure {
         let wrapper = capture_file(&root, WRAPPER, MAX_WRAPPER_BYTES)?;
         let typescript_manifest = capture_file(&root, TYPESCRIPT_MANIFEST, MAX_MANIFEST_BYTES)?;
         let typescript = capture_file(&root, TYPESCRIPT, MAX_TYPESCRIPT_BYTES)?;
-        let total = [
-            &worker,
-            &worker_v3,
-            &limits_v3,
-            &worker_v4,
-            &limits_v4,
-            &wrapper_manifest,
-            &wrapper,
-            &typescript_manifest,
-            &typescript,
-        ]
-        .into_iter()
-        .try_fold(0_usize, |total, file| total.checked_add(file.bytes.len()))
-        .ok_or_else(|| execution_error("tooling executable closure byte count overflowed"))?;
-        if total > MAX_CLOSURE_BYTES {
-            return Err(execution_error("tooling executable closure exceeds its byte limit"));
-        }
         validate_graph(&wrapper_manifest.bytes, &wrapper.bytes, &typescript_manifest.bytes)?;
         require_digest(
             &wrapper_manifest,
@@ -190,7 +177,7 @@ impl CapturedToolingClosure {
             "TypeScript implementation manifest",
         )?;
         require_digest(&typescript, TYPESCRIPT_SHA256, "TypeScript 6.0.3 runtime bundle")?;
-        Ok(Self {
+        let captured = Self {
             worker,
             worker_v3,
             limits_v3,
@@ -200,8 +187,35 @@ impl CapturedToolingClosure {
             wrapper,
             typescript_manifest,
             typescript,
-        })
+        };
+        captured.validate_size()?;
+        Ok(captured)
     }
+
+    pub(super) fn validate_size(&self) -> Result<(), Diagnostic> {
+        validate_sizes([
+            self.worker.bytes.len(),
+            self.worker_v3.bytes.len(),
+            self.limits_v3.bytes.len(),
+            self.worker_v4.bytes.len(),
+            self.limits_v4.bytes.len(),
+            self.wrapper_manifest.bytes.len(),
+            self.wrapper.bytes.len(),
+            self.typescript_manifest.bytes.len(),
+            self.typescript.bytes.len(),
+        ])
+    }
+}
+
+pub(super) fn validate_sizes(sizes: [usize; 9]) -> Result<(), Diagnostic> {
+    let total = sizes
+        .into_iter()
+        .try_fold(0_usize, usize::checked_add)
+        .ok_or_else(|| execution_error("tooling executable closure byte count overflowed"))?;
+    if total > MAX_CLOSURE_BYTES {
+        return Err(execution_error("tooling executable closure exceeds its byte limit"));
+    }
+    Ok(())
 }
 
 fn verify_v3_workers(worker: &CapturedFile, limits: &CapturedFile) -> Result<(), Diagnostic> {
@@ -340,7 +354,7 @@ fn bounded_read(handle: &mut Handle, limit: usize) -> Result<Vec<u8>, Diagnostic
     }
 }
 
-fn capture_absolute(path: &Path) -> Result<Dir, Diagnostic> {
+pub(super) fn capture_absolute(path: &Path) -> Result<Dir, Diagnostic> {
     #[cfg(unix)]
     let (mut current, mut components) = (
         Dir::open_ambient_dir(Path::new("/"), ambient_authority()).map_err(|_| source_changed())?,

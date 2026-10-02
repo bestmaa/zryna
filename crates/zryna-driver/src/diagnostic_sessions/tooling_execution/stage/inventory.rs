@@ -5,19 +5,6 @@ use zryna_diagnostics::Diagnostic;
 
 use super::{MODULES, OLD, OLD_LIB, ROOT, SCOPE, WRAPPER, WRAPPER_LIB, stage_changed};
 
-pub(super) fn file_name(key: &str) -> &'static str {
-    match key {
-        "worker" => "worker.mjs",
-        "worker-v3" => "worker-v3.mjs",
-        "limits-v3" => "limits-v3.mjs",
-        "worker-v4" => "worker-v4.mjs",
-        "limits-v4" => "limits-v4.mjs",
-        "wrapper-manifest" | "old-manifest" => "package.json",
-        "wrapper-runtime" | "old-runtime" => "typescript.js",
-        _ => "",
-    }
-}
-
 pub(super) fn validate_inventory(key: &str, directory: &Dir) -> Result<(), Diagnostic> {
     let expected: BTreeSet<String> = match key {
         ROOT => [

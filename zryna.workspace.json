@@ -150,6 +150,13 @@
       "kind": "application",
       "dependencies": ["zryna-abi", "zryna-architecture", "zryna-diagnostics", "zryna-driver", "zryna-package", "zryna-windows-filesystem"],
       "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
+    },
+    {
+      "id": "zryna-playground-compiler",
+      "root": "apps/zryna-playground-compiler",
+      "kind": "application",
+      "dependencies": ["zryna-driver"],
+      "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
     }
   ],
   "adapters": [
