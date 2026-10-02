@@ -1,0 +1,12 @@
+function readSeed(seed: i32): i32 {
+  const out: FfiHandleOut = Ffi.outHandle("fixture-c-v0@0/fixture_handle");
+  const opened: i32 = Ffi.rawCall("fixture-c-v0@0/fixture_open", seed, out);
+  if (opened !== 0) { return Ffi.foreignError("fixture-c-v0@0/fixture_open", opened); }
+  const handle: FfiHandle = Ffi.takeHandle(out);
+  const value: FfiI32Out = Ffi.outI32();
+  const read: i32 = Ffi.rawCall("fixture-c-v0@0/fixture_read", handle, value);
+  if (read !== 0) { return Ffi.foreignError("fixture-c-v0@0/fixture_read", read); }
+  const result: i32 = Ffi.readI32(value);
+  Ffi.release("fixture-c-v0@0/fixture_close", handle);
+  return result;
+}

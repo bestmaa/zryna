@@ -66,4 +66,16 @@ int32_t fixture_copy_bytes(const uint8_t *bytes, size_t length,
                            uint8_t *out_bytes, size_t *out_length);
 #elif defined(REJECT_OWNED_BUFFER_RELEASE_TYPE)
 void fixture_release_bytes(struct fixture_handle *bytes);
+#elif defined(REJECT_INPUT_CONSTNESS)
+int32_t sum_bytes(uint8_t *bytes, size_t length, int32_t *out);
+#elif defined(REJECT_COUNT_OUT_WIDTH)
+int32_t fixture_copy_bytes(const uint8_t *bytes, size_t length,
+                           uint8_t **out_bytes, uint32_t *out_length);
+#elif defined(REJECT_RELEASE_RESULT)
+int32_t fixture_close(struct fixture_handle *handle);
+#elif defined(REJECT_HANDLE_KIND)
+struct unrelated_handle;
+int32_t fixture_read(struct unrelated_handle *handle, int32_t *out);
+#elif defined(REJECT_EXPORT_SIGNED_WIDTH)
+int64_t zryna_c_v0_e_add(int32_t left, int32_t right);
 #endif

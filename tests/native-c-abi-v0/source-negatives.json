@@ -1,0 +1,22 @@
+{
+  "format": "zryna.native-c-source-negatives.v0",
+  "status": "reference-only-not-executed",
+  "cases": [
+    { "id": "ordinary-declaration", "source": "declare function add(left: i32, right: i32): i32;", "boundary": "source", "expected": "ordinary declaration creates no foreign authority" },
+    { "id": "ordinary-import", "source": "import { add } from \"fixture-c-v0\";", "boundary": "source", "expected": "ordinary import cannot authenticate a C library" },
+    { "id": "plain-call", "source": "function imported(left: i32, right: i32): i32 { return add(left, right); }", "boundary": "source", "expected": "plain call cannot replace the explicit raw intrinsic" },
+    { "id": "shadowed-namespace", "source": "const Ffi = replacement; Ffi.rawCall(\"fixture-c-v0@0/add\", 1, 2);", "boundary": "source", "expected": "reserved intrinsic namespace cannot be shadowed" },
+    { "id": "aliased-intrinsic", "source": "const call = Ffi.rawCall; call(\"fixture-c-v0@0/add\", 1, 2);", "boundary": "source", "expected": "indirect or aliased intrinsic cannot carry raw authority" },
+    { "id": "computed-key", "source": "Ffi.rawCall(key, 1, 2);", "boundary": "source", "expected": "operation key must be the exact literal" },
+    { "id": "wrong-arity", "source": "Ffi.rawCall(\"fixture-c-v0@0/add\", 1);", "boundary": "ABI", "expected": "ordered ABI argument count must match" },
+    { "id": "wrong-scalar", "source": "Ffi.rawCall(\"fixture-c-v0@0/add\", true, 2);", "boundary": "ABI", "expected": "Boolean cannot enter an i32 lane" },
+    { "id": "read-before-status", "source": "const out: FfiI32Out = Ffi.outI32(); return Ffi.readI32(out);", "boundary": "resource", "expected": "read lacks initialization by a dominating successful call" },
+    { "id": "take-before-call", "source": "const out: FfiHandleOut = Ffi.outHandle(\"fixture-c-v0@0/fixture_handle\"); return Ffi.takeHandle(out);", "boundary": "resource", "expected": "take lacks a successful acquisition and cannot escape the wrapper" },
+    { "id": "loan-escape", "source": "function escaped(bytes: Vec<i32>): FfiBytes { return Ffi.borrowBytes(bytes); }", "boundary": "resource", "expected": "loan cannot leave its creating wrapper" },
+    { "id": "owner-parameter", "source": "function consume(owner: FfiHandle): i32 { return 0; }", "boundary": "resource", "expected": "foreign token cannot cross a private function parameter" },
+    { "id": "wrong-release-kind", "source": "Ffi.release(\"fixture-c-v0@0/fixture_release_bytes\", liveHandle);", "boundary": "resource", "expected": "handle cannot enter the byte allocator release" },
+    { "id": "double-release", "source": "Ffi.release(\"fixture-c-v0@0/fixture_close\", liveHandle); Ffi.release(\"fixture-c-v0@0/fixture_close\", liveHandle);", "boundary": "resource", "expected": "consumed token rejects before the second C call" },
+    { "id": "fallible-export", "source": "export function failure(seed: i32): i32 { return Ffi.foreignError(\"fixture-c-v0@0/fixture_open\", 1); }", "boundary": "ABI", "expected": "initial C exports must be total scalar bodies without foreign calls or terminal failures" },
+    { "id": "buffer-export", "source": "export function copied(bytes: Vec<i32>): Vec<i32> { return bytes; }", "boundary": "ABI", "expected": "private owned layout cannot become a C export carrier" }
+  ]
+}
