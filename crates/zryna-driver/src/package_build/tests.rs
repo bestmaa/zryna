@@ -1,6 +1,7 @@
 mod graph;
 mod hostile;
 mod invalidation;
+mod source_trust;
 
 use std::{
     fs,
