@@ -1,0 +1,6 @@
+function imported(left: i32, right: i32): i32 {
+  return Ffi.rawCall("fixture-c-v0@0/add", left, right);
+}
+export function add(left: i32, right: i32): i32 {
+  return left + right;
+}

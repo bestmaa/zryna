@@ -571,7 +571,12 @@ Completion gate: editor and playground behavior is driven by compiler contracts 
   [dependency-ready slice table](../spec/language/BOUNDED_GENERICS_DECISIONS_V1.md#compatibility-dependencies-and-delivery)
   only after normal integration of the whole reviewed #415 packet; its schema/fixture
   checks establish specification evidence, not implementation or public support;
-- native-only FFI profile;
+- native-only FFI under the [#364 ABI contract](../spec/abi/NATIVE_C_INTEROP_V0.md)
+  and [complete declaration contract](../spec/abi/NATIVE_C_INTEROP_V0_REVIEW.md):
+  specified-only syntax, exact identities, owner/failure policy and limits;
+  then separate tiny prototype, independent IR/MIR verification, import/export
+  and driver linking, checked wrappers, per-platform conformance and public
+  activation. The specified contract supplies no foreign-call runtime support;
 - compatibility, performance, and security gates;
 - additional platforms after conformance gates exist;
 - documented 1.0 stability criteria.

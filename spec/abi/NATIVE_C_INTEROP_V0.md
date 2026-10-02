@@ -1,9 +1,15 @@
 # Native C interop and foreign resources v0
 
-Contract candidate: `zryna-native-c-interop-v0`. State: **specified-only draft for
-[#364](https://github.com/zryna/zryna/issues/364)**. Review and acceptance of these
-decisions precede implementation. No foreign declaration, import, export, wrapper,
+Contract: `zryna-native-c-interop-v0`. State: **specified-only normative future
+contract**, for [#364](https://github.com/zryna/zryna/issues/364), effective upon
+normal integration of the complete contract. No foreign declaration, import, export, wrapper,
 library, target selector, or public FFI capability is implemented by this document.
+
+The [complete declaration and acceptance review](NATIVE_C_INTEROP_V0_REVIEW.md)
+fixes the source, identity, limit and failure decisions and inert reference
+vectors. The [operation acceptance contract](NATIVE_C_INTEROP_V0_ACCEPTANCE.md)
+supplies the exact fixture policies. This specification acceptance does not
+retroactively attribute sign-off to earlier proposals or establish execution.
 
 ## Authority and scope
 
@@ -48,11 +54,14 @@ attributes, and `-fshort-*`/packing options are different targets or unsupported
 | `void *`, pointer to object, pointer to opaque incomplete struct | 8 | 8 | Address carrier only; pointee layout and ownership come from the declaration, never from pointer width. Function pointers are excluded. |
 
 Only fixed-arity C functions returning `void`, an explicitly admitted scalar, or an
-explicit status scalar with caller-owned out parameters are proposed. The initial
+explicit status scalar with caller-owned out parameters are specified. The initial
 implementation slice may use `i32`, canonical `uint32_t` Boolean shims, `uint8_t`
 buffers, and opaque object pointers; every other table row remains a reserved exact
 mapping until its language and verifier gate exists. No automatic signed/unsigned
 conversion, truncation, enum conversion, or Zryna `bool` to `_Bool` bitcast is valid.
+The closed initial sidecar/source contract admits read-only borrowed bytes and
+returned C-owned bytes; writable borrowed buffers, buffer/handle C exports and
+fallible C exports are excluded from v0 and need a new reviewed version.
 Raw C `int`, `long`, `size_t`, and `_Bool` must be named as distinct ABI types in
 verified declarations; source spelling cannot silently choose one.
 
@@ -92,7 +101,7 @@ established merely by matching C function types.
 | --- | --- | --- |
 | Borrowed input `(const uint8_t *p, size_t n)` | Zryna wrapper retains its owned value and lends stable bytes only for the synchronous call; C may not retain `p`. | `n` is byte length, checked before conversion to `size_t`. `(NULL, 0)` is allowed only if declared; `(NULL, n>0)` rejects. UTF-8 mode validates the complete byte sequence; no terminator is implied. |
 | Borrowed output `(uint8_t *p, size_t capacity)` | Caller owns initialized storage and C may write only during the call. | An explicit reported written length must be `<= capacity`; a larger length is boundary failure before reading bytes. Partial initialization is tracked; failure never exposes uninitialized bytes. |
-| C-owned returned `(uint8_t *p, size_t n)` | The named C library owns allocation until the wrapper accepts the result; after acceptance, the wrapper owns the release obligation, not the allocation itself. | A non-null allocated result creates the release obligation before length or encoding validation. Check pointer/length/nullability, max size and encoding before copying to a private Zryna value or retaining as an opaque foreign resource. Call the declared same-library release exactly once on every post-allocation exit. Never pass it to the Zryna runtime allocator. |
+| C-owned returned `(uint8_t *p, size_t n)` | The named C library owns allocation; a successful non-null result immediately creates the wrapper's release obligation before metadata conversion, not ownership of private Zryna storage. | Check pointer/length/nullability, max size and encoding before copying or exposing bytes. Release a valid allocation exactly once on every post-allocation exit. For malformed metadata, release only with the reviewed guarantee that the pointer is still a live matching allocation; otherwise record an unresolved obligation and host/ABI failure, without guessed read/free or a leak-free claim. Never pass it to the Zryna runtime allocator. |
 | Opaque `struct T *` handle | The declaration names one library-specific handle kind and whether the successful call creates, borrows, or consumes it. The wrapper tracks one live owner token per created handle. | Only the matching declared release consumes a live owned token, once. Null creation and failed operations transfer no ownership unless a separately reviewed API contract explicitly states a returned partial resource. No field access, arithmetic, cast across handle kinds, or forged integer-to-pointer value. |
 
 A transferred input becomes foreign-owned only after a declared successful call result;
@@ -135,7 +144,8 @@ language trap. C signal, abort, timeout, loader failure and nonzero harness exit
 process failures, never scalar returns. A corrupt or crashing in-process C library
 cannot promise that cleanup runs; tests must report this limit rather than claim a
 sandbox or recovery. Cross-language unwinding in either direction is forbidden: C
-and Zryna entry shims must contain their own errors and return declared statuses.
+and Zryna entry shims must contain their own errors. Imports use their declared
+statuses; initial total scalar exports have no failure/status channel.
 
 V0 has **no callbacks, function pointers, C-held Zryna borrows, worker threads,
 thread-affine handles, or reentrant entry**. A foreign call executes synchronously
@@ -172,7 +182,9 @@ The incomplete `struct fixture_handle` is created by
 `int32_t fixture_read(struct fixture_handle *, int32_t *out)`, and consumed by
 `void fixture_close(struct fixture_handle *)`. `fixture_open` returns status `1`
 without allocating or writing `out` for a negative seed; status `0` creates a
-handle whose read result is the seed. Its contract fixes the allocator/release
+handle whose read result is the seed. Allocation failure for a nonnegative seed
+returns status `2` without allocating or writing `out`; negative seed is checked
+first and never attempts allocation. Its contract fixes the allocator/release
 pair, `NULL` and zero-length behavior, bounds, failure atomicity, and a trace
 counter for each release. A separate generated export
 `int32_t zryna_c_v0_e_add(int32_t, int32_t)` is called by a C11 client using
@@ -193,18 +205,20 @@ signed-overflow arithmetic.
 | C attempts callback, retains borrowed pointer, unwinds across boundary, or requires worker-thread entry | Signature or reviewed library policy rejected; hostile execution is not classified as a recoverable language error. |
 
 The reverse export test also checks wrong arity/type in the generated header as a
-compile failure, invalid raw Boolean carrier as an entry failure before the body,
-and repeated C-client calls with no leaked owner. C fixtures are deliberately
+compile failure and repeated C-client calls with no leaked owner. A separately
+declared Boolean shim/export must check invalid raw Boolean carriers before its
+body; the direct `i32` addition export admits every signed 32-bit value and is
+not that Boolean fixture. C fixtures are deliberately
 smaller than SQLite or a Rust wrapper so ABI and cleanup faults are visible alone.
 
 ## Bounded delivery and acceptance gates
 
 | Stage | Prerequisite | Required evidence before advancing |
 | --- | --- | --- |
-| Design acceptance | Review this target table, resource policy and exclusions against #357; coordinate only native artifact fields with #361. | Signed-off contract decision, checked primary psABI/header comparisons, complete positive/negative case review; no support claim. |
+| Specification acceptance | Integrate the complete target table, resource/source/identity policies, exclusions and limits with #357 and native artifact fields under #361. | This specified-only normative future contract, checked primary psABI/header comparisons and complete positive/negative case requirements; no support claim. |
 | Prototype | Accepted contract; isolated fixture branch. | C header static assertions and callable scalar/buffer/handle examples on the exact Linux target; deliberately disposable prototype, no selector or distribution. |
 | Profile and IR/MIR implementation | Accepted #357 native admissibility and exact accepted ownership/layout/profile gates. | Independent malformed declaration and hostile raw IR/MIR rejection; stable diagnostics; universal/JS/WASM/`all` refusal; no verified value from partial input. |
-| Import/export and driver linking | Verified profile and exact #361 native artifact input decisions for artifact-backed linking. | Closed symbols, relocations, header identity, toolchain and target audits; create-only publication; scalar/buffer/handle and reverse C-client results. |
+| Import/export and driver linking | Verified profile and exact #361 native artifact input decisions for artifact-backed linking. | Closed symbols, relocations, header identity, toolchain and target audits; create-only publication; scalar imports/exports, buffer/handle imports and reverse C-client results. |
 | Safe wrappers and later library proof | Audited raw boundary, reviewed library-specific ownership contract. | Injected allocation failure, partial failure, wrong allocator/library, null/length/UTF-8, repeated release, leak and sanitizer evidence; SQLite and Rust-through-C-shim each receive separate proof. |
 | Per-platform conformance | Complete Linux fixture and wrapper matrix. | Linux x86-64 CI plus independent malformed and fault tests; each additional OS/ABI gets a new table, header comparison and separate evidence before activation. |
 | Public activation | Accepted implementation, conformance, docs and release review. | Explicit selector/profile migration and published support decision; `specified`, `prototype`, `conformance-passed`, `publicly-supported` tracked separately. |
@@ -212,18 +226,18 @@ smaller than SQLite or a Rust wrapper so ABI and cleanup faults are visible alon
 No stage changes the historical digest-pinned inventories or M3 gates. FFI completion alone
 does not establish stable 1.0 compatibility or native frontend replacement.
 
-## Decisions for reviewer agreement
+## Fixed v0 decisions
 
-- **Boolean C surface:** v0 proposes a `uint32_t` checked shim and excludes direct
+- **Boolean C surface:** v0 specifies a `uint32_t` checked shim and excludes direct
   `_Bool`. A later direct `_Bool` option needs independent narrow-width call/result
   validation and a matching header/fixture proof; it cannot reuse the 32-bit public
   scalar carrier by assertion.
-- **Export namespace:** `zryna_c_v0_e_` avoids the existing scalar namespace. The
-  reviewer may choose another fixed prefix before implementation, but exact symbol
-  collision and version tests remain required.
+- **Export namespace:** `zryna_c_v0_e_` is the fixed versioned prefix, separate
+  from the existing scalar namespace. Exact symbol collision and version tests
+  remain required; a different prefix requires a new reviewed contract version.
 - **Foreign allocation:** v0 allows only a named same-library release obligation.
   Adoption into private Zryna storage is a checked copy. A zero-copy adoption option
-  needs a new allocator and failure/cleanup proof and is outside this v0 draft.
+  needs a new allocator and failure/cleanup proof and is outside v0.
 - **Fault containment:** in-process C crashes remain process failures. Promising
   recovery from a hostile library requires a separately specified process-isolation
   boundary, not a wider metadata declaration.
