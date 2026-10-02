@@ -14,7 +14,7 @@ backend-consumable function-instance IDs. A raw producer may
 claim IDs but cannot make them authoritative.
 
 Each verified function instance carries its declaration identity, ordered type
-argument keys, substituted parameter/result types, source call site, private
+argument keys, substituted parameter/result types, all referring source call sites, private
 symbol identity and full ownership/drop plan. Every call names one existing
 instance ID and has exact arity, argument types, result type and ownership
 transfer. No type parameter, unresolved application, type erasure, dynamic
@@ -44,3 +44,26 @@ mutations of key, substitution, target ID, variant, payload and cleanup; and
 exact/first-extra, overflow and replay fixtures. A valid producer output alone
 does not prove the verifier boundary. The eventual implementation must freeze
 exact new IR tags and diagnostic codes before executable use.
+
+The successor's logical operations are `ClosedGenericCall(instanceId,
+arguments)`, `ClosedEnumConstruct(typeId, ordinal, payload?)` and
+`ClosedEnumMatch(typeId, scrutinee, mode, successors)`, where mode is exactly
+`value`, `shared-borrow` or `exclusive-borrow`. These are logical contract names,
+not additional tags in current raw IR. Each successor contains ordinal, optional
+payload binding/type, exact result type, source span and verified owner/loan
+transfers. Bindings and successors occur in ordinal order; execution selects
+only the discriminant's edge. The constructor has zero payload operands for
+none and exactly one for every payload variant. Generic-call arguments retain
+source evaluation order. All reachable and unreachable claimed blocks are
+verified under the existing canonical graph rules; no orphan claim can hide an
+invalid owner, variant or new instance.
+
+The verifier binds the whole complete instance inventory, declaration and
+SourceMap identities, both successor layout fingerprints, selected future
+language contract and ownership-runtime declaration identity. It rejects omitted
+or extra inventory members, duplicate keys, nondense/sorted IDs, wrong source
+provenance, invented private symbols, and graph authority from another compilation.
+One deduplicated instance can have multiple call sites; call-site provenance is
+not part of its key or ID. Physical wire tag allocation is a separate new-version
+serialization gate in #416; no producer can execute these logical operations
+until that schema and independent hostile decoding tests are frozen.

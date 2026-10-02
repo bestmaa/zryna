@@ -1,0 +1,858 @@
+{
+  "format": "zryna.generic-review.v1",
+  "status": "candidate-only",
+  "sourceCases": [
+    {
+      "id": "function-one",
+      "source": "function identity<T extends ZrynaValue>(value: T): T { return value; }",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "function-two",
+      "source": "function select<T extends ZrynaValue, E extends ZrynaValue>(value: T, error: E): T { return value; }",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "nominal-struct",
+      "source": "export interface Box<T extends ZrynaValue> extends ZrynaStruct { value: T; }",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "nominal-enum",
+      "source": "interface Choice<T extends ZrynaValue, E extends ZrynaValue> extends ZrynaEnum { ok: T; err: E; none: ZrynaNone; }",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "explicit-call",
+      "source": "function identity<T extends ZrynaValue>(value: T): T { return value; } function score(): i32 { return identity<i32>(7); }",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "struct-construction",
+      "source": "interface Box<T extends ZrynaValue> extends ZrynaStruct { value: T; } function score(): i32 { const box: Box<i32> = Box<i32>({ value: 7 }); return box.value; }",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "user-enum-construction",
+      "source": "const value: Choice<i32, String> = Choice.ok<i32, String>(7);",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "option-none",
+      "source": "const value: Option<i32> = Option.none<i32>();",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "option-some",
+      "source": "const value: Option<i32> = Option.some<i32>(7);",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "result-ok",
+      "source": "const value: Result<i32, String> = Result.ok<i32, String>(7);",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "result-err",
+      "source": "const value: Result<i32, String> = Result.err<i32, String>(message);",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "nested-container",
+      "source": "const value: Vec<Option<i32>> = Vec<Option<i32>>([Option.some<i32>(7)]);",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "complete-match",
+      "source": "const score: i32 = match(value, { \"Option.none\": () => 0, \"Option.some\": (item) => item });",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "shared-match",
+      "source": "const loan: Borrow<Option<String>> = borrow(owner); const score: i32 = match(loan, { \"Option.none\": () => 0, \"Option.some\": (item) => 1 });",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "exclusive-match",
+      "source": "const loan: BorrowMut<Option<i32>> = borrowMut(owner); const score: i32 = match(loan, { \"Option.none\": () => 0, \"Option.some\": (item) => item });",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "borrowed-signature",
+      "source": "function read<T extends ZrynaValue>(value: Borrow<T>): i32 { return 1; }",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "finite-supplied-nesting",
+      "source": "interface Box<T extends ZrynaValue> extends ZrynaStruct { value: T; } const value: Box<Box<i32>> = Box<Box<i32>>({ value: Box<i32>({ value: 7 }) });",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "same-key-indirection",
+      "source": "interface Node<T extends ZrynaValue> extends ZrynaStruct { next: Vec<Node<T>>; }",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "missing-bound",
+      "source": "function f<T>(value: T): T { return value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "T",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "wrong-bound",
+      "source": "function f<T extends Copy>(value: T): T { return value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "Copy",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "three-parameters",
+      "source": "function f<T extends ZrynaValue, E extends ZrynaValue, U extends ZrynaValue>(value: T): T { return value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "U",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "default-parameter",
+      "source": "function f<T extends ZrynaValue = i32>(value: T): T { return value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "=",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "structural-type",
+      "source": "type Box<T extends ZrynaValue> = { value: T };",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "type",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "local-template",
+      "source": "function score(): i32 { function identity<T extends ZrynaValue>(value: T): T { return value; } return 0; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "identity",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "omitted-argument",
+      "source": "identity(7);",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7001",
+      "primaryToken": "identity",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "extra-argument",
+      "source": "identity<i32, bool>(7);",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7001",
+      "primaryToken": "bool",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "three-arguments",
+      "source": "select<i32, bool, String>(7, true);",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7001",
+      "primaryToken": "String",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "borrow-argument",
+      "source": "identity<Borrow<i32>>(loan);",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7001",
+      "primaryToken": "Borrow",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "unit-argument",
+      "source": "Option.none<unit>();",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7001",
+      "primaryToken": "unit",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "opaque-clone",
+      "source": "function f<T extends ZrynaValue>(value: T): T { return clone(value); }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7002",
+      "primaryToken": "clone",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "opaque-arithmetic",
+      "source": "function f<T extends ZrynaValue>(value: T): T { return value + value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7002",
+      "primaryToken": "+",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "recursive-function",
+      "source": "function f<T extends ZrynaValue>(value: T): T { return f<T>(value); }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7003",
+      "primaryToken": "f<T>",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "expanding-declaration",
+      "source": "interface Nest<T extends ZrynaValue> extends ZrynaStruct { next: Vec<Nest<Vec<T>>>; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7003",
+      "primaryToken": "Nest<Vec<T>>",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "by-value-cycle",
+      "source": "interface Node<T extends ZrynaValue> extends ZrynaStruct { next: Node<T>; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-L3002",
+      "primaryToken": "Node<T>",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "unknown-variant",
+      "source": "Option.empty<i32>();",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7004",
+      "primaryToken": "empty",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "missing-arm",
+      "source": "match(value, { \"Result.ok\": (item) => item });",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7004",
+      "primaryToken": "match",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "duplicate-arm",
+      "source": "match(value, { \"Option.none\": () => 0, \"Option.none\": () => 1, \"Option.some\": (item) => item });",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7004",
+      "primaryToken": "\"Option.none\"",
+      "primaryOccurrence": 1
+    },
+    {
+      "id": "source-template-export",
+      "source": "export function identity<T extends ZrynaValue>(value: T): T { return value; }",
+      "parserErrors": 0,
+      "decision": "admit",
+      "code": null,
+      "primaryToken": null,
+      "primaryOccurrence": null
+    },
+    {
+      "id": "aggregate-export",
+      "source": "export function value(): Option<i32> { return Option.none<i32>(); }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7005",
+      "primaryToken": "value",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "wrong-payload",
+      "source": "Option.some<i32>(true);",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7006",
+      "primaryToken": "true",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "extra-payload",
+      "source": "Option.none<i32>(7);",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7006",
+      "primaryToken": "none",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "borrowed-payload-move",
+      "source": "const loan: Borrow<Option<String>> = borrow(owner); const moved: String = match(loan, { \"Option.none\": () => \"\", \"Option.some\": (item) => item });",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7007",
+      "primaryToken": "item",
+      "primaryOccurrence": 1
+    },
+    {
+      "id": "invalid-application-member",
+      "source": "Option<i32>.some(7);",
+      "parserErrors": 1,
+      "decision": "reject",
+      "code": "parser",
+      "primaryToken": ".",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "class-template",
+      "source": "class Box<T extends ZrynaValue> { value: T; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "class",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "method-template",
+      "source": "interface Box<T extends ZrynaValue> extends ZrynaStruct { get(): T; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "get",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "optional-field",
+      "source": "interface Box<T extends ZrynaValue> extends ZrynaStruct { value?: T; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "?",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "readonly-field",
+      "source": "interface Box<T extends ZrynaValue> extends ZrynaStruct { readonly value: T; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "readonly",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "computed-field",
+      "source": "interface Box<T extends ZrynaValue> extends ZrynaStruct { [name]: T; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "[",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "declaration-merge",
+      "source": "interface Box<T extends ZrynaValue> extends ZrynaStruct { value: T; } interface Box<T extends ZrynaValue> extends ZrynaStruct { value: T; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "Box",
+      "primaryOccurrence": 1
+    },
+    {
+      "id": "overload-set",
+      "source": "function f<T extends ZrynaValue>(value: T): T; function f<T extends ZrynaValue>(value: T): T { return value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "f",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "union-type",
+      "source": "type Value<T extends ZrynaValue> = T | i32;",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "type",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "intersection-type",
+      "source": "type Value<T extends ZrynaValue> = T & i32;",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "type",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "conditional-type",
+      "source": "type Value<T extends ZrynaValue> = T extends i32 ? i32 : bool;",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "type",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "mapped-type",
+      "source": "type Value<T extends ZrynaValue> = { [K in keyof T]: T[K] };",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "type",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "indexed-type",
+      "source": "type Value<T extends ZrynaValue> = T[key];",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "type",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "keyof-bound",
+      "source": "function f<T extends keyof Value>(value: T): T { return value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "keyof",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "type-query",
+      "source": "type Value<T extends ZrynaValue> = typeof source;",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "type",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "literal-type",
+      "source": "type Value<T extends ZrynaValue> = 7;",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "type",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "infer-type",
+      "source": "type Value<T> = T extends Vec<infer E> ? E : i32;",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "type",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "multiple-bounds",
+      "source": "function f<T extends ZrynaValue & Copy>(value: T): T { return value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "&",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "variance-parameter",
+      "source": "interface Box<out T extends ZrynaValue> extends ZrynaStruct { value: T; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "out",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "rest-parameter",
+      "source": "function f<T extends ZrynaValue>(...values: Vec<T>): T { return value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "...",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "closure-template",
+      "source": "const f = <T extends ZrynaValue>(value: T): T => value;",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "=>",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "wildcard-match",
+      "source": "match(value, { \"Option.none\": () => 0, \"Option.some\": (item) => item, \"_\": () => 0 });",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7004",
+      "primaryToken": "\"_\"",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "block-match-arm",
+      "source": "match(value, { \"Option.none\": () => { return 0; }, \"Option.some\": (item) => item });",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7004",
+      "primaryToken": "{ return",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "generic-function-value",
+      "source": "const value = identity;",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7001",
+      "primaryToken": "identity",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "constructor-spread",
+      "source": "Option.some<i32>(...items);",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "...",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "higher-kinded-use",
+      "source": "function f<F extends ZrynaValue>(value: F<i32>): F<i32> { return value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7002",
+      "primaryToken": "F<i32>",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "exceptions",
+      "source": "function f<T extends ZrynaValue>(value: T): T { throw value; }",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-D7001",
+      "primaryToken": "throw",
+      "primaryOccurrence": 0
+    },
+    {
+      "id": "utf8-primary-span",
+      "source": "// π precedes a source error\nOption.some<i32>(true);",
+      "parserErrors": 0,
+      "decision": "reject",
+      "code": "ZRYNA-M7006",
+      "primaryToken": "true",
+      "primaryOccurrence": 0
+    }
+  ],
+  "moduleCases": [
+    {
+      "id": "diamond-shared-instances",
+      "files": [
+        {
+          "path": "a.zry",
+          "source": "import { Box, identity } from \"./values.zry\"; export function left(): i32 { const box: Box<i32> = Box<i32>({ value: identity<i32>(7) }); return box.value; }"
+        },
+        {
+          "path": "b.zry",
+          "source": "import { Box, identity } from \"./values.zry\"; export function right(): i32 { const box: Box<i32> = Box<i32>({ value: identity<i32>(7) }); return box.value; }"
+        },
+        {
+          "path": "main.zry",
+          "source": "import { left } from \"./a.zry\"; import { right } from \"./b.zry\"; export function score(): i32 { return left() + right(); }"
+        },
+        {
+          "path": "values.zry",
+          "source": "export interface Box<T extends ZrynaValue> extends ZrynaStruct { value: T; } export function identity<T extends ZrynaValue>(value: T): T { return value; }"
+        }
+      ],
+      "expectedFunctionKeys": [
+        "400300000000000000010000000100000001"
+      ],
+      "expectedDataKeys": [
+        "120300000000000000010000000100000001"
+      ],
+      "expectedExecutableExports": [
+        "a.zry:left",
+        "b.zry:right",
+        "main.zry:score"
+      ],
+      "expectedObservation": "i32:14",
+      "forbiddenEntrypoints": [
+        "values.zry:identity",
+        "values.zry:identity<i32>"
+      ],
+      "rejectionCode": "ZRYNA-M7005"
+    }
+  ],
+  "limits": [
+    {
+      "metric": "parameters",
+      "limit": 2,
+      "firstExtraCode": "ZRYNA-D7001"
+    },
+    {
+      "metric": "arguments",
+      "limit": 2,
+      "firstExtraCode": "ZRYNA-M7001"
+    },
+    {
+      "metric": "functions",
+      "limit": 4096,
+      "firstExtraCode": "ZRYNA-M7201"
+    },
+    {
+      "metric": "data",
+      "limit": 4096,
+      "firstExtraCode": "ZRYNA-M7201"
+    },
+    {
+      "metric": "edges",
+      "limit": 65536,
+      "firstExtraCode": "ZRYNA-M7201"
+    },
+    {
+      "metric": "depth",
+      "limit": 64,
+      "firstExtraCode": "ZRYNA-M7201"
+    },
+    {
+      "metric": "keyBytes",
+      "limit": 4096,
+      "firstExtraCode": "ZRYNA-M7201"
+    }
+  ],
+  "observations": [
+    {
+      "id": "option-none",
+      "scenario": "By-value Option<i32>.none, none arm returns 0.",
+      "outcome": "i32:0",
+      "trace": []
+    },
+    {
+      "id": "option-some",
+      "scenario": "By-value Option<i32>.some(7), payload returned as Copy scalar.",
+      "outcome": "i32:7",
+      "trace": []
+    },
+    {
+      "id": "result-ok",
+      "scenario": "Result<i32,String>.ok(7), ok arm returns the scalar.",
+      "outcome": "i32:7",
+      "trace": []
+    },
+    {
+      "id": "result-err",
+      "scenario": "Result<i32,String>.err(message), err arm returns 1; binding remains live until arm exit.",
+      "outcome": "i32:1",
+      "trace": [
+        "release:message"
+      ]
+    },
+    {
+      "id": "nested-owned",
+      "scenario": "Option<Result<i32,String>>.some(err(message)); exhaustive nested matches return 1 without moving String away.",
+      "outcome": "i32:1",
+      "trace": [
+        "release:message"
+      ]
+    },
+    {
+      "id": "borrowed-owner",
+      "scenario": "Shared match over Option<String>.some(message); return 1, end payload loan, end scrutinee loan, then scope exit.",
+      "outcome": "i32:1",
+      "trace": [
+        "end-loan:payload",
+        "end-loan:scrutinee",
+        "release:message"
+      ]
+    },
+    {
+      "id": "constructor-fault",
+      "scenario": "Earlier live root; generic two-String struct left field succeeds, right clone reports ALLOCATION; no right result is initialized.",
+      "outcome": "zryna.trap.allocation-v1",
+      "trace": [
+        "release:left",
+        "release:earlier-root"
+      ]
+    },
+    {
+      "id": "match-arm-fault",
+      "scenario": "Owned Option<String>.some(message); arm owns later String local; next allocation reports ALLOCATION.",
+      "outcome": "zryna.trap.allocation-v1",
+      "trace": [
+        "release:later-local",
+        "release:message"
+      ]
+    },
+    {
+      "id": "payload-fault",
+      "scenario": "Option.some<String>(clone(source)); clone reports ALLOCATION before publishing payload; earlier source remains live.",
+      "outcome": "zryna.trap.allocation-v1",
+      "trace": [
+        "release:source"
+      ]
+    },
+    {
+      "id": "inactive-err",
+      "scenario": "Result<i32,String>.ok(7) ignores uninitialized err bytes; inactive String produces no release.",
+      "outcome": "i32:7",
+      "trace": []
+    },
+    {
+      "id": "bounds-before-payload",
+      "scenario": "Option.some<i32>(array[index]) with invalid index and an earlier owned root; no enum is initialized.",
+      "outcome": "zryna.trap.bounds-v1",
+      "trace": [
+        "release:earlier-root"
+      ]
+    },
+    {
+      "id": "capacity-before-payload",
+      "scenario": "Option.some<String>(left + right) reports CAPACITY before result commit; both source Strings remain live.",
+      "outcome": "zryna.trap.capacity-v1",
+      "trace": [
+        "release:right",
+        "release:left"
+      ]
+    },
+    {
+      "id": "refcount-before-payload",
+      "scenario": "Option.some<Shared<i32>>(clone(source)) under private REFCOUNT fault injection; count increment and enum commit have no effect.",
+      "outcome": "zryna.trap.refcount-v1",
+      "trace": [
+        "release:source"
+      ]
+    },
+    {
+      "id": "utf8-boundary",
+      "scenario": "Private ownership-runtime boundary fixture reports UTF8 before publishing a String for Option.some; retained byte-source owner is cleaned. This grants no source or host import.",
+      "outcome": "zryna.trap.utf8-v1",
+      "trace": [
+        "release:byte-source"
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "path": "spec/language/DATA_OWNERSHIP_V1.md",
+      "sha256": "ed75e0aafc28a2cece2bd4380885556b809ec6bc3bdc699623df5e64be5bff12"
+    },
+    {
+      "path": "spec/memory-model/AGGREGATE_LAYOUT_V1.md",
+      "sha256": "024326a3c7d52596134e0de7d0fa375603ef932971bf65919e8393a74059459d"
+    },
+    {
+      "path": "spec/abi/OWNERSHIP_RUNTIME_V1.md",
+      "sha256": "3329dca6ee8548623f9041fcf2cd97b36da7f5a94a263954f83210f0885accc6"
+    },
+    {
+      "path": "spec/language/CROSS_TARGET_PROFILES_V1.md",
+      "sha256": "56f6ac4166208d7967fbacc010dfb96f441abc8dceac3b9fd22ef7065dfc90c0"
+    }
+  ],
+  "keyBoundary": [
+    {
+      "resultNodes": 288,
+      "optionWrappers": 7,
+      "keyBytes": 4096,
+      "sha256": "2919b8de2e55105006744afc446d0ec763345832f259600aeef6eed21371d795",
+      "expected": "admit"
+    },
+    {
+      "resultNodes": 290,
+      "optionWrappers": 4,
+      "keyBytes": 4097,
+      "sha256": "1d7beba953c042c514aa8fa28c747de33451828d711e6968b32d5c591b98f767",
+      "expected": "ZRYNA-M7201"
+    }
+  ]
+}

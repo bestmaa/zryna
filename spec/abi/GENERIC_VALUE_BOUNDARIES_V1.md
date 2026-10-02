@@ -20,6 +20,13 @@ profile's implemented ABI path admits it. A
 generic function, `Option`, `Result` or any aggregate containing them is rejected
 at that boundary before emission, even when one specialization could return a
 scalar. Generic nominal values and standard enum values remain internal.
+The future source-module template export is compile-time visibility, separate
+from executable ABI admission. `export function identity<T ...>` can be imported
+as a template; no public symbol or callable host carrier is generated for it or
+its instances. A nongeneric scalar wrapper may call an imported closed instance.
+Public entrypoint selection of the template or any specialization rejects with
+M7005, and a forged executable-export inventory rejects at the IR boundary.
+Current profiles keep their existing `export` interpretation unchanged.
 Neither internal layout nor private call carriers create a JS object API, core
 Wasm export, native C ABI, WIT resource, Component Model binding or serialization
 format. A future aggregate boundary must separately define type/version identity,

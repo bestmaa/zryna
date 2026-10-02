@@ -86,3 +86,18 @@ type/depth/key/object limits, checked arithmetic with synthetic small targets,
 and a one-byte key/fingerprint mutation. The four fixed records cover both
 generic nominal kinds and both compiler-owned enum families; mutation and
 independent encoder fixtures remain implementation gates.
+
+The [owned/nested review fixtures](generic-owned-layout-v1-fixtures.json) and
+their [closed review schema](generic-owned-layout-v1.schema.json) additionally
+freeze Option<String>, Option<Option<String>> and Result<Option<String>,String>.
+Each case includes the complete canonical type-universe prefix, exact record
+bytes, size/alignment/offset/payload area and whole-document SHA-256 for both
+targets. Option<String> uses aggregate drop/runtime kind 1 with String payload
+type 2; all three owned standard enums have aggregate kind 1, never String kind
+2 on the wrapper. The ordered universe is bool=0, i32=1, String=2,
+Option<String>=3, Option<Option<String>>=4, Result<Option<String>,String>=5.
+Each listed case fingerprints its complete prefix, not an isolated record that
+omits a referenced type. `tests/m7-generic-owned-layout-spec.test.mjs` derives
+the layout formulas independently and reproduces the fixed bytes/digests.
+These are reference-encoding review results; executable layout authority and
+hostile runtime boundary rejection remain #416 requirements.

@@ -81,6 +81,6 @@ test('the quick gate includes the focused public manifest/profile contract', asy
     args.includes('tests/m2-manifest-contract.test.mjs')));
   assert.equal(
     packageDocument.scripts['docs:check'],
-    'node --test tests/docs-bundle.test.mjs tests/m2-contract.test.mjs tests/m2-manifest-contract.test.mjs tests/m3-contract.test.mjs tests/m3-public-docs.test.mjs',
+    'node --test tests/docs-bundle.test.mjs tests/m2-contract.test.mjs tests/m2-manifest-contract.test.mjs tests/m3-contract.test.mjs tests/m3-public-docs.test.mjs tests/m7-generic-spec-fixtures.test.mjs tests/m7-generic-instance-spec-fixtures.test.mjs tests/m7-generic-review-spec.test.mjs tests/m7-generic-resource-spec.test.mjs tests/m7-generic-owned-layout-spec.test.mjs tests/m7-generic-key-spec.test.mjs',
   );
 });

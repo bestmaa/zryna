@@ -11,6 +11,9 @@ Companion proposals cover the [verified IR](../ir/GENERIC_INSTANTIATION_V1.md),
 [closed layout](../memory-model/GENERIC_ENUM_LAYOUT_V1.md),
 [ABI boundary](../abi/GENERIC_VALUE_BOUNDARIES_V1.md), and
 [conformance/resource evidence](../../docs/M7_GENERIC_CONFORMANCE.md).
+The [complete decision catalogue](BOUNDED_GENERICS_DECISIONS_V1.md) fixes exact
+source forms, exclusions, Copy/Clone, borrowed match, diagnostic selection and
+the dependency-ready #416 plan. Read these proposals as one acceptance unit.
 
 ## 1. Authority and admitted forms
 
@@ -24,7 +27,9 @@ The initial user-defined forms are top-level functions and nominal struct/enum
 declarations with one or two invariant type parameters. A parameter occurs only in
 value parameter/result types, fields, variant payloads, and admitted nested M3
 containers. No locally declared generic functions or types, methods, closures, aliases, interfaces
-other than the nominal markers, or generic exports at scalar ABI v1 are admitted.
+other than the nominal markers, or executable generic exports at scalar ABI v1 are admitted.
+Source-module `export` on a template exposes only its compile-time declaration
+for exact named imports; it never creates an executable export or host symbol.
 All function parameters and results retain explicit types. Generic values must be
 fully instantiated before layout, IR sealing or code generation. Bare generic names
 are never runtime values.
@@ -83,8 +88,9 @@ followed by property access, such as `Option<i32>.some(7)`, is excluded because
 it is not TypeScript-compatible source syntax. The future provider must preserve
 the callee/member and each explicit argument span without assigning its meaning.
 Inference from arguments, expected results, or omitted generic arguments is
-excluded. Importing a generic declaration follows the existing exact named-import
-and module-closure rules. A source-level generic function name remains unique in
+excluded. Importing a generic function or data declaration follows the existing
+exact named-import and module-closure rules. Its original declaration identity
+survives every import path and diamond. A source-level generic function name remains unique in
 its module: overload sets and specialization are excluded. The source call graph,
 including imported generic calls, remains acyclic. Instantiation cannot introduce
 direct or mutual function recursion. A future syntax protocol must define distinct nodes
@@ -287,6 +293,8 @@ future protocol/IR versioning; no current executable path may emit them:
 | `ZRYNA-M7003` | Function recursion or expanding nominal instantiation |
 | `ZRYNA-M7004` | Wrong standard variant or inexact/nonexhaustive match |
 | `ZRYNA-M7005` | Generic or standard enum at a forbidden public ABI boundary |
+| `ZRYNA-M7006` | Exact payload, field, call or match-result type/arity mismatch |
+| `ZRYNA-M7007` | Generic/standard-enum move, borrow, initialization or cleanup misuse |
 | `ZRYNA-M7201` | Terminal instantiation resource exhaustion |
 | `ZRYNA-I7001` | Unclosed, mismatched or forged verified-IR instance/variant/cleanup |
 | `ZRYNA-L7001` | Invalid closed layout key, record, ordinal or fingerprint |
@@ -318,14 +326,13 @@ one exact revision. Those results cannot be claimed from this document.
 
 ## 5. Review decisions and implementation order
 
-Before freezing syntax, reviewers must decide whether `ZrynaValue` is the only
-initial bound and whether explicit application syntax can be represented without
-ambiguity by the replacement frontend. An authenticated portable-candidate
-TypeScript 6.0.3 parser check accepts eight generic declaration/call forms above
-and rejects `Option<i32>.some(7)`; a future provider-neutral protocol/schema and
-native-provider conformance remain implementation work. The candidate limits,
-diagnostics and canonical layout encodings
-require exact-limit/first-extra and independent digest fixtures before adoption.
+The candidate decision is exactly one initial bound, `ZrynaValue`, and explicit
+application syntax as fixed in the complete decision catalogue. Checked-in
+review fixtures and pinned TypeScript 6.0.3 AST checks make syntax ambiguity
+review reproducible. They do not implement a future provider-neutral protocol;
+its schema and native-provider conformance remain #416 work. Candidate limits,
+diagnostics and canonical layout encodings are reviewed with the fixed schema,
+exact-limit/first-extra reference fixtures and independent digest checks.
 The public ABI of these types, aggregate export policy, WIT/component mapping and
 host resource policy remain separate proposals. No current supported profile is
 expanded by approving internal semantics.
