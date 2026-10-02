@@ -34,10 +34,9 @@ fn worker_location(version: u32) -> (PathBuf, Vec<OsString>, PathBuf) {
         },
         PathBuf::from,
     );
-    let adapter = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../adapters/typescript-6")
-        .canonicalize()
-        .expect("bootstrap adapter directory");
+    // Canonicalization adds Windows verbatim prefixes that Node cannot use as its cwd.
+    let adapter = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../adapters/typescript-6");
+    assert!(adapter.is_dir(), "bootstrap adapter directory");
     let script = if version == 2 {
         "src/worker.mjs".to_owned()
     } else {
