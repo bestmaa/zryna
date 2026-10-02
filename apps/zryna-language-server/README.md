@@ -43,5 +43,6 @@ definition is not advertised. Hover, references, rename,
 completion, code actions, indexing, debugging, and execution are unsupported.
 
 Each formatting capability accepts only its separately verified profile. See the
-[format contract and editor guide](../../docs/LANGUAGE_SERVER.md). Cross-platform clean-install
-acceptance and marketplace publication require separate evidence under #409.
+[format contract and editor guide](../../docs/LANGUAGE_SERVER.md). Its publication evidence records
+the separate Linux/Windows portable acceptance and clean registry installations of editor 0.5.0,
+including real Windows extension-host checks against this matching reviewed server.
