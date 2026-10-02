@@ -265,10 +265,48 @@ function evaluateGraph(jobs, leaves) {
   return results;
 }
 
+const WINDOWS_RUST_TIMEOUT = "${{ matrix.os == 'windows-latest' && 60 || 40 }}";
+
+function withoutWindowsRustBudget(candidate) {
+  const original = structuredClone(candidate);
+  assert.equal(original.jobs.rust['timeout-minutes'], WINDOWS_RUST_TIMEOUT);
+  original.jobs.rust['timeout-minutes'] = 40;
+  return original;
+}
+
+test('Windows Rust timeout retains finite platform budgets and the unchanged workflow', () => {
+  const original = withoutWindowsRustBudget(workflow);
+  assert.equal(original.jobs.rust['timeout-minutes'], 40);
+  original.jobs.rust['timeout-minutes'] = WINDOWS_RUST_TIMEOUT;
+  assert.deepEqual(original, workflow);
+});
+
+test('Rust timeout value, operating-system and operator mutations reject before normalization', () => {
+  for (const value of [
+    undefined, null, true, 0, 40, 60, 75,
+    "${{ matrix.os == 'windows-latest' && 59 || 40 }}",
+    "${{ matrix.os == 'windows-latest' && 61 || 40 }}",
+    "${{ matrix.os == 'windows-latest' && 75 || 40 }}",
+    "${{ matrix.os == 'windows-latest' && 60 || 39 }}",
+    "${{ matrix.os == 'windows-latest' && 60 || 41 }}",
+    "${{ matrix.os == 'windows-latest' && 40 || 60 }}",
+    "${{ matrix.os == 'ubuntu-latest' && 60 || 40 }}",
+    "${{ matrix.arch == 'windows-latest' && 60 || 40 }}",
+    "${{ matrix.os != 'windows-latest' && 60 || 40 }}",
+    "${{ matrix.os == 'windows-latest' || 60 && 40 }}",
+    "${{ matrix.os == 'windows-latest' && 60 && 40 }}",
+  ]) {
+    const changed = structuredClone(workflow);
+    if (value === undefined) delete changed.jobs.rust['timeout-minutes'];
+    else changed.jobs.rust['timeout-minutes'] = value;
+    assert.throws(() => withoutWindowsRustBudget(changed));
+  }
+});
+
 test('CI starts independent authorities together with bounded preflight headroom', () => {
   assert.equal(workflow.jobs['fast-contracts']['timeout-minutes'], 10);
   assert.equal(workflow.jobs.preflight['timeout-minutes'], 40);
-  assert.equal(workflow.jobs.rust['timeout-minutes'], 40);
+  assert.equal(workflow.jobs.rust['timeout-minutes'], WINDOWS_RUST_TIMEOUT);
   assert.equal(workflow.jobs.preflight.if, undefined);
   assert.equal(workflow.jobs.preflight.needs, undefined);
   assert.equal(workflow.jobs['fast-contracts'].needs, undefined);
@@ -364,7 +402,7 @@ test('M0 aggregate checks out the pinned verifier before execution', () => {
 
 test('routing preserves all other pinned workflow authority', () => {
   bootstrapOrder(workflow, packageDocument);
-  const original = structuredClone(workflow);
+  const original = withoutWindowsRustBudget(workflow);
   const editorIndex = original.jobs.rust.steps.findIndex(step => step.name === "Verify and package editor client");
   assert(editorIndex >= 0);
   assert.deepEqual(original.jobs.rust.steps[editorIndex], {
