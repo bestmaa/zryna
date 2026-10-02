@@ -192,7 +192,7 @@ fn load(out: &mut Vec<Token>, ty: VerifiedType<'_>) {
 fn store(out: &mut Vec<Token>, ty: VerifiedType<'_>) -> Result<(), Diagnostic> {
     match ty.category() {
         TypeCategory::Struct | TypeCategory::Enum | TypeCategory::FixedArray => {
-            out.extend([constant(ty.size())?, Token::Call(1)])
+            out.extend([constant(ty.size())?, Token::Call(1)]);
         }
         TypeCategory::Bool => out.push(Token::StoreByte),
         _ => out.push(Token::Store),

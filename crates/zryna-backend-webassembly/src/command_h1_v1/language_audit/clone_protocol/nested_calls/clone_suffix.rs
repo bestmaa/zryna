@@ -28,7 +28,7 @@ pub(super) fn derive(
         TypeCategory::Struct => structure(&mut out, ty, layouts, shape, enabled)?,
         TypeCategory::Enum => enumeration(&mut out, ty, layouts, shape, enabled)?,
         TypeCategory::FixedArray | TypeCategory::Vec => {
-            sequence(&mut out, ty, layouts, shape, enabled)?
+            sequence(&mut out, ty, layouts, shape, enabled)?;
         }
         _ => return Err(invalid()),
     }

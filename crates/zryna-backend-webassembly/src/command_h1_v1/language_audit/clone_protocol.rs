@@ -213,14 +213,13 @@ fn helper_checks(program: &VerifiedProgram) -> BTreeMap<u32, (usize, bool)> {
 
 fn audit_helper_calls(steps: &[Step], shape: &Shape) -> Result<(), Diagnostic> {
     for step in steps {
-        if let Step::Call(callee) = step {
-            if !matches!(*callee, 0 | 1)
-                && !(*callee >= 6 && *callee < 6 + shape.type_count * 2)
-                && *callee != shape.run + 1
-                && *callee != shape.run + 2
-            {
-                return Err(invalid());
-            }
+        if let Step::Call(callee) = step
+            && !(matches!(*callee, 0 | 1)
+                || *callee >= 6 && *callee < 6 + shape.type_count * 2
+                || *callee == shape.run + 1
+                || *callee == shape.run + 2)
+        {
+            return Err(invalid());
         }
     }
     Ok(())

@@ -1,5 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
-use zryna_ir::data_ownership_v1::{VerifiedDropAction, VerifiedFunction, VerifiedPlaceKind};
+use zryna_ir::data_ownership_v1::{
+    PlaceIdentity, VerifiedDropAction, VerifiedFunction, VerifiedPlaceKind,
+};
 use zryna_layout::{TypeCategory, TypeId, VerifiedLayouts};
 
 use super::super::index_error;
@@ -44,8 +46,8 @@ impl Plan {
             .ty();
         let mut selection = Selection {
             places: function.places().map(|place| (place.id().index(), place.kind())).collect(),
-            initialized: action.initialized_projections().map(|place| place.index()).collect(),
-            moved: action.moved_projections().map(|place| place.index()).collect(),
+            initialized: action.initialized_projections().map(PlaceIdentity::index).collect(),
+            moved: action.moved_projections().map(PlaceIdentity::index).collect(),
             ancestors: BTreeSet::new(),
             variants: action
                 .active_variants()
@@ -163,7 +165,7 @@ impl Selection<'_> {
             if let Some(plan) = self.build(Some(child), ty, false)? {
                 match plan.kind {
                     Kind::Complete => {
-                        segments.push(Segment::Complete { start: index, end: index + 1 })
+                        segments.push(Segment::Complete { start: index, end: index + 1 });
                     }
                     _ => segments.push(Segment::Projected { index, plan }),
                 }
@@ -194,10 +196,10 @@ impl Selection<'_> {
 
     fn active_path(&self, mut child: u32, root: u32) -> bool {
         while let Some(kind) = self.places.get(&child) {
-            if let VerifiedPlaceKind::EnumPayload { base, variant } = kind {
-                if self.variants.get(&base.index()).is_some_and(|active| active != variant) {
-                    return false;
-                }
+            if let VerifiedPlaceKind::EnumPayload { base, variant } = kind
+                && self.variants.get(&base.index()).is_some_and(|active| active != variant)
+            {
+                return false;
             }
             let Some(base) = parent(kind) else {
                 break;

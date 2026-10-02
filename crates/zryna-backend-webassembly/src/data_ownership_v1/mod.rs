@@ -2,7 +2,7 @@ use wasmparser::{
     Encoding, ExternalKind, Operator, Parser, Payload, ValType, Validator, WasmFeatures,
 };
 use zryna_diagnostics::Diagnostic;
-use zryna_ir::data_ownership_v1::VerifiedProgram;
+use zryna_ir::data_ownership_v1::{VerifiedFunction, VerifiedProgram};
 use zryna_ownership_runtime_abi::VerifiedOwnershipRuntimeAbi;
 
 use crate::ValidatedWebAssemblyArtifact;
@@ -188,7 +188,7 @@ fn private_global_count(program: &VerifiedProgram) -> u32 {
     let prefix = program
         .modules()
         .flat_map(zryna_ir::data_ownership_v1::VerifiedModule::functions)
-        .flat_map(|function| function.blocks())
+        .flat_map(VerifiedFunction::blocks)
         .flat_map(zryna_ir::data_ownership_v1::VerifiedBlock::instructions)
         .any(|instruction| match instruction.kind() {
             K::VecClone => instruction.vec_clone_element_failure_drop_actions().next().is_some(),

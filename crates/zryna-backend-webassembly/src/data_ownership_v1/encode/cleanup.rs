@@ -79,7 +79,7 @@ impl Emitter<'_, '_> {
                 for segment in segments.iter().rev() {
                     match segment {
                         Segment::Complete { start, end } => {
-                            self.range(child, stride, offset, *start, *end)?
+                            self.range(child, stride, offset, *start, *end)?;
                         }
                         Segment::Projected { index, plan } => self.node(
                             plan,
