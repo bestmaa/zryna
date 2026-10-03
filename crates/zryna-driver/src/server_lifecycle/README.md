@@ -1,7 +1,8 @@
 # Internal server lifecycle candidate (#401)
 
-This module is a lifecycle-only implementation candidate for the driver. It is loaded by
-`harness.rs` and has no public selector or production runtime call site. It does not establish
+This module is a lifecycle-only implementation candidate for the driver. It is loaded by the
+registered Cargo test target `server_lifecycle` and has no public selector or production runtime
+call site. It does not establish
 server component emission, a verified component identity, HTTP bindings, a capability grant,
 guest execution, or supported host evidence. Issue #401 remains open.
 
@@ -64,7 +65,15 @@ admission and publication, instrumented resource destruction, blocked-destructor
 shutdown waiting, panic recovery and repeated startup. Those observations are distinct from
 WASI component execution, imported-capability enforcement and supported-host conformance.
 
-Standalone execution with the repository-pinned Rust toolchain is:
+Normal Cargo execution with the repository-pinned Rust toolchain is:
+
+```sh
+cargo test --locked -p zryna-driver --test server_lifecycle
+```
+
+The target is also discovered by the unchanged workspace test command in Linux and Windows M0.
+Registration does not establish Windows execution evidence until that hosted target actually runs.
+Standalone execution remains available:
 
 ```sh
 rustc --edition 2024 --test -D warnings \
@@ -72,7 +81,7 @@ rustc --edition 2024 --test -D warnings \
 /tmp/zryna-server-lifecycle-tests --test-threads=2
 ```
 
-Cargo test registration is a coordinated shared-manifest change. Runtime wiring requires a
+Runtime wiring requires a
 reviewed server artifact and incoming-handler adapter, reviewed grant admission and revocation,
 per-store memory/fuel/deadline limits, and exact-revision Linux and Windows execution evidence.
 The unchanged enclosing issue still requires its fixed server corpus, public local-only example,
