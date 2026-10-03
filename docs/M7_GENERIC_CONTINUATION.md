@@ -88,7 +88,8 @@ fixture moves templates across exact `.zry` named imports. Unicode source spans,
 wire/source/compilation brands have independent controls. These observations establish the narrow
 [Copy wire/source lane](../spec/ir/GENERIC_COPY_WIRE_V1.md), not the full owned generic profile.
 
+The additive [Copy Wasm lane](M7_GENERIC_COPY_WASM.md) emits core Wasm 1.0 from that same seal.
 Owned values, loans, mutable CFG and nominal declarations still reject at this new executable
-boundary. Full owner/loan/drop and runtime fault replay, Wasm/native, protocol-v5 provider parity,
+boundary. Full owner/loan/drop and runtime fault replay, native, protocol-v5 provider parity,
 driver admission and supported-platform generic conformance remain unfinished under #416.
 The older layout/runtime/IR constructors and current public profiles remain unchanged.
