@@ -9,7 +9,7 @@ import re
 import subprocess
 import tomllib
 
-CONSUMER_SHA = "024b747686169c0b00108177abb4f73f8ae9fc72"
+CONSUMER_SHA = "aaeaa5b2be0afe3abd748e75cb309e02ec383d50"
 DEPENDENCY_SHA = "af415a682330b1015818e9c0a8d61555fdd8d18c"
 PROVIDER = "zryna-native-activation-harness"
 VERSION = "0.2.3"
