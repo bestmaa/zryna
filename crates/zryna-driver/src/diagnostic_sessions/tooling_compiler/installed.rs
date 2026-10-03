@@ -87,7 +87,7 @@ pub(super) fn abort_execution(
                     format!("{}; owned cleanup failed: {cleanup}", diagnostic.message);
                 ToolingCompilerError::Configuration(diagnostic)
             }
-            primary => ToolingCompilerError::Configuration(
+            primary @ ToolingCompilerError::Session(_) => ToolingCompilerError::Configuration(
                 super::super::tooling_execution::execution_error(format!(
                     "{primary}; owned cleanup failed: {cleanup}"
                 )),

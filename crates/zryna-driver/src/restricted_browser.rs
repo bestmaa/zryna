@@ -32,7 +32,7 @@ pub struct RestrictedBrowserCompiler {
 }
 
 /// Failures of transport policy, compiler configuration, or sealed output encoding.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct RestrictedBrowserError(&'static str);
 
 impl fmt::Display for RestrictedBrowserError {
@@ -47,7 +47,7 @@ impl std::error::Error for RestrictedBrowserError {}
 struct IsolatedBrowserCaptureError {
     reason: &'static str,
     primary: Option<String>,
-    cleanup: Option<Diagnostic>,
+    cleanup: Option<Box<Diagnostic>>,
 }
 
 impl IsolatedBrowserCaptureError {
@@ -67,10 +67,11 @@ impl IsolatedBrowserCaptureError {
 impl fmt::Display for IsolatedBrowserCaptureError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(self.reason)?;
-        if let Some(primary) = &self.primary {
-            if primary != self.reason && primary != "PLAYGROUND-UNSUPPORTED-HOST" {
-                write!(formatter, ": {primary}")?;
-            }
+        if let Some(primary) = &self.primary
+            && primary != self.reason
+            && primary != "PLAYGROUND-UNSUPPORTED-HOST"
+        {
+            write!(formatter, ": {primary}")?;
         }
         if let Some(cleanup) = &self.cleanup {
             write!(formatter, "; owned cleanup failed: {cleanup}")?;
@@ -95,14 +96,14 @@ impl RestrictedBrowserCompiler {
         let prepared = ToolingCompiler::prepare_installed(material_root)
             .map_err(IsolatedBrowserCaptureError::materials)?;
         if let Err(primary) = prepared.revalidate() {
-            let cleanup = prepared.abort().err();
+            let cleanup = prepared.abort().err().map(Box::new);
             return Err(IsolatedBrowserCaptureError {
                 cleanup,
                 ..IsolatedBrowserCaptureError::materials(primary)
             });
         }
         if let Err(primary) = restrict_browser_runtime() {
-            let cleanup = prepared.abort().err();
+            let cleanup = prepared.abort().err().map(Box::new);
             return Err(IsolatedBrowserCaptureError {
                 cleanup,
                 ..IsolatedBrowserCaptureError::policy(primary)
@@ -122,7 +123,7 @@ impl RestrictedBrowserCompiler {
         source: &str,
     ) -> Result<BrowserCompilation, impl std::error::Error> {
         let compiled = self.compile(revision, source);
-        let cleanup = self.compiler.abort().err();
+        let cleanup = self.compiler.abort().err().map(Box::new);
         match (compiled, cleanup) {
             (Ok(response), None) => Ok(response),
             (compiled, cleanup) => Err(IsolatedBrowserCaptureError {
@@ -218,12 +219,11 @@ impl RestrictedBrowserCompiler {
             }
             Err(error) => {
                 response.report = report(error.diagnostics(), &sources)?;
-                if let SourceToIrError::Frontend(error) = error {
-                    if error.diagnostics().is_empty() {
-                        response.status = "unavailable";
-                        response.failure =
-                            Some(CompilerFailure::new(error.code(), error.to_string())?);
-                    }
+                if let SourceToIrError::Frontend(error) = error
+                    && error.diagnostics().is_empty()
+                {
+                    response.status = "unavailable";
+                    response.failure = Some(CompilerFailure::new(error.code(), error.to_string())?);
                 }
             }
         }

@@ -15,10 +15,12 @@ fn input_exact_byte_and_revision_boundaries() {
 fn rejected_frame_contains_no_executable_payload_and_preserves_source_bytes() {
     let response = BrowserCompilation::empty(3, "é\r\n");
     let mut bytes = Vec::new();
-    response.write_frame(&mut bytes).unwrap();
-    let length = u32::from_le_bytes(bytes[..4].try_into().unwrap()) as usize;
+    response.write_frame(&mut bytes).expect("bounded rejected frame");
+    let length =
+        u32::from_le_bytes(bytes[..4].try_into().expect("four-byte frame header")) as usize;
     assert_eq!(bytes.len(), length + 4);
-    let metadata: serde_json::Value = serde_json::from_slice(&bytes[4..]).unwrap();
+    let metadata: serde_json::Value =
+        serde_json::from_slice(&bytes[4..]).expect("valid frame metadata");
     assert_eq!(metadata["sourceBytes"], 4);
     assert_eq!(metadata["sourceSha256"], digest("é\r\n".as_bytes()));
     assert_eq!(metadata["revision"], 3);

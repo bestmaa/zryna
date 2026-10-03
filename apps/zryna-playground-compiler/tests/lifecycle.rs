@@ -143,7 +143,10 @@ fn authenticated_large_provider_stages_then_compiles_and_removes_owned_stage() {
     assert_eq!(artifacts.len(), 3);
     let payload: u64 =
         artifacts.iter().map(|item| item["bytes"].as_u64().expect("artifact bytes")).sum();
-    assert_eq!(payload as usize + header + 4, output.stdout.len());
+    assert_eq!(
+        usize::try_from(payload).expect("bounded frame payload fits host size") + header + 4,
+        output.stdout.len()
+    );
     assert_eq!(fs::read_dir(&scratch).expect("owned scratch inventory").count(), 0);
     fs::remove_dir(scratch).expect("remove exact empty test-owned scratch");
 }
