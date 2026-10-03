@@ -5,6 +5,7 @@ use zryna_ir::data_ownership_v1 as limits;
 use zryna_native_c_ir::VerifiedNativeCProgram;
 
 mod abi;
+mod entry;
 mod exits;
 mod source;
 mod storage;
@@ -18,6 +19,7 @@ pub fn verify(
 ) -> Result<VerifiedMirProgram, MirError> {
     preflight(&program)?;
     source::check(&program, source)?;
+    entry::check(&program, source)?;
     machine_budget(&program)?;
     abi::check(&program, source)?;
     for (function, original) in program.functions.iter().zip(source.functions()) {
@@ -69,6 +71,8 @@ fn preflight(program: &raw::Program) -> Result<(), MirError> {
     count(0, program.operations.len(), 256)?;
     count(0, program.target.len(), 128)?;
     count(0, program.storage.runtime.len(), 128)?;
+    count(0, program.dispatcher.symbol.len(), 128)?;
+    count(0, program.dispatcher.contract.len(), 128)?;
     let mut values = 0;
     let mut parameters = 0;
     let mut statements = 0;
@@ -78,6 +82,8 @@ fn preflight(program: &raw::Program) -> Result<(), MirError> {
     }
     for function in &program.functions {
         count(0, function.name.len(), 128)?;
+        count(0, function.entry.symbol.len(), 128)?;
+        count(0, function.entry.contract.len(), 128)?;
         count(0, function.values.len(), limits::MAX_VALUES_PER_FUNCTION)?;
         values = count(values, function.values.len(), limits::MAX_VALUES_PER_PROGRAM)?;
         count(0, function.parameters.len(), limits::MAX_PARAMETERS_PER_FUNCTION)?;

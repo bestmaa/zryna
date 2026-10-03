@@ -1,6 +1,7 @@
 //! Complete untrusted machine claims; copying retained records does not mint an issuer.
 
 use super::abi::{OutputSlot, Signature};
+use super::entry::{DispatcherEntry, PrivateEntry};
 use zryna_layout::TypeId;
 use zryna_native_c_ir::{
     contract::*,
@@ -16,6 +17,8 @@ pub struct Program {
     pub target: String,
     /// Claimed dual-layout/runtime descriptors; actual issuers remain retained separately.
     pub storage: Storage,
+    /// Independently checked hidden dispatch protocol, separate from public C declarations.
+    pub dispatcher: DispatcherEntry,
     /// Every original declaration and its physical C ABI.
     pub operations: Vec<OperationPlan>,
     /// Every original source function.
@@ -50,6 +53,8 @@ pub struct Function {
     pub result: (TypeId, ValueType),
     /// Total scalar C export only, or hidden private entry.
     pub export: Option<usize>,
+    /// Compiler-local checked entry; genuine private layouts remain in parameters/result above.
+    pub entry: PrivateEntry,
     /// Complete original statement inventory.
     pub statements: Vec<Statement>,
     /// Complete dense source operations and ownership/status provenance.

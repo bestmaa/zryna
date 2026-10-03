@@ -19,6 +19,11 @@ impl VerifiedMirProgram {
     pub fn target(&self) -> &str {
         &self.program.target
     }
+    /// Exact hidden checked dispatcher, without raw context or invocation constructor authority.
+    #[must_use]
+    pub const fn dispatcher(&self) -> &super::entry::DispatcherEntry {
+        &self.program.dispatcher
+    }
     /// Complete declarations, including unused imports, with verified physical signatures.
     pub fn operations(&self) -> impl ExactSizeIterator<Item = VerifiedOperation<'_>> {
         self.program.operations.iter().map(|record| VerifiedOperation { record })
@@ -90,6 +95,11 @@ impl<'a> VerifiedFunction<'a> {
     #[must_use]
     pub const fn export(self) -> Option<usize> {
         self.record.export
+    }
+    /// Fixed compiler-private checked entry, separate from the source's public C ABI.
+    #[must_use]
+    pub const fn entry(self) -> &'a super::entry::PrivateEntry {
+        &self.record.entry
     }
     /// Exact original statement inventory.
     #[must_use]

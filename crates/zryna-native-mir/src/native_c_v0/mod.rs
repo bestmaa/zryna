@@ -6,6 +6,12 @@ use zryna_native_c_ir::{VerifiedNativeCProgram, contract::Span};
 
 /// Exact physical INTEGER lanes and caller output-slot requirements.
 pub mod abi;
+/// Closed vocabulary already exposed by immutable machine/source views; no issuer factories.
+pub mod contract {
+    pub use zryna_native_c_ir::contract::*;
+}
+/// Compiler-private entry channels, separate from every public foreign C signature.
+pub mod entry;
 mod lower;
 /// Explicit hostile machine claims; no raw value is a backend authority.
 pub mod raw;

@@ -2,6 +2,8 @@
 
 #[path = "native_c_v0/capture.rs"]
 mod capture;
+#[path = "native_c_v0/entry.rs"]
+mod entry;
 #[path = "native_c_v0/hostile.rs"]
 mod hostile;
 
