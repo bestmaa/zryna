@@ -564,7 +564,7 @@ jobs:
     name: Provider conformance v4 (${{ matrix.os }})
     if: needs.route-contracts.outputs.provider_v4 == 'true'
     needs: route-contracts
-    timeout-minutes: 30
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 40 || 30 }}
     strategy:
       fail-fast: false
       matrix:
