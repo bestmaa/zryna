@@ -188,6 +188,19 @@ jobs:
       - name: Run Windows CLI smoke
         if: runner.os == 'Windows'
         run: cargo test --locked -p zryna --test cli javascript_build_and_run_publish_exact_bundles -- --exact
+      - name: Verify restricted playground and M6 contracts
+        run: |
+          pnpm playground:contract
+          pnpm m6:contract
+      - name: Verify Linux playground helper units
+        if: runner.os == 'Linux'
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 tests/playground-host-unit.py
+          python3 tests/playground-cgroup-unit.py
+          python3 tests/playground-join-unit.py
+          python3 tests/playground-helper-policy-unit.py
       - name: Verify documentation bundle contract
         run: pnpm docs:check
       - name: Verify and package editor client

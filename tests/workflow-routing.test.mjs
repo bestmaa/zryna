@@ -355,3 +355,18 @@ test('main runs only documentation validation and publication with short retenti
     'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02');
   assert.equal(upload.with['retention-days'], 7);
 });
+
+test('required Rust platform jobs include playground contracts and Linux helper units', () => {
+  const rust = ci.jobs.rust;
+  assert.deepEqual(rust.strategy.matrix.os, ['ubuntu-latest', 'windows-latest']);
+  const contracts = rust.steps.filter(step => step.name === 'Verify restricted playground and M6 contracts');
+  assert.deepEqual(contracts, [{ name: 'Verify restricted playground and M6 contracts',
+    run: 'pnpm playground:contract\npnpm m6:contract\n' }]);
+  const helpers = rust.steps.filter(step => step.name === 'Verify Linux playground helper units');
+  assert.deepEqual(helpers, [{ name: 'Verify Linux playground helper units', if: "runner.os == 'Linux'",
+    env: { PYTHONDONTWRITEBYTECODE: '1' }, run: 'python3 tests/playground-host-unit.py\n' +
+      'python3 tests/playground-cgroup-unit.py\npython3 tests/playground-join-unit.py\n' +
+      'python3 tests/playground-helper-policy-unit.py\n' }]);
+  assert(rust.steps.indexOf(contracts[0]) < rust.steps.indexOf(helpers[0]));
+  assert.equal(rust.steps.at(-1).run, 'node scripts/run-m0-conformance.mjs');
+});
