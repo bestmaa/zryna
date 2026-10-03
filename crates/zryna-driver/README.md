@@ -193,6 +193,13 @@ stage so public-path replacement cannot substitute code, bounds and isolates the
 group, decodes its exact four-byte result channel, and returns the ABI authority's typed
 `ScalarOutcome`.
 
+On Linux x86-64, private stage writers and driver-owned child spawning share an exclusion gate.
+The writer closes before releasing the gate, and spawning releases it before waiting for the
+child. This prevents a concurrently forked driver child from retaining a CLOEXEC writable
+snapshot descriptor until exec and making another snapshot exec fail `ETXTBSY`. Gate poison
+fails closed; process errors are neither swallowed nor retried. Independently spawned processes
+in an embedding application are outside this coordination boundary.
+
 The public CLI composes these library boundaries through driver-owned profile-specific build and
 run requests. Each request performs the mandatory architecture gate first. M1 authenticates and
 verifies one entrypoint once. M2 discovers one final module graph and lowers it once. Each path

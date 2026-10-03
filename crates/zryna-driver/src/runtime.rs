@@ -408,7 +408,8 @@ fn run_bounded_with_timeout(
         .stderr(Stdio::piped());
     let mut command = CommandWrap::from(native);
     command.wrap(ProcessGroup::leader());
-    let mut child = command.spawn().map_err(|_| process_error("could not start"))?;
+    let mut child = crate::process_spawn::spawn(|| command.spawn())
+        .map_err(|_| process_error("could not start"))?;
     let group_id = child.id().cast_signed();
     let operation = (|| {
         let input = match input {
@@ -767,9 +768,7 @@ mod tests {
             .expect("Node.js must be installed for runtime tests")
             .canonicalize()
             .expect("Node.js executable must canonicalize");
-        let version = Command::new(&candidate)
-            .arg("--version")
-            .output()
+        let version = crate::process_spawn::output(Command::new(&candidate).arg("--version"))
             .expect("Node.js version probe must start");
         assert!(version.status.success());
         assert!(is_pinned_node_version(&version.stdout));
@@ -1001,12 +1000,13 @@ mod tests {
         fs::write(&runtime_source, "fn main() { print!(\"v22.22.1\\n\"); }\n")
             .expect("private runtime source must be written");
         let compiler = env::var_os("RUSTC").unwrap_or_else(|| "rustc".into());
-        let output = Command::new(compiler)
-            .args(["--edition=2024", "--crate-name", "zryna_private_node", "-o"])
-            .arg(&compiled_runtime)
-            .arg(&runtime_source)
-            .output()
-            .expect("private runtime compiler must start");
+        let output = crate::process_spawn::output(
+            Command::new(compiler)
+                .args(["--edition=2024", "--crate-name", "zryna_private_node", "-o"])
+                .arg(&compiled_runtime)
+                .arg(&runtime_source),
+        )
+        .expect("private runtime compiler must start");
         assert!(
             output.status.success(),
             "private runtime compilation must succeed: {}",

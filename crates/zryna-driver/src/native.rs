@@ -1253,6 +1253,7 @@ impl NativeStage {
         let name = path.file_name().ok_or_else(staging_write_error)?;
         let mut options = cap_std::fs::OpenOptions::new();
         options.write(true).create_new(true).mode(0o600);
+        let _writer = crate::process_spawn::snapshot_writer().map_err(|_| staging_write_error())?;
         let mut file =
             self.directory_handle.open_with(name, &options).map_err(|_| staging_write_error())?;
         file.write_all(bytes)
@@ -1261,6 +1262,7 @@ impl NativeStage {
             .map_err(|_| staging_write_error())?;
         file.set_permissions(cap_std::fs::Permissions::from_std(fs::Permissions::from_mode(0o600)))
             .map_err(|_| staging_write_error())?;
+        drop(file);
         self.revalidate()
     }
 
@@ -1720,8 +1722,8 @@ fn run_bounded_process(
         .stderr(Stdio::piped());
     let mut command = CommandWrap::from(native);
     command.wrap(ProcessGroup::leader());
-    let mut child =
-        command.spawn().map_err(|error| process_io_failure!(context, Spawn, Some(&error)))?;
+    let mut child = crate::process_spawn::spawn(|| command.spawn())
+        .map_err(|error| process_io_failure!(context, Spawn, Some(&error)))?;
     let group_id = child.id().cast_signed();
     let operation = (|| {
         let stdout =
