@@ -109,7 +109,7 @@ pub struct PrivateLoan {
     pub empty_without_allocation: bool,
 }
 
-/// Foreign-byte expansion into a distinct initialized private Vec<i32>.
+/// Foreign-byte expansion into a distinct initialized private `Vec<i32>`.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PrivateCopy {
     /// Original copy expression.
@@ -216,7 +216,7 @@ impl BoundaryExit {
 pub enum PrivatePreparation {
     /// Scoped packed bytes or retained initialized String bytes.
     Loan(PrivateLoan),
-    /// Distinct private Vec<i32> byte expansion.
+    /// Distinct private `Vec<i32>` byte expansion.
     Copy(PrivateCopy),
 }
 
