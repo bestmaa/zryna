@@ -198,6 +198,9 @@ impl<'root> WorkspaceSourceSession<'root> {
         if !metadata.is_file() || metadata_is_link_or_reparse(&metadata) {
             return Err(unreadable(path));
         }
+        if self.sources.values().any(|source| source.identity == opened) {
+            return Err(unsafe_path(path));
+        }
         let bytes = bounded_read(&mut opened).map_err(|kind| read_error(path, kind))?;
         after_read();
         let stable = StableSource {
@@ -260,21 +263,15 @@ impl<'root> WorkspaceSourceSession<'root> {
         let source = self.sources.get_mut(path).ok_or_else(|| changed(path))?;
         index.require_exact(&source.name).map_err(|_| changed(path))?;
         let parent = self.directories.get(&source.parent).ok_or_else(|| changed(path))?;
-        let mut current =
-            open_regular_nofollow(&parent.dir, &source.name).map_err(|_| changed(path))?;
-        let current_metadata = current.as_file().metadata().map_err(|_| changed(path))?;
-        let held_metadata = source.identity.as_file().metadata().map_err(|_| changed(path))?;
-        if current != source.identity
-            || !current_metadata.is_file()
-            || metadata_is_link_or_reparse(&current_metadata)
-            || !same_file_state(&source.metadata, &held_metadata)
-            || !same_file_state(&source.metadata, &current_metadata)
-        {
-            return Err(changed(path));
-        }
-        let bytes = bounded_read(&mut current).map_err(|_| changed(path))?;
-        let digest: [u8; 32] = Sha256::digest(&bytes).into();
-        if digest != source.stable.sha256 || bytes.as_slice() != source.stable.text.as_bytes() {
+        crate::source_identity::validate(
+            &parent.dir,
+            &source.name,
+            &source.identity,
+            &source.metadata,
+        )
+        .map_err(|_| changed(path))?;
+        let digest: [u8; 32] = Sha256::digest(source.stable.text.as_bytes()).into();
+        if digest != source.stable.sha256 {
             return Err(changed(path));
         }
         Ok(())
