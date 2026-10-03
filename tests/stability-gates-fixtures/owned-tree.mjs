@@ -1,10 +1,13 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const fixture = fileURLToPath(import.meta.url);
 const [role, ready, output, implementation, detached = 'false'] = process.argv.slice(2);
-if (role === 'directory-owner') {
+if (role === 'startup-delay') {
+  writeFileSync(ready, JSON.stringify({ pid: process.pid, cwd: process.cwd() }));
+  setTimeout(() => {}, 6000);
+} else if (role === 'directory-owner') {
   process.send({ pid: process.pid, cwd: process.cwd() });
   setInterval(() => {}, 1000);
 } else if (role === 'grandchild') {
@@ -44,6 +47,13 @@ if (role === 'directory-owner') {
   process.on('message', message => {
     if (['SIGINT', 'SIGTERM'].includes(message.signal)) process.emit(message.signal);
   });
+  if (detached === 'true') {
+    const delayed = spawnSync(process.execPath, [fixture, 'startup-delay', `${ready}.startup`], {
+      cwd: fileURLToPath(new URL('../..', implementation)), shell: false, windowsHide: true,
+      timeout: 7000, maxBuffer: 1024,
+    });
+    if (delayed.error || delayed.status !== 0 || delayed.signal) throw new Error('bounded startup fixture failed');
+  }
   const result = await collect('compatibility', output);
   if (process.connected) process.disconnect();
   process.exitCode = result.signal === 'SIGINT' ? 130 : 143;

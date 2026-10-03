@@ -55,16 +55,16 @@ export function withoutStabilityTests(candidate) {
 
 function passedOutput() {
   return ['TAP version 13', ...REQUIRED_STABILITY_TESTS.map((name, index) =>
-    `ok ${index + 1} - ${name.replaceAll('#', '\\#')}`), '1..28', '# tests 28', '# suites 0',
-  '# pass 28', '# fail 0', '# cancelled 0', '# skipped 0', '# todo 0', ''].join('\n');
+    `ok ${index + 1} - ${name.replaceAll('#', '\\#')}`), '1..29', '# tests 29', '# suites 0',
+  '# pass 29', '# fail 0', '# cancelled 0', '# skipped 0', '# todo 0', ''].join('\n');
 }
 
-test('stability CI selects all 28 distinct cases from four exact files', () => {
+test('stability CI selects all 29 distinct cases from four exact files', () => {
   assert.deepEqual(STABILITY_TEST_FILES, ['tests/stability-gates-v1.test.mjs',
     'tests/stability-gates-source-process.test.mjs', 'tests/stability-gates-interruption.test.mjs',
     'tests/stability-gates-test-selection.test.mjs']);
-  assert.equal(REQUIRED_STABILITY_TESTS.length, 28);
-  assert.equal(new Set(REQUIRED_STABILITY_TESTS).size, 28);
+  assert.equal(REQUIRED_STABILITY_TESTS.length, 29);
+  assert.equal(new Set(REQUIRED_STABILITY_TESTS).size, 29);
   assert(Object.isFrozen(STABILITY_TEST_FILES));
   assert(Object.isFrozen(REQUIRED_STABILITY_TESTS));
   const declared = STABILITY_TEST_FILES.flatMap(file => [...readFileSync(new URL(`../${file}`, import.meta.url),
@@ -84,13 +84,13 @@ test('stability proof rejects omitted, renamed, duplicate and nonpassing cases',
       output.replace(line, `${line} # SKIP omitted`), output.replace(line, `${line} # TODO omitted`),
     ]) assert.throws(() => verifyStabilityTestOutput(changed));
   }
-  assert.throws(() => verifyStabilityTestOutput(`${output}ok 29 - unexpected case\n`));
+  assert.throws(() => verifyStabilityTestOutput(`${output}ok 30 - unexpected case\n`));
   assert.throws(() => verifyStabilityTestOutput(output.replace('ok 2 - ', 'ok 1 - ')));
 });
 
 test('stability proof rejects empty, partial and ambiguous TAP summaries', () => {
   const output = passedOutput();
-  for (const summary of ['TAP version 13', '1..28', '# tests 28', '# suites 0', '# pass 28',
+  for (const summary of ['TAP version 13', '1..29', '# tests 29', '# suites 0', '# pass 29',
     '# fail 0', '# cancelled 0', '# skipped 0', '# todo 0']) {
     for (const changed of [output.replace(`${summary}\n`, ''), `${output}${summary}\n`,
       output.replace(summary, summary.replace(/\d+/u, '999')), `${output}${summary.replace(/\d+/u, '999')}\n`,

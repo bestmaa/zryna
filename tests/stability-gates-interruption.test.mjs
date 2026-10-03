@@ -26,6 +26,15 @@ async function ready(path, child, diagnostic = () => '') {
   }
   throw new Error('owned fixture did not become ready within 5 seconds');
 }
+async function gateStarted(child, started, diagnostic) {
+  const deadline = performance.now() + 30_000;
+  while (!started()) {
+    assert.equal(child.exitCode, null, `collector exited during startup: ${diagnostic()}`);
+    assert.equal(child.signalCode, null, 'collector terminated during startup');
+    assert(performance.now() < deadline, `collector startup exceeded thirty seconds: ${diagnostic()}`);
+    await delay(20);
+  }
+}
 function gone(pid) {
   try { process.kill(pid, 0); return false; }
   catch (error) { if (error.code === 'ESRCH') return true; throw error; }
@@ -101,7 +110,7 @@ test('prior cancellation prevents process start and cannot qualify successful pr
   scope.dispose();
 });
 
-test('collector interruption preserves actual logs and never starts the later gates', async () => {
+async function exerciseCollector(startupDelay = false) {
   // Synthetic repository/execution only: never published as candidate conformance evidence.
   const directory = mkdtempSync(resolve(tmpdir(), 'zryna-stability-collector-interruption-'));
   const repository = resolve(directory, 'source');
@@ -128,17 +137,35 @@ setInterval(() => {}, 1000);
   git(repository, ['-c', 'user.name=Stability test', '-c', 'user.email=stability@example.invalid',
     '-c', 'commit.gpgsign=false', 'commit', '--quiet', '-m', 'synthetic interruption fixture']);
   const child = fork(fixture, ['collector', readyPath, output,
-    pathToFileURL(resolve(repository, 'scripts/stability-gates/run.mjs')).href],
+    pathToFileURL(resolve(repository, 'scripts/stability-gates/run.mjs')).href, String(startupDelay)],
   { stdio: ['ignore', 'pipe', 'pipe', 'ipc'], windowsHide: true,
     detached: process.platform !== 'win32',
     execArgv: ['--require', resolve(root, 'tests/stability-gates-fixtures/probe.cjs')],
     env: { ...process.env, NODE_TEST_CONTEXT: undefined, ZRYNA_STABILITY_FIXTURE_TRACE: trace } });
   const owner = ownFixture(child);
   let stdout = ''; let stderr = ''; let owned; let primary;
-  child.stdout.on('data', data => { stdout += data; });
+  const forkedAt = performance.now();
+  let startedAt = null;
+  child.stdout.on('data', data => {
+    stdout += data;
+    if (stdout.includes('[stability] compatibility-contracts\n')) startedAt ??= performance.now();
+  });
   child.stderr.on('data', data => { stderr += data; });
   try {
+    // Tool/source probes run before a gate exists. The five-second tree deadline
+    // starts only after the actual first gate starts; startup has its own bound.
+    await gateStarted(child, () => startedAt !== null, () => stderr);
     owned = await ready(readyPath, child, () => stderr);
+    if (startupDelay) {
+      const delayed = JSON.parse(readFileSync(`${readyPath}.startup`, 'utf8'));
+      assert.equal(delayed.cwd, repository);
+      assert.notEqual(delayed.pid, child.pid);
+      assert(gone(delayed.pid), 'startup process must close before the gate starts');
+      assert(startedAt - forkedAt >= 6000 && startedAt - forkedAt < 30_000);
+      console.log('Bounded collector startup ownership:', { collector: child.pid,
+        startup: delayed.pid, cwd: delayed.cwd, startupElapsedMs: startedAt - forkedAt,
+        ownedTreeReadyMs: performance.now() - startedAt });
+    }
     if (process.platform === 'win32') child.send({ signal: 'SIGTERM' });
     else process.kill(child.pid, 'SIGTERM');
     const [code] = await owner.completion;
@@ -169,16 +196,29 @@ setInterval(() => {}, 1000);
     primary = error;
     console.error('Collector fixture failure:', error.message, { pid: child.pid,
       closed: owner.closed, stdout, stderr,
+      startup: existsSync(`${readyPath}.startup`) ? JSON.parse(readFileSync(`${readyPath}.startup`, 'utf8')) : null,
       trace: existsSync(trace) ? readFileSync(trace, 'utf8') : '' });
     throw error;
   } finally {
-    try { await owner.remove(directory, owned ? Object.values(owned) : []); }
+    try {
+      await owner.remove(directory, owned ? Object.values(owned) : []);
+      if (primary) console.error('Collector cleanup barrier:', { pid: child.pid,
+        closed: owner.closed, sourceRemoved: !existsSync(directory), primary: primary.message });
+    }
     catch (cleanup) {
       if (primary) throw new AggregateError([primary, cleanup],
         `${primary.message}; owned fixture cleanup also failed: ${cleanup.message}`);
       throw cleanup;
     }
   }
+}
+
+test('collector interruption preserves actual logs and never starts the later gates', async () => {
+  await exerciseCollector();
+});
+
+test('collector readiness separates bounded startup from the five-second owned-tree deadline', async () => {
+  await exerciseCollector(true);
 });
 
 test('fixture failure cleanup closes its owner before removing the current directory', async () => {
@@ -198,6 +238,7 @@ test('fixture failure cleanup closes its owner before removing the current direc
     assert.equal(owner.closed, false);
     if (process.platform === 'win32') {
       assert.throws(() => rmSync(directory, { recursive: true, force: true }), { code: 'EBUSY' });
+      console.log('Verified Windows cwd lock:', { owner: ready.pid, cwd: ready.cwd, closed: owner.closed });
     }
     const first = owner.remove(directory);
     assert.equal(owner.remove(directory), first, 'repeated cleanup has one owner');
@@ -205,5 +246,6 @@ test('fixture failure cleanup closes its owner before removing the current direc
     assert.equal(owner.closed, true);
     assert(gone(child.pid));
     assert(!existsSync(directory));
+    console.log('Fixture closure barrier:', { owner: ready.pid, closed: owner.closed, directoryRemoved: true });
   } finally { await owner.remove(directory); }
 });

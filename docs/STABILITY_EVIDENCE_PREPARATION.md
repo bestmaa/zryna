@@ -56,12 +56,22 @@ node scripts/stability-gates/validate.mjs /tmp/zryna-418-all
 ```
 
 The guarded CI runner selects evidence, source/process, interruption and selection guard suites.
-All 28 exact named cases must execute once with nonzero TAP totals and no failures,
+All 29 exact named cases must execute once with nonzero TAP totals and no failures,
 cancellations, skips or todo cases. The existing Linux/Windows `adapter-platform` matrix runs
 this mandatory step after frozen dependency installation; its failures propagate through the
 adapter and M0 aggregates. Portable preflight also executes selection and workflow mutation
 guards. The distinct Rust insertion point used by #405 remains intact. This registration does
 not collect a performance baseline or certify blocked M7 prerequisites.
+
+Synthetic interruption fixtures own their fork before readiness starts. Failure cleanup
+terminates only that owned tree, waits for process and pipe closure within ten seconds, and
+then removes the private directory once. Uncertain cleanup retains the source and reports
+both the primary failure and the cleanup error. A Windows regression identifies a live
+process holding its cwd, observes `EBUSY`, and proves removal after closure. Collector startup
+has a separate thirty-second bound; the existing five-second tree-readiness deadline begins
+when the actual first gate starts. A controlled six-second startup child exercises that
+boundary before running every unchanged cancellation, source and log assertion. Read-only
+fixture lifetime traces record actual commands, PIDs and cwds without replacing tool results.
 
 Collection validates HEAD's full commit and tree, hashes every regular tracked source against its
 Git blob (including files hidden by index flags), and hashes the ordered complete source inventory.
