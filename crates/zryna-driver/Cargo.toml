@@ -46,3 +46,7 @@ zryna-syntax = { path = "../zryna-syntax" }
 
 [lints]
 workspace = true
+
+[[test]]
+name = "native_activation_parity"
+path = "src/native_activation_parity.rs"
