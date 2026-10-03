@@ -1,6 +1,6 @@
 use std::{fs, io, os::windows::fs::MetadataExt as _, path::Path, process::Command};
 
-use super::{CapturedRequest, Fixture, VALID, rejected};
+use super::{CapturedRequest, Fixture, VALID, owner_fixture_evidence, rejected};
 
 fn acl(path: &Path, broad: bool) -> io::Result<()> {
     // Only fixed test code executes; the native path is passed as one environment value.
@@ -167,9 +167,9 @@ New-Item -ItemType Junction -Path $path -Target $target | Out-Null
 fn actual_foreign_owner_rejects_when_restore_privilege_is_available() -> io::Result<()> {
     let fixture = private()?;
     let path = fixture.path();
-    eprintln!(
+    owner_fixture_evidence(format_args!(
         "foreign-owner fixture platform=windows stage=eligibility outcome=checking owner_sid=S-1-5-32-544"
-    );
+    ))?;
     // SetOwner is confined to the new fixture. Successful setup independently verifies
     // the actual foreign owner SID; a denied setup gives no owner-rejection coverage.
     let script = r"
@@ -198,22 +198,26 @@ if ($observed -ne $foreign) { throw 'foreign fixture owner was not established' 
         for line in String::from_utf8_lossy(&output.stderr).lines() {
             if line.starts_with("foreign-owner fixture platform=windows stage=setup outcome=error ")
             {
-                eprintln!("{line}");
+                owner_fixture_evidence(format_args!("{line}"))?;
             }
         }
-        eprintln!(
+        owner_fixture_evidence(format_args!(
             "foreign-owner fixture platform=windows stage=eligibility outcome=unavailable setup_exit_code={:?}",
             output.status.code()
-        );
+        ))?;
         return Ok(());
     }
-    eprintln!(
+    owner_fixture_evidence(format_args!(
         "foreign-owner fixture platform=windows stage=setup outcome=established owner_sid=S-1-5-32-544"
-    );
+    ))?;
     rejected(&path, Some("MODE"));
-    eprintln!("foreign-owner fixture platform=windows stage=rejection outcome=observed");
+    owner_fixture_evidence(format_args!(
+        "foreign-owner fixture platform=windows stage=rejection outcome=observed"
+    ))?;
     acl(&path, false)?;
     CapturedRequest::capture(&path, Some("MODE")).expect("foreign-owner fixture recovery");
-    eprintln!("foreign-owner fixture platform=windows stage=recovery outcome=observed");
+    owner_fixture_evidence(format_args!(
+        "foreign-owner fixture platform=windows stage=recovery outcome=observed"
+    ))?;
     Ok(())
 }

@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use super::{CapturedRequest, Fixture, VALID, rejected};
+use super::{CapturedRequest, Fixture, VALID, owner_fixture_evidence, rejected};
 
 fn private() -> io::Result<Fixture> {
     let fixture = Fixture::new()?;
@@ -169,28 +169,32 @@ fn relative_parent_paths_directories_and_source_mismatch_reject() -> io::Result<
 fn actual_foreign_owner_rejects_when_privileged_fixture_is_possible() -> io::Result<()> {
     let effective_uid = nix::unistd::geteuid();
     if !effective_uid.is_root() {
-        eprintln!(
+        owner_fixture_evidence(format_args!(
             "foreign-owner fixture platform=unix stage=eligibility outcome=unavailable effective_uid={} required_effective_uid=0",
             effective_uid.as_raw()
-        );
+        ))?;
         return Ok(()); // A non-root test process cannot create an actual foreign-owned fixture.
     }
-    eprintln!(
+    owner_fixture_evidence(format_args!(
         "foreign-owner fixture platform=unix stage=eligibility outcome=eligible effective_uid=0"
-    );
+    ))?;
     let fixture = private()?;
     let foreign = nix::unistd::Uid::from_raw(65534);
     nix::unistd::chown(&fixture.path(), Some(foreign), None).map_err(io::Error::other)?;
     assert_eq!(fs::metadata(fixture.path())?.uid(), foreign.as_raw());
-    eprintln!(
+    owner_fixture_evidence(format_args!(
         "foreign-owner fixture platform=unix stage=setup outcome=established owner_uid=65534"
-    );
+    ))?;
     rejected(&fixture.path(), Some("MODE"));
-    eprintln!("foreign-owner fixture platform=unix stage=rejection outcome=observed");
+    owner_fixture_evidence(format_args!(
+        "foreign-owner fixture platform=unix stage=rejection outcome=observed"
+    ))?;
     nix::unistd::chown(&fixture.path(), Some(nix::unistd::geteuid()), None)
         .map_err(io::Error::other)?;
     CapturedRequest::capture(&fixture.path(), Some("MODE")).expect("owner recovery");
-    eprintln!("foreign-owner fixture platform=unix stage=recovery outcome=observed");
+    owner_fixture_evidence(format_args!(
+        "foreign-owner fixture platform=unix stage=recovery outcome=observed"
+    ))?;
     Ok(())
 }
 

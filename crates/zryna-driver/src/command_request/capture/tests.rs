@@ -56,3 +56,11 @@ fn rejected(path: &Path, key: Option<&str>) {
     let diagnostic = CapturedRequest::capture(path, key).err().expect("rejected capture");
     assert_eq!(diagnostic, super::super::rejection());
 }
+
+// Write to the actual stream so successful tests expose their fixture path even
+// when the test harness captures printing macros.
+fn owner_fixture_evidence(message: std::fmt::Arguments<'_>) -> io::Result<()> {
+    use std::io::Write as _;
+
+    writeln!(io::stderr().lock(), "{message}")
+}

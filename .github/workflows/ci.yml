@@ -180,8 +180,6 @@ jobs:
         run: cargo test --locked -p zryna-semantics --lib control_flow_v1
       - name: Verify M2 driver security
         run: cargo test --locked -p zryna-driver --lib
-      - name: Report actual foreign-owner fixture path
-        run: cargo test --locked -p zryna-driver --lib actual_foreign_owner_rejects -- --nocapture
       - name: Verify exact Windows directory lifecycle
         if: runner.os == 'Windows'
         run: cargo test --locked -p zryna-windows-filesystem -- --show-output
