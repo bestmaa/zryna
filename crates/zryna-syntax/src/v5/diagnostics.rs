@@ -31,7 +31,7 @@ impl fmt::Display for SyntaxDecodeError {
 
 impl std::error::Error for SyntaxDecodeError {}
 
-/// A failed declaration check; a location is present only when SourceMap authenticated it.
+/// A failed declaration check; a location is present only when `SourceMap` authenticated it.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DeclarationError {
     pub code: &'static str,

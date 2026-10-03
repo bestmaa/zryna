@@ -69,7 +69,7 @@ It provides no conversion to existing M3 authority. Its focused tests and compil
 obligations require execution evidence before this implementation can be considered verified.
 
 The separate `bounded_generics_v1::body_types::check_body_types` consumes that exact declaration
-context and checks every original body, including unused templates. Its draft implementation
+context and checks every original body, including unused templates. Its implementation
 retains declaration-owned opaque parameters, explicit ordered substitutions, exact nominal and
 Option/Result identities, lexical bindings and borrowed match payload types. Source predicate
 rows derive Copy/Clone requirements without expanding substituted type trees or nominal fields.
@@ -78,10 +78,24 @@ internal failures return no partial context and do not become source resource di
 
 The read-only result reports original expression types and actual table/predicate capacity bytes.
 It retains use occurrences without certifying initialization, moves, loans, cleanup, closed
-instances, recursive layout validity or target execution. The new body fixtures and compile-fail
-boundaries have not yet been compiled or run on this draft. The driver and public profiles do not
-select this phase; the remaining issue #416 contracts still require separate implementation and
-verification.
+instances, recursive layout validity or target execution. Source-backed body fixtures now execute
+in the cloud continuation. The large owner fixture builds typed units one at a time and preserves
+its exact owner/predicate counts. Exact-revision commands and counts belong to the continuation
+receipt and draft PR. The driver and public profiles do not select this phase.
+
+`bounded_generics_v1::instantiation::discover` consumes the exact original body authority. It
+retains finite supplied trees, original nominal/function identities, sorted complete key
+inventories and deduplicated dependency pairs. Original-declaration value predicates reject
+non-storable nominal arguments before generated body expansion. Explicit work stacks distinguish
+source function recursion and declaration-generated expansion from finite supplied nesting and
+same-key indirection. Compiler-owned Option/Result payloads participate in dependency discovery.
+Synthetic exact/first-extra tests cover the function, data, edge and key-byte limits; independent
+source tests cover depth, ordered forwarding, imported aliases, diamond replay and UTF-8 spans.
+
+This semantic inventory grants no executable IDs, layouts, ownership/drop plans or backend
+authority. Full diagnostic/path conformance, successor layout/raw-IR serialization, owned standard
+enum operations, provider parity, cross-target execution and driver admission remain issue #416
+work. See [the continuation boundary](../../docs/M7_GENERIC_CONTINUATION.md).
 
 ## Internal M2 semantics boundary
 

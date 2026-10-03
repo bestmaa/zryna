@@ -275,15 +275,15 @@ fn module_binding_checked_counters_exact_and_extra() {
         (Metric::Modules, 4096),
         (Metric::SourceBytes, 8 * 1024 * 1024),
         (Metric::ImportsPerModule, 4096),
-        (Metric::Imports, 65536),
+        (Metric::Imports, 65_536),
         (Metric::NamesPerImport, 256),
-        (Metric::ImportedNames, 65536),
+        (Metric::ImportedNames, 65_536),
         (Metric::DataPerModule, 4096),
-        (Metric::Data, 16384),
+        (Metric::Data, 16_384),
         (Metric::FunctionsPerModule, 4096),
-        (Metric::Functions, 16384),
-        (Metric::TypesPerModule, 65536),
-        (Metric::Types, 262144),
+        (Metric::Functions, 16_384),
+        (Metric::TypesPerModule, 65_536),
+        (Metric::Types, 262_144),
     ] {
         assert_eq!(metric.limit(), frozen_limit);
         assert_eq!(
@@ -323,6 +323,6 @@ fn failed_resolution_then_pristine_replay() {
         .map(|declaration| (declaration.identity(), declaration.span()))
         .collect::<Vec<_>>();
     assert_eq!(original, replayed);
-    assert!(std::ptr::eq(replay.syntax(), &project.syntax));
-    assert!(std::ptr::eq(replay.sources(), &project.sources));
+    assert!(std::ptr::eq(replay.syntax(), &raw const project.syntax));
+    assert!(std::ptr::eq(replay.sources(), &raw const project.sources));
 }

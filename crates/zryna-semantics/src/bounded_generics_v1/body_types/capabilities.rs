@@ -200,9 +200,13 @@ impl Graph {
                 graph.edge(graph.nominal(owner), row, false);
             }
         }
-        let count = graph.rows.len();
+        graph.solve()
+    }
+
+    fn solve(mut self) -> Result<Self, BodyTypeFailure> {
+        let count = self.rows.len();
         if count == 0 {
-            return Ok(graph);
+            return Ok(self);
         }
         let mut queue = resources::repeated(count, 0_usize)?;
         let mut pending = resources::repeated(count, true)?;
@@ -215,21 +219,21 @@ impl Graph {
             start = (start + 1) % count;
             length -= 1;
             pending[row] = false;
-            let old = graph.rows[row].values;
-            let next = Statuses::from(graph.evaluate(row)?);
+            let old = self.rows[row].values;
+            let next = Statuses::from(self.evaluate(row)?);
             if old == next {
                 continue;
             }
-            graph.rows[row].values = next;
-            let mut edge = graph.rows[row].first_reverse;
+            self.rows[row].values = next;
+            let mut edge = self.rows[row].first_reverse;
             while let Some(index) = edge {
-                let current = graph.edges[index];
+                let current = self.edges[index];
                 if current.payload {
-                    let support = graph.rows[current.dependent]
+                    let support = self.rows[current.dependent]
                         .support
                         .ok_or(BodyTypeFailure::InternalFailure)?;
                     for output in 0..32 {
-                        let supports = &mut graph.supports[support];
+                        let supports = &mut self.supports[support];
                         if old.get(output) == Status::False {
                             supports.false_count[output] -= 1;
                         }
@@ -252,7 +256,7 @@ impl Graph {
                 edge = current.next;
             }
         }
-        Ok(graph)
+        Ok(self)
     }
 
     fn evaluate(&self, row: usize) -> Result<[Status; 32], BodyTypeFailure> {
@@ -298,7 +302,7 @@ impl Graph {
                 let bit = parameter.index() as usize * 2 + usize::from(clone);
                 if valuation & (1 << bit) != 0 { Status::True } else { Status::False }
             }
-            Kind::Scalar(Scalar::String) => {
+            Kind::Scalar(Scalar::String) | Kind::Shared | Kind::Weak => {
                 if clone {
                     Status::True
                 } else {
@@ -307,13 +311,6 @@ impl Graph {
             }
             Kind::Scalar(_) => Status::True,
             Kind::Borrow | Kind::BorrowMut | Kind::Function(_) => Status::False,
-            Kind::Shared | Kind::Weak => {
-                if clone {
-                    Status::True
-                } else {
-                    Status::False
-                }
-            }
             Kind::Vec if !clone => Status::False,
             Kind::Nominal(owner) => {
                 let mut bits = [Status::False; 4];
@@ -419,13 +416,10 @@ impl Graph {
                             Some(if assume_parameters { Status::True } else { Status::False })
                         }
                         Kind::Borrow | Kind::BorrowMut | Kind::Function(_) => Some(Status::False),
-                        Kind::Scalar(Scalar::String) => {
+                        Kind::Scalar(Scalar::String) | Kind::Shared | Kind::Weak => {
                             Some(if clone { Status::True } else { Status::False })
                         }
                         Kind::Scalar(_) => Some(Status::True),
-                        Kind::Shared | Kind::Weak => {
-                            Some(if clone { Status::True } else { Status::False })
-                        }
                         Kind::Vec if !clone => Some(Status::False),
                         _ => None,
                     };

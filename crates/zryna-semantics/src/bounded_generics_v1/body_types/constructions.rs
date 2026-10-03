@@ -196,21 +196,20 @@ pub(super) fn enumeration(
     let generic = head.children[0].is_some();
     let at =
         resources::raw_function(checker.context, owner).body.expressions[expression as usize].span;
-    if let Kind::Nominal(target) = head.kind {
-        if !matches!(signatures::data(checker.context, target), RawDataDeclarationKind::Enum { .. })
-        {
-            if generic {
-                constraints::mismatch(checker, at, "enum construction names a struct");
-            } else {
-                legacy_error(
-                    checker,
-                    at,
-                    "enum construction names a struct",
-                    "construct a declared enum variant",
-                );
-            }
-            return Ok(None);
+    if let Kind::Nominal(target) = head.kind
+        && !matches!(signatures::data(checker.context, target), RawDataDeclarationKind::Enum { .. })
+    {
+        if generic {
+            constraints::mismatch(checker, at, "enum construction names a struct");
+        } else {
+            legacy_error(
+                checker,
+                at,
+                "enum construction names a struct",
+                "construct a declared enum variant",
+            );
         }
+        return Ok(None);
     }
     let environment = signatures::nominal_environment(checker, owner, head)?;
     let Some((_, expected)) =
@@ -244,17 +243,15 @@ pub(super) fn enumeration(
                     at,
                     "variant payload",
                 )?;
-            } else {
-                if !constraints::require(
-                    checker,
-                    owner,
-                    Some(expected),
-                    actual,
-                    at,
-                    "enum payload",
-                )? {
-                    return Ok(None);
-                }
+            } else if !constraints::require(
+                checker,
+                owner,
+                Some(expected),
+                actual,
+                at,
+                "enum payload",
+            )? {
+                return Ok(None);
             }
         }
         _ => {
@@ -278,7 +275,7 @@ pub(super) fn enumeration(
     Ok(Some(substitution::issue_expression(checker, owner, expression, head)?))
 }
 
-/// Preserve the Copy constructor templates from copy_lowering/expressions/{constructors,planning}.
+/// Preserve the Copy constructor templates from `copy_lowering/expressions/{constructors,planning`}.
 pub(super) fn legacy_error(
     checker: &mut Checker<'_, '_>,
     at: zryna_source::UntrustedSpan,

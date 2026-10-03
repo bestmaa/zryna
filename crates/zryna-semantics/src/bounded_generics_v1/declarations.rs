@@ -21,7 +21,7 @@ pub(super) struct Inventory<'a> {
     pub(super) names: BTreeMap<&'a str, DeclarationIdentity>,
 }
 
-pub(super) fn inventories<'a>(input: SemanticInput<'a>) -> Vec<Inventory<'a>> {
+pub(super) fn inventories(input: SemanticInput<'_>) -> Vec<Inventory<'_>> {
     input
         .syntax()
         .files()
@@ -80,10 +80,10 @@ pub(super) fn inventories<'a>(input: SemanticInput<'a>) -> Vec<Inventory<'a>> {
         .collect()
 }
 
-pub(super) fn name<'a>(
-    input: SemanticInput<'a>,
+pub(super) fn name(
+    input: SemanticInput<'_>,
     identity: DeclarationIdentity,
-) -> &'a RawIdentifierSyntax {
+) -> &RawIdentifierSyntax {
     let unit = &input.syntax().files()[identity.module().index() as usize];
     let index = identity.source_index() as usize;
     match identity.kind() {
@@ -108,10 +108,10 @@ pub(super) fn exported(input: SemanticInput<'_>, identity: DeclarationIdentity) 
     }
 }
 
-pub(super) fn parameters<'a>(
-    input: SemanticInput<'a>,
+pub(super) fn parameters(
+    input: SemanticInput<'_>,
     identity: DeclarationIdentity,
-) -> Option<&'a RawTypeParameterList> {
+) -> Option<&RawTypeParameterList> {
     let unit = &input.syntax().files()[identity.module().index() as usize];
     let index = identity.source_index() as usize;
     match identity.kind() {

@@ -55,7 +55,12 @@ fn shift(raw: &mut Value, start: u64, end: u64, delta: i64) {
                 for key in ["start", "end"] {
                     let offset = object[key].as_u64().expect("offset");
                     if offset >= end && !(start == end && key == "start" && offset == start) {
-                        object.insert(key.into(), json!((offset as i64 + delta) as u64));
+                        object.insert(
+                            key.into(),
+                            json!(
+                                offset.checked_add_signed(delta).expect("shifted fixture offset")
+                            ),
+                        );
                     }
                 }
             }
@@ -77,10 +82,23 @@ fn renamed(bytes: &[u8], source: &str, pointer: &str, replacement: &str) -> (Val
     let name = raw.pointer(pointer).expect("selected source name");
     let start = name["span"]["start"].as_u64().expect("start");
     let end = name["span"]["end"].as_u64().expect("end");
-    assert_eq!(&source[start as usize..end as usize], name["text"].as_str().expect("name"));
+    assert_eq!(
+        &source[usize::try_from(start).expect("fixture start")
+            ..usize::try_from(end).expect("fixture end")],
+        name["text"].as_str().expect("name")
+    );
     let mut source = source.to_owned();
-    source.replace_range(start as usize..end as usize, replacement);
-    shift(&mut raw, start, end, replacement.len() as i64 - (end - start) as i64);
+    source.replace_range(
+        usize::try_from(start).expect("fixture start")..usize::try_from(end).expect("fixture end"),
+        replacement,
+    );
+    shift(
+        &mut raw,
+        start,
+        end,
+        i64::try_from(replacement.len()).expect("replacement length")
+            - i64::try_from(end - start).expect("original length"),
+    );
     raw.pointer_mut(pointer).expect("selected source name")["text"] = json!(replacement);
     (raw, source)
 }
@@ -274,8 +292,8 @@ fn shorthand_authenticates_both_the_member_and_runtime_occurrence() {
     let pointer =
         format!("/files/0/functions/0/body/expressions/{constructor}/kind/fields/0/kind/name");
     let (mut raw, source) = renamed(OPERATIONS, OPERATIONS_SOURCE, &pointer, "true");
-    raw["files"][0]["functions"][0]["body"]["expressions"][alias as usize]["kind"]["name"]["text"] =
-        json!("true");
+    raw["files"][0]["functions"][0]["body"]["expressions"]
+        [usize::try_from(alias).expect("fixture alias")]["kind"]["name"]["text"] = json!("true");
     rejects(raw, &source);
 }
 

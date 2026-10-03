@@ -1,7 +1,8 @@
-//! Source-derived declaration context for the internal bounded-generics contract.
+//! Source-derived authorities for the internal bounded-generics contract.
 //!
-//! This phase retains original v5/source/module/declaration authority. It does not check opaque
-//! bodies, discover closed instances, derive layouts, seal executable IR or select a profile.
+//! Declaration resolution, symbolic body checking and closed semantic discovery retain the
+//! original v5/source/module authority. Layouts, ownership, executable IR and profile selection
+//! require separate successor authorities.
 
 use zryna_diagnostics::Diagnostic;
 use zryna_source::{FileId, SourceMap, Span};
@@ -17,6 +18,7 @@ mod parameter_scopes;
 mod resources;
 
 pub mod body_types;
+pub mod instantiation;
 
 pub use identity::{DeclarationIdentity, DeclarationKind, ModuleIdentity, TypeParameterIdentity};
 pub use input::SemanticInput;
@@ -100,9 +102,9 @@ impl DeclarationContext<'_> {
 /// # Errors
 /// Returns bounded source-bound declaration or inherited module/name diagnostics without a
 /// partial context. All project-wide imported-type shadow errors precede every module error.
-pub fn resolve_declarations<'a>(
-    input: SemanticInput<'a>,
-) -> Result<DeclarationContext<'a>, Vec<Diagnostic>> {
+pub fn resolve_declarations(
+    input: SemanticInput<'_>,
+) -> Result<DeclarationContext<'_>, Vec<Diagnostic>> {
     resources::preflight(input).map_err(|failure| vec![failure.diagnostic()])?;
     let inventories = declarations::inventories(input);
     let imports = imports::provisional(input, &inventories);
@@ -138,6 +140,9 @@ pub struct ModuleView<'a> {
 
 impl<'a> ModuleView<'a> {
     /// Returns the original source-map-branded module identity.
+    ///
+    /// # Panics
+    /// Panics only if the retained authenticated module inventory is internally inconsistent.
     #[must_use]
     pub fn identity(self) -> ModuleIdentity {
         ModuleIdentity::new(
@@ -175,7 +180,6 @@ impl<'a> ModuleView<'a> {
     }
 
     /// Iterates exact successful original import bindings in source order.
-    #[must_use]
     pub fn imports(self) -> impl Iterator<Item = ImportView<'a>> {
         self.context.modules[self.index]
             .imports
@@ -224,7 +228,9 @@ impl<'a> DeclarationView<'a> {
     }
 
     /// Iterates source-authenticated parameters in their owning declaration order.
-    #[must_use]
+    ///
+    /// # Panics
+    /// Panics only if retained authenticated parameter spans are internally inconsistent.
     pub fn type_parameters(self) -> impl Iterator<Item = TypeParameterView<'a>> {
         declarations::parameters(self.context.input, self.identity())
             .into_iter()
@@ -268,6 +274,9 @@ impl<'a> ImportView<'a> {
     }
 
     /// Returns the exact original target, with no alias-generated declaration.
+    ///
+    /// # Panics
+    /// Panics only if the retained resolved import inventory is internally inconsistent.
     #[must_use]
     pub fn target(self) -> DeclarationView<'a> {
         self.context

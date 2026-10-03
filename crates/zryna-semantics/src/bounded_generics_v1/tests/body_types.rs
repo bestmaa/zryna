@@ -13,7 +13,7 @@ fn exact_declaration_context_retained() {
     let input = project(&[("main.zry", IDENTITY)]);
     let context = declarations(&input);
     let checked = check_body_types(&context).expect("original fixture invariant");
-    assert!(std::ptr::eq(checked.declarations(), &context));
+    assert!(std::ptr::eq(checked.declarations(), &raw const context));
     let foreign = project(&[("main.zry", IDENTITY)]);
     let foreign_owner = function(&declarations(&foreign), 0);
     assert_eq!(checked.expression_count(foreign_owner), None);
@@ -44,8 +44,8 @@ fn owning_parameter_terms_are_disjoint() {
                 .map(|parameter| (parameter.identity().declaration(), parameter.identity().index()))
         })
         .collect::<std::collections::BTreeSet<_>>();
-    assert_eq!(owners.len(), 65528);
-    assert_eq!(checked.storage().predicate_rows, 65537);
+    assert_eq!(owners.len(), 65_528);
+    assert_eq!(checked.storage().predicate_rows, 65_537);
 }
 
 #[test]
@@ -424,9 +424,9 @@ fn source_order_and_terminal_diagnostics() {
 #[test]
 fn derived_storage_cache_eviction_and_pristine_replay() {
     assert_eq!(
-        resources::comparison_domain(262144, 65536, 16384, 4096, 16384)
+        resources::comparison_domain(262_144, 65_536, 16_384, 4096, 16_384)
             .expect("original fixture invariant"),
-        (7466307588, 55745748998626377744, 5316866)
+        (7_466_307_588, 55_745_748_998_626_377_744, 5_316_866)
     );
     assert!(matches!(
         resources::reserve::<u64>(usize::MAX),

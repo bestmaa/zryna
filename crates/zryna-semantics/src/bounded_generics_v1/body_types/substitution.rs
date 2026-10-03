@@ -143,17 +143,17 @@ pub(super) fn head(
                 .environments
                 .get(ty.environment as usize - 1)
                 .ok_or(BodyTypeFailure::InternalFailure)?;
-            if let Kind::Parameter(parameter) = head.kind {
-                if parameter.declaration() == environment.owner {
-                    let Some(argument) = environment.arguments[parameter.index() as usize] else {
-                        return Err(BodyTypeFailure::InternalFailure);
-                    };
-                    if argument.environment >= ty.environment {
-                        return Err(BodyTypeFailure::InternalFailure);
-                    }
-                    ty = argument;
-                    continue;
+            if let Kind::Parameter(parameter) = head.kind
+                && parameter.declaration() == environment.owner
+            {
+                let Some(argument) = environment.arguments[parameter.index() as usize] else {
+                    return Err(BodyTypeFailure::InternalFailure);
+                };
+                if argument.environment >= ty.environment {
+                    return Err(BodyTypeFailure::InternalFailure);
                 }
+                ty = argument;
+                continue;
             }
             for child in head.children.iter_mut().flatten() {
                 if !matches!(child.origin, Origin::Source { .. }) {

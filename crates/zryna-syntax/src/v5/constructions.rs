@@ -43,38 +43,7 @@ pub(super) fn validate(
             cursor.type_arguments(unit, type_arguments.as_ref())?;
             cursor.token(*open_paren_span, "(")?;
             cursor.token(*open_brace_span, "{")?;
-            for (index, field) in fields.iter().enumerate() {
-                if index != 0 {
-                    cursor.punctuation(",")?;
-                }
-                cursor.bound(field.span)?;
-                let (name, value) = match &field.kind {
-                    RawFieldInitializerKind::Shorthand { name, value } => {
-                        let expression = node(body, *value)?;
-                        if expression.span != name.span
-                            || !matches!(&expression.kind, Kind::Reference { name: reference } if reference == name)
-                        {
-                            return Err(arena::malformed());
-                        }
-                        context.identifier(cursor, name, Role::Runtime)?;
-                        (name, *value)
-                    }
-                    RawFieldInitializerKind::Explicit { name, colon_span, value } => {
-                        cursor.identifier(name)?;
-                        cursor.token(*colon_span, ":")?;
-                        child(cursor, body, *value)?;
-                        (name, *value)
-                    }
-                };
-                if field.span.start != name.span.start
-                    || field.span.end != node(body, value)?.span.end
-                {
-                    return Err(arena::malformed());
-                }
-            }
-            if !fields.is_empty() {
-                cursor.comma()?;
-            }
+            validate_fields(cursor, body, fields, context)?;
             cursor.token(*close_brace_span, "}")?;
             cursor.token(*close_paren_span, ")")?;
         }
@@ -141,6 +110,45 @@ pub(super) fn validate(
             cursor.token(*close_paren_span, ")")?;
         }
         _ => return Err(arena::malformed()),
+    }
+    Ok(())
+}
+
+fn validate_fields(
+    cursor: &mut Cursor<'_>,
+    body: &RawFunctionBodySyntax,
+    fields: &[crate::v4::RawFieldInitializer],
+    context: Context,
+) -> Result<(), DeclarationError> {
+    for (index, field) in fields.iter().enumerate() {
+        if index != 0 {
+            cursor.punctuation(",")?;
+        }
+        cursor.bound(field.span)?;
+        let (name, value) = match &field.kind {
+            RawFieldInitializerKind::Shorthand { name, value } => {
+                let expression = node(body, *value)?;
+                if expression.span != name.span
+                    || !matches!(&expression.kind, Kind::Reference { name: reference } if reference == name)
+                {
+                    return Err(arena::malformed());
+                }
+                context.identifier(cursor, name, Role::Runtime)?;
+                (name, *value)
+            }
+            RawFieldInitializerKind::Explicit { name, colon_span, value } => {
+                cursor.identifier(name)?;
+                cursor.token(*colon_span, ":")?;
+                child(cursor, body, *value)?;
+                (name, *value)
+            }
+        };
+        if field.span.start != name.span.start || field.span.end != node(body, value)?.span.end {
+            return Err(arena::malformed());
+        }
+    }
+    if !fields.is_empty() {
+        cursor.comma()?;
     }
     Ok(())
 }

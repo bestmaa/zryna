@@ -61,35 +61,7 @@ pub(super) fn validate(
     if statement.span.file != unit.id {
         return Err(arena::malformed());
     }
-    let endpoints = match &statement.kind {
-        Kind::LocalDeclaration { keyword_span, semicolon_span, .. }
-        | Kind::Return { keyword_span, semicolon_span, .. } => {
-            (keyword_span.start, semicolon_span.end)
-        }
-        Kind::Assignment { target, semicolon_span, .. } => {
-            (node(body, *target)?.span.start, semicolon_span.end)
-        }
-        Kind::ExpressionStatement { expression, semicolon_span } => {
-            (node(body, *expression)?.span.start, semicolon_span.end)
-        }
-        Kind::Block { block } => {
-            let span = block_span(body, *block)?;
-            (span.start, span.end)
-        }
-        Kind::If { keyword_span, then_block, else_clause, .. } => (
-            keyword_span.start,
-            block_span(body, else_clause.as_ref().map_or(*then_block, |clause| clause.block))?.end,
-        ),
-        Kind::While { keyword_span, body_block, .. } => {
-            (keyword_span.start, block_span(body, *body_block)?.end)
-        }
-        Kind::WeakUpgrade { keyword_span, .. } => {
-            if !cursor.text(statement.span)?.ends_with(';') {
-                return Err(arena::malformed());
-            }
-            (keyword_span.start, statement.span.end)
-        }
-    };
+    let endpoints = endpoints(&cursor, body, statement)?;
     if endpoints != (statement.span.start, statement.span.end) {
         return Err(arena::malformed());
     }
@@ -115,10 +87,10 @@ pub(super) fn validate(
         }
         Kind::Assignment { target, equals_span, value, semicolon_span } => {
             place(body, *target)?;
-            if let super::RawExpressionKind::Reference { name } = &node(body, *target)?.kind {
-                if !context.allows(&name.text, Role::Assignment) {
-                    return Err(DeclarationError::malformed(Some(cursor.bound(name.span)?)));
-                }
+            if let super::RawExpressionKind::Reference { name } = &node(body, *target)?.kind
+                && !context.allows(&name.text, Role::Assignment)
+            {
+                return Err(DeclarationError::malformed(Some(cursor.bound(name.span)?)));
             }
             child(&mut cursor, body, *target)?;
             cursor.token(*equals_span, "=")?;
@@ -168,33 +140,83 @@ pub(super) fn validate(
             child(&mut cursor, body, *expression)?;
             cursor.token(*semicolon_span, ";")?;
         }
-        Kind::WeakUpgrade {
-            keyword_span,
-            weak,
-            as_span,
-            binding,
-            success_block,
-            else_span,
-            failure_block,
-        } => {
-            cursor.token(*keyword_span, "upgradeWeak")?;
-            cursor.punctuation("(")?;
-            child(&mut cursor, body, *weak)?;
-            cursor.punctuation(",")?;
-            cursor.punctuation("(")?;
-            context.identifier(&mut cursor, binding, Role::ValueBinding)?;
-            cursor.punctuation(")")?;
-            cursor.token(*as_span, "=>")?;
-            cursor.child(block_span(body, *success_block)?)?;
-            cursor.punctuation(",")?;
-            cursor.punctuation("(")?;
-            cursor.punctuation(")")?;
-            cursor.token(*else_span, "=>")?;
-            cursor.child(block_span(body, *failure_block)?)?;
-            cursor.comma()?;
-            cursor.punctuation(")")?;
-            cursor.punctuation(";")?;
+        Kind::WeakUpgrade { .. } => {
+            upgrade(&mut cursor, body, context, &statement.kind)?;
         }
     }
     cursor.finish()
+}
+
+fn endpoints(
+    cursor: &Cursor<'_>,
+    body: &RawFunctionBodySyntax,
+    statement: &RawStatementSyntax,
+) -> Result<(u32, u32), DeclarationError> {
+    Ok(match &statement.kind {
+        Kind::LocalDeclaration { keyword_span, semicolon_span, .. }
+        | Kind::Return { keyword_span, semicolon_span, .. } => {
+            (keyword_span.start, semicolon_span.end)
+        }
+        Kind::Assignment { target, semicolon_span, .. } => {
+            (node(body, *target)?.span.start, semicolon_span.end)
+        }
+        Kind::ExpressionStatement { expression, semicolon_span } => {
+            (node(body, *expression)?.span.start, semicolon_span.end)
+        }
+        Kind::Block { block } => {
+            let span = block_span(body, *block)?;
+            (span.start, span.end)
+        }
+        Kind::If { keyword_span, then_block, else_clause, .. } => (
+            keyword_span.start,
+            block_span(body, else_clause.as_ref().map_or(*then_block, |clause| clause.block))?.end,
+        ),
+        Kind::While { keyword_span, body_block, .. } => {
+            (keyword_span.start, block_span(body, *body_block)?.end)
+        }
+        Kind::WeakUpgrade { keyword_span, .. } => {
+            if !cursor.text(statement.span)?.ends_with(';') {
+                return Err(arena::malformed());
+            }
+            (keyword_span.start, statement.span.end)
+        }
+    })
+}
+
+fn upgrade(
+    cursor: &mut Cursor<'_>,
+    body: &RawFunctionBodySyntax,
+    context: Context,
+    kind: &Kind,
+) -> Result<(), DeclarationError> {
+    let Kind::WeakUpgrade {
+        keyword_span,
+        weak,
+        as_span,
+        binding,
+        success_block,
+        else_span,
+        failure_block,
+    } = kind
+    else {
+        return Err(arena::malformed());
+    };
+    cursor.token(*keyword_span, "upgradeWeak")?;
+    cursor.punctuation("(")?;
+    child(cursor, body, *weak)?;
+    cursor.punctuation(",")?;
+    cursor.punctuation("(")?;
+    context.identifier(cursor, binding, Role::ValueBinding)?;
+    cursor.punctuation(")")?;
+    cursor.token(*as_span, "=>")?;
+    cursor.child(block_span(body, *success_block)?)?;
+    cursor.punctuation(",")?;
+    cursor.punctuation("(")?;
+    cursor.punctuation(")")?;
+    cursor.token(*else_span, "=>")?;
+    cursor.child(block_span(body, *failure_block)?)?;
+    cursor.comma()?;
+    cursor.punctuation(")")?;
+    cursor.punctuation(";")?;
+    Ok(())
 }

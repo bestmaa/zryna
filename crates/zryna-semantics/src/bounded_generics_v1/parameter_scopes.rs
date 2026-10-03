@@ -75,7 +75,7 @@ impl<'a> TypeParameterView<'a> {
         self.name
     }
 
-    /// Returns the original authenticated ZrynaValue marker span.
+    /// Returns the original authenticated `ZrynaValue` marker span.
     #[must_use]
     pub const fn bound_span(self) -> Span {
         self.bound

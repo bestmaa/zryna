@@ -147,10 +147,10 @@ impl Context {
 
     pub(super) fn allows(self, text: &str, role: Role) -> bool {
         if matches!(role, Role::TypeHead | Role::ApplicationHead) {
-            return !type_diversion(text)
-                && !(matches!(role, Role::ApplicationHead) && text == "function")
-                && !(self.external_module
-                    && (strict_word(text) || (!self.in_function && text == "await")));
+            return !(type_diversion(text)
+                || matches!(role, Role::ApplicationHead) && text == "function"
+                || self.external_module
+                    && (strict_word(text) || !self.in_function && text == "await"));
         }
         if reserved_runtime(text) || (self.external_module && strict_word(text)) {
             return false;

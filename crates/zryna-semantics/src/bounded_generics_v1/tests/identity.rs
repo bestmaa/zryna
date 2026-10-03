@@ -9,8 +9,8 @@ use zryna_syntax::v5::verify_snapshot;
 fn exact_v5_source_and_entry_retained() {
     let project = fixtures::reference();
     let resolved = context(&project, "main.zry").expect("original declaration context");
-    assert!(std::ptr::eq(resolved.syntax(), &project.syntax));
-    assert!(std::ptr::eq(resolved.sources(), &project.sources));
+    assert!(std::ptr::eq(resolved.syntax(), &raw const project.syntax));
+    assert!(std::ptr::eq(resolved.sources(), &raw const project.sources));
     assert_eq!(resolved.entry().index(), 0);
     let declarations = resolved
         .modules()
@@ -56,7 +56,7 @@ fn cloned_source_map_identity_accepted() {
     )
     .expect("retained issuing identity");
     let resolved = resolve_declarations(input).expect("original immutable clone");
-    assert!(std::ptr::eq(resolved.sources(), &cloned));
+    assert!(std::ptr::eq(resolved.sources(), &raw const cloned));
     assert_eq!(resolved.modules().next().expect("module").functions().count(), 1);
 }
 

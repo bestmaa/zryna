@@ -61,18 +61,17 @@ pub(super) fn operation(
         if !constraints::require(checker, owner, left, right, at, "comparison")? {
             return Ok(None);
         }
-        if let Some(left) = left {
-            if let Some(head) = substitution::head(&checker.tables, owner, left)? {
-                if !matches!(head.kind, Kind::Scalar(Scalar::Bool | Scalar::I32)) {
-                    let span = checker.span(at);
-                    checker.constraints.at(
-                        "ZRYNA-M3008",
-                        span,
-                        "equality is scalar-only in aggregate M3",
-                        "compare bool or i32 projections rather than whole aggregates",
-                    );
-                }
-            }
+        if let Some(left) = left
+            && let Some(head) = substitution::head(&checker.tables, owner, left)?
+            && !matches!(head.kind, Kind::Scalar(Scalar::Bool | Scalar::I32))
+        {
+            let span = checker.span(at);
+            checker.constraints.at(
+                "ZRYNA-M3008",
+                span,
+                "equality is scalar-only in aggregate M3",
+                "compare bool or i32 projections rather than whole aggregates",
+            );
         }
     } else {
         let expected = Some(Ty::scalar(Scalar::I32));

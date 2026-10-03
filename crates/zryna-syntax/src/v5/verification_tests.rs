@@ -101,7 +101,7 @@ fn whole_project_raw_barrier_precedes_real_earlier_declaration_error() {
     let name = &mut authentic["files"][0]["functions"][0]["name"];
     name["text"] = json!("Weak");
     name["span"]["end"] = json!(name["span"]["end"].as_u64().expect("name end") - 1);
-    let start = source.find("Weak").expect("reserved name") as u32;
+    let start = u32::try_from(source.find("Weak").expect("reserved name")).expect("fixture offset");
     let expected = map
         .verify_span(UntrustedSpan { file: 0, start, end: start + 4 })
         .expect("authentic reserved identifier");
@@ -136,8 +136,9 @@ fn faithful_invalid_bound_is_deferred_until_complete_project_barrier() {
     let mut snapshot = value(REFERENCE);
     let bound = &mut snapshot["files"][1]["data_declarations"][0]["type_parameters"]["parameters"]
         [0]["bound"];
-    let start = bound["span"]["start"].as_u64().expect("start") as usize;
-    let end = bound["span"]["end"].as_u64().expect("end") as usize;
+    let start =
+        bound["span"]["start"].as_u64().and_then(|n| usize::try_from(n).ok()).expect("start");
+    let end = bound["span"]["end"].as_u64().and_then(|n| usize::try_from(n).ok()).expect("end");
     bound["text"] = json!("OpaqueCopy");
     let mut source = VALUES.to_owned();
     source.replace_range(start..end, "OpaqueCopy");

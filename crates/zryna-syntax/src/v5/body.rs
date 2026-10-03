@@ -96,6 +96,13 @@ pub(super) fn validate(
     for expression in &body.expressions {
         expression_source::validate(sources, unit, body, expression, context)?;
     }
+    reject_directive(sources, body)
+}
+
+fn reject_directive(
+    sources: &SourceMap,
+    body: &RawFunctionBodySyntax,
+) -> Result<(), DeclarationError> {
     // A directive changes identifier roles; the frozen grammar admits no strict directive.
     for id in &body.blocks[0].statements {
         let crate::v4::RawStatementKind::ExpressionStatement { expression, .. } =

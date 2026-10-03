@@ -18,17 +18,17 @@ pub(super) fn check(
     scope: &Scope<'_>,
 ) -> Result<Option<Ty>, BodyTypeFailure> {
     if let Some(binding) = scope.get(&callee.text) {
-        if let Some(ty) = binding.ty {
-            if let Some(head) = substitution::head(&checker.tables, owner, ty)? {
-                if matches!(head.kind, Kind::Parameter(_)) {
-                    constraints::opaque(checker, callee.span, "callable capability");
-                } else {
-                    constraints::mismatch(
-                        checker,
-                        callee.span,
-                        "callee is a value rather than an original function",
-                    );
-                }
+        if let Some(ty) = binding.ty
+            && let Some(head) = substitution::head(&checker.tables, owner, ty)?
+        {
+            if matches!(head.kind, Kind::Parameter(_)) {
+                constraints::opaque(checker, callee.span, "callable capability");
+            } else {
+                constraints::mismatch(
+                    checker,
+                    callee.span,
+                    "callee is a value rather than an original function",
+                );
             }
         }
         return Ok(None);

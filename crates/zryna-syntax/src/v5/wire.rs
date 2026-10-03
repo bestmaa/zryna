@@ -47,17 +47,17 @@ pub(super) fn valid(value: &Value) -> bool {
                         || text.len() > 1_024
                         || !text.is_ascii()
                         || !(text.starts_with("./") || text.starts_with("../"))
-                        || !text.ends_with(".zry")
+                        || !text.as_bytes().ends_with(b".zry")
                         || text.contains(['\\', '?', '#', '\0'])
                         || text.contains("//"))
                 {
                     return false;
                 }
             }
-            if let Some(path) = object.get("path").and_then(Value::as_str) {
-                if NormalizedSourcePath::new(path).is_err() {
-                    return false;
-                }
+            if let Some(path) = object.get("path").and_then(Value::as_str)
+                && NormalizedSourcePath::new(path).is_err()
+            {
+                return false;
             }
             for key in ["bindings", "variants", "blocks"] {
                 if object.get(key).and_then(Value::as_array).is_some_and(Vec::is_empty) {
@@ -82,12 +82,11 @@ pub(super) fn valid(value: &Value) -> bool {
             {
                 return false;
             }
-            if let Some(spelling) = object.get("length_spelling").and_then(Value::as_str) {
-                if !decimal(spelling, false, 10)
-                    || object.get("length").and_then(Value::as_u64).is_none_or(|n| n > 1_048_576)
-                {
-                    return false;
-                }
+            if let Some(spelling) = object.get("length_spelling").and_then(Value::as_str)
+                && (!decimal(spelling, false, 10)
+                    || object.get("length").and_then(Value::as_u64).is_none_or(|n| n > 1_048_576))
+            {
+                return false;
             }
             if let Some(spelling) = object.get("spelling").and_then(Value::as_str) {
                 match object.get("kind").and_then(Value::as_str) {

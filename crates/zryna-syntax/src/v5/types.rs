@@ -83,28 +83,7 @@ pub(super) fn validate(sources: &SourceMap, unit: &RawSourceUnit) -> Result<(), 
         if node.span.file != unit.id {
             return Err(DeclarationError::malformed(None));
         }
-        let (start, end) = match &node.kind {
-            RawTypeSyntaxKind::Missing => (node.span.start, node.span.start),
-            RawTypeSyntaxKind::Named { name } => (name.span.start, name.span.end),
-            RawTypeSyntaxKind::String { keyword_span } => (keyword_span.start, keyword_span.end),
-            RawTypeSyntaxKind::Application { name, type_arguments } => {
-                if matches!(
-                    name.text.as_str(),
-                    "String" | "Vec" | "Shared" | "Weak" | "Borrow" | "BorrowMut" | "FixedArray"
-                ) {
-                    return Err(DeclarationError::malformed(None));
-                }
-                (name.span.start, type_arguments.span.end)
-            }
-            RawTypeSyntaxKind::Vec { keyword_span, greater_than_span, .. }
-            | RawTypeSyntaxKind::Shared { keyword_span, greater_than_span, .. }
-            | RawTypeSyntaxKind::Weak { keyword_span, greater_than_span, .. }
-            | RawTypeSyntaxKind::Borrow { keyword_span, greater_than_span, .. }
-            | RawTypeSyntaxKind::BorrowMut { keyword_span, greater_than_span, .. }
-            | RawTypeSyntaxKind::FixedArray { keyword_span, greater_than_span, .. } => {
-                (keyword_span.start, greater_than_span.end)
-            }
-        };
+        let (start, end) = endpoints(node)?;
         if node.span.start != start || node.span.end != end {
             return Err(DeclarationError::malformed(None));
         }
@@ -219,4 +198,29 @@ pub(super) fn arguments(
         }
     }
     cursor.token(list.greater_than_span, ">")
+}
+
+fn endpoints(node: &RawTypeSyntax) -> Result<(u32, u32), DeclarationError> {
+    Ok(match &node.kind {
+        RawTypeSyntaxKind::Missing => (node.span.start, node.span.start),
+        RawTypeSyntaxKind::Named { name } => (name.span.start, name.span.end),
+        RawTypeSyntaxKind::String { keyword_span } => (keyword_span.start, keyword_span.end),
+        RawTypeSyntaxKind::Application { name, type_arguments } => {
+            if matches!(
+                name.text.as_str(),
+                "String" | "Vec" | "Shared" | "Weak" | "Borrow" | "BorrowMut" | "FixedArray"
+            ) {
+                return Err(DeclarationError::malformed(None));
+            }
+            (name.span.start, type_arguments.span.end)
+        }
+        RawTypeSyntaxKind::Vec { keyword_span, greater_than_span, .. }
+        | RawTypeSyntaxKind::Shared { keyword_span, greater_than_span, .. }
+        | RawTypeSyntaxKind::Weak { keyword_span, greater_than_span, .. }
+        | RawTypeSyntaxKind::Borrow { keyword_span, greater_than_span, .. }
+        | RawTypeSyntaxKind::BorrowMut { keyword_span, greater_than_span, .. }
+        | RawTypeSyntaxKind::FixedArray { keyword_span, greater_than_span, .. } => {
+            (keyword_span.start, greater_than_span.end)
+        }
+    })
 }

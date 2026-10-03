@@ -14,7 +14,7 @@ pub(super) fn declaration(
         .data_declarations()
         .chain(module.functions())
         .find(|declaration| declaration.name() == name)
-        .map(|declaration| declaration.identity())
+        .map(super::super::DeclarationView::identity)
         .or_else(|| {
             module
                 .imports()
@@ -71,51 +71,13 @@ pub(super) fn resolve(checker: &mut Checker<'_, '_>) -> Result<(), BodyTypeFailu
                     }
                     None
                 }
-                RawTypeSyntaxKind::Named { name } => {
-                    if let Some(parameter) = checker.context.type_parameter(owner, &name.text) {
-                        Some(Head::leaf(Kind::Parameter(parameter.identity())))
-                    } else if let Some(scalar) = match name.text.as_str() {
-                        "bool" => Some(Scalar::Bool),
-                        "i32" => Some(Scalar::I32),
-                        "unit" => Some(Scalar::Unit),
-                        _ => None,
-                    } {
-                        Some(Head::leaf(Kind::Scalar(scalar)))
-                    } else if let Some((kind, count)) = family(checker.context, owner, &name.text) {
-                        if count == 0 {
-                            Some(Head::leaf(kind))
-                        } else {
-                            arguments::error(
-                                checker,
-                                name.span,
-                                "generic type requires explicit arguments",
-                            );
-                            invalid = true;
-                            None
-                        }
-                    } else {
-                        if checker.tables.sources[unit.id as usize][index].argument_occurrence {
-                            arguments::error(
-                                checker,
-                                name.span,
-                                "type name does not resolve to a value type",
-                            );
-                        } else {
-                            let span = checker.span(name.span);
-                            checker.names.at(
-                                "ZRYNA-M3002",
-                                span,
-                                format!(
-                                    "type '{}' does not name a module-local aggregate",
-                                    name.text
-                                ),
-                                "use bool, i32, or an exact aggregate declaration name",
-                            );
-                        }
-                        invalid = true;
-                        None
-                    }
-                }
+                RawTypeSyntaxKind::Named { name } => named(
+                    checker,
+                    owner,
+                    name,
+                    checker.tables.sources[unit.id as usize][index].argument_occurrence,
+                    &mut invalid,
+                ),
                 RawTypeSyntaxKind::String { .. } => Some(Head::leaf(Kind::Scalar(Scalar::String))),
                 RawTypeSyntaxKind::Vec { argument, .. } => {
                     Some(Head::unary(Kind::Vec, child(*argument)))
@@ -148,12 +110,11 @@ pub(super) fn resolve(checker: &mut Checker<'_, '_>) -> Result<(), BodyTypeFailu
                             Some(type_arguments),
                             name.span,
                         )?;
-                        match children {
-                            Some(children) => Some(Head { kind, children }),
-                            None => {
-                                invalid = true;
-                                None
-                            }
+                        if let Some(children) = children {
+                            Some(Head { kind, children })
+                        } else {
+                            invalid = true;
+                            None
                         }
                     } else {
                         arguments::error(
@@ -235,4 +196,45 @@ fn argument_occurrences(checker: &mut Checker<'_, '_>) -> Result<(), BodyTypeFai
         }
     }
     Ok(())
+}
+
+fn named(
+    checker: &mut Checker<'_, '_>,
+    owner: DeclarationIdentity,
+    name: &zryna_syntax::v4::RawIdentifierSyntax,
+    argument_occurrence: bool,
+    invalid: &mut bool,
+) -> Option<Head> {
+    if let Some(parameter) = checker.context.type_parameter(owner, &name.text) {
+        Some(Head::leaf(Kind::Parameter(parameter.identity())))
+    } else if let Some(scalar) = match name.text.as_str() {
+        "bool" => Some(Scalar::Bool),
+        "i32" => Some(Scalar::I32),
+        "unit" => Some(Scalar::Unit),
+        _ => None,
+    } {
+        Some(Head::leaf(Kind::Scalar(scalar)))
+    } else if let Some((kind, count)) = family(checker.context, owner, &name.text) {
+        if count == 0 {
+            Some(Head::leaf(kind))
+        } else {
+            arguments::error(checker, name.span, "generic type requires explicit arguments");
+            *invalid = true;
+            None
+        }
+    } else {
+        if argument_occurrence {
+            arguments::error(checker, name.span, "type name does not resolve to a value type");
+        } else {
+            let span = checker.span(name.span);
+            checker.names.at(
+                "ZRYNA-M3002",
+                span,
+                format!("type '{}' does not name a module-local aggregate", name.text),
+                "use bool, i32, or an exact aggregate declaration name",
+            );
+        }
+        *invalid = true;
+        None
+    }
 }

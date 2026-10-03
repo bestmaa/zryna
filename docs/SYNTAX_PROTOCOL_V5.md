@@ -151,16 +151,16 @@ unchanged v2/v3/v4 source/schema bytes. They are raw syntax examples, not execut
 `node --test tests/syntax-protocol-v5.test.mjs` checks closed records, every populated
 required field, raw tag inventories, exact/first-extra parameter/argument counts, independent
 source spans, member/list placement and old-protocol rejection. `cargo test --locked -p
-zryna-syntax v5::` is the authored Rust declaration/hostile-decoder suite; test authorship
-alone does not establish that it ran. Heavy verification requires the coordinated lease.
+zryna-syntax v5::` is the Rust declaration/hostile-decoder suite. The cloud continuation
+executes the focused suite; its exact-revision receipt records command and test counts.
 
 The independent precedence, control-flow and ownership-operation source/raw fixtures cover
 all 28 expression and eight statement tags. They assert syntax only, including source whose
 semantics must reject later. The new Rust tests cover omitted source despite clean owned
 arenas, faithful-token precedence/associativity forgeries, cross-file raw-before-declaration
 barriers, match/weak delimiters, source identity, hostile endpoints and diagnostic limits.
-These successor tests are authored but have not run; earlier focused results belong to the
-prior declaration-only source revision and do not verify this successor.
+The cloud continuation executes these successor tests. Earlier declaration-only results
+remain evidence for their own revision; the continuation receipt identifies the current source.
 
 Independent script/module keyword fixtures cover permitted contextual bindings, read-only
 strict names, keyword member/quoted labels, an aliased keyword import and function-owned
@@ -169,8 +169,9 @@ occurrence forests, and parses without errors; parser acceptance alone does not 
 its strict identifier role. Source tests cover keyword relabeling, type ownership, hidden
 export prefixes, shorthand aliases, weak/match bindings and strict directive rejection.
 
-Complete successor review, Rust verification, both providers and all excluded source
-forms remain the syntax slice's next steps. Deterministic bounded instantiation, successor sealed layout/IR,
+Complete successor review, both providers and broader excluded-source conformance remain
+the syntax slice's next steps. Closed semantic discovery is an internal candidate in the
+[continuation](M7_GENERIC_CONTINUATION.md); complete instantiation conformance, successor sealed layout/IR,
 real owned Option/Result construction/matching/cleanup, hostile authorities, cross-target
 fault/conformance and separately reviewed driver admission remain later #416 work.
 Required preflight/M0/platform gates are not waived by these focused checks.

@@ -1,6 +1,7 @@
 //! Source declaration and type occurrence serialization for the independent test reader.
 
 use super::Reader;
+use std::fmt::Write;
 
 pub(super) fn many_owners() -> super::Project {
     let paths = ["main.zry", "one.zry", "two.zry", "three.zry"];
@@ -9,16 +10,17 @@ pub(super) fn many_owners() -> super::Project {
         let mut source = String::new();
         if module == 0 {
             for name in ["one", "two", "three"] {
-                source.push_str(&format!("import {{f0 as {name}}} from \"./{name}.zry\";\n"));
+                writeln!(source, "import {{f0 as {name}}} from \"./{name}.zry\";")
+                    .expect("fixture source");
             }
         }
         for index in 0..4096 {
             let extra = if module == 0 && index < 9 { "extra:i32;" } else { "" };
-            source.push_str(&format!("interface D{index}<T extends ZrynaValue,E extends ZrynaValue> extends ZrynaStruct {{value:T;{extra}}}\n"));
+            writeln!(source, "interface D{index}<T extends ZrynaValue,E extends ZrynaValue> extends ZrynaStruct {{value:T;{extra}}}").expect("fixture source");
         }
         for index in 0..4095 {
             let export = if index == 0 { "export " } else { "" };
-            source.push_str(&format!("{export}function f{index}<T extends ZrynaValue,E extends ZrynaValue>(value:T):T {{return value;}}\n"));
+            writeln!(source, "{export}function f{index}<T extends ZrynaValue,E extends ZrynaValue>(value:T):T {{return value;}}").expect("fixture source");
         }
         files.push((path, source));
     }
@@ -102,7 +104,7 @@ impl Reader {
         } else {
             json!({"kind":"named","name":name})
         };
-        let index = self.types.len() as u32;
+        let index = u32::try_from(self.types.len()).expect("fixture type count");
         self.types.push(json!({"span":self.span(start,self.end()),"kind":kind}));
         index
     }

@@ -61,7 +61,11 @@ impl Reader {
                     .find(|operator| source[index..].starts_with(operator));
                 index += operator.map_or(1, str::len);
             }
-            tokens.push((source[start..index].into(), start as u32, index as u32));
+            tokens.push((
+                source[start..index].into(),
+                u32::try_from(start).expect("fixture offset"),
+                u32::try_from(index).expect("fixture index"),
+            ));
         }
         Self {
             file,
@@ -101,8 +105,10 @@ impl Reader {
         json!({"text":text,"span":self.span(start,end)})
     }
     fn emit(&mut self, start: u32, kind: Value) -> u32 {
-        let index = self.expressions.len() as u32;
-        self.expressions.push(json!({"span":self.span(start,self.end()),"kind":kind}));
+        let index = u32::try_from(self.expressions.len()).expect("fixture arena");
+        let mut expression = json!({"span":self.span(start,self.end())});
+        expression["kind"] = kind;
+        self.expressions.push(expression);
         index
     }
     fn expression(&mut self, minimum: u8) -> u32 {
@@ -124,7 +130,8 @@ impl Reader {
             if priority == 0 || priority < minimum {
                 break;
             }
-            let operator_span = self.token(&self.peek().to_owned());
+            let (_, begin, end) = self.take();
+            let operator_span = self.span(begin, end);
             let right = self.expression(priority + 1);
             left = self.emit(
                 start,
@@ -135,7 +142,7 @@ impl Reader {
     }
     fn primary(&mut self) -> u32 {
         let start = self.start();
-        let mut value = if self.peek() == "-" {
+        let value = if self.peek() == "-" {
             let operator_span = self.token("-");
             let operand = self.expression(5);
             self.emit(
@@ -176,10 +183,7 @@ impl Reader {
                 };
                 let type_arguments =
                     if self.application_call() { self.arguments() } else { Value::Null };
-                if self.peek() != "(" {
-                    assert!(type_arguments.is_null());
-                    self.emit(start, json!({"kind":"reference","name":first}))
-                } else {
+                if self.peek() == "(" {
                     let open_paren_span = self.token("(");
                     if self.peek() == "{" {
                         let open_brace_span = self.token("{");
@@ -228,9 +232,16 @@ impl Reader {
                         };
                         self.emit(start, kind)
                     }
+                } else {
+                    assert!(type_arguments.is_null());
+                    self.emit(start, json!({"kind":"reference","name":first}))
                 }
             }
         };
+        self.projection(start, value)
+    }
+
+    fn projection(&mut self, start: u32, mut value: u32) -> u32 {
         while matches!(self.peek(), "." | "[") {
             let kind = if self.peek() == "." {
                 let dot_span = self.token(".");
@@ -249,10 +260,12 @@ impl Reader {
     fn separator(&self, left: u32, right: u32) -> Value {
         let end = self.expressions[left as usize]["span"]["end"]
             .as_u64()
-            .expect("original fixture invariant") as u32;
+            .and_then(|n| u32::try_from(n).ok())
+            .expect("original fixture invariant");
         let start = self.expressions[right as usize]["span"]["start"]
             .as_u64()
-            .expect("original fixture invariant") as u32;
+            .and_then(|n| u32::try_from(n).ok())
+            .expect("original fixture invariant");
         let token = self
             .tokens
             .iter()
@@ -303,7 +316,7 @@ impl Reader {
             let (key, begin, end) = self.take();
             let (family, variant) =
                 key.trim_matches('"').split_once('.').expect("original fixture invariant");
-            let dot = begin + 1 + family.len() as u32;
+            let dot = begin + 1 + u32::try_from(family.len()).expect("fixture family length");
             let type_name = json!({"text":family,"span":self.span(begin+1,dot)});
             let variant = json!({"text":variant,"span":self.span(dot+1,end-1)});
             self.token(":");
@@ -323,7 +336,7 @@ impl Reader {
         self.emit(start,json!({"kind":"match","keyword_span":keyword_span,"open_paren_span":open_paren_span,"scrutinee":scrutinee,"close_paren_span":close_paren_span,"open_brace_span":open_brace_span,"arms":arms,"close_brace_span":close_brace_span}))
     }
     fn block(&mut self) -> u32 {
-        let index = self.blocks.len() as u32;
+        let index = u32::try_from(self.blocks.len()).expect("fixture arena");
         self.blocks.push(Value::Null);
         let start = self.start();
         let open_brace_span = self.token("{");
@@ -336,7 +349,7 @@ impl Reader {
         index
     }
     fn statement(&mut self) -> u32 {
-        let index = self.statements.len() as u32;
+        let index = u32::try_from(self.statements.len()).expect("fixture arena");
         self.statements.push(Value::Null);
         let start = self.start();
         let kind = match self.peek() {
@@ -348,7 +361,7 @@ impl Reader {
                     self.token(":");
                     self.ty()
                 } else {
-                    let index = self.types.len() as u32;
+                    let index = u32::try_from(self.types.len()).expect("fixture arena");
                     self.types.push(json!({"span":self.span(self.start(),self.start()),"kind":{"kind":"missing"}}));
                     index
                 };
@@ -443,8 +456,10 @@ pub(in crate::bounded_generics_v1) fn project(files: &[(&str, &str)]) -> Project
             .iter()
             .enumerate()
             .map(|(id, (path, text))| {
-                serde_json::from_value(Reader::new(id as u32, text).unit(path))
-                    .expect("original fixture invariant")
+                serde_json::from_value(
+                    Reader::new(u32::try_from(id).expect("fixture file"), text).unit(path),
+                )
+                .expect("original fixture invariant")
             })
             .collect(),
     };

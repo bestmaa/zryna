@@ -14,7 +14,8 @@ pub(super) fn children(kind: &RawExpressionKind, mut push: impl FnMut(u32)) {
         RawExpressionKind::Reference { .. }
         | RawExpressionKind::BoolLiteral { .. }
         | RawExpressionKind::I32Literal { .. }
-        | RawExpressionKind::StringLiteral { .. } => {}
+        | RawExpressionKind::StringLiteral { .. }
+        | RawExpressionKind::Match { .. } => {}
         RawExpressionKind::Negation { operand, .. } => push(*operand),
         RawExpressionKind::Addition { lhs, rhs, .. }
         | RawExpressionKind::Subtraction { lhs, rhs, .. }
@@ -38,7 +39,7 @@ pub(super) fn children(kind: &RawExpressionKind, mut push: impl FnMut(u32)) {
                 match field.kind {
                     zryna_syntax::v4::RawFieldInitializerKind::Explicit { value, .. }
                     | zryna_syntax::v4::RawFieldInitializerKind::Shorthand { value, .. } => {
-                        push(value)
+                        push(value);
                     }
                 }
             }
@@ -68,7 +69,6 @@ pub(super) fn children(kind: &RawExpressionKind, mut push: impl FnMut(u32)) {
             push(*value);
             push(*vector);
         }
-        RawExpressionKind::Match { .. } => {}
     }
 }
 
@@ -81,44 +81,7 @@ pub(super) fn check(
     let function = resources::raw_function(checker.context, owner);
     let expression = &function.body.expressions[index as usize];
     let ty = match &expression.kind {
-        RawExpressionKind::Reference { name } => {
-            if let Some(binding) = scope.get(&name.text) {
-                binding.ty
-            } else if let Some(target) =
-                type_resolution::declaration(checker.context, owner.module(), &name.text)
-            {
-                if target.kind() == DeclarationKind::Function {
-                    if checker
-                        .context
-                        .declaration(target)
-                        .expect("original value name")
-                        .type_parameters()
-                        .count()
-                        > 0
-                    {
-                        arguments::error(
-                            checker,
-                            name.span,
-                            "generic function value requires explicit arguments",
-                        );
-                        None
-                    } else {
-                        Some(substitution::issue_expression(
-                            checker,
-                            owner,
-                            index,
-                            Head::leaf(Kind::Function(target)),
-                        )?)
-                    }
-                } else {
-                    value_names::missing(checker, name);
-                    None
-                }
-            } else {
-                value_names::missing(checker, name);
-                None
-            }
-        }
+        RawExpressionKind::Reference { name } => reference(checker, owner, index, name, scope)?,
         RawExpressionKind::BoolLiteral { .. } => Some(Ty::scalar(Scalar::Bool)),
         RawExpressionKind::I32Literal { spelling } => {
             scalars::integer(checker, spelling, expression.span)
@@ -195,4 +158,49 @@ pub(super) fn check(
     };
     checker.tables.function_mut(owner).expressions[index as usize].ty = ty;
     Ok(())
+}
+
+fn reference(
+    checker: &mut Checker<'_, '_>,
+    owner: DeclarationIdentity,
+    index: u32,
+    name: &zryna_syntax::v4::RawIdentifierSyntax,
+    scope: &Scope<'_>,
+) -> Result<Option<Ty>, BodyTypeFailure> {
+    Ok(if let Some(binding) = scope.get(&name.text) {
+        binding.ty
+    } else if let Some(target) =
+        type_resolution::declaration(checker.context, owner.module(), &name.text)
+    {
+        if target.kind() == DeclarationKind::Function {
+            if checker
+                .context
+                .declaration(target)
+                .expect("original value name")
+                .type_parameters()
+                .count()
+                > 0
+            {
+                arguments::error(
+                    checker,
+                    name.span,
+                    "generic function value requires explicit arguments",
+                );
+                None
+            } else {
+                Some(substitution::issue_expression(
+                    checker,
+                    owner,
+                    index,
+                    Head::leaf(Kind::Function(target)),
+                )?)
+            }
+        } else {
+            value_names::missing(checker, name);
+            None
+        }
+    } else {
+        value_names::missing(checker, name);
+        None
+    })
 }

@@ -71,6 +71,45 @@ pub struct BodyTypeContext<'c, 's> {
 }
 
 impl<'c, 's> BodyTypeContext<'c, 's> {
+    pub(super) fn source_owners(
+        &self,
+        module: u32,
+    ) -> impl Iterator<Item = (DeclarationIdentity, usize)> {
+        self.tables.sources[module as usize]
+            .iter()
+            .enumerate()
+            .filter(|(_, record)| record.head.is_some())
+            .map(|(index, record)| (record.owner, index))
+    }
+
+    fn function_records(&self, owner: DeclarationIdentity) -> Option<&model::FunctionRecords> {
+        let offset = *self.tables.function_offsets.get(owner.module().index() as usize)?;
+        self.tables
+            .functions
+            .get(offset.checked_add(owner.source_index() as usize)?)
+            .filter(|records| records.owner == owner)
+    }
+    pub(super) fn source_type(
+        &self,
+        owner: DeclarationIdentity,
+        occurrence: u32,
+    ) -> Option<TypeView<'_, 'c, 's>> {
+        let record =
+            self.tables.sources.get(owner.module().index() as usize)?.get(occurrence as usize)?;
+        if record.owner != owner || record.head.is_none() {
+            return None;
+        }
+        Some(TypeView {
+            context: self,
+            function: owner,
+            ty: Ty::source(owner.module().index(), occurrence),
+        })
+    }
+
+    pub(super) fn source_argument(&self, owner: DeclarationIdentity, occurrence: u32) -> bool {
+        let record = &self.tables.sources[owner.module().index() as usize][occurrence as usize];
+        record.owner == owner && record.argument_occurrence
+    }
     /// The exact retained original context, including its issuing source map and entry.
     #[must_use]
     pub const fn declarations(&self) -> &'c DeclarationContext<'s> {
@@ -86,11 +125,7 @@ impl<'c, 's> BodyTypeContext<'c, 's> {
     /// Original expression use count; uses are retained even after a return or a consuming call.
     #[must_use]
     pub fn expression_count(&self, owner: DeclarationIdentity) -> Option<usize> {
-        self.tables
-            .functions
-            .iter()
-            .find(|function| function.owner == owner)
-            .map(|function| function.expressions.len())
+        self.function_records(owner).map(|function| function.expressions.len())
     }
 
     /// Returns a read-only symbolic type for one original expression of the issuing owner.
@@ -100,7 +135,7 @@ impl<'c, 's> BodyTypeContext<'c, 's> {
         owner: DeclarationIdentity,
         expression: u32,
     ) -> Option<TypeView<'_, 'c, 's>> {
-        let records = self.tables.functions.iter().find(|function| function.owner == owner)?;
+        let records = self.function_records(owner)?;
         let ty = records.expressions.get(expression as usize)?.ty?;
         Some(TypeView { context: self, function: owner, ty })
     }
@@ -150,6 +185,44 @@ pub struct TypeView<'v, 'c, 's> {
 }
 
 impl<'v, 'c, 's> TypeView<'v, 'c, 's> {
+    pub(super) fn original_span(self) -> Option<UntrustedSpan> {
+        match self.ty.origin {
+            model::Origin::Source { module, occurrence } => Some(
+                self.context.declarations.syntax().files()[module as usize].type_syntax
+                    [occurrence as usize]
+                    .span,
+            ),
+            model::Origin::Expression { function, expression } => Some(
+                self.context.declarations.syntax().files()[function.module().index() as usize]
+                    .functions[function.source_index() as usize]
+                    .body
+                    .expressions[expression as usize]
+                    .span,
+            ),
+            _ => None,
+        }
+    }
+
+    pub(super) fn application_head_span(self) -> Option<UntrustedSpan> {
+        match self.ty.origin {
+            model::Origin::Source { module, occurrence } => {
+                let node = &self.context.declarations.syntax().files()[module as usize].type_syntax
+                    [occurrence as usize];
+                match &node.kind {
+                    zryna_syntax::v5::RawTypeSyntaxKind::Application { name, .. } => {
+                        Some(name.span)
+                    }
+                    _ => Some(node.span),
+                }
+            }
+            model::Origin::Expression { function, expression } => Some(
+                resources::raw_function(self.context.declarations, function).body.expressions
+                    [expression as usize]
+                    .span,
+            ),
+            _ => None,
+        }
+    }
     fn head(self) -> model::Head {
         substitution::head(&self.context.tables, self.function, self.ty)
             .expect("retained checked environment")

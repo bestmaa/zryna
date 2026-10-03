@@ -38,7 +38,7 @@ pub(super) fn validate(
     for declaration in &unit.data_declarations {
         match &declaration.kind {
             RawDataDeclarationKind::Struct { fields, .. } => {
-                roots.extend(fields.iter().map(|field| (field.type_syntax, false)))
+                roots.extend(fields.iter().map(|field| (field.type_syntax, false)));
             }
             RawDataDeclarationKind::Enum { variants, .. } => roots.extend(
                 variants.iter().filter_map(|variant| variant.payload_type.map(|id| (id, false))),
@@ -59,7 +59,7 @@ pub(super) fn validate(
             match &expression.kind {
                 RawExpressionKind::VecConstruction { type_syntax, .. }
                 | RawExpressionKind::FixedArrayConstruction { type_syntax, .. } => {
-                    roots.push((*type_syntax, true))
+                    roots.push((*type_syntax, true));
                 }
                 RawExpressionKind::Call { type_arguments, .. }
                 | RawExpressionKind::StructConstruction { type_arguments, .. }

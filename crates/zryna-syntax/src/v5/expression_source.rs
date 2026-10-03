@@ -138,48 +138,18 @@ pub(super) fn validate(
     if endpoints(unit, body, expression)? != (expression.span.start, expression.span.end) {
         return Err(arena::malformed());
     }
-    if let Some((precedence, spelling, operator, lhs, rhs)) = binary(&expression.kind) {
-        let right = node(body, rhs)?;
-        if spelling == "-"
-            && operator.end == right.span.start
-            && cursor.text(right.span)?.starts_with('-')
-        {
-            return Err(arena::malformed());
-        }
-        for (id, right) in [(lhs, false), (rhs, true)] {
-            if binary(&node(body, id)?.kind)
-                .is_some_and(|(child, ..)| child < precedence || (right && child == precedence))
-            {
-                return Err(arena::malformed());
-            }
-        }
-        child(&mut cursor, body, lhs)?;
-        cursor.token(operator, spelling)?;
-        child(&mut cursor, body, rhs)?;
-        return cursor.finish();
+    if binary(&expression.kind).is_some() {
+        return validate_binary(cursor, body, &expression.kind);
     }
     match &expression.kind {
         Kind::Reference { name } => {
             context.identifier(&mut cursor, name, Role::Runtime)?;
         }
         Kind::BoolLiteral { value } => {
-            cursor.token(expression.span, if *value { "true" } else { "false" })?
+            cursor.token(expression.span, if *value { "true" } else { "false" })?;
         }
-        Kind::I32Literal { spelling } => {
-            cursor.token(expression.span, spelling)?;
-            if !super::wire::valid(
-                &serde_json::json!({ "kind": "i32-literal", "spelling": spelling }),
-            ) {
-                return Err(arena::malformed());
-            }
-        }
-        Kind::StringLiteral { spelling } => {
-            cursor.token(expression.span, spelling)?;
-            if !super::wire::valid(
-                &serde_json::json!({ "kind": "string-literal", "spelling": spelling }),
-            ) {
-                return Err(arena::malformed());
-            }
+        Kind::I32Literal { spelling } | Kind::StringLiteral { spelling } => {
+            literal(&mut cursor, expression, spelling)?;
         }
         Kind::Negation { operator_span, operand } => {
             let operand = node(body, *operand)?;
@@ -194,36 +164,7 @@ pub(super) fn validate(
             cursor.token(*operator_span, "-")?;
             cursor.child(operand.span)?;
         }
-        Kind::Call { callee, type_arguments, open_paren_span, arguments, close_paren_span } => {
-            if matches!(
-                callee.text.as_str(),
-                "match"
-                    | "upgradeWeak"
-                    | "clone"
-                    | "shared"
-                    | "downgrade"
-                    | "borrow"
-                    | "borrowMut"
-                    | "push"
-                    | "Vec"
-                    | "FixedArray"
-            ) {
-                return Err(arena::malformed());
-            }
-            context.identifier(&mut cursor, callee, Role::Runtime)?;
-            cursor.type_arguments(unit, type_arguments.as_ref())?;
-            cursor.token(*open_paren_span, "(")?;
-            for (index, id) in arguments.iter().enumerate() {
-                if index != 0 {
-                    cursor.punctuation(",")?;
-                }
-                child(&mut cursor, body, *id)?;
-            }
-            if !arguments.is_empty() {
-                cursor.comma()?;
-            }
-            cursor.token(*close_paren_span, ")")?;
-        }
+        Kind::Call { .. } => call(&mut cursor, unit, body, &expression.kind, context)?,
         Kind::FieldAccess { base, dot_span, field } => {
             if !primary(&node(body, *base)?.kind) {
                 return Err(arena::malformed());
@@ -246,17 +187,15 @@ pub(super) fn validate(
         | Kind::Downgrade { keyword_span, open_paren_span, value, close_paren_span }
         | Kind::Borrow { keyword_span, open_paren_span, value, close_paren_span }
         | Kind::BorrowMut { keyword_span, open_paren_span, value, close_paren_span } => {
-            let spelling = match &expression.kind {
-                Kind::Clone { .. } => "clone",
-                Kind::Shared { .. } => "shared",
-                Kind::Downgrade { .. } => "downgrade",
-                Kind::Borrow { .. } => "borrow",
-                _ => "borrowMut",
-            };
-            cursor.token(*keyword_span, spelling)?;
-            cursor.token(*open_paren_span, "(")?;
-            child(&mut cursor, body, *value)?;
-            cursor.token(*close_paren_span, ")")?;
+            unary(
+                &mut cursor,
+                body,
+                &expression.kind,
+                *keyword_span,
+                *open_paren_span,
+                *value,
+                *close_paren_span,
+            )?;
         }
         Kind::VecPush {
             keyword_span,
@@ -274,15 +213,125 @@ pub(super) fn validate(
             cursor.token(*close_paren_span, ")")?;
         }
         Kind::Match { .. } => {
-            super::matches::validate(&mut cursor, body, &expression.kind, context)?
+            super::matches::validate(&mut cursor, body, &expression.kind, context)?;
         }
         Kind::StructConstruction { .. }
         | Kind::EnumConstruction { .. }
         | Kind::VecConstruction { .. }
         | Kind::FixedArrayConstruction { .. } => {
-            super::constructions::validate(&mut cursor, unit, body, &expression.kind, context)?
+            super::constructions::validate(&mut cursor, unit, body, &expression.kind, context)?;
         }
         _ => return Err(arena::malformed()),
     }
     cursor.finish()
+}
+
+fn call(
+    cursor: &mut Cursor<'_>,
+    unit: &RawSourceUnit,
+    body: &RawFunctionBodySyntax,
+    kind: &Kind,
+    context: Context,
+) -> Result<(), DeclarationError> {
+    let Kind::Call { callee, type_arguments, open_paren_span, arguments, close_paren_span } = kind
+    else {
+        return Err(arena::malformed());
+    };
+    if matches!(
+        callee.text.as_str(),
+        "match"
+            | "upgradeWeak"
+            | "clone"
+            | "shared"
+            | "downgrade"
+            | "borrow"
+            | "borrowMut"
+            | "push"
+            | "Vec"
+            | "FixedArray"
+    ) {
+        return Err(arena::malformed());
+    }
+    context.identifier(cursor, callee, Role::Runtime)?;
+    cursor.type_arguments(unit, type_arguments.as_ref())?;
+    cursor.token(*open_paren_span, "(")?;
+    for (index, id) in arguments.iter().enumerate() {
+        if index != 0 {
+            cursor.punctuation(",")?;
+        }
+        child(cursor, body, *id)?;
+    }
+    if !arguments.is_empty() {
+        cursor.comma()?;
+    }
+    cursor.token(*close_paren_span, ")")?;
+    Ok(())
+}
+
+fn unary(
+    cursor: &mut Cursor<'_>,
+    body: &RawFunctionBodySyntax,
+    kind: &Kind,
+    keyword: UntrustedSpan,
+    open: UntrustedSpan,
+    value: u32,
+    close: UntrustedSpan,
+) -> Result<(), DeclarationError> {
+    let spelling = match kind {
+        Kind::Clone { .. } => "clone",
+        Kind::Shared { .. } => "shared",
+        Kind::Downgrade { .. } => "downgrade",
+        Kind::Borrow { .. } => "borrow",
+        _ => "borrowMut",
+    };
+    cursor.token(keyword, spelling)?;
+    cursor.token(open, "(")?;
+    child(cursor, body, value)?;
+    cursor.token(close, ")")?;
+    Ok(())
+}
+
+fn validate_binary(
+    mut cursor: Cursor<'_>,
+    body: &RawFunctionBodySyntax,
+    kind: &Kind,
+) -> Result<(), DeclarationError> {
+    let Some((precedence, spelling, operator, lhs, rhs)) = binary(kind) else {
+        return Err(arena::malformed());
+    };
+    let right = node(body, rhs)?;
+    if spelling == "-"
+        && operator.end == right.span.start
+        && cursor.text(right.span)?.starts_with('-')
+    {
+        return Err(arena::malformed());
+    }
+    for (id, right) in [(lhs, false), (rhs, true)] {
+        if binary(&node(body, id)?.kind)
+            .is_some_and(|(child, ..)| child < precedence || (right && child == precedence))
+        {
+            return Err(arena::malformed());
+        }
+    }
+    child(&mut cursor, body, lhs)?;
+    cursor.token(operator, spelling)?;
+    child(&mut cursor, body, rhs)?;
+    cursor.finish()
+}
+
+fn literal(
+    cursor: &mut Cursor<'_>,
+    expression: &RawExpressionSyntax,
+    spelling: &str,
+) -> Result<(), DeclarationError> {
+    cursor.token(expression.span, spelling)?;
+    let kind = if matches!(expression.kind, Kind::I32Literal { .. }) {
+        "i32-literal"
+    } else {
+        "string-literal"
+    };
+    if !super::wire::valid(&serde_json::json!({ "kind": kind, "spelling": spelling })) {
+        return Err(arena::malformed());
+    }
+    Ok(())
 }

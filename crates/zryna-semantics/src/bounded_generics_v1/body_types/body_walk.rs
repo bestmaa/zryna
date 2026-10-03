@@ -7,38 +7,23 @@ use super::{
     BodyTypeFailure, Checker, expressions, matches, resources, statements, type_resolution,
 };
 
+enum Work<'a> {
+    Block(u32, Option<Binding<'a>>),
+    Leave,
+    Statement(u32),
+    FinishStatement(u32),
+    Expression(u32),
+    FinishExpression(u32),
+    PrepareMatch(u32),
+    Arm(u32, usize),
+}
 pub(super) fn check(
     checker: &mut Checker<'_, '_>,
     owner: DeclarationIdentity,
 ) -> Result<(), BodyTypeFailure> {
     let context = checker.context;
     let function = resources::raw_function(context, owner);
-    let records = checker.tables.function(owner);
-    let bindings = resources::checked_add(
-        function.parameters.len(),
-        resources::checked_add(function.body.statements.len(), records.arms.len())?,
-    )?;
-    // Every frame belongs to an original block, statement, expression or arm. No runtime
-    // branch iteration or recursive function-body expansion is performed.
-    let tasks = resources::checked_add(
-        function.body.blocks.len(),
-        resources::checked_add(
-            function.body.statements.len(),
-            resources::checked_add(function.body.expressions.len(), records.arms.len())?,
-        )?,
-    )?;
-    let mut scope = Scope::new(bindings, tasks + 1)?;
-    let mut work = resources::reserve(tasks * 3 + 1)?;
-    enum Work<'a> {
-        Block(u32, Option<Binding<'a>>),
-        Leave,
-        Statement(u32),
-        FinishStatement(u32),
-        Expression(u32),
-        FinishExpression(u32),
-        PrepareMatch(u32),
-        Arm(u32, usize),
-    }
+    let (mut scope, mut work) = storage(function, checker.tables.function(owner).arms.len())?;
     scope.enter();
     for parameter in &function.parameters {
         let ty = type_resolution::source(checker, owner.module().index(), parameter.type_syntax);
@@ -67,7 +52,7 @@ pub(super) fn check(
                 work.push(Work::FinishStatement(index));
                 match &statement.kind {
                     RawStatementKind::LocalDeclaration { initializer, .. } => {
-                        work.push(Work::Expression(*initializer))
+                        work.push(Work::Expression(*initializer));
                     }
                     RawStatementKind::Assignment { target, value, .. } => {
                         work.push(Work::Expression(*value));
@@ -77,42 +62,20 @@ pub(super) fn check(
                     RawStatementKind::Block { .. } => {}
                     RawStatementKind::If { condition, .. }
                     | RawStatementKind::While { condition, .. } => {
-                        work.push(Work::Expression(*condition))
+                        work.push(Work::Expression(*condition));
                     }
                     RawStatementKind::ExpressionStatement { expression, .. } => {
-                        work.push(Work::Expression(*expression))
+                        work.push(Work::Expression(*expression));
                     }
                     RawStatementKind::WeakUpgrade { weak, .. } => {
-                        work.push(Work::Expression(*weak))
+                        work.push(Work::Expression(*weak));
                     }
                 }
             }
             Work::FinishStatement(index) => {
                 let statement = &function.body.statements[index as usize];
                 statements::check(checker, owner, index, &mut scope)?;
-                match &statement.kind {
-                    RawStatementKind::Block { block } => work.push(Work::Block(*block, None)),
-                    RawStatementKind::If { then_block, else_clause, .. } => {
-                        if let Some(clause) = else_clause {
-                            work.push(Work::Block(clause.block, None));
-                        }
-                        work.push(Work::Block(*then_block, None));
-                    }
-                    RawStatementKind::While { body_block, .. } => {
-                        work.push(Work::Block(*body_block, None))
-                    }
-                    RawStatementKind::WeakUpgrade {
-                        binding, success_block, failure_block, ..
-                    } => {
-                        let ty = checker.tables.function(owner).statements[index as usize].ty;
-                        work.push(Work::Block(*failure_block, None));
-                        work.push(Work::Block(*success_block, Some(Binding { name: binding, ty })));
-                    }
-                    RawStatementKind::LocalDeclaration { .. }
-                    | RawStatementKind::Assignment { .. }
-                    | RawStatementKind::Return { .. }
-                    | RawStatementKind::ExpressionStatement { .. } => {}
-                }
+                blocks(checker, owner, index, statement, &mut work);
             }
             Work::Expression(index) => {
                 let expression = &function.body.expressions[index as usize];
@@ -123,7 +86,7 @@ pub(super) fn check(
                 } else {
                     work.push(Work::FinishExpression(index));
                     expressions::children(&expression.kind, |child| {
-                        work.push(Work::Expression(child))
+                        work.push(Work::Expression(child));
                     });
                 }
             }
@@ -156,4 +119,56 @@ pub(super) fn check(
         }
     }
     Ok(())
+}
+
+fn blocks<'a>(
+    checker: &Checker<'_, '_>,
+    owner: DeclarationIdentity,
+    index: u32,
+    statement: &'a zryna_syntax::v4::RawStatementSyntax,
+    work: &mut Vec<Work<'a>>,
+) {
+    match &statement.kind {
+        RawStatementKind::Block { block } => work.push(Work::Block(*block, None)),
+        RawStatementKind::If { then_block, else_clause, .. } => {
+            if let Some(clause) = else_clause {
+                work.push(Work::Block(clause.block, None));
+            }
+            work.push(Work::Block(*then_block, None));
+        }
+        RawStatementKind::While { body_block, .. } => {
+            work.push(Work::Block(*body_block, None));
+        }
+        RawStatementKind::WeakUpgrade { binding, success_block, failure_block, .. } => {
+            let ty = checker.tables.function(owner).statements[index as usize].ty;
+            work.push(Work::Block(*failure_block, None));
+            work.push(Work::Block(*success_block, Some(Binding { name: binding, ty })));
+        }
+        RawStatementKind::LocalDeclaration { .. }
+        | RawStatementKind::Assignment { .. }
+        | RawStatementKind::Return { .. }
+        | RawStatementKind::ExpressionStatement { .. } => {}
+    }
+}
+
+fn storage(
+    function: &zryna_syntax::v5::RawFunctionSyntax,
+    arms: usize,
+) -> Result<(Scope<'_>, Vec<Work<'_>>), BodyTypeFailure> {
+    let bindings = resources::checked_add(
+        function.parameters.len(),
+        resources::checked_add(function.body.statements.len(), arms)?,
+    )?;
+    // Every frame belongs to an original block, statement, expression or arm. No runtime
+    // branch iteration or recursive function-body expansion is performed.
+    let tasks = resources::checked_add(
+        function.body.blocks.len(),
+        resources::checked_add(
+            function.body.statements.len(),
+            resources::checked_add(function.body.expressions.len(), arms)?,
+        )?,
+    )?;
+    let scope = Scope::new(bindings, tasks + 1)?;
+    let work = resources::reserve(tasks * 3 + 1)?;
+    Ok((scope, work))
 }
