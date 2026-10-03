@@ -16,6 +16,10 @@ fn path(value: &str) -> NormalizedSourcePath {
     NormalizedSourcePath::new(value).expect("portable fixture path")
 }
 
+fn checked<T, E: std::fmt::Debug>(value: std::result::Result<T, E>) -> Result<T> {
+    value.map_err(|error| format!("{error:?}").into())
+}
+
 pub fn smoke(cwd: &Path) -> Result<Vec<String>> {
     let mut passed = Vec::new();
     for protocol in 2..=4 {
@@ -32,7 +36,7 @@ pub fn smoke(cwd: &Path) -> Result<Vec<String>> {
         if protocol == 3 {
             fs::write(project.join("dep.zry"), "export function value(): i32 { return 7; }\r\n")?;
         }
-        let root = WorkspaceSourceRoot::capture(&project)?;
+        let root = checked(WorkspaceSourceRoot::capture(&project))?;
         let source = capture_native_workspace_sources(&root, path("main.zry"))?;
         let map = source.sources().clone();
         let id = map.file_id(&path("main.zry")).ok_or("missing entry")?;
@@ -48,10 +52,10 @@ pub fn smoke(cwd: &Path) -> Result<Vec<String>> {
                 let right = zryna_driver::lower_verified_syntax(native.syntax(), native.sources())
                     .map_err(|_| "retained M1 lowering rejected")?;
                 native.revalidate()?;
-                assert_eq!(js::emit(left.program())?, js::emit(right.program())?);
+                assert_eq!(checked(js::emit(left.program()))?, checked(js::emit(right.program()))?);
                 assert_eq!(
-                    wasm::emit(left.program())?.bytes(),
-                    wasm::emit(right.program())?.bytes()
+                    checked(wasm::emit(left.program()))?.bytes(),
+                    checked(wasm::emit(right.program()))?.bytes()
                 );
                 native.revalidate()?;
             }
@@ -72,10 +76,13 @@ pub fn smoke(cwd: &Path) -> Result<Vec<String>> {
                     .lower_control_flow_v1()
                     .map_err(|_| "retained M2 lowering rejected")?;
                 native.revalidate()?;
-                assert_eq!(js::emit_control_flow(&left)?, js::emit_control_flow(&right)?);
                 assert_eq!(
-                    wasm::emit_control_flow(&left)?.bytes(),
-                    wasm::emit_control_flow(&right)?.bytes()
+                    checked(js::emit_control_flow(&left))?,
+                    checked(js::emit_control_flow(&right))?
+                );
+                assert_eq!(
+                    checked(wasm::emit_control_flow(&left))?.bytes(),
+                    checked(wasm::emit_control_flow(&right))?.bytes()
                 );
                 native.revalidate()?;
             }
@@ -96,12 +103,14 @@ pub fn smoke(cwd: &Path) -> Result<Vec<String>> {
                     .map_err(|_| "retained M3 lowering rejected")?;
                 native.revalidate()?;
                 assert_eq!(
-                    js::emit_data_ownership(left.verified_ir(), left.runtime_abi())?,
-                    js::emit_data_ownership(right.verified_ir(), right.runtime_abi())?
+                    checked(js::emit_data_ownership(left.verified_ir(), left.runtime_abi()))?,
+                    checked(js::emit_data_ownership(right.verified_ir(), right.runtime_abi()))?
                 );
                 assert_eq!(
-                    wasm::emit_data_ownership(left.verified_ir(), left.runtime_abi())?.bytes(),
-                    wasm::emit_data_ownership(right.verified_ir(), right.runtime_abi())?.bytes()
+                    checked(wasm::emit_data_ownership(left.verified_ir(), left.runtime_abi()))?
+                        .bytes(),
+                    checked(wasm::emit_data_ownership(right.verified_ir(), right.runtime_abi()))?
+                        .bytes()
                 );
                 native.revalidate()?;
             }
@@ -113,10 +122,21 @@ pub fn smoke(cwd: &Path) -> Result<Vec<String>> {
     let project = cwd.join("retained-stale");
     fs::create_dir(&project)?;
     fs::write(project.join("main.zry"), "export function main(): i32 { return 7; }")?;
-    let root = WorkspaceSourceRoot::capture(&project)?;
+    let root = checked(WorkspaceSourceRoot::capture(&project))?;
     let native = capture_native_workspace_sources(&root, path("main.zry"))?.verify_v2()?;
-    if fs::write(project.join("main.zry"), "export function main(): i32 { return 8; }").is_ok() {
-        assert!(native.revalidate().is_err(), "changed source retained dispatch authority");
+    match fs::write(project.join("main.zry"), "export function main(): i32 { return 8; }") {
+        Ok(()) => {
+            assert!(native.revalidate().is_err(), "changed source retained dispatch authority")
+        }
+        Err(error) => {
+            assert!(cfg!(windows), "unexpected write failure: {error}");
+            assert_eq!(error.kind(), std::io::ErrorKind::PermissionDenied);
+            assert_eq!(
+                fs::read_to_string(project.join("main.zry"))?,
+                "export function main(): i32 { return 7; }"
+            );
+            native.revalidate()?;
+        }
     }
     passed.push("retained:stale-source-denied".into());
     Ok(passed)

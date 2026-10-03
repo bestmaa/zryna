@@ -130,7 +130,12 @@ def main():
         cargo = shutil.which(args.cargo)
         if cargo is None:
             raise ValueError("pinned Cargo is unavailable")
-        cargo_version = subprocess.check_output([cargo, "--version"], text=True).strip()
+        build_env = dict(os.environ)
+        for name in ("RUSTC", "RUSTC_WRAPPER", "RUSTC_WORKSPACE_WRAPPER"):
+            build_env.pop(name, None)
+        build_env["RUSTUP_TOOLCHAIN"] = "1.97.1"
+        cargo_version = subprocess.check_output([cargo, "--version"], cwd=ROOT,
+                                                 env=build_env, text=True).strip()
         if not cargo_version.startswith("cargo 1.97.1 "):
             raise ValueError(f"expected pinned Cargo 1.97.1, observed {cargo_version}")
         state["cargo_version"] = cargo_version
@@ -141,15 +146,24 @@ def main():
             src = package / "src"
             src.mkdir()
             shutil.copy2(ROOT / "rustfmt.toml", package / "rustfmt.toml")
+            shutil.copy2(ROOT / "rust-toolchain.toml", package / "rust-toolchain.toml")
+            rustc = Path(cargo).parent / ("rustc.exe" if os.name == "nt" else "rustc")
+            rust_version = subprocess.check_output([str(rustc), "--version"], cwd=package,
+                                                   env=build_env, text=True).strip()
+            if not rust_version.startswith("rustc 1.97.1 "):
+                raise ValueError(f"expected pinned Rust 1.97.1, observed {rust_version}")
+            state["rustc_version"] = rust_version
+            if subprocess.check_output([cargo, "--version"], cwd=package, env=build_env,
+                                       text=True).strip() != cargo_version:
+                raise ValueError("external package changed pinned Cargo selection")
             for source in (ROOT / "tests/native-provider-activation").glob("*.rs"):
                 shutil.copy2(source, src / source.name)
             manifest(package, args.retained, version, original)
             shutil.copy2(ROOT / "Cargo.lock", package / "Cargo.lock")
-            run([cargo, "generate-lockfile", "--offline"], package, evidence / "lock.log")
+            run([cargo, "generate-lockfile", "--offline"], package, evidence / "lock.log", env=build_env)
             verify_registry_lock(original, tomllib.loads((package / "Cargo.lock").read_text()))
             shutil.copy2(package / "Cargo.lock", evidence / "harness.Cargo.lock")
             state["harness_lock_sha256"] = digest(package / "Cargo.lock")
-            build_env = dict(os.environ)
             # The private package cannot inherit a workspace's feature or toolchain selection.
             target = args.target_dir.resolve() if args.target_dir else package / "target"
             if target == ROOT or ROOT in target.parents:
