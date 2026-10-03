@@ -12,7 +12,7 @@ declaration/header/policy materials, dual layouts and ownership-runtime issuer.
 It never reconstructs an issuer from a digest or a legacy protocol-v4/M3 program.
 The independent verifier does not call the lowering producer.
 
-The ten production modules separate records/views/production from source, value,
+The production modules separate records/views/production from source, value,
 call/status/output, private storage and terminal cleanup replay. The complete source
 and declaration inventories include unused operations. Value definitions retain
 original spans, dense lexical identities, exact arguments, private moves and status
@@ -29,6 +29,11 @@ outcomes. They provide no native MIR, runtime allocation, process execution, obj
 link/publication or public profile capability. Initial public C entries remain total
 scalar exports only. Foreign pointer validity and malformed-result release still
 depend on the exact retained reviewed library promises.
+
+The `contract` module reexports closed record types already returned by these views for downstream
+machine planning. Copies cannot construct any source, layout, runtime or program issuer. The
+separately admitted `zryna-native-mir::native_c_v0` retains this actual immutable IR authority;
+its new normal dependency points downstream without a base-IR or semantics backedge.
 
 Focused proposed verification is `cargo test --locked -p zryna-native-c-ir`, with
 capture, admission, hostile and limits integration targets, plus the architecture

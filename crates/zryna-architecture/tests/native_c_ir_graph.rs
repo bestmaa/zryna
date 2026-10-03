@@ -158,3 +158,56 @@ fn cargo_workspace_lock_and_test_directories_register_the_same_component() {
         );
     }
 }
+
+#[test]
+fn native_c_mir_edge_matches_normal_manifest_and_lock_without_frontend_edges() {
+    let document = registry();
+    let graph = graph(&document);
+    assert!(acyclic(&graph));
+    assert!(graph["zryna-native-mir"].contains(MEMBER));
+    assert!(!graph[MEMBER].contains("zryna-native-mir"));
+    let manifest: toml::Value = toml::from_str(
+        &fs::read_to_string(root().join("crates/zryna-native-mir/Cargo.toml"))
+            .expect("actual native MIR manifest"),
+    )
+    .expect("MIR TOML document");
+    let expected: BTreeSet<String> = [
+        "zryna-abi",
+        "zryna-diagnostics",
+        "zryna-ir",
+        "zryna-layout",
+        "zryna-native-c-ir",
+        "zryna-ownership-runtime-abi",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect();
+    let actual = manifest["dependencies"]
+        .as_table()
+        .expect("normal dependencies")
+        .keys()
+        .filter(|name| name.starts_with("zryna-"))
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    assert_eq!(actual, expected);
+    assert!(actual.iter().all(|name| graph["zryna-native-mir"].contains(name)));
+    let lock: toml::Value =
+        toml::from_str(&fs::read_to_string(root().join("Cargo.lock")).expect("actual lock"))
+            .expect("lock TOML document");
+    let entry = lock["package"]
+        .as_array()
+        .expect("packages")
+        .iter()
+        .find(|package| package["name"].as_str() == Some("zryna-native-mir"))
+        .expect("MIR local package");
+    assert!(entry.get("source").is_none());
+    assert_eq!(
+        entry["dependencies"]
+            .as_array()
+            .expect("lock dependencies")
+            .iter()
+            .filter(|dependency| dependency.as_str() == Some(MEMBER))
+            .count(),
+        1
+    );
+}

@@ -9,6 +9,8 @@ use zryna_diagnostics::Diagnostic;
 use zryna_semantics::native_c_v0::body::VerifiedPrivateBoundaries;
 use zryna_source::Span;
 
+/// Closed record vocabulary already exposed by immutable IR views; no issuer constructors.
+pub mod contract;
 mod lower;
 /// Closed untrusted program claims and the independent hostile-input seam.
 pub mod raw;

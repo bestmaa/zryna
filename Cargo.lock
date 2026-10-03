@@ -1988,10 +1988,13 @@ dependencies = [
 name = "zryna-native-mir"
 version = "0.2.3"
 dependencies = [
+ "serde_json",
+ "sha2",
  "zryna-abi",
  "zryna-diagnostics",
  "zryna-ir",
  "zryna-layout",
+ "zryna-native-c-ir",
  "zryna-ownership-runtime-abi",
  "zryna-semantics",
  "zryna-source",

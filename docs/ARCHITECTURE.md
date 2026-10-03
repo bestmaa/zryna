@@ -138,6 +138,15 @@ has a reverse edge. Its independent raw-to-verified boundary retains original bo
 both layouts and the runtime declaration issuer, with complete source/value/call/storage/exit
 replay. This authority supplies no MIR, object, runtime, linker or public selector capability.
 See [its component contract](../crates/zryna-native-c-ir/README.md).
+
+The independent `zryna-native-mir::native_c_v0` boundary consumes only the sealed native C IR
+and retains its actual source, material, layout and runtime issuers. The registered normal edge
+is native MIR -> native C IR; read-only IR contract records require no normal frontend dependency.
+Raw machine claims cannot reach a backend. Separate producer and verifier modules preserve exact
+SysV INTEGER placement, low-width Bool32 checks, caller output-slot initialization, private
+packing/copy faults and every conditional reserve/register/release/terminal cleanup action.
+Only total scalar exports have a public C signature. This MIR slice grants no native object,
+runtime execution, foreign ledger, link or public support capability.
 `zryna-semantics` is a compiler
 component and cannot depend on `zryna-frontend`; backends cannot depend on either provider layer.
 The architecture engine has a negative graph fixture for both forbidden edges.

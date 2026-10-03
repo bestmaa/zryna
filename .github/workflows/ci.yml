@@ -182,6 +182,8 @@ jobs:
         run: cargo test --locked -p zryna-native-c-ir
       - name: Verify native C IR graph registration
         run: cargo test --locked -p zryna-architecture --test native_c_ir_graph
+      - name: Verify native C machine admission and hostile claims
+        run: cargo test --locked -p zryna-native-mir --test native_c_v0
       - name: Verify M2 driver security
         run: cargo test --locked -p zryna-driver --lib
       - name: Verify exact Windows directory lifecycle
