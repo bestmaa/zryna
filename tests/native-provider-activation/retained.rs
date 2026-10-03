@@ -129,13 +129,17 @@ pub fn smoke(cwd: &Path) -> Result<Vec<String>> {
             assert!(native.revalidate().is_err(), "changed source retained dispatch authority")
         }
         Err(error) => {
-            assert!(cfg!(windows), "unexpected write failure: {error}");
-            assert_eq!(error.kind(), std::io::ErrorKind::PermissionDenied);
-            assert_eq!(
-                fs::read_to_string(project.join("main.zry"))?,
-                "export function main(): i32 { return 7; }"
-            );
-            native.revalidate()?;
+            #[cfg(not(windows))]
+            return Err(format!("unexpected write failure: {error}").into());
+            #[cfg(windows)]
+            {
+                assert_eq!(error.kind(), std::io::ErrorKind::PermissionDenied);
+                assert_eq!(
+                    fs::read_to_string(project.join("main.zry"))?,
+                    "export function main(): i32 { return 7; }"
+                );
+                native.revalidate()?;
+            }
         }
     }
     passed.push("retained:stale-source-denied".into());
