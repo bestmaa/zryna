@@ -9,7 +9,7 @@ pub(super) fn many_owners() -> super::Project {
         let mut source = String::new();
         if module == 0 {
             for name in ["one", "two", "three"] {
-                source.push_str(&format!("import {{f0 as {name}}} from \"./{name}\";\n"));
+                source.push_str(&format!("import {{f0 as {name}}} from \"./{name}.zry\";\n"));
             }
         }
         for index in 0..4096 {

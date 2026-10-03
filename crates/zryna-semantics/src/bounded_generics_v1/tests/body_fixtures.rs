@@ -434,7 +434,20 @@ pub(in crate::bounded_generics_v1) fn project(files: &[(&str, &str)]) -> Project
             .collect(),
     )
     .expect("original fixture invariant");
-    let raw: RawProjectSyntaxSnapshot = serde_json::from_value(json!({"schema_version":5,"diagnostics":[],"files":files.iter().enumerate().map(|(id,(path,text))|Reader::new(id as u32,text).unit(path)).collect::<Vec<_>>()})).expect("original fixture invariant");
+    // Consume one unit's temporary JSON before constructing the next. The large owner fixture
+    // must retain its exact source counts without keeping a second whole-project syntax tree.
+    let raw = RawProjectSyntaxSnapshot {
+        schema_version: 5,
+        diagnostics: vec![],
+        files: files
+            .iter()
+            .enumerate()
+            .map(|(id, (path, text))| {
+                serde_json::from_value(Reader::new(id as u32, text).unit(path))
+                    .expect("original fixture invariant")
+            })
+            .collect(),
+    };
     let syntax =
         verify_snapshot(raw, &sources).expect("independent complete original v5 verification");
     Project { sources, syntax }

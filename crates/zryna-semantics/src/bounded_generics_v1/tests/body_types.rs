@@ -88,7 +88,7 @@ fn imported_template_substitution_uses_original_owner() {
     let input = project(&[
         (
             "main.zry",
-            "import { identity as relay, Box as Parcel } from \"./values\"; function wrap<T extends ZrynaValue>(value:T):T { const p:Parcel<T> = Parcel<T>({value:value}); return relay<T>(p.value); }",
+            "import { identity as relay, Box as Parcel } from \"./values.zry\"; function wrap<T extends ZrynaValue>(value:T):T { const p:Parcel<T> = Parcel<T>({value:value}); return relay<T>(p.value); }",
         ),
         (
             "values.zry",
@@ -235,7 +235,7 @@ fn ownership_misuse_remains_an_unresolved_obligation() {
 #[test]
 fn opaque_barrier_precedes_all_argument_candidates() {
     let main = format!(
-        "import {{bad,other}} from \"./late\"; {IDENTITY} function score():i32 {{ {} return 0; }}",
+        "import {{bad,other}} from \"./late.zry\"; {IDENTITY} function score():i32 {{ {} return 0; }}",
         "identity(1);".repeat(256)
     );
     let input = project(&[
