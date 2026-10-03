@@ -3,6 +3,29 @@
 use super::*;
 
 #[test]
+fn completion_rechecks_deadline_after_resource_destruction() {
+    struct DelayedDrop(Instant, Arc<AtomicUsize>);
+    impl Drop for DelayedDrop {
+        fn drop(&mut self) {
+            thread::sleep(self.0.saturating_duration_since(Instant::now()));
+            self.1.fetch_add(1, Ordering::SeqCst);
+        }
+    }
+    let server = Server::start(limits()).expect("start");
+    let mut timed = input(b"body");
+    timed.deadline = Instant::now() + Duration::from_millis(100);
+    let request = server.admit(&timed).expect("admit");
+    let destroyed = Arc::new(AtomicUsize::new(0));
+    request
+        .retain(DelayedDrop(timed.deadline + Duration::from_millis(10), Arc::clone(&destroyed)))
+        .expect("resource");
+    assert_eq!(request.finish(200, b"late"), Err(Error::Deadline));
+    assert_eq!(destroyed.load(Ordering::SeqCst), 1);
+    assert_eq!(server.usage(), Ok((0, 0)));
+    server.shutdown().expect("joined");
+}
+
+#[test]
 fn failing_expired_resource_does_not_strand_other_retired_reservations() {
     struct FailingDrop(mpsc::Sender<()>);
     impl Drop for FailingDrop {

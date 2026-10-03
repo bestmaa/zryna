@@ -101,8 +101,12 @@ impl Request {
             (entry, response)
         };
         // Guest/adapter authority must be destroyed before a response escapes.
+        let deadline = entry.deadline;
         self.shared.retire(entry)?;
         self.shared.wake.notify_all();
+        if response.is_ok() && deadline <= Instant::now() {
+            return Err(Error::Deadline);
+        }
         response
     }
 

@@ -10,8 +10,8 @@ The unchanged pinned world is `zryna:capability-profiles/server@0.1.0`, exportin
 outgoing HTTP and secure random, all at `0.2.12`. It has no filesystem or environment import.
 The WIT closure and grant composition must be authenticated before a future runtime adapter
 starts this lifecycle. PR #513, inspected read-only at
-`0445169bb98d738a214de7ebcd914240aec73acb`, supplies command-specific reviewed-candidate
-mechanics, not server grants or a server execution interface. No code from that branch is
+`0445169bb98d738a214de7ebcd914240aec73acb`, supplies command-specific implementation-candidate
+mechanics, not a reviewed server grant or execution interface. No code from that branch is
 imported here.
 
 ## Internal behavior
@@ -45,7 +45,8 @@ running guest code: a future runtime must enforce fuel, memory and epoch interru
 A response consumes the request, admits a status in 200–599 and at most the configured body
 limit, and copies its bytes while holding the publication/cancellation lock. Invalid responses
 also destroy the request. Cancellation or termination that wins that lock prevents publication;
-publication that wins first completes cleanup before returning its bytes. HTTP outparam binding
+publication that wins first completes cleanup and rechecks expiry before returning its bytes.
+A deadline that expires during resource destruction suppresses that response. HTTP outparam binding
 and wire publication remain future adapter obligations.
 
 Resources are destroyed outside the registry lock. Their quota remains charged until actual
