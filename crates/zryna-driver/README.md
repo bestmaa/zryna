@@ -7,7 +7,13 @@ retains real semantic lowering, one exact root-approved private input, audited c
 composition authorities through consuming execution and create-only publication. Its
 `command_request`, `command_h1_runtime` and `command_h1_workspace` modules own those boundaries;
 the distinct [manifest](../../docs/WASI_COMMAND_MANIFEST_V1.md) cannot recreate run authority.
-Complete platform acceptance and independent final review remain pending.
+Complete public platform acceptance remains separate from this bounded implementation candidate.
+
+The internal [native source snapshot route](../../docs/NATIVE_SOURCE_SNAPSHOTS.md) retains workspace
+or frozen package capabilities, reads each exact source once, seals the original source map and
+canonical graph before complete native parsing, then applies existing v2/v3/v4 verifiers. Source
+content is never reopened after capture. Verified native snapshots keep their source owner alive
+through dispatch; no public provider or cross-package import syntax is activated.
 
 The source-only package route owns retained no-follow filesystem capabilities for declared local
 roots and prepopulated exact-commit Git-cache entries. It passes bounded bytes to

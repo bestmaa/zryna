@@ -25,8 +25,8 @@ Use [GETTING_STARTED](GETTING_STARTED.md) for M1/M2, [M3_GETTING_STARTED](M3_GET
 
 - Start: [semantics README](../crates/zryna-semantics/README.md), [M2 control-flow semantics](M2_CONTROL_FLOW_SEMANTICS.md), [module closure](M2_MODULE_CLOSURE.md).
 - Entries: `crates/zryna-semantics/src/lib.rs::{SemanticInput::try_new,lower}` for M1; `src/control_flow_v1.rs::lower` for M2.
-- Filesystem/module authority: `crates/zryna-driver/src/module_closure.rs::discover_module_closure`; `src/module_closure/entry.rs` has separate internal native entries for import-only and import-prefix/straight-line-function closure. Do not put resolution into the adapter or backend.
-- Focus: `cargo test --locked -p zryna-semantics`; closure tests in driver `module_closure_tests.rs`; `pnpm m2:quick` for cross-phase M2 checks.
+- Filesystem/module authority: `crates/zryna-driver/src/module_closure.rs::discover_module_closure`; `src/module_closure/entry.rs` has separate internal native entries for import-only and import-prefix/straight-line-function closure. Native retained sources and versioned snapshots start at `src/module_closure/native_sources.rs`, with `graph.rs` and `verification.rs` helpers; [ownership and lifecycle](NATIVE_SOURCE_SNAPSHOTS.md) maps capability checks and import discovery. Do not put resolution into the adapter or backend.
+- Focus: `cargo test --locked -p zryna-semantics`; closure tests in driver `module_closure_tests.rs`; `cargo test --locked -p zryna-driver --lib module_closure::native_sources::tests -- --include-ignored` for complete native source and resource proof; `pnpm m2:quick` for cross-phase M2 checks.
 - Source legality and backend profile acceptance are separate. Finish with the full gates below.
 
 ## 3. Internal M3 ownership, constructors, borrowing, or cleanup

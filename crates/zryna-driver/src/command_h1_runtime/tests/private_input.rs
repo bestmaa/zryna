@@ -73,11 +73,12 @@ if ($env:ZRYNA_COMMAND_RUNTIME_BROAD -eq 'yes') {
 }
 [System.IO.File]::SetAccessControl($path,$acl)
 ";
-        let output = std::process::Command::new("powershell.exe")
-            .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
-            .env("ZRYNA_COMMAND_RUNTIME_FIXTURE", &self.path)
-            .env("ZRYNA_COMMAND_RUNTIME_BROAD", if broad { "yes" } else { "no" })
-            .output()?;
+        let output = crate::process_spawn::output(
+            std::process::Command::new("powershell.exe")
+                .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
+                .env("ZRYNA_COMMAND_RUNTIME_FIXTURE", &self.path)
+                .env("ZRYNA_COMMAND_RUNTIME_BROAD", if broad { "yes" } else { "no" }),
+        )?;
         if !output.status.success() {
             return Err(io::Error::other("fixed private runtime fixture ACL setup failed"));
         }

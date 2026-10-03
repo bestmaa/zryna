@@ -4,6 +4,11 @@ Status: implemented source-only package graph and lockfile support for Issue #40
 package registry, package-import syntax, build engine, release publisher, or native dependency
 manager.
 
+The internal [native source snapshot route](NATIVE_SOURCE_SNAPSHOTS.md) may consume one exact
+instance's immutable source inventory from this frozen graph. It retains the resolver's source
+capabilities and original bytes through syntax verification and dispatch. It does not add alias
+imports, a module-export table, source acquisition or lock updates.
+
 ## Files and command
 
 Each package directory contains canonical `zryna.package.json` bytes using the closed
@@ -25,7 +30,9 @@ to the newly authenticated graph; it never writes or repairs the lock.
 
 Revalidation immediately before publication reopens each package and descendant directory from
 the retained source or cache root, compares directory identities and complete bounded entry sets,
-then rechecks retained file identity, state, bytes, and digest. This detects persistent replacement
+then rechecks retained file identity and state without reopening or rereading file contents.
+Captured bytes are authenticated against their declared inventory before becoming immutable
+compiler inputs. This detects persistent replacement
 or entry mutation observed at that boundary; it is not an atomic filesystem snapshot against an
 arbitrary hostile writer that continues mutating paths after validation.
 

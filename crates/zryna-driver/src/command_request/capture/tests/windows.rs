@@ -21,11 +21,12 @@ if ($env:ZRYNA_COMMAND_INPUT_BROAD -eq 'yes') {
 }
 [System.IO.File]::SetAccessControl($path,$acl)
 ";
-    let output = Command::new("powershell.exe")
-        .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
-        .env("ZRYNA_COMMAND_INPUT_FIXTURE", path)
-        .env("ZRYNA_COMMAND_INPUT_BROAD", if broad { "yes" } else { "no" })
-        .output()?;
+    let output = crate::process_spawn::output(
+        Command::new("powershell.exe")
+            .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
+            .env("ZRYNA_COMMAND_INPUT_FIXTURE", path)
+            .env("ZRYNA_COMMAND_INPUT_BROAD", if broad { "yes" } else { "no" }),
+    )?;
     if !output.status.success() {
         return Err(io::Error::other("fixed private fixture ACL setup failed"));
     }
@@ -145,11 +146,12 @@ $path = $env:ZRYNA_COMMAND_INPUT_JUNCTION
 $target = $env:ZRYNA_COMMAND_INPUT_TARGET
 New-Item -ItemType Junction -Path $path -Target $target | Out-Null
 ";
-    let output = Command::new("powershell.exe")
-        .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
-        .env("ZRYNA_COMMAND_INPUT_JUNCTION", &junction)
-        .env("ZRYNA_COMMAND_INPUT_TARGET", &target)
-        .output()?;
+    let output = crate::process_spawn::output(
+        Command::new("powershell.exe")
+            .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
+            .env("ZRYNA_COMMAND_INPUT_JUNCTION", &junction)
+            .env("ZRYNA_COMMAND_INPUT_TARGET", &target),
+    )?;
     if !output.status.success() {
         return Err(io::Error::other("fixed fixture junction setup failed"));
     }
@@ -190,10 +192,11 @@ if ($observed -ne $foreign) { throw 'foreign fixture owner was not established' 
   exit 1
 }
 ";
-    let output = Command::new("powershell.exe")
-        .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
-        .env("ZRYNA_COMMAND_INPUT_FIXTURE", &path)
-        .output()?;
+    let output = crate::process_spawn::output(
+        Command::new("powershell.exe")
+            .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
+            .env("ZRYNA_COMMAND_INPUT_FIXTURE", &path),
+    )?;
     if !output.status.success() {
         for line in String::from_utf8_lossy(&output.stderr).lines() {
             if line.starts_with("foreign-owner fixture platform=windows stage=setup outcome=error ")
