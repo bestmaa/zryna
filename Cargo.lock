@@ -1946,6 +1946,7 @@ dependencies = [
  "zryna-diagnostics",
  "zryna-layout",
  "zryna-source",
+ "zryna-syntax",
 ]
 
 [[package]]

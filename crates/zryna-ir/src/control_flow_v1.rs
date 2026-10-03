@@ -1797,7 +1797,7 @@ fn reachable_from_entry(successors: &[Vec<usize>]) -> Vec<bool> {
     reachable
 }
 
-fn immediate_dominators(
+pub(crate) fn immediate_dominators(
     successors: &[Vec<usize>],
     predecessors: &[Vec<usize>],
 ) -> Option<Vec<usize>> {
@@ -1863,7 +1863,7 @@ fn intersect(mut left: usize, mut right: usize, idom: &[usize], position: &[usiz
     left
 }
 
-fn dominator_intervals(idom: &[usize]) -> (Vec<usize>, Vec<usize>) {
+pub(crate) fn dominator_intervals(idom: &[usize]) -> (Vec<usize>, Vec<usize>) {
     let mut children = vec![Vec::<usize>::new(); idom.len()];
     for block in 1..idom.len() {
         children[idom[block]].push(block);

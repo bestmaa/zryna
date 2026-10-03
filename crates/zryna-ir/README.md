@@ -216,3 +216,33 @@ allocators, and executable M3 profiles remain unavailable.
 
 The exact authority tuple, raw vocabulary, limits, diagnostics, and verified-view contract are
 documented in [`M3_DATA_OWNERSHIP_IR.md`](../../docs/M3_DATA_OWNERSHIP_IR.md).
+
+## Staged closed-generic IR validation
+
+The separate `generic_v1` module supplies independent validation checks for the
+[accepted generic IR contract](../../spec/ir/GENERIC_INSTANTIATION_V1.md). It returns `()` and
+has no executable program constructor or backend-consumable views.
+
+`validate_closed_graph` checks the complete claimed function/type inventory, whole canonical
+keys, both successor layout authorities, dense IDs, typed operations, dominance, reducible
+loops and inherited budgets. Its enum constructors and exhaustive value/shared/exclusive
+match edges bind only the selected variant's exact payload type. Generic IDs follow unsigned
+complete-key order; nongeneric roots retain their original source identities. The independent
+hostile tests include exact/first-extra key bytes, type depth, generic function count, values,
+blocks, static call depth and loop nesting, with pristine replay after rejection.
+
+`validate_source_graph` first rejects foreign immutable syntax authority, then independently
+resolves original declarations and exported import aliases. It checks original ranges and
+arities, the call graph including unused templates, exact closed parameter/result substitution,
+claimed call targets and explicit caller type arguments at their exact source expressions, and
+source-ordered nominal fields/variants against sealed layouts. Complete layout metadata,
+including unused original declarations, is read through immutable successor views and checked
+against exact syntax. This uses the approved IR-to-syntax dependency and retains pinned tools.
+
+These stages do not yet establish complete source body/demand coverage, opaque-template body
+constraints, entry-module scalar ABI selection, places, ownership transitions, arm-loan ends,
+active-only reverse cleanup, runtime ABI authority or the successor wire protocol. Typed graph
+acceptance does not prove source semantics, and source signature/layout acceptance does not
+prove execution. Option/Result errors remain ordinary enum values in this vocabulary; no error
+variant is converted to a trap. The remaining obligations and all JS/Wasm/native execution
+acceptance stay open under #416. Existing executable profiles are unchanged.

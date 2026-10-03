@@ -50,6 +50,8 @@ struct Record {
 #[derive(Clone, Debug)]
 pub struct VerifiedLayouts {
     source_map: SourceMapIdentity,
+    original_modules: Vec<raw::Module>,
+    original_declarations: Vec<raw::Declaration>,
     universe: [u8; 32],
     target: StorageTarget,
     records: Vec<Record>,
@@ -58,6 +60,17 @@ pub struct VerifiedLayouts {
 }
 
 impl VerifiedLayouts {
+    /// Complete original module claims bound into the issuing universe identity.
+    /// Syntax authentication remains the responsibility of the source-to-IR verifier.
+    #[must_use]
+    pub fn original_modules(&self) -> &[raw::Module] {
+        &self.original_modules
+    }
+    /// Complete original data declaration claims, including unused templates.
+    #[must_use]
+    pub fn original_declarations(&self) -> &[raw::Declaration] {
+        &self.original_declarations
+    }
     /// Exact issuing source-map identity.
     #[must_use]
     pub const fn source_map_identity(&self) -> SourceMapIdentity {
@@ -125,8 +138,14 @@ pub fn verify(
         StorageTarget::LinuxX8664V1 => (linux, linux_bytes),
     };
     let fingerprint = Sha256::digest(&bytes).into();
+    let mut original_modules = reserve(graph.modules.len())?;
+    original_modules.extend(graph.modules.iter().cloned());
+    let mut original_declarations = reserve(graph.declarations.len())?;
+    original_declarations.extend(graph.declarations.iter().cloned());
     Ok(VerifiedLayouts {
         source_map: sources.identity(),
+        original_modules,
+        original_declarations,
         universe: canonical.universe.0,
         target,
         records,
