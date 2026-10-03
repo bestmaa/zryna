@@ -98,6 +98,10 @@ sharing/junction rejection. Proportional source-file, aggregate-byte, retained-f
 named-binding-edge tests are ignored in ordinary runs and require `--include-ignored` in complete
 verification.
 
+The Windows Rust CI job runs `node scripts/run-native-source-resource-tests.mjs` after the ordinary
+driver suite. This invokes the four ignored resource cases serially and requires each exact test
+name to pass, with four passed and zero failed/ignored; empty or partial output cannot qualify.
+
 Semantic name resolution, version solving, network acquisition/registries, watch mode, package
 export syntax, public provider selection, new profiles and frontend-owned filesystem access are
 excluded. Focused checks do not waive preflight, complete affected gates, or Linux/Windows merge
