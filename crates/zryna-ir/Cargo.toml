@@ -11,6 +11,7 @@ serde.workspace = true
 zryna-abi.workspace = true
 zryna-diagnostics = { path = "../zryna-diagnostics" }
 zryna-layout = { path = "../zryna-layout" }
+zryna-ownership-runtime-abi = { path = "../zryna-ownership-runtime-abi" }
 zryna-source = { path = "../zryna-source" }
 zryna-syntax = { path = "../zryna-syntax" }
 

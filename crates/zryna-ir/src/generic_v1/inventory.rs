@@ -136,7 +136,7 @@ fn add(total: &mut usize, amount: usize, limit: usize, label: &str) -> Result<()
     Ok(())
 }
 
-fn preflight(program: &raw::Program) -> Result<(), Failure> {
+pub(super) fn preflight(program: &raw::Program) -> Result<(), Failure> {
     use crate::data_ownership_v1 as limits;
     if program.modules.len() > limits::MAX_MODULES
         || program

@@ -36,6 +36,24 @@ impl<'a> TypeView<'a> {
     pub fn id(self) -> TypeId {
         self.identity(self.record.physical.id.index)
     }
+    /// Closed physical category, without conversion to an older layout identity.
+    #[must_use]
+    pub const fn category(self) -> crate::TypeCategory {
+        self.record.physical.category()
+    }
+    /// Exact branded element or payload of a closed container.
+    #[must_use]
+    pub fn referenced_type(self) -> Option<TypeId> {
+        match self.record.physical.kind {
+            VerifiedKind::FixedArray { element, .. } | VerifiedKind::Vec { element } => {
+                Some(self.identity(element.index))
+            }
+            VerifiedKind::Shared { payload } | VerifiedKind::Weak { payload } => {
+                Some(self.identity(payload.index))
+            }
+            _ => None,
+        }
+    }
     /// Complete canonical type key.
     #[must_use]
     pub fn key(self) -> &'a [u8] {

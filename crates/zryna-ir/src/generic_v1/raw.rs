@@ -1,4 +1,4 @@
-//! Untrusted successor graph vocabulary. This draft vocabulary provides no executable wire admission.
+//! Untrusted successor graph vocabulary; separate wire admission still grants no executable authority.
 
 use zryna_source::UntrustedSpan;
 

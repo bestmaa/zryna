@@ -220,8 +220,8 @@ documented in [`M3_DATA_OWNERSHIP_IR.md`](../../docs/M3_DATA_OWNERSHIP_IR.md).
 ## Staged closed-generic IR validation
 
 The separate `generic_v1` module supplies independent validation checks for the
-[accepted generic IR contract](../../spec/ir/GENERIC_INSTANTIATION_V1.md). It returns `()` and
-has no executable program constructor or backend-consumable views.
+[accepted generic IR contract](../../spec/ir/GENERIC_INSTANTIATION_V1.md). Its two validation
+entrypoints return `()` and grant no executable authority.
 
 `validate_closed_graph` checks the complete claimed function/type inventory, whole canonical
 keys, both successor layout authorities, dense IDs, typed operations, dominance, reducible
@@ -246,3 +246,12 @@ acceptance does not prove source semantics, and source signature/layout acceptan
 prove execution. Option/Result errors remain ordinary enum values in this vocabulary; no error
 variant is converted to a trap. The remaining obligations and all JS/Wasm/native execution
 acceptance stay open under #416. Existing executable profiles are unchanged.
+
+
+The additive `generic_v1::copy_v1` lane seals immutable Copy programs only after the
+[separate wire gate](../../spec/ir/GENERIC_COPY_WIRE_V1.md), complete original symbolic body and
+closed operation replay, demand equality, exact entry closure, retained generic runtime issuer,
+layout-derived empty owned/loan/drop effects and unchanged scalar ABI verification. Its opaque
+program has an internal JavaScript consumer. It rejects owned values, loans, mutable control flow
+and nominal original declarations. These remaining obligations still prevent full #416 acceptance;
+the two earlier validation entrypoints retain their original partial-contract behavior.

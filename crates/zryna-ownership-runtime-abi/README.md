@@ -27,3 +27,11 @@ a successful no-growth reserve to return the exact old storage pointer. It also 
 old storage, length, and capacity on failure and retains the existing checked element-count and
 `capacity * stride` byte-amplification rules. Neither API executes a runtime or authenticates an
 allocator implementation.
+
+
+The additive `generic_v1::{raw_v1,verify_v1}` issuer binds both complete successor layouts in a
+separate `zryna-generic-ownership-runtime-v1` domain. It independently derives Vec strides and
+Shared/Weak control records and retains compilation-branded operation/element/payload identities.
+The exact fixed helper/status/header inventory is shared through a private declaration builder;
+root `verify_v1`, old IDs and old transition semantics remain unchanged. The successor seal is
+not convertible to an older ABI seal and is a declaration proof, not a runtime implementation.

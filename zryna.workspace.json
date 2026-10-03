@@ -63,7 +63,7 @@
       "id": "zryna-ir",
       "root": "crates/zryna-ir",
       "kind": "compiler",
-      "dependencies": ["zryna-abi", "zryna-diagnostics", "zryna-layout", "zryna-source", "zryna-syntax"],
+      "dependencies": ["zryna-abi", "zryna-diagnostics", "zryna-layout", "zryna-ownership-runtime-abi", "zryna-source", "zryna-syntax"],
       "allowedEntries": ["Cargo.toml", "README.md", "src"]
     },
     {

@@ -6,6 +6,7 @@ use super::{
 };
 use zryna_syntax::v5::{RawDataDeclarationKind, RawTypeParameterList, RawTypeSyntaxKind};
 
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) enum Closed {
     Stored(Vec<u8>),
     Unit,
@@ -31,6 +32,14 @@ pub(super) struct Resolver<'a, 'b> {
 
 impl Resolver<'_, '_> {
     pub fn resolve(&self, occurrence: u32) -> Result<Closed, Failure> {
+        self.resolve_mode(occurrence, false)
+    }
+
+    pub fn resolve_symbolic(&self, occurrence: u32) -> Result<Closed, Failure> {
+        self.resolve_mode(occurrence, true)
+    }
+
+    fn resolve_mode(&self, occurrence: u32, symbolic: bool) -> Result<Closed, Failure> {
         let mut pending = reserve(257)?;
         let mut values = reserve(129)?;
         pending.push(Task::Node(occurrence));
@@ -90,7 +99,9 @@ impl Resolver<'_, '_> {
                         stored.push(key);
                     }
                     values.push(match shape {
-                        Shape::Key(tag, lanes, _) => Closed::Stored(encode(tag, &lanes, &stored)?),
+                        Shape::Key(tag, lanes, _) => {
+                            Closed::Stored(encode_mode(tag, &lanes, &stored, symbolic)?)
+                        }
                         Shape::Borrow(_, exclusive) => Closed::Borrow(stored.remove(0), exclusive),
                     });
                 }
@@ -217,6 +228,15 @@ fn copy_ids(ids: &[u32]) -> Result<Vec<u32>, Failure> {
 }
 
 fn encode(tag: u8, lanes: &[u32], children: &[Vec<u8>]) -> Result<Vec<u8>, Failure> {
+    encode_mode(tag, lanes, children, false)
+}
+
+pub(super) fn encode_mode(
+    tag: u8,
+    lanes: &[u32],
+    children: &[Vec<u8>],
+    symbolic: bool,
+) -> Result<Vec<u8>, Failure> {
     let length = children.iter().try_fold(1 + 4 * lanes.len(), |total, child| {
         total
             .checked_add(4)
@@ -237,6 +257,8 @@ fn encode(tag: u8, lanes: &[u32], children: &[Vec<u8>]) -> Result<Vec<u8>, Failu
         );
         key.extend_from_slice(child);
     }
-    keys::decode(&key, keys::Domain::Type)?;
+    if !symbolic {
+        keys::decode(&key, keys::Domain::Type)?;
+    }
     Ok(key)
 }

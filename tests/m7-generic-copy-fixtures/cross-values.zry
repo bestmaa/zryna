@@ -1,0 +1,3 @@
+export function identity<T extends ZrynaValue>(value: T): T { return value; }
+export function forward<U extends ZrynaValue>(value: U): U { return identity<U>(value); }
+export function wrap<T extends ZrynaValue>(value: T): Option<T> { return Option.some<T>(value); }

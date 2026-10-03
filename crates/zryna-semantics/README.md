@@ -300,3 +300,10 @@ internal single-return function with scalar literal, parameter, or active-payloa
 a general expression-level match implementation. No runtime, backend, driver, CLI, or public
 `data-ownership-v1` profile selects this module. See
 [M3 Copy aggregate semantics](../../docs/M3_COPY_AGGREGATE_SEMANTICS.md).
+
+
+`bounded_generics_v1::instantiation::copy_v1::produce_claim` produces raw immutable Copy-lane
+claims from complete closed semantic discovery and the retained original bodies. It verifies
+complete type-key equality with successor layouts; the output must still cross the separately
+versioned wire decoder and independent source/ownership/ABI issuer before JavaScript emission.
+Owned, loan, mutable CFG and nominal-source replay remain unfinished under #416.

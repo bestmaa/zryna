@@ -77,3 +77,18 @@ subreaper execution are recorded separately: supervised success cannot erase a p
 The earlier PR #511 revision has successful hosted CI, including its Windows jobs. This later
 revision requires its own hosted CI; separate local Windows validation remains unrun. No release, deployment or issue closure
 is implied by this continuation.
+
+
+A separate continuation adds the generic-layout runtime declaration issuer, frozen internal
+wire v1 and an opaque immutable Copy-lane program after complete supported source/body/demand
+replay, entry closure and scalar ABI verification. Genuine complete-source DTO fixtures execute
+private generic enum arguments/returns, forwarding, active payload transfers, both Option/Result
+variants, lexical shadowing and wrapping i32 addition in JavaScript under pinned Node. A second
+fixture moves templates across exact `.zry` named imports. Unicode/CRLF source spans and hostile
+wire/source/compilation brands have independent controls. These observations establish the narrow
+[Copy wire/source lane](../spec/ir/GENERIC_COPY_WIRE_V1.md), not the full owned generic profile.
+
+Owned values, loans, mutable CFG and nominal declarations still reject at this new executable
+boundary. Full owner/loan/drop and runtime fault replay, Wasm/native, protocol-v5 provider parity,
+driver admission and supported-platform generic conformance remain unfinished under #416.
+The older layout/runtime/IR constructors and current public profiles remain unchanged.

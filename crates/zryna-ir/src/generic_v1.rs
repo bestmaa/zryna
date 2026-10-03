@@ -3,23 +3,27 @@
 //! These checks return no backend-consumable program. Exact original syntax and substitution
 //! are checked by the source-bound entrypoint. Complete source operation coverage,
 //! ownership/runtime authority and the new wire protocol remain mandatory prerequisites to
-//! executable sealing. Existing M1/M2/M3 constructors are unchanged.
+//! executable sealing. The separate `copy_v1` lane proves these obligations only for immutable
+//! Copy values after the new wire gate. Existing M1/M2/M3 constructors are unchanged.
 
 use zryna_diagnostics::Diagnostic;
 
 mod body;
 mod calls;
 mod cfg;
+pub mod copy_v1;
 mod inventory;
 pub mod keys;
 mod loops;
 pub mod raw;
 mod source;
+mod source_body;
 mod source_calls;
 mod source_types;
 mod substitution;
 #[cfg(test)]
 mod tests;
+pub mod wire;
 
 /// Atomic successor validation failure.
 #[derive(Debug)]

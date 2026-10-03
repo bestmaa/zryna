@@ -9,6 +9,8 @@ use zryna_source::UntrustedSpan;
 use super::body_types::{BodyTypeContext, TypeShape, TypeView};
 use super::{DeclarationIdentity, DeclarationKind};
 
+pub mod copy_v1;
+
 #[cfg(test)]
 mod diagnostic_tests;
 mod diagnostics;
