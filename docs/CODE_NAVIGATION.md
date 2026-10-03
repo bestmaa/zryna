@@ -47,8 +47,7 @@ Use [GETTING_STARTED](GETTING_STARTED.md) for M1/M2, [M3_GETTING_STARTED](M3_GET
 ## 4. Type/layout identity, raw IR, or hostile verification
 
 - Native C extension IR: [registered component](../crates/zryna-native-c-ir/README.md), `src/lib.rs::{lower,verify}`, closed claims in `src/raw.rs`, immutable views in `src/views.rs`, and independent `src/verify/{source,values,calls,storage,exits}.rs`. Genuine captures and hostile/limit tests are in `crates/zryna-native-c-ir/tests/`; static graph registration fixtures are in `crates/zryna-architecture/tests/native_c_ir_graph.rs`. Focus with `cargo test --locked -p zryna-native-c-ir` and `cargo test --locked -p zryna-architecture --test native_c_ir_graph`. This IR authority does not grant MIR, runtime, native linking or public C support.
-- Native C scalar emission and invocation: backend `src/native_c_v0/{mod,scalar,audit,tests}.rs` retains sealed MIR and emits/audits total public scalar exports; driver `src/native/native_c_v0.rs` and its `tests.rs` own typed linking and reverse C proof, using the existing helper in `src/native/link.rs`. Focus with `cargo test --locked -p zryna-backend-native --lib native_c_v0` and `cargo test --locked -p zryna-driver --lib native_c_v0`. Imported operations and private resource entries remain plans; full #417 cleanup, foreign recipe linkage and public support remain unfinished.
-- Native C machine plans: [native MIR component](../crates/zryna-native-mir/README.md), `src/native_c_v0/{raw,abi,lower,views}.rs` and independent `verify/{source,abi,storage,exits}.rs`. The immutable MIR seal retains actual native C IR. Focus with `cargo test --locked -p zryna-native-mir --test native_c_v0`; this verifies source/ABI/storage/cleanup planning and grants no object, runtime, linking or public C support. Existing scalar claims now live in the cohesive `src/raw.rs` module with the same public API.
+- Native C scalar emission and invocation: backend `src/native_c_v0/{mod,scalar,audit,tests}.rs` retains sealed MIR and emits/audits total public scalar exports; driver `src/native/native_c_v0.rs` and its `tests.rs` own typed linking and reverse C proof, using the existing helper in `src/native/link.rs`. Focus with `cargo test --locked -p zryna-backend-native --lib native_c_v0` and `cargo test --locked -p zryna-driver --lib native_c_v0`. Imported operations and private resource entries remain plans; full #417 cleanup, foreign recipe linkage and public support remain unfinished. Native C machine plans: [native MIR component](../crates/zryna-native-mir/README.md), `src/native_c_v0/{raw,abi,lower,views}.rs` and independent `verify/{source,abi,storage,exits}.rs`. The immutable MIR seal retains actual native C IR. Focus with `cargo test --locked -p zryna-native-mir --test native_c_v0`; this verifies source/ABI/storage/cleanup planning and grants no object, runtime, linking or public C support. Existing scalar claims now live in the cohesive `src/raw.rs` module with the same public API.
 
 - Start: [layout README](../crates/zryna-layout/README.md), [IR README](../crates/zryna-ir/README.md), [M3 IR contract](M3_DATA_OWNERSHIP_IR.md).
 - Layout authority: `crates/zryna-layout/src/lib.rs::{verify,VerifiedLayouts::type_by_id}`. Raw graphs are not sealed layouts.
@@ -136,7 +135,7 @@ Use [GETTING_STARTED](GETTING_STARTED.md) for M1/M2, [M3_GETTING_STARTED](M3_GET
 
 ## Required completion checks for every route
 
-The focused commands above are editing aids, not submission evidence by themselves. Follow current CONTRIBUTING and the checked gate registries:
+The focused commands above are editing aids; follow CONTRIBUTING and checked gate registries:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -144,12 +143,8 @@ pnpm preflight
 pnpm m0:check
 ```
 
-Use the repository-pinned toolchains. Keep Linux and Windows M0/required hosted checks mandatory before merge. Quick filters omit some expensive/ignored boundaries; retain the complete gate's required ignored-test execution and doctests.
-For a custom filter, first inspect `-- --list` and verify actual nonzero matching tests; never report discovery as execution. Record the exact revision, command, exit status, and executed/ignored counts; do not reuse stale binaries as evidence for changed source.
+Use the repository-pinned toolchains. Keep Linux and Windows M0/required hosted checks mandatory before merge. Quick filters omit some expensive/ignored boundaries; retain the complete gate's required ignored-test execution and doctests. For a custom filter, first inspect `-- --list` and verify actual nonzero matching tests; never report discovery as execution. Record the exact revision, command, exit status, and executed/ignored counts; do not reuse stale binaries as evidence for changed source.
 
 ## Keeping this index current
 
-When moving a file or changing an entrypoint, update its route and relative links in the same change.
-Recheck the component's manifest registration/dependencies, existing README, neighboring tests, and gate script references.
-Prefer stable entry symbols over line numbers and dynamic test counts. Search within the selected component before expanding to callers. This file guides navigation; it grants no new source admission, dependency edge, public profile, or reduced verification requirement.
-M3 conformance: [contract](M3_CONFORMANCE.md), [registry](../tests/m3-conformance-v1.json), [candidate corpus](../crates/zryna-driver/src/ownership_commands/conformance.rs), and [commands](../scripts/lib/m3-gates.mjs).
+Update routes and links alongside moved entrypoints; recheck component registration, neighboring tests and gate references. Prefer stable symbols and search the owning component first; this index grants no exceptions. M3 conformance: [contract](M3_CONFORMANCE.md), [registry](../tests/m3-conformance-v1.json), [candidate corpus](../crates/zryna-driver/src/ownership_commands/conformance.rs), and [commands](../scripts/lib/m3-gates.mjs).
