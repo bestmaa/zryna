@@ -113,6 +113,10 @@ fn wrong_elf_identity_symbol_kind_visibility_section_flags_and_missing_definitio
     let text = section(bytes, b".text");
     forged[text + 8] = 7; // SHF_WRITE must never be added to executable code.
     assert!(audit::check(&forged, artifact.program()).is_err());
+    let mut unreadable = bytes.to_vec();
+    unreadable[text + 24..text + 32]
+        .copy_from_slice(&u64::try_from(bytes.len()).expect("object size").to_le_bytes());
+    assert!(audit::check(&unreadable, artifact.program()).is_err(), "truncated text payload");
     let mut renamed = bytes.to_vec();
     let symbol = b"zryna_c_v0_e_add\0";
     let name = renamed.windows(symbol.len()).position(|w| w == symbol).expect("exact symbol");

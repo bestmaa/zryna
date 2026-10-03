@@ -85,7 +85,8 @@ existing exact Linux x86-64 target capability. It emits every admitted total pub
 retains the complete original program authority, and preserves distinct `c-i32`, `c-int` and
 `c-bool32` header spelling. Boolean carriers outside 0/1 terminate before the source body runs.
 The generated C11 header checks the target and carrier size/alignment. The independent audit
-requires the closed ELF section inventory, exact public symbol set, fixed file metadata,
+requires readable, size-matched section payloads, the closed ELF section inventory, exact public
+symbol set, fixed file metadata,
 non-overlapping text definitions and no undefined symbols or relocations.
 
 This separate artifact emits no imported operation, private entry, foreign dispatcher, resource

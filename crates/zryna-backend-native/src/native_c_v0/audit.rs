@@ -42,7 +42,9 @@ pub(super) fn check(bytes: &[u8], program: &VerifiedMirProgram) -> Result<(), Di
             ".symtab" | ".strtab" | ".shstrtab" => (SectionKind::Metadata, 0),
             _ => return Err(audit_error()),
         };
-        if section.kind() != kind
+        if section.data().map_err(|_| audit_error())?.len()
+            != usize::try_from(section.size()).map_err(|_| audit_error())?
+            || section.kind() != kind
             || section.flags() != (SectionFlags::Elf { sh_flags: flags })
             || section.relocations().next().is_some()
         {
