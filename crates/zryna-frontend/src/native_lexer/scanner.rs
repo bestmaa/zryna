@@ -237,7 +237,23 @@ fn utf8_width(first: u8) -> usize {
 }
 
 fn whitespace_width(bytes: &[u8]) -> Option<usize> {
-    if bytes[0].is_ascii_whitespace() { Some(1) } else { line_terminator_width(bytes) }
+    if matches!(bytes[0], b' ' | b'\t' | b'\x0b' | b'\x0c' | b'\r' | b'\n') {
+        return Some(1);
+    }
+    let width = utf8_width(bytes[0]);
+    let character = std::str::from_utf8(bytes.get(..width)?).ok()?.chars().next()?;
+    matches!(
+        character,
+        '\u{0085}' | '\u{00a0}' | '\u{1680}' | '\u{2000}'
+            ..='\u{200b}'
+                | '\u{2028}'
+                | '\u{2029}'
+                | '\u{202f}'
+                | '\u{205f}'
+                | '\u{3000}'
+                | '\u{feff}'
+    )
+    .then_some(width)
 }
 
 fn line_terminator_width(bytes: &[u8]) -> Option<usize> {

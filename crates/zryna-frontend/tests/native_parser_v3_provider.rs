@@ -86,9 +86,14 @@ fn pinned_provider_and_native_v3_parser_match_m2_corpus_and_rejections() {
                     .expect("provider source location");
             let span = native.diagnostic().primary_span().expect("native source location");
             assert_eq!(span.file().index(), 0, "{path}: source file");
-            assert!(
-                span.start() >= start && span.end() <= end,
-                "{path}: native location within provider rejected construct"
+            assert_eq!((span.start(), span.end()), (start, end), "{path}: exact rejected span");
+            assert_eq!(
+                native.diagnostic().message(),
+                error["message"]
+                    .as_str()
+                    .expect("provider message")
+                    .replace(&format!(" at file 0 bytes {start}..{end}"), ""),
+                "{path}: exact rejection message"
             );
             rejected += 1;
         }

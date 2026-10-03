@@ -23,11 +23,28 @@ enum TypeForm {
 }
 
 impl FileParser<'_> {
+    fn type_greater_than(&mut self) -> Result<UntrustedSpan, ParseError> {
+        if self.pending_type_equals {
+            return Err(unsupported(self.current(), "unsupported protocol-v4 syntax"));
+        }
+        if let Some(token) = self.current()
+            && token.kind() == TokenKind::GreaterEqual
+        {
+            self.pending_type_equals = true;
+            return Ok(UntrustedSpan { end: token.span().end() - 1, ..raw(token) });
+        }
+        self.take(TokenKind::GreaterThan).map(raw)
+    }
+
     fn push_type(&mut self, value: syntax::RawTypeSyntax) -> Result<u32, ParseError> {
         if self.types.len() >= syntax::MAX_TYPE_NODES_PER_MODULE
             || self.previous_types + self.types.len() >= syntax::MAX_TYPE_NODES_PER_PROJECT
         {
-            return Err(resource("type-syntax inventory exceeds protocol-v4 limit"));
+            return Err(resource(if self.types.len() >= syntax::MAX_TYPE_NODES_PER_MODULE {
+                "module exceeds the type-syntax limit"
+            } else {
+                "project exceeds the type-syntax limit"
+            }));
         }
         let id = u32::try_from(self.types.len()).expect("bounded type inventory");
         self.types.push(value);
@@ -45,14 +62,14 @@ impl FileParser<'_> {
                     .parse::<u32>()
                     .is_ok_and(|length| length <= syntax::MAX_FIXED_ARRAY_LENGTH)
             {
-                return Err(resource("fixed-array length exceeds protocol-v4 limit"));
+                return Err(resource("fixed-array length must be canonical and at most 1048576"));
             }
-            let greater = self.take(TokenKind::GreaterThan)?;
+            let greater = self.type_greater_than()?;
             return self.push_type(syntax::RawTypeSyntax {
                 span: UntrustedSpan {
                     file: self.file,
                     start: frame.keyword.span().start(),
-                    end: greater.span().end(),
+                    end: greater.end,
                 },
                 kind: syntax::RawTypeSyntaxKind::FixedArray {
                     keyword_span: raw(frame.keyword),
@@ -62,14 +79,14 @@ impl FileParser<'_> {
                     length_span: raw(length_token),
                     length_spelling: spelling.clone(),
                     length: spelling.parse().expect("bounded canonical length"),
-                    greater_than_span: raw(greater),
+                    greater_than_span: greater,
                 },
             });
         } else {
-            let greater = self.take(TokenKind::GreaterThan)?;
+            let greater = self.type_greater_than()?;
             let keyword_span = raw(frame.keyword);
             let less_than_span = raw(frame.less);
-            let greater_than_span = raw(greater);
+            let greater_than_span = greater;
             let kind = match frame.form {
                 TypeForm::Vec => syntax::RawTypeSyntaxKind::Vec {
                     keyword_span,
@@ -109,7 +126,7 @@ impl FileParser<'_> {
             span: UntrustedSpan {
                 file: self.file,
                 start: frame.keyword.span().start(),
-                end: kind.1.span().end(),
+                end: kind.1.end,
             },
             kind: kind.0,
         })
@@ -130,12 +147,27 @@ impl FileParser<'_> {
                 "FixedArray" => TypeForm::FixedArray,
                 _ => return Err(unsupported(Some(token), "unsupported type constructor")),
             };
-            if frames.len() + 1 >= syntax::MAX_NESTING_DEPTH as usize {
+            if frames.len() >= syntax::MAX_NESTING_DEPTH as usize {
                 return Err(resource("type syntax exceeds the nesting limit"));
+            }
+            if let Some(end) =
+                super::super::collections::generic_end(&self.tokens, self.position + 1)
+            {
+                let count = super::super::collections::generic_arguments(
+                    &self.tokens,
+                    self.position + 1,
+                    end,
+                );
+                if count != if matches!(form, TypeForm::FixedArray) { 2 } else { 1 } {
+                    return Err(unsupported(Some(token), "unsupported type argument count"));
+                }
             }
             self.position += 1;
             let less = self.take(TokenKind::LessThan)?;
             frames.push(TypeFrame { keyword: token, less, form });
+        }
+        if frames.len() >= syntax::MAX_NESTING_DEPTH as usize {
+            return Err(resource("type syntax exceeds the nesting limit"));
         }
         if let Some(token) = self.current()
             && matches!(

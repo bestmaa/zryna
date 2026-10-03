@@ -31,8 +31,12 @@ keyword, decimal, and unescaped string inventory are deterministic; malformed sc
 and comments recover at character boundaries with stable diagnostics. Fixed token, trivia,
 project, diagnostic, and protocol-v4 aggregate-source budgets fail atomically as `ZRYNA-F1502`;
 recoverable malformed input and invalid UTF-8 admission are reported as `ZRYNA-F1501`. Raw bytes
-are never normalized or repaired. Identifiers are ASCII and at most 128 bytes, strings are single- or double-quoted with
-no escapes or line terminators, and `//` and `/* ... */` comments remain lossless trivia. The
+are never normalized or repaired. Identifiers are ASCII and at most 128 bytes; `constructor`,
+`prototype`, and `__proto__` are forbidden at lexical admission. Strings are single- or double-quoted with
+no escapes or line terminators, and `//` and `/* ... */` comments remain lossless trivia. Whitespace uses the pinned TypeScript 6 scanner's exact set,
+including U+0085, U+200B, and U+FEFF; CR, LF, U+2028, and U+2029 terminate line comments.
+U+180E, U+2060, and U+001C remain lexical F1501 failures. Those pre-parser failures are a
+distinct native lexical admission contract, not equivalent bootstrap parser diagnostics. The
 lexical inventory covers the v4 keywords plus braces, brackets, parentheses, `: ; , .`, `< <= >
 >=`, `= => === !==`, and `+ - *`. Per-file token and trivia limits are 65,536 each; the project
 retains at most 262,144 combined lexemes, 256 diagnostics, and 8 MiB of source. This stage does not
@@ -43,46 +47,41 @@ pinned TypeScript 6 provider on Linux and Windows. Add `-- --include-ignored` to
 proportional production-limit token, trivia, project-lexeme, and raw-byte proofs without lowering
 their limits.
 
-`native_parser::parse_v2_candidate` is an internal first parser slice over that exact bound token
-stream. It constructs untrusted protocol-v2 DTOs for exported functions with named or missing
-parameter/result annotations and return statements containing ASCII
-references, Boolean literals, canonical decimal integers, and left-associative addition. It
-retains source-order files/functions/statements, exact token-based UTF-8 spans, and canonical
-postorder expression arenas. The frozen M1 subset includes trailing parameter commas and
-semicolon omission at a closing brace or before a line-separated return; a line break directly
-after `return` remains rejected. First-extra v2 inventory and depth failures are atomic. Lexical diagnostics,
-foreign source maps, malformed input, and syntax outside this closed slice are rejected. The
-existing `zryna_syntax::v2::verify_snapshot` remains the only syntax authority. This partial
-slice does not cover parenthesized expressions, M2/M3 grammar, bootstrap-equivalent recovery
-diagnostics, or provider selection;
-it is not a completed native frontend. `tests/native_parser_v2.rs` compares the frozen bootstrap
-M1 snapshot and checks verifier acceptance plus negative/resource cases.
-The separate `parse_v2_recovering_candidate` synchronizes at the next top-level `export` after a
-rejected declaration and balanced braces, brackets, and parentheses, retaining later valid
-functions and bounded errors. Mismatched delimiters stop synchronization. It never returns a
-partial candidate on lexical or resource failure. Its DTO still requires the v2 verifier; any
-retained error blocks semantic input. The frozen parenthesized-return and return-newline cases
-match bootstrap diagnostic spans, wording, guidance, and multiplicity. Rejected direct calls,
-simple multiplication chains, and string literals now have the same exact subtree spans and
-diagnostic text as the bootstrap provider. Unsupported primitive parameter and result annotations
-now preserve the pinned bootstrap keyword span, function or parameter index, diagnostic text, and
-guidance. A well-formed function signature with multiple unsupported primitive annotations now
-retains their source-ordered diagnostics, discards that function, and keeps a later valid sibling;
-that rejected signature counts toward the v2 function and parameter limits. A distinct named type,
-such as `String`, remains a candidate for semantic checking. A balanced call is scanned iteratively
-over the lexer's bounded token stream; recovery still resumes only at a genuine top-level export. Other
-unsupported annotation forms, mixed error kinds in one function, expressions, and declarations still
-need independent differential recovery evidence.
+`native_parser::parse_v2_candidate` constructs an internal untrusted protocol-v2 DTO over
+that exact source-bound stream. The admitted M1 grammar consists of exported functions with
+named or missing parameter/result annotations and returns containing ASCII references, Boolean
+literals, canonical decimal integers, and left-associative addition. Files, functions, and
+statements retain source order; expressions use canonical postorder arenas and exact UTF-8
+spans. Trailing parameter commas and semicolon omission at a closing brace or before a
+line-separated return follow the pinned worker. A line terminator directly after `return`
+produces separate unsupported return and expression-statement diagnostics.
 
-| Checked M1 source set | Native candidate evidence | Remaining gap |
-| --- | --- | --- |
-| `examples/universal/add.zry`, `tests/m1-fixtures/{bool-gated,invalid-any}.zry` | Exact frozen bootstrap DTO and v2 verifier acceptance | Semantic outcomes remain owned by the existing compiler. |
-| Missing annotations, trailing parameter comma, semicolon omission, and UTF-8 comment prefix | Exact frozen bootstrap DTO and v2 verifier acceptance | Broader TypeScript syntax is excluded. |
-| Newline directly after `return` followed by `1;` | Both frozen bootstrap F2002 diagnostics and verified error snapshot | Other expression-statement forms remain unproven. |
-| Unsupported parenthesized return before a valid function | Exact frozen bootstrap diagnostic and retained function; verified error snapshot | Parenthesized syntax remains unsupported. |
-| Unsupported direct calls, simple multiplication, and string literals with a later valid function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Other unsupported expressions retain generic rejection. |
-| Multiple unsupported primitive annotations in one well-formed signature, then a named-type function | Exact frozen bootstrap diagnostics and retained function; verified error snapshot | Mixed error kinds in one function and other unsupported type forms remain unproven. |
-| First-extra functions, parameters, expression depth, and recovery diagnostics | Bounded focused tests and 128 deterministic expression mutations | Other unsupported grammar axes remain excluded. |
+The separate `parse_v2_recovering_candidate` mirrors the frozen worker's recovery boundary.
+TypeScript parse diagnostics suppress normalization for that file. Well-formed rejected
+functions retain bounded source diagnostics, discard their function DTO, and permit later valid
+functions. Rejected declarations and statements consume balanced source nodes; signature errors
+retain the parameter/function ordinal and whole annotation or initializer node span. Rejected
+returns roll back their temporary expression arena and project expression budget, while rejected
+functions still count toward function, parameter, and statement budgets. This candidate requires
+`zryna_syntax::v2::verify_snapshot`; retained error diagnostics prevent semantic input.
+
+The recovery collector keeps the earliest 255 diagnostics in canonical file/span/code/message
+order and emits one global `ZRYNA-F2003` truncation diagnostic when another diagnostic occurs.
+Production inventory exhaustion is a distinct atomic `ZRYNA-F1002` rejection. Lexical failure,
+foreign source maps, and fatal resource failures never expose a partial candidate. Parentheses,
+calls, multiplication, strings, primitive or compound annotations, nonexported/generic/generator
+functions, and non-M1 declarations remain unsupported; frozen cases verify their complete
+rejected-node diagnostics and retained sibling functions. Unsupported TypeScript syntax beyond
+the frozen rejection corpus is excluded from parser equivalence.
+
+`tests/native_parser_parity.rs` compares exact raw snapshots, diagnostic multiplicity, codes,
+messages, guidance, and spans against pinned receipts, then applies the existing versioned
+verifiers to every candidate. Its ordinary and depth corpora cover mixed recovery, malformed
+source, whitespace and line-terminator variants, signed literals, precedence, callback and
+ownership rejection, and diagnostic/depth ordering. Production boundary sources and first-extra
+receipts live beside those corpora. The live lane requires both the frozen-receipt comparison
+and production-limit comparison; deterministic token-grammar mutations separately prove bounded,
+panic-free rejection or verifier acceptance.
 
 `native_parser::v3::parse_v3_import_candidate` is a separate internal M2 candidate for
 functionless modules containing named imports only. It consumes every nontrivia native token or
@@ -125,7 +124,7 @@ closed behavior for source closure. A live pinned-worker test compares all 14 pu
 files (13 exact candidates and one equivalent rejection), six further rejected forms, and 128
 deterministic accepted or atomic-rejection grammar mutations. Compound or property assignment,
 parenthesized expressions or callees, indirect, generic, optional, or spread calls, other
-operators, recovery, full diagnostic parity, provider selection, and module resolution remain
+operators, provider selection, and module resolution remain
 outside this parser slice.
 
 `native_parser::v4::parse_v4_candidate` constructs an untrusted protocol-v4 candidate from the
@@ -139,10 +138,42 @@ new expression and statement forms. Generated expression mutations are also chec
 existing `zryna_syntax::v4::verify_snapshot`, which remains the only syntax authority. The
 `provider:conformance:v4` gate compares native candidates with the pinned TypeScript 6 worker for
 all 95 frozen M3 source fixtures, one four-file composition, and seven rejected forms. It requires
-identical raw candidates, rejection codes, and source locations within the provider's rejected
-constructs. The entry does not register a provider, perform semantic checks, resolve imports, or
-activate a public profile. Unsupported source fails as a whole while differential recovery and
-diagnostic parity remain separate work.
+identical raw candidates and exact rejection codes, messages, and spans. The entry does not register a provider, perform semantic checks, resolve imports, or
+activate a public profile. Protocol-v3/v4 unsupported source fails atomically, matching the
+bootstrap worker; later-function recovery belongs to protocol v2. The shared parity corpus
+checks complete rejection nodes, malformed-source priority, and expression-depth diagnostics
+before candidate inventory allocation for long scalar, call, construction, field, and index
+chains. A lexer-bounded source-shape pass follows expression preorder depth checks and the
+worker's inventory reservation order using copied current counters. Struct operands reserve
+before their field values; array and enum operands reserve after their values. Invalid match
+arms retain the earlier scrutinee and arm-value checks. The pass does not allocate candidate
+syntax or consume real parser budgets. Frozen priority cases include populated function arenas
+and exhausted project aggregate budgets, with exact nonzero-file spans.
+
+Production resource fixtures compare all 63 per-item boundaries and 24 reachable project
+boundaries, including valid limits and first-extra rejections. Separate receipts preserve the
+statement-limit priority over the local limit and protocol-v2 rejected-expression rollback.
+Some parser ceilings cannot be reached through native lexical admission: project parameter,
+expression, local, match-arm, import, and member inventories, and module/project type arenas,
+require more lexemes than the fixed native lexer permits. Those lexer-first cases are exclusions
+from parser diagnostic equivalence; parser and lexer limits remain unchanged.
+
+Whole parameter, named-import binding, ordinary call-argument, data-member, construction-field,
+array-element, and match-arm counts are checked before normalizing their children, following the
+worker's order. Function, import, block, statement, and local reservations remain interleaved with
+source traversal. Recognized type constructors check argument arity before descending, and
+specialized call or weak-upgrade callback shapes are checked before their nested inventories.
+The per-function local ceiling is dominated by the statement ceiling, whose diagnostic wins on
+the first extra local declaration.
+
+Known malformed-source diagnostics are checked after global source nesting and before any
+normalization or inventory reservations within each file. A parse error therefore precedes a
+function or parameter limit in the same file; an earlier file's fatal inventory failure still
+precedes a later file's parse error. Rejected type annotations retain their parameter, result,
+local, data-member, or array-element context. Parameter ordinals follow delimiter-aware ranges,
+including commas inside earlier generic annotations.
+For a generic local annotation immediately followed by `=`, the parser retains separate `>`
+and `=` source ranges from the lexer's single `>=` token. Ordinary comparison tokens are unchanged.
 
 Protocol v1 intentionally carries declarations and diagnostics only. Protocol v2 is a separate
 executable-syntax contract owned by `zryna-syntax`; it does not change v1 semantics in place. The

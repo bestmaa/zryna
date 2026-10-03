@@ -93,7 +93,12 @@ fn local_errors_name_the_annotation_or_expression() {
     let lexed = lex(&sources).expect("tokens");
     let error = parse_v3_straight_line_candidate(&sources, &lexed).expect_err("local rejects");
     assert_eq!(error.diagnostic().code(), "ZRYNA-F2002");
-    assert_eq!(error.diagnostic().message(), "unsupported expression");
+    assert_eq!(
+        error.diagnostic().message(),
+        "expression uses unsupported syntax 'ParenthesizedExpression'"
+    );
+    let span = error.diagnostic().primary_span().expect("whole rejected expression");
+    assert_eq!(&text[span.start() as usize..span.end() as usize], "(1)");
 }
 
 #[test]

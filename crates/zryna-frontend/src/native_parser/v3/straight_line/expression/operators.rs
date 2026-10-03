@@ -55,9 +55,6 @@ fn reduce(
     let (rhs, rhs_depth) = values.pop().expect("binary operator has a right operand");
     let (lhs, lhs_depth) = values.pop().expect("binary operator has a left operand");
     let depth = lhs_depth.max(rhs_depth) + 1;
-    if depth > syntax::MAX_NESTING_DEPTH {
-        return Err(function_error_at(operator, "expression depth exceeds protocol-v3 limit"));
-    }
     let span = UntrustedSpan {
         file,
         start: expressions[lhs as usize].span.start,

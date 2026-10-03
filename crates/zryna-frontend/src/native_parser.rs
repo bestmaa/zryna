@@ -11,8 +11,13 @@ use zryna_syntax::v2 as syntax;
 
 use crate::native_lexer::{Keyword, LexedProject, Token, TokenKind};
 
+mod collections;
+mod depth;
 mod expression;
+mod functions;
 mod recovery;
+mod rejection;
+mod v2_recovery;
 pub mod v3;
 pub mod v4;
 
@@ -89,7 +94,7 @@ fn parse_v2_internal(
     let mut total_parameters = 0_usize;
     let mut total_statements = 0_usize;
     let mut total_expressions = 0_usize;
-    let mut diagnostics = Vec::new();
+    let mut diagnostics = recovery::Diagnostics::default();
     for file in lexed.files() {
         let source = sources
             .source(file.id())
@@ -103,59 +108,68 @@ fn parse_v2_internal(
             tokens: file.tokens().collect(),
             position: 0,
             file: file.id().index(),
+            recovering,
+            diagnostics: recovery::Diagnostics::default(),
+            parameter_count: 0,
+            statement_count: 0,
+            previous_parameters: 0,
+            previous_statements: 0,
+            previous_expressions: 0,
         };
+        if recovering
+            && let Some(mut parse_diagnostics) =
+                rejection::malformed_v2(sources, parser.text, &parser.tokens, parser.file)
+        {
+            diagnostics.append(&mut parse_diagnostics);
+            files.push(syntax::RawSourceUnit {
+                id: file.id().index(),
+                path: file.path().as_str().to_owned(),
+                functions: Vec::new(),
+            });
+            continue;
+        }
         let mut functions = Vec::new();
         let mut function_index = 0_usize;
         while parser.current().is_some() {
+            if recovering && parser.recover_top_level() {
+                diagnostics.append(&mut parser.diagnostics);
+                continue;
+            }
             let checkpoint = parser.position;
+            parser.parameter_count = 0;
+            parser.statement_count = 0;
+            parser.previous_parameters = total_parameters;
+            parser.previous_statements = total_statements;
+            parser.previous_expressions = total_expressions;
             let index = function_index;
             if parser.starts_function() {
-                reserve_function(&parser, function_index, total_functions)?;
+                reserve_function(function_index, total_functions)?;
                 function_index += 1;
                 total_functions += 1;
             }
             let function = match parser.function(index) {
                 Ok(function) => function,
                 Err(error) if recovering && error.diagnostic().code() == "ZRYNA-F2002" => {
-                    let signature = recovery::primitive_annotations(&parser, checkpoint, index);
-                    let mut recovered = match signature {
-                        Some(Err(resource)) => return Err(resource),
-                        Some(Ok(signature))
-                            if signature.diagnostics.first()
-                                == Some(&recovery::raw_diagnostic(&error)) =>
-                        {
-                            total_parameters += signature.parameter_count;
-                            if total_parameters > syntax::MAX_PARAMETERS_PER_PROJECT {
-                                return Err(resource(
-                                    "project syntax inventory exceeds protocol-v2 limit",
-                                ));
-                            }
-                            signature.diagnostics
-                        }
-                        _ => vec![recovery::raw_diagnostic(&error)],
-                    };
+                    parser.retain_error(&error);
                     if let Some(following) = error.following {
-                        recovered.push(*following);
+                        parser.retain_diagnostic(*following);
                     }
-                    if diagnostics.len() + recovered.len() > syntax::MAX_PROVIDER_DIAGNOSTICS {
-                        return Err(resource("parser diagnostics exceed protocol-v2 limit"));
-                    }
-                    diagnostics.extend(recovered);
+                    diagnostics.append(&mut parser.diagnostics);
+                    total_parameters += parser.parameter_count;
+                    total_statements += parser.statement_count;
                     recovery::skip_to_next_function(&mut parser, checkpoint);
                     continue;
                 }
                 Err(error) => return Err(error),
             };
-            total_parameters += function.parameters.len();
-            total_statements += function.body.statements.len();
+            total_parameters += parser.parameter_count;
+            total_statements += parser.statement_count;
             total_expressions += function.body.expressions.len();
-            if total_parameters > syntax::MAX_PARAMETERS_PER_PROJECT
-                || total_statements > syntax::MAX_STATEMENTS_PER_PROJECT
-                || total_expressions > syntax::MAX_EXPRESSIONS_PER_PROJECT
-            {
-                return Err(resource("project syntax inventory exceeds protocol-v2 limit"));
+            if parser.diagnostics.is_empty() {
+                functions.push(function);
+            } else {
+                diagnostics.append(&mut parser.diagnostics);
             }
-            functions.push(function);
         }
         files.push(syntax::RawSourceUnit {
             id: file.id().index(),
@@ -166,7 +180,7 @@ fn parse_v2_internal(
     Ok(syntax::RawProjectSyntaxSnapshot {
         schema_version: syntax::PROTOCOL_VERSION,
         files,
-        diagnostics,
+        diagnostics: diagnostics.finish(),
     })
 }
 
@@ -176,6 +190,13 @@ struct FileParser<'a> {
     tokens: Vec<Token>,
     position: usize,
     file: u32,
+    recovering: bool,
+    diagnostics: recovery::Diagnostics,
+    parameter_count: usize,
+    statement_count: usize,
+    previous_parameters: usize,
+    previous_statements: usize,
+    previous_expressions: usize,
 }
 
 #[derive(Clone, Copy)]
@@ -186,14 +207,17 @@ enum AnnotationContext {
 
 impl FileParser<'_> {
     fn starts_function(&self) -> bool {
-        self.current().is_some_and(|token| token.kind() == TokenKind::Keyword(Keyword::Export))
-            && self
-                .tokens
-                .get(self.position + 1)
-                .is_some_and(|token| token.kind() == TokenKind::Keyword(Keyword::Function))
+        self.current().is_some_and(|token| token.kind() == TokenKind::Keyword(Keyword::Function))
+            || self
+                .current()
+                .is_some_and(|token| token.kind() == TokenKind::Keyword(Keyword::Export))
+                && self
+                    .tokens
+                    .get(self.position + 1)
+                    .is_some_and(|token| token.kind() == TokenKind::Keyword(Keyword::Function))
     }
 
-    fn error_between(&self, first: Token, last: Token, message: &'static str) -> ParseError {
+    fn error_between(&self, first: Token, last: Token, message: impl Into<String>) -> ParseError {
         let span =
             UntrustedSpan { file: self.file, start: first.span().start(), end: last.span().end() };
         self.sources.verify_span(span).map_or_else(
@@ -274,12 +298,15 @@ impl FileParser<'_> {
             TokenKind::Identifier => {}
             _ => return Err(self.error_here("ZRYNA-F2002", "unsupported type annotation")),
         }
+        if let Some(annotation) = self.recover_complex_annotation(&context)? {
+            return Ok(annotation);
+        }
         if let Some(kind) = recovery::primitive_kind(self.spelling(token)) {
             let context = match context {
                 AnnotationContext::Parameter(index) => format!("parameter {index} annotation"),
                 AnnotationContext::Result(index) => format!("function {index} result annotation"),
             };
-            return Err(ParseError {
+            let error = ParseError {
                 primary: Diagnostic::error_at(
                     "ZRYNA-F2002",
                     token.span(),
@@ -287,7 +314,11 @@ impl FileParser<'_> {
                     "use only the documented protocol-v2 bootstrap syntax",
                 ),
                 following: None,
-            });
+            };
+            if !self.recovering {
+                return Err(error);
+            }
+            self.retain_error(&error);
         }
         if matches!(self.spelling(token), "infer" | "keyof" | "readonly" | "unique") {
             return Err(error_at(token, "ZRYNA-F2002", "unsupported type annotation"));
@@ -297,122 +328,6 @@ impl FileParser<'_> {
             span: raw(token),
             kind: syntax::RawTypeSyntaxKind::Named { name: self.spelling(token).to_owned() },
         })
-    }
-
-    fn function(&mut self, index: usize) -> Result<syntax::RawFunctionSyntax, ParseError> {
-        let export = self.take(TokenKind::Keyword(Keyword::Export))?;
-        let keyword = self.take(TokenKind::Keyword(Keyword::Function))?;
-        let name = self.identifier()?;
-        let (parameters, parameter_end) = self.parameters()?;
-        let result_type = self.annotation(parameter_end, AnnotationContext::Result(index))?;
-        let open = self.take(TokenKind::OpenBrace)?;
-        let mut statements = Vec::new();
-        let mut expressions = Vec::new();
-        while self.current().is_some_and(|token| token.kind() != TokenKind::CloseBrace) {
-            if statements.len() >= syntax::MAX_STATEMENTS_PER_FUNCTION {
-                return Err(self.error_here(
-                    "ZRYNA-F2003",
-                    "function statement inventory exceeds protocol-v2 limit",
-                ));
-            }
-            let keyword = self.take(TokenKind::Keyword(Keyword::Return))?;
-            if self.current().is_some_and(|next| {
-                has_line_break(self.text, keyword.span().end(), next.span().start())
-            }) {
-                let mut error = self.error_between(
-                    keyword,
-                    keyword,
-                    "statement uses unsupported syntax 'ReturnStatement'",
-                );
-                error.following = recovery::newline_expression_statement(self).map(Box::new);
-                return Err(error);
-            }
-            let expression_start = self.position;
-            let value = expression::addition(self, &mut expressions)?;
-            if self.position == expression_start {
-                return Err(self.error_here("ZRYNA-F2002", "return value is missing"));
-            }
-            let root = &expressions[value as usize];
-            let statement_end = if let Some(semicolon) = self.maybe(TokenKind::Semicolon) {
-                semicolon.span().end()
-            } else if self.current().is_some_and(|next| {
-                next.kind() == TokenKind::CloseBrace
-                    || (next.kind() == TokenKind::Keyword(Keyword::Return)
-                        && has_line_break(self.text, root.span.end, next.span().start()))
-            }) {
-                root.span.end
-            } else {
-                return Err(self.error_here("ZRYNA-F2002", "missing return statement terminator"));
-            };
-            statements.push(syntax::RawStatementSyntax {
-                span: UntrustedSpan {
-                    file: self.file,
-                    start: keyword.span().start(),
-                    end: statement_end,
-                },
-                kind: syntax::RawStatementKind::Return { keyword_span: raw(keyword), value },
-            });
-        }
-        let close = self.take(TokenKind::CloseBrace)?;
-        Ok(syntax::RawFunctionSyntax {
-            span: UntrustedSpan {
-                file: self.file,
-                start: export.span().start(),
-                end: close.span().end(),
-            },
-            export_span: raw(export),
-            function_span: raw(keyword),
-            name,
-            parameters,
-            result_type,
-            body: syntax::RawFunctionBodySyntax {
-                span: UntrustedSpan {
-                    file: self.file,
-                    start: open.span().start(),
-                    end: close.span().end(),
-                },
-                statements,
-                expressions,
-            },
-        })
-    }
-
-    fn parameters(&mut self) -> Result<(Vec<syntax::RawParameterSyntax>, u32), ParseError> {
-        let open_paren = self.take(TokenKind::OpenParen)?;
-        let mut parameter_end = open_paren.span().end();
-        let mut parameters = Vec::new();
-        if self.current().is_some_and(|token| token.kind() != TokenKind::CloseParen) {
-            loop {
-                if parameters.len() >= syntax::MAX_PARAMETERS_PER_FUNCTION {
-                    return Err(self.error_here(
-                        "ZRYNA-F2003",
-                        "function parameter inventory exceeds protocol-v2 limit",
-                    ));
-                }
-                let name = self.identifier()?;
-                let type_syntax =
-                    self.annotation(name.span.end, AnnotationContext::Parameter(parameters.len()))?;
-                parameter_end = type_syntax.span.end;
-                parameters.push(syntax::RawParameterSyntax {
-                    span: UntrustedSpan {
-                        file: self.file,
-                        start: name.span.start,
-                        end: type_syntax.span.end,
-                    },
-                    name,
-                    type_syntax,
-                });
-                let Some(comma) = self.maybe(TokenKind::Comma) else {
-                    break;
-                };
-                parameter_end = comma.span().end();
-                if self.current().is_some_and(|token| token.kind() == TokenKind::CloseParen) {
-                    break;
-                }
-            }
-        }
-        self.take(TokenKind::CloseParen)?;
-        Ok((parameters, parameter_end))
     }
 }
 
@@ -447,20 +362,18 @@ fn error_at(token: Token, code: &'static str, message: &'static str) -> ParseErr
 }
 
 fn resource(message: &'static str) -> ParseError {
-    failure("ZRYNA-F2003", message)
+    failure("ZRYNA-F1002", message)
 }
 
-fn reserve_function(
-    parser: &FileParser<'_>,
-    file_count: usize,
-    project_count: usize,
-) -> Result<(), ParseError> {
+fn reserve_function(file_count: usize, project_count: usize) -> Result<(), ParseError> {
     if file_count >= syntax::MAX_FUNCTIONS_PER_FILE
         || project_count >= syntax::MAX_FUNCTIONS_PER_PROJECT
     {
-        return Err(
-            parser.error_here("ZRYNA-F2003", "function inventory exceeds protocol-v2 limit")
-        );
+        return Err(resource(if file_count >= syntax::MAX_FUNCTIONS_PER_FILE {
+            "source file exceeds the function limit"
+        } else {
+            "project exceeds the function limit"
+        }));
     }
     Ok(())
 }

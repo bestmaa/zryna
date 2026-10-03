@@ -44,6 +44,15 @@ pub fn parse_v3_straight_line_candidate(
     sources: &SourceMap,
     lexed: &LexedProject,
 ) -> Result<syntax::RawProjectSyntaxSnapshot, ParseError> {
+    parse_candidate(sources, lexed).map_err(|error| ParseError {
+        diagnostic: super::super::rejection::diagnostic(sources, lexed, error.diagnostic, 3),
+    })
+}
+
+fn parse_candidate(
+    sources: &SourceMap,
+    lexed: &LexedProject,
+) -> Result<syntax::RawProjectSyntaxSnapshot, ParseError> {
     if !lexed.is_bound_to(sources) || lexed.files().len() != sources.len() {
         return Err(failure("native tokens do not belong to this source map"));
     }
@@ -72,23 +81,20 @@ pub fn parse_v3_straight_line_candidate(
             .verify_span(UntrustedSpan { file: file.id().index(), start: end, end })
             .map_err(|_| failure("native source EOF is unavailable"))?;
         let mut parser = FileParser {
+            sources,
             text: source.text(),
             tokens: file.tokens().collect(),
             position: 0,
             file: file.id().index(),
             eof,
         };
-        enforce_source_nesting(&parser.tokens)?;
+        parser.source_diagnostics()?;
         let mut imports = Vec::new();
         let mut functions = Vec::new();
         while let Some(token) = parser.current() {
             match token.kind() {
                 TokenKind::Keyword(Keyword::Import) if functions.is_empty() => {
-                    if imports.len() >= syntax::MAX_IMPORTS_PER_MODULE
-                        || total_imports >= syntax::MAX_IMPORTS_PER_PROJECT
-                    {
-                        return Err(resource("import inventory exceeds protocol-v3 limit"));
-                    }
+                    import_room(imports.len(), total_imports)?;
                     let import = parser.import(total_bindings)?;
                     total_imports += 1;
                     total_bindings += import.bindings.len();
@@ -98,7 +104,13 @@ pub fn parse_v3_straight_line_candidate(
                     if functions.len() >= syntax::MAX_FUNCTIONS_PER_MODULE
                         || total_functions >= syntax::MAX_FUNCTIONS_PER_PROJECT
                     {
-                        return Err(resource("function inventory exceeds protocol-v3 limit"));
+                        return Err(resource(
+                            if functions.len() >= syntax::MAX_FUNCTIONS_PER_MODULE {
+                                "module exceeds the function limit"
+                            } else {
+                                "project exceeds the function limit"
+                            },
+                        ));
                     }
                     let function = parser.function(
                         total_parameters,
@@ -143,6 +155,20 @@ pub fn parse_v3_straight_line_candidate(
 }
 
 impl FileParser<'_> {
+    fn source_diagnostics(&self) -> Result<(), ParseError> {
+        enforce_source_nesting(&self.tokens)?;
+        if let Some(diagnostic) = super::super::rejection::malformed_file(
+            self.sources,
+            self.text,
+            &self.tokens,
+            self.file,
+            3,
+        ) {
+            return Err(ParseError { diagnostic });
+        }
+        Ok(())
+    }
+
     fn function_error_here(&self, message: &'static str) -> ParseError {
         self.current().map_or_else(
             || ParseError {
@@ -175,6 +201,9 @@ impl FileParser<'_> {
     fn named_type(&mut self) -> Result<syntax::RawTypeSyntax, ParseError> {
         self.function_take(TokenKind::Colon)?;
         let token = self.function_take(TokenKind::Identifier)?;
+        if super::super::recovery::primitive_kind(self.spelling(token)).is_some() {
+            return Err(function_error_at(token, "unsupported primitive type annotation"));
+        }
         Ok(syntax::RawTypeSyntax {
             span: raw(token),
             kind: syntax::RawTypeSyntaxKind::Named { name: self.spelling(token).to_owned() },
@@ -285,13 +314,35 @@ impl FileParser<'_> {
         let keyword = self.function_take(TokenKind::Keyword(Keyword::Function))?;
         let name = self.function_identifier()?;
         self.function_take(TokenKind::OpenParen)?;
+        let count = super::super::collections::separated_bounds(
+            &self.tokens,
+            self.position - 1,
+            TokenKind::Comma,
+            true,
+        )
+        .map_or(0, |(_, count)| count);
+        if count > syntax::MAX_PARAMETERS_PER_FUNCTION
+            || previous_parameters + count > syntax::MAX_PARAMETERS_PER_PROJECT
+        {
+            return Err(resource(if count > syntax::MAX_PARAMETERS_PER_FUNCTION {
+                "function exceeds the parameter limit"
+            } else {
+                "project exceeds the parameter limit"
+            }));
+        }
         let mut parameters = Vec::new();
         if self.current().is_some_and(|token| token.kind() != TokenKind::CloseParen) {
             loop {
                 if parameters.len() >= syntax::MAX_PARAMETERS_PER_FUNCTION
                     || previous_parameters + parameters.len() >= syntax::MAX_PARAMETERS_PER_PROJECT
                 {
-                    return Err(resource("parameter inventory exceeds protocol-v3 limit"));
+                    return Err(resource(
+                        if parameters.len() >= syntax::MAX_PARAMETERS_PER_FUNCTION {
+                            "function exceeds the parameter limit"
+                        } else {
+                            "project exceeds the parameter limit"
+                        },
+                    ));
                 }
                 let name = self.function_identifier()?;
                 let type_syntax = self.optional_type(name.span.end)?;
@@ -369,4 +420,15 @@ fn resource(message: &'static str) -> ParseError {
             "keep the candidate within protocol-v3 resource limits",
         ),
     }
+}
+
+fn import_room(count: usize, total_imports: usize) -> Result<(), ParseError> {
+    if count >= syntax::MAX_IMPORTS_PER_MODULE || total_imports >= syntax::MAX_IMPORTS_PER_PROJECT {
+        return Err(resource(if count >= syntax::MAX_IMPORTS_PER_MODULE {
+            "module exceeds the import-declaration limit"
+        } else {
+            "project exceeds the import-declaration limit"
+        }));
+    }
+    Ok(())
 }

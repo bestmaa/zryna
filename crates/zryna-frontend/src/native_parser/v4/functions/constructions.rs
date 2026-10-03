@@ -20,6 +20,11 @@ impl FileParser<'_> {
         let dot = self.take(TokenKind::Dot)?;
         let variant = self.identifier()?;
         let open = self.take(TokenKind::OpenParen)?;
+        if super::super::super::collections::bounds(&self.tokens, self.position - 1)
+            .is_some_and(|(_, count)| count > 1)
+        {
+            return Err(unsupported(Some(open), "unsupported enum construction"));
+        }
         let (payload, depth) =
             if self.current().is_some_and(|token| token.kind() != TokenKind::CloseParen) {
                 let (id, depth) = self.binary_expression(body, nesting + 1)?;
@@ -55,13 +60,28 @@ impl FileParser<'_> {
     ) -> Result<(u32, u32), ParseError> {
         let type_name = self.identifier()?;
         let open_paren = self.take(TokenKind::OpenParen)?;
+        if let Some((_, count)) =
+            super::super::super::collections::bounds(&self.tokens, self.position - 1)
+            && count != 1
+        {
+            return Err(if count > syntax::MAX_PARAMETERS_PER_FUNCTION {
+                resource("call exceeds the argument limit")
+            } else {
+                unsupported(self.current(), "unsupported aggregate construction")
+            });
+        }
         let open_brace = self.take(TokenKind::OpenBrace)?;
+        let count = self.collection_count(
+            syntax::MAX_INITIALIZERS_PER_CONSTRUCTION,
+            "struct construction exceeds the initializer limit",
+        )?;
+        self.count_aggregate_operands(count)?;
         let mut fields = Vec::new();
         let mut seen = BTreeSet::new();
         let mut depth = 0;
         while self.current().is_some_and(|token| token.kind() != TokenKind::CloseBrace) {
             if fields.len() >= syntax::MAX_INITIALIZERS_PER_CONSTRUCTION {
-                return Err(resource("struct initializer inventory exceeds protocol-v4 limit"));
+                return Err(resource("struct construction exceeds the initializer limit"));
             }
             let name = self.identifier()?;
             if !seen.insert(name.text.clone()) {
@@ -102,7 +122,6 @@ impl FileParser<'_> {
         }
         let close_brace = self.take(TokenKind::CloseBrace)?;
         let close_paren = self.take(TokenKind::CloseParen)?;
-        self.count_aggregate_operands(fields.len())?;
         let span = UntrustedSpan {
             file: self.file,
             start: type_name.span.start,
@@ -163,14 +182,31 @@ impl FileParser<'_> {
         let type_start = self.position;
         let first = self.current().expect("typed construction name");
         let is_vec = self.spelling(first) == "Vec";
+        if super::super::super::collections::bounds(&self.tokens, type_end)
+            .is_some_and(|(_, count)| count != 1)
+        {
+            return Err(unsupported(Some(first), "unsupported typed construction"));
+        }
+        let types = super::super::super::collections::generic_arguments(
+            &self.tokens,
+            type_start + 1,
+            type_end,
+        );
+        if types != if is_vec { 1 } else { 2 } {
+            return Err(unsupported(Some(first), "unsupported typed construction"));
+        }
         self.position = type_end;
         let open_paren = self.take(TokenKind::OpenParen)?;
         let open_bracket = self.take(TokenKind::OpenBracket)?;
+        self.collection_count(
+            syntax::MAX_ELEMENTS_PER_CONSTRUCTION,
+            "array construction exceeds the element limit",
+        )?;
         let mut elements = Vec::new();
         let mut depth = 0;
         while self.current().is_some_and(|token| token.kind() != TokenKind::CloseBracket) {
             if elements.len() >= syntax::MAX_ELEMENTS_PER_CONSTRUCTION {
-                return Err(resource("array element inventory exceeds protocol-v4 limit"));
+                return Err(resource("array construction exceeds the element limit"));
             }
             let (element, element_depth) = self.binary_expression(body, nesting + 1)?;
             elements.push(element);
@@ -220,9 +256,22 @@ impl FileParser<'_> {
     fn count_aggregate_operands(&mut self, count: usize) -> Result<(), ParseError> {
         self.aggregate_operands += count;
         if self.aggregate_operands > syntax::MAX_AGGREGATE_OPERANDS_PER_PROJECT {
-            return Err(resource("aggregate operand inventory exceeds protocol-v4 limit"));
+            return Err(resource("project exceeds the aggregate-construction operand limit"));
         }
         Ok(())
+    }
+
+    pub(super) fn collection_count(
+        &self,
+        maximum: usize,
+        message: &'static str,
+    ) -> Result<usize, ParseError> {
+        let (_, count) = super::super::super::collections::bounds(&self.tokens, self.position - 1)
+            .ok_or_else(|| unsupported(self.current(), "unclosed collection"))?;
+        if count > maximum {
+            return Err(resource(message));
+        }
+        Ok(count)
     }
 
     pub(super) fn match_expression(
@@ -232,17 +281,25 @@ impl FileParser<'_> {
     ) -> Result<(u32, u32), ParseError> {
         let keyword = self.take(TokenKind::Identifier)?;
         let open_paren = self.take(TokenKind::OpenParen)?;
+        if super::super::super::collections::bounds(&self.tokens, self.position - 1)
+            .is_some_and(|(_, count)| count != 2)
+        {
+            return Err(unsupported(Some(keyword), "unsupported match expression"));
+        }
         let (scrutinee, mut depth) = self.binary_expression(body, nesting + 1)?;
         self.take(TokenKind::Comma)?;
         let open_brace = self.take(TokenKind::OpenBrace)?;
+        let count = self.collection_count(
+            syntax::MAX_MATCH_ARMS_PER_EXPRESSION,
+            "match exceeds the arm limit",
+        )?;
+        self.match_arms += count;
+        if self.match_arms > syntax::MAX_MATCH_ARMS_PER_PROJECT {
+            return Err(resource("project exceeds the match-arm limit"));
+        }
         let mut arms = Vec::new();
         let mut seen = BTreeSet::new();
         while self.current().is_some_and(|token| token.kind() != TokenKind::CloseBrace) {
-            if arms.len() >= syntax::MAX_MATCH_ARMS_PER_EXPRESSION
-                || self.match_arms + arms.len() >= syntax::MAX_MATCH_ARMS_PER_PROJECT
-            {
-                return Err(resource("match arm inventory exceeds protocol-v4 limit"));
-            }
             let (arm, value_depth) = self.match_arm(body, nesting, &mut seen)?;
             depth = depth.max(value_depth);
             arms.push(arm);
@@ -252,7 +309,6 @@ impl FileParser<'_> {
         }
         let close_brace = self.take(TokenKind::CloseBrace)?;
         let close_paren = self.take(TokenKind::CloseParen)?;
-        self.match_arms += arms.len();
         let span = UntrustedSpan {
             file: self.file,
             start: keyword.span().start(),
