@@ -204,25 +204,19 @@ fn generated_edge(
     let Err(position) = builder.generated.binary_search(&(from, to)) else {
         return Ok(());
     };
-    if let TypeShape::Nominal(target) = builder.types[to].shape
-        && builder.generic(builder.types[to].shape)
-    {
-        let mut pending = super::reserve(builder.types.len())?;
-        let mut visited = super::reserve(builder.types.len())?;
-        visited.resize(builder.types.len(), false);
-        pending.push(from);
-        while let Some(id) = pending.pop() {
-            if visited[id] {
-                continue;
-            }
-            visited[id] = true;
-            if builder.types[id].shape == TypeShape::Nominal(target) && id != to {
-                return Err(failure(builder.bodies,"ZRYNA-M7003",at,"declaration-generated application repeats a generic declaration with different closed arguments".into()));
-            }
-            for &parent in &builder.generated_reverse[id] {
-                push(&mut pending, parent)?;
-            }
+    if let Some(path) = super::expansion::path(builder, from, to)? {
+        let mut witness = super::reserve(path.len())?;
+        for id in path {
+            witness.push(super::copy_bytes(&builder.types[id].key)?);
         }
+        return Err(failure(
+            builder.bodies,
+            "ZRYNA-M7003",
+            at,
+            format!(
+                "declaration-generated application repeats a generic declaration with different closed arguments; canonical retained-graph path {witness:?}"
+            ),
+        ));
     }
     builder.generated.try_reserve(1).map_err(|_| InstantiationFailure::AllocationFailure)?;
     builder.generated_reverse[to]

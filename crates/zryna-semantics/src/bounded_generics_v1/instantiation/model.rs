@@ -42,6 +42,7 @@ pub(super) struct Builder<'b, 'c, 's> {
     pub(super) generated_reverse: Vec<Vec<usize>>,
     pub(super) argument_uses: Vec<(usize, Option<UntrustedSpan>)>,
     pub(super) bounds: super::value_bounds::Bounds,
+    pub(super) errors: super::diagnostics::Errors,
     generic_data: usize,
     generic_functions: usize,
 }
@@ -59,6 +60,7 @@ impl<'b, 'c, 's> Builder<'b, 'c, 's> {
             generated_reverse: Vec::new(),
             argument_uses: Vec::new(),
             bounds: super::value_bounds::Bounds::new(bodies)?,
+            errors: super::diagnostics::Errors::default(),
             generic_data: 0,
             generic_functions: 0,
         };
@@ -102,21 +104,23 @@ impl<'b, 'c, 's> Builder<'b, 'c, 's> {
         };
         let generic = self.generic(node.shape);
         if generic && self.generic_data == MAX_DATA_INSTANCES {
-            return Err(budget(
+            return Err(super::budget_key(
                 self.bodies,
                 "closed generic data instances",
                 MAX_DATA_INSTANCES,
                 self.generic_data + 1,
                 at,
+                &node.key,
             ));
         }
         if self.types.len() == zryna_layout::MAX_TYPE_NODES {
-            return Err(budget(
+            return Err(super::budget_key(
                 self.bodies,
                 "closed types",
                 zryna_layout::MAX_TYPE_NODES,
                 self.types.len() + 1,
                 at,
+                &node.key,
             ));
         }
         self.type_order.try_reserve(1).map_err(|_| InstantiationFailure::AllocationFailure)?;
@@ -161,12 +165,13 @@ impl<'b, 'c, 's> Builder<'b, 'c, 's> {
             return Ok(self.function_order[index.expect("found function")]);
         };
         if generic && self.generic_functions == MAX_FUNCTION_INSTANCES {
-            return Err(budget(
+            return Err(super::budget_key(
                 self.bodies,
                 "closed generic functions",
                 MAX_FUNCTION_INSTANCES,
                 self.generic_functions + 1,
                 at,
+                &key,
             ));
         }
         self.function_order.try_reserve(1).map_err(|_| InstantiationFailure::AllocationFailure)?;
@@ -188,12 +193,13 @@ impl<'b, 'c, 's> Builder<'b, 'c, 's> {
             .binary_search_by(|(a, b)| a.as_slice().cmp(from).then_with(|| b.as_slice().cmp(to)));
         if let Err(position) = search {
             if self.edges.len() == MAX_EDGES {
-                return Err(budget(
+                return Err(super::budget_key(
                     self.bodies,
                     "instantiation edges",
                     MAX_EDGES,
                     self.edges.len() + 1,
                     at,
+                    to,
                 ));
             }
             let mut a = reserve(from.len())?;
@@ -212,12 +218,14 @@ impl<'b, 'c, 's> Builder<'b, 'c, 's> {
         at: Option<UntrustedSpan>,
     ) -> Result<(), InstantiationFailure> {
         if !self.types[id].value {
-            return Err(super::failure(
+            self.errors.at(
                 self.bodies,
                 "ZRYNA-M7001",
                 at,
+                &self.types[id].key,
+                &[],
                 "closed argument contains a non-storable nominal member".into(),
-            ));
+            )?;
         }
         let order = at.map_or((1, 0, 0, 0), |at| (0, at.file, at.start, at.end));
         let search = self.argument_uses.binary_search_by(|(other, span)| {
@@ -234,7 +242,18 @@ impl<'b, 'c, 's> Builder<'b, 'c, 's> {
         Ok(())
     }
 
+    pub(super) fn check_errors(&mut self) -> Result<(), InstantiationFailure> {
+        if self.errors.is_empty() {
+            return Ok(());
+        }
+        let errors = std::mem::take(&mut self.errors);
+        Err(InstantiationFailure::Diagnostics(errors.finish()?))
+    }
+
     pub(super) fn finish(self) -> Result<InstanceContext<'b, 'c, 's>, InstantiationFailure> {
+        if !self.errors.is_empty() {
+            return Err(InstantiationFailure::InternalFailure);
+        }
         let mut function_order = reserve(self.generic_functions)?;
         for id in self.function_order {
             if self.functions[id].generic {

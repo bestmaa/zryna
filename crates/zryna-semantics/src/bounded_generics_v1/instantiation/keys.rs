@@ -5,16 +5,7 @@ pub(super) fn encode(
     lanes: &[u32],
     children: &[&[u8]],
 ) -> Result<(Vec<u8>, usize), InstantiationFailure> {
-    let size = children.iter().try_fold(
-        1usize
-            .checked_add(lanes.len().checked_mul(4).ok_or(InstantiationFailure::InternalFailure)?)
-            .ok_or(InstantiationFailure::InternalFailure)?,
-        |size, child| {
-            size.checked_add(4)
-                .and_then(|size| size.checked_add(child.len()))
-                .ok_or(InstantiationFailure::InternalFailure)
-        },
-    )?;
+    let size = encoded_size(lanes.len(), children.iter().map(|child| child.len()))?;
     // The caller supplies the authenticated location for a key-size failure.
     if size > MAX_KEY_BYTES {
         return Ok((Vec::new(), size));
@@ -33,4 +24,20 @@ pub(super) fn encode(
         key.extend_from_slice(child);
     }
     Ok((key, size))
+}
+
+pub(super) fn encoded_size(
+    lanes: usize,
+    mut children: impl Iterator<Item = usize>,
+) -> Result<usize, InstantiationFailure> {
+    children.try_fold(
+        1usize
+            .checked_add(lanes.checked_mul(4).ok_or(InstantiationFailure::InternalFailure)?)
+            .ok_or(InstantiationFailure::InternalFailure)?,
+        |size, child| {
+            size.checked_add(4)
+                .and_then(|size| size.checked_add(child))
+                .ok_or(InstantiationFailure::InternalFailure)
+        },
+    )
 }

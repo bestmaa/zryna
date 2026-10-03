@@ -36,6 +36,15 @@ are not source-admissible-program claims. Canonical whole-phase diagnostic colle
 offending-path/key witnesses and overflow conformance still need acceptance coverage. A passing
 producer fixture is not proof of a hostile layout/IR verifier boundary.
 
+The next continuation collects independent original source-call cycles and invalid closed
+arguments in bounded canonical order, deduplicating the complete span/code/key/numeric tuple.
+Source-backed checks exercise the 255 ordinary plus reserved terminal diagnostic boundary and
+prove invalid supplied arguments stop before generated expansion. Retained generated graphs now
+carry a complete simple path selected by unsigned key order; a separate synthetic exhaustive
+four-node graph oracle checks selection independently of edge insertion order. Synthetic key
+size and inventory arithmetic checks reject overflow without allocation or wraparound. These
+checks do not establish complete whole-phase generated-error or resource witness conformance.
+
 Successor sealed layouts on both storage targets, separately versioned closed raw-IR tags and
 hostile decoding, ownership/loan/drop plans, real Option/Result construction and matching,
 runtime fault traces, JS/Wasm/native execution, provider parity and driver/profile admission

@@ -9,11 +9,16 @@ use zryna_source::UntrustedSpan;
 use super::body_types::{BodyTypeContext, TypeShape, TypeView};
 use super::{DeclarationIdentity, DeclarationKind};
 
+#[cfg(test)]
+mod diagnostic_tests;
+mod diagnostics;
 mod discovery;
+mod expansion;
 mod keys;
 mod model;
 #[cfg(test)]
 mod resource_tests;
+mod source_calls;
 #[cfg(test)]
 mod tests;
 mod types;
@@ -95,10 +100,12 @@ pub fn discover<'b, 'c, 's>(
     bodies: &'b BodyTypeContext<'c, 's>,
 ) -> Result<InstanceContext<'b, 'c, 's>, InstantiationFailure> {
     let mut builder = Builder::new(bodies)?;
-    discovery::source_calls(&builder)?;
+    source_calls::check(&builder)?;
     discovery::roots(&mut builder)?;
+    builder.check_errors()?;
     discovery::pending(&mut builder)?;
     discovery::value_arguments(&mut builder)?;
+    builder.check_errors()?;
     builder.finish()
 }
 
@@ -132,7 +139,13 @@ fn failure(
     at: Option<UntrustedSpan>,
     message: String,
 ) -> InstantiationFailure {
-    let span = at.and_then(|at| bodies.declarations().sources().verify_span(at).ok());
+    let span = match at {
+        Some(at) => match bodies.declarations().sources().verify_span(at) {
+            Ok(span) => Some(span),
+            Err(_) => return InstantiationFailure::InternalFailure,
+        },
+        None => None,
+    };
     let guidance = "use the admitted bounded closed-instantiation graph";
     let diagnostic = match span {
         Some(span) => Diagnostic::error_at(code, span, message, guidance),
@@ -149,4 +162,23 @@ fn budget(
     at: Option<UntrustedSpan>,
 ) -> InstantiationFailure {
     failure(bodies, "ZRYNA-M7201", at, format!("{metric} limit {limit}; rejected count {actual}"))
+}
+
+fn budget_key(
+    bodies: &BodyTypeContext<'_, '_>,
+    metric: &str,
+    limit: usize,
+    actual: usize,
+    at: Option<UntrustedSpan>,
+    key: &[u8],
+) -> InstantiationFailure {
+    if at.is_none() {
+        return budget(bodies, metric, limit, actual, at);
+    }
+    failure(
+        bodies,
+        "ZRYNA-M7201",
+        at,
+        format!("{metric} limit {limit}; rejected count {actual}; canonical offending key {key:?}"),
+    )
 }

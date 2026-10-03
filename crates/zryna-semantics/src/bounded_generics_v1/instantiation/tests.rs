@@ -5,7 +5,7 @@ use zryna_source::NormalizedSourcePath;
 
 type Inventory = (Vec<Vec<u8>>, Vec<Vec<u8>>, usize);
 
-fn check(files: &[(&str, &str)]) -> Result<Inventory, InstantiationFailure> {
+pub(super) fn check(files: &[(&str, &str)]) -> Result<Inventory, InstantiationFailure> {
     let input = project(files);
     let entry = input
         .sources

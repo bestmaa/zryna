@@ -1,74 +1,7 @@
 use super::model::{Builder, Environment};
 use super::types;
-use super::{DeclarationKind, InstantiationFailure, failure, push, reserve};
+use super::{DeclarationKind, InstantiationFailure, push, reserve};
 use zryna_syntax::v5::{RawDataDeclarationKind, RawExpressionKind};
-
-pub(super) fn source_calls(builder: &Builder<'_, '_, '_>) -> Result<(), InstantiationFailure> {
-    let declarations = builder.bodies.declarations();
-    let mut owners = reserve(super::checked_count(
-        declarations.syntax().files().iter().map(|file| file.functions.len()),
-    )?)?;
-    owners.extend(
-        declarations
-            .modules()
-            .flat_map(super::super::ModuleView::functions)
-            .map(super::super::DeclarationView::identity),
-    );
-    let mut edges = reserve(owners.len())?;
-    edges.resize_with(owners.len(), Vec::new);
-    for (index, owner) in owners.iter().enumerate() {
-        let function = &builder.bodies.declarations().syntax().files()
-            [owner.module().index() as usize]
-            .functions[owner.source_index() as usize];
-        for expression in &function.body.expressions {
-            if let RawExpressionKind::Call { callee, .. } = &expression.kind
-                && let Some(target) = builder.target(*owner, &callee.text)
-                && target.kind() == DeclarationKind::Function
-            {
-                let to = owners
-                    .binary_search(&target)
-                    .map_err(|_| InstantiationFailure::InternalFailure)?;
-                push(&mut edges[index], (to, callee.span))?;
-            }
-        }
-    }
-    let mut states = reserve(owners.len())?;
-    states.resize(owners.len(), 0u8);
-    let mut stack = reserve(owners.len())?;
-    for root in 0..owners.len() {
-        if states[root] != 0 {
-            continue;
-        }
-        debug_assert!(stack.is_empty());
-        states[root] = 1;
-        stack.push((root, 0));
-        while let Some((index, next)) = stack.last_mut() {
-            if *next == edges[*index].len() {
-                states[*index] = 2;
-                stack.pop();
-                continue;
-            }
-            let (child, span) = edges[*index][*next];
-            *next += 1;
-            match states[child] {
-                1 => {
-                    return Err(failure(
-                        builder.bodies,
-                        "ZRYNA-M7003",
-                        Some(span),
-                        "source-level function recursion is excluded before specialization".into(),
-                    ));
-                }
-                0 => {
-                    states[child] = 1;
-                    push(&mut stack, (child, 0))?;
-                }
-                _ => {}
-            }
-        }
-    }
-    Ok(())
-}
 
 pub(super) fn roots(builder: &mut Builder<'_, '_, '_>) -> Result<(), InstantiationFailure> {
     let declarations = builder.bodies.declarations();
@@ -256,12 +189,14 @@ pub(super) fn value_arguments(
     }
     for &(id, at) in &builder.argument_uses {
         if !builder.types[id].value {
-            return Err(failure(
+            builder.errors.at(
                 builder.bodies,
                 "ZRYNA-M7001",
                 at,
+                &builder.types[id].key,
+                &[],
                 "closed argument contains a non-storable nominal member".into(),
-            ));
+            )?;
         }
     }
     Ok(())
