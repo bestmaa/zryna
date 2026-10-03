@@ -4,6 +4,8 @@
 //! It is not an executable implementation of the program's foreign wrappers or dispatcher.
 
 mod audit;
+/// Independently audited private scalar/handle entries with a shared foreign obligation ledger.
+pub mod resources;
 mod scalar;
 
 use cranelift_codegen::{

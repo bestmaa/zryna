@@ -153,8 +153,12 @@ total public scalar functions and independently audits the closed ELF inventory.
 retains the complete program. The driver consumes only that artifact for typed bounded scalar
 invocation through the existing GNU link/audit/cleanup boundary. Native C IR dependencies in
 backend and driver are dev-only for genuine recapture tests; normal production edges remain
-through native MIR. Imports, private entry execution, foreign resource accounting and public
-activation remain separate unfinished gates.
+through native MIR. A distinct backend handle artifact now emits exact selected private scalar/
+handle bodies, closed imported symbols and a shared 64-obligation private context, with nominal
+registration and checked reverse cleanup. Independent ELF mutation and driver C observation
+tests exercise that increment. The driver exposes only immutable exact linking requirements;
+reviewed fixture linkage is test-only. No foreign library/recipe execution grant, OS proof, private
+String/Vec or byte-copy execution, Windows C target or public activation follows from this stage.
 
 `zryna-semantics` is a compiler
 component and cannot depend on `zryna-frontend`; backends cannot depend on either provider layer.

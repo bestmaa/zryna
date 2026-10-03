@@ -94,3 +94,34 @@ ledger or safe wrapper. Focused evidence is `cargo test --locked -p zryna-backen
 native_c_v0`. Raw-to-verified MIR rejection remains independently tested by the MIR component.
 Driver linking and reverse C execution are a separate boundary. Neither this API nor its tests
 activate a public CLI profile or complete the #417 foreign-resource matrix.
+
+## Internal native C handle execution
+
+`native_c_v0::resources::emit_handle_entries` separately consumes the same immutable MIR seal.
+It selects exact private entry symbols and admits scalar inputs/results plus handle and i32 output
+slots. Private String/Vec storage, foreign byte copies and multi-owner creators reject before
+emission. Original unselected bodies and declaration/header/policy authorities remain retained.
+The finite aggregate emission inventory and existing 8 MiB object ceiling remain enforced.
+
+Generated entries execute original foreign calls, classify status before output reads, reserve
+capacity before C entry and share one 64-obligation compiler-private context. Successful non-null
+acquisitions register nominal owner/release identity before metadata exposure. Conditional reverse
+cleanup uses one checked same-library release body per operation; it marks a record as releasing
+before C entry and clears it only after confirmed return. Unknown or malformed outcomes poison
+the context and report unresolved live/reserved obligations. A process fault cannot produce a
+private outcome or establish cleanup. Private caller storage must be valid owned memory; pointer
+alignment and nominal checks do not make arbitrary in-process C memory corruption safe.
+
+An independent audit closes ELF sections, hidden entry/dispatcher definitions, local helper
+definitions, exact imported symbols and bounded non-overlapping relocation fields. Malformed
+ELF tests mutate sections, visibility, imports and relocations independently of the producer.
+Driver tests link the unchanged reviewed C observation fixture to generated bodies and check
+success, declared failures, reverse cleanup, 64/65 capacity, alias and release identity refusal,
+unknown status, null success and process-fault classification. Recoverable output snapshots detect
+changed bits; they cannot detect an identical-bit write or a missing write of zero. The captured
+library's reviewed initialization and failure-atomicity promises remain required.
+
+This artifact provides no foreign library acquisition, native recipe permission, OS containment,
+public CLI or Windows C target. The full #417 byte/private-owner and library proof matrix remains
+unfinished. Focus with `cargo test --locked -p zryna-backend-native --lib native_c_v0` and the
+driver's separate execution tests.

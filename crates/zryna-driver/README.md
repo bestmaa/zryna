@@ -238,5 +238,29 @@ Linux tests in `src/native/native_c_v0/tests.rs` link the independently authored
 exercise wrapping i32 arithmetic, zero/7/8/9/16 argument exports, C-int and Bool32, and reject wrong
 requests, missing symbols, header mismatches and noncanonical raw Boolean arguments. Run
 `cargo test --locked -p zryna-driver --lib native_c_v0`. The raw tiny-C fixture's manual resource
-cleanup is separate evidence: generated imports, safe resource wrappers, exactly-once foreign
-cleanup and exact library/recipe linkage remain unfinished #417 requirements.
+cleanup is separate evidence from the private handle execution increment below.
+
+## Internal native C handle linking requirements
+
+`native_c_v0::resource_identity::handle_link_requirements` retains the backend's independently
+audited private handle artifact and its complete original source/machine authority. It records
+exact object bytes, the generated private header and the established declaration-domain digest,
+plus exact retained header/policy hashes for every required library. The original artifact exposes
+selected entry ordinals and complete imported operation/signature/kind/allocator/release views.
+This immutable requirement record is a #405 integration input; it grants no foreign artifact,
+native recipe execution or OS isolation permission. Existing recipe denial remains in force.
+
+Linux-only `resource_tests` link independently captured C fixture bytes to real generated handle
+bodies through the existing retained GNU link/audit/process boundary. They observe successful
+read/open/close, declared failure with no output exposure, reverse automatic cleanup, later failure
+cleanup, 64 accepted acquisitions and refusal before the 65th foreign call. Independent fault
+wrappers test null/unknown/alias outcomes, corrupt nominal release identity and a process exit
+during release. Corrupt identity deliberately retains the obligation and allocation; it is refusal
+evidence without a leak-free claim. Sanitizer runs separately instrument the C fixture and caller
+for success/error and 64-owner cleanup; the generated machine object is not ASan-instrumented,
+and sanitizer executables do not acquire the production closed executable seal.
+
+These tests are private reviewed fixture linkage, not a production foreign-library or recipe
+linker API. Foreign bytes, private String/Vec copying, arbitrary native libraries, actual host
+authorization/containment and the full #417 acceptance matrix remain unfinished. No CLI selector,
+executable publication or Windows native C target is added.

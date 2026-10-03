@@ -8,6 +8,9 @@ use zryna_abi::{ScalarOutcome, ScalarValue};
 use zryna_backend_native::native_c_v0::ValidatedScalarExports;
 use zryna_diagnostics::Diagnostic;
 
+/// Immutable exact linking requirements for the separate private handle artifact.
+pub mod resource_identity;
+
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 use {
     std::{fmt::Write as _, sync::Arc},
@@ -168,3 +171,6 @@ fn request_error() -> Diagnostic {
 
 #[cfg(all(test, target_os = "linux", target_arch = "x86_64"))]
 mod tests;
+
+#[cfg(all(test, target_os = "linux", target_arch = "x86_64"))]
+mod resource_tests;
