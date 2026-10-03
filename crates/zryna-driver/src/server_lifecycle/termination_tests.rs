@@ -150,7 +150,7 @@ fn failure_cleanup_allows_reentrant_revocation_without_double_destruction() {
             self.destroyed.fetch_add(1, Ordering::SeqCst);
         }
     }
-    let server = Server::start(crate::Limits { requests: 3, ..limits() }).expect("start");
+    let mut server = Server::start(crate::Limits { requests: 3, ..limits() }).expect("start");
     let failed = server.admit(&input(b"fail")).expect("failing request");
     failed.retain(FailingDrop).expect("resource");
     let reentrant = server.admit(&input(b"body")).expect("reentrant request");
@@ -164,6 +164,12 @@ fn failure_cleanup_allows_reentrant_revocation_without_double_destruction() {
             destroyed: Arc::clone(&reentrant_drop),
         })
         .expect("reentrant resource");
+    // The stopped worker must finish before try_lock can diagnose a lock held by the
+    // retirement caller, rather than legitimate transient contention from that worker.
+    let worker = server.worker.take().expect("owned deadline worker");
+    *failed.shared.stop_hook.lock().expect("hook mutex") = Some(Box::new(move || {
+        assert_eq!(worker.join().expect("stopped deadline worker joined"), Ok(()));
+    }));
     assert_eq!(failed.cancellation().cancel(), Err(Error::Host));
     assert_eq!(reentrant_drop.load(Ordering::SeqCst), 1);
     assert_eq!(sibling_drop.load(Ordering::SeqCst), 1);

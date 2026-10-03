@@ -69,6 +69,8 @@ shutdown waiting, panic recovery and repeated startup. A one-shot test-only stop
 outside the mutex to deterministically check sibling revocation before cleanup and termination
 during response destruction; reentrant destruction checks that no mutex is held and no resource
 is destroyed twice. All original 21 cases remain, with three termination regressions added.
+The reentrancy assertion joins the owned deadline worker at the stopped boundary first,
+so unrelated worker contention cannot be mistaken for a mutex held across destruction.
 Those observations are distinct from
 WASI component execution, imported-capability enforcement and supported-host conformance.
 
