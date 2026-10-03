@@ -1,0 +1,134 @@
+[
+  {
+    "version": 2,
+    "name": "project-functions-16385",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the function limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 2,
+    "name": "project-statements-65537",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the statement limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "project-functions-16385",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the function limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "project-statements-65537",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the statement limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "project-imported-names-65537",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the imported-name limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "project-blocks-65537",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the lexical-block limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "project-functions-16385",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the function limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "project-imported-names-65537",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the imported-name limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "project-blocks-65537",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the lexical-block limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "project-declarations-16385",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the nominal-declaration limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "project-statements-65537",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the statement limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "project-aggregate-operands-65537",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "project exceeds the aggregate-construction operand limit",
+        "span": null
+      }
+    }
+  }
+]

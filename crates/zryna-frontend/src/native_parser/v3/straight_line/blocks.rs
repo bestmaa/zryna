@@ -106,7 +106,11 @@ impl FileParser<'_> {
         if statements.len() >= syntax::MAX_STATEMENTS_PER_FUNCTION
             || previous_statements + statements.len() >= syntax::MAX_STATEMENTS_PER_PROJECT
         {
-            return Err(resource("statement inventory exceeds protocol-v3 limit"));
+            return Err(resource(if statements.len() >= syntax::MAX_STATEMENTS_PER_FUNCTION {
+                "function exceeds the statement limit"
+            } else {
+                "project exceeds the statement limit"
+            }));
         }
         Ok(())
     }
@@ -118,7 +122,11 @@ impl FileParser<'_> {
         if blocks.len() >= syntax::MAX_BLOCKS_PER_FUNCTION
             || previous_blocks + blocks.len() >= syntax::MAX_BLOCKS_PER_PROJECT
         {
-            return Err(resource("block inventory exceeds protocol-v3 limit"));
+            return Err(resource(if blocks.len() >= syntax::MAX_BLOCKS_PER_FUNCTION {
+                "function exceeds the lexical-block limit"
+            } else {
+                "project exceeds the lexical-block limit"
+            }));
         }
         Ok(())
     }
@@ -252,7 +260,11 @@ impl FileParser<'_> {
                     if locals >= syntax::MAX_LOCALS_PER_FUNCTION
                         || previous_locals + locals >= syntax::MAX_LOCALS_PER_PROJECT
                     {
-                        return Err(resource("local inventory exceeds protocol-v3 limit"));
+                        return Err(resource(if locals >= syntax::MAX_LOCALS_PER_FUNCTION {
+                            "function exceeds the local limit"
+                        } else {
+                            "project exceeds the local limit"
+                        }));
                     }
                     let mutable = token.kind() == TokenKind::Keyword(Keyword::Let);
                     let statement = self.local_declaration(
