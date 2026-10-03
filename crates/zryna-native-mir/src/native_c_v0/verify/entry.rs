@@ -1,6 +1,11 @@
 //! Independent private-entry replay from original source; no producer routine is an oracle.
 
-use super::super::{MirError, abi::*, entry::*, raw, require};
+use super::super::{
+    MirError,
+    abi::{Location, Register},
+    entry::{ChannelLane, ChannelRole},
+    raw, require,
+};
 use std::collections::BTreeSet;
 use zryna_native_c_ir::VerifiedNativeCProgram;
 

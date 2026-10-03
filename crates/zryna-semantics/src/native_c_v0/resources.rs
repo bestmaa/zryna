@@ -64,149 +64,17 @@ pub(super) fn check(document: &DeclarationSet) -> Result<(), DeclarationError> {
             )?;
         }
         for (index, resource) in operation.resources.iter().enumerate() {
-            require(
-                !resource.slots.is_empty()
-                    && resource.slots.iter().all(|slot| {
-                        operation
-                            .parameters
-                            .get(usize::from(*slot))
-                            .is_some_and(|parameter| parameter.resource == Some(index as u8))
-                    }),
-                "ZRYNA-C4105",
-                "resource-slot",
-            )?;
-            require(resource.valid_pointer_guarantee, "ZRYNA-C4105", "pointer-guarantee")?;
-            match resource.access {
-                Access::Read => require(
-                    resource.owner_before == Owner::Caller
-                        && resource.owner_after == Owner::Caller
-                        && resource.borrow_end == BorrowEnd::Return
-                        && !resource.fresh
-                        && !resource.releasable_on_malformed
-                        && resource.expected_length_slot.is_none(),
-                    "ZRYNA-C4105",
-                    "read-owner-policy",
-                )?,
-                Access::Create => require(
-                    resource.owner_before == Owner::None
-                        && resource.owner_after == Owner::Caller
-                        && resource.borrow_end == BorrowEnd::None
-                        && resource.fresh
-                        && operation.mode == Mode::Status,
-                    "ZRYNA-C4105",
-                    "create-owner-policy",
-                )?,
-                Access::Consume => require(
-                    resource.owner_before == Owner::Caller
-                        && resource.owner_after == Owner::Consumed
-                        && resource.borrow_end == BorrowEnd::None
-                        && !resource.fresh
-                        && !resource.releasable_on_malformed
-                        && resource.expected_length_slot.is_none()
-                        && resource.release == operation.key
-                        && operation.mode == Mode::Void
-                        && operation.parameters.len() == 1
-                        && operation.resources.len() == 1,
-                    "ZRYNA-C4105",
-                    "consume-owner-policy",
-                )?,
-            }
-            let types: Vec<_> = resource
-                .slots
-                .iter()
-                .filter_map(|slot| {
-                    operation.parameters.get(usize::from(*slot)).map(|parameter| parameter.abi)
-                })
-                .collect();
-            if resource.allocator == "none" {
-                require(
-                    resource.kind == "borrowed-bytes"
-                        && resource.release == "none"
-                        && resource.access == Access::Read
-                        && resource.null_rule == NullRule::NullZero
-                        && resource.max_bytes.is_some()
-                        && resource.encoding != Encoding::None
-                        && types == [AbiType::BytesIn, AbiType::Count],
-                    "ZRYNA-C4105",
-                    "borrow-policy",
-                )?;
-                continue;
-            }
-            let allocator = library
-                .and_then(|library| {
-                    library.allocators.iter().find(|allocator| allocator.id == resource.allocator)
-                })
-                .ok_or(DeclarationError { code: "ZRYNA-C4105", detail: "allocator-pair" })?;
-            require(
-                allocator.kind == resource.kind
-                    && allocator.release == resource.release
-                    && (resource.access != Access::Create || allocator.create == operation.key),
-                "ZRYNA-C4105",
-                "allocator-pair",
-            )?;
-            if allocator.category == Category::Handle {
-                let expected = if resource.access == Access::Create {
-                    AbiType::HandleOut
-                } else {
-                    AbiType::HandleIn
-                };
-                require(
-                    types == [expected]
-                        && resource.null_rule == NullRule::Nonnull
-                        && resource.max_bytes.is_none()
-                        && resource.encoding == Encoding::None
-                        && resource.expected_length_slot.is_none(),
-                    "ZRYNA-C4105",
-                    "handle-policy",
-                )?;
-            } else {
-                require(
-                    resource.max_bytes.is_some() && resource.encoding != Encoding::None,
-                    "ZRYNA-C4105",
-                    "byte-policy",
-                )?;
-                if resource.access == Access::Create {
-                    require(
-                        types == [AbiType::BytesOwnedOut, AbiType::CountOut]
-                            && resource.null_rule == NullRule::NullZero,
-                        "ZRYNA-C4105",
-                        "byte-output-signature",
-                    )?;
-                    if let Some(count) = resource.expected_length_slot {
-                        require(
-                            operation
-                                .parameters
-                                .get(usize::from(count))
-                                .is_some_and(|parameter| parameter.abi == AbiType::Count)
-                                && operation.resources.iter().any(|input| {
-                                    input.kind == "borrowed-bytes"
-                                        && input.access == Access::Read
-                                        && input.slots.get(1) == Some(&count)
-                                        && input.max_bytes == resource.max_bytes
-                                        && input.encoding == resource.encoding
-                                }),
-                            "ZRYNA-C4105",
-                            "expected-length-slot",
-                        )?;
-                    }
-                } else {
-                    require(
-                        resource.access == Access::Consume
-                            && types == [AbiType::BytesRelease]
-                            && resource.null_rule == NullRule::Nonnull,
-                        "ZRYNA-C4105",
-                        "byte-release-signature",
-                    )?;
-                }
-            }
+            check_resource(operation, library, index, resource)?;
         }
         for (index, parameter) in operation.parameters.iter().enumerate() {
+            let index = u8::try_from(index)
+                .map_err(|_| DeclarationError { code: "ZRYNA-C4107", detail: "parameter-index" })?;
             if let Some(resource) = parameter.resource {
                 require(
                     operation
                         .resources
                         .get(usize::from(resource))
-                        .is_some_and(|resource| resource.slots.contains(&(index as u8))),
+                        .is_some_and(|resource| resource.slots.contains(&index)),
                     "ZRYNA-C4105",
                     "parameter-resource",
                 )?;
@@ -227,6 +95,157 @@ pub(super) fn check(document: &DeclarationSet) -> Result<(), DeclarationError> {
                 require(parameter.resource.is_none(), "ZRYNA-C4105", "scalar-resource")?;
             }
         }
+    }
+    Ok(())
+}
+
+fn check_resource(
+    operation: &zryna_syntax::native_c_v0::raw::Operation,
+    library: Option<&zryna_syntax::native_c_v0::raw::Library>,
+    index: usize,
+    resource: &zryna_syntax::native_c_v0::raw::Resource,
+) -> Result<(), DeclarationError> {
+    let index = u8::try_from(index)
+        .map_err(|_| DeclarationError { code: "ZRYNA-C4107", detail: "resource-index" })?;
+    require(
+        !resource.slots.is_empty()
+            && resource.slots.iter().all(|slot| {
+                operation
+                    .parameters
+                    .get(usize::from(*slot))
+                    .is_some_and(|parameter| parameter.resource == Some(index))
+            }),
+        "ZRYNA-C4105",
+        "resource-slot",
+    )?;
+    owner_policy(operation, resource)?;
+    let types: Vec<_> = resource
+        .slots
+        .iter()
+        .filter_map(|slot| {
+            operation.parameters.get(usize::from(*slot)).map(|parameter| parameter.abi)
+        })
+        .collect();
+    if resource.allocator == "none" {
+        require(
+            resource.kind == "borrowed-bytes"
+                && resource.release == "none"
+                && resource.access == Access::Read
+                && resource.null_rule == NullRule::NullZero
+                && resource.max_bytes.is_some()
+                && resource.encoding != Encoding::None
+                && types == [AbiType::BytesIn, AbiType::Count],
+            "ZRYNA-C4105",
+            "borrow-policy",
+        )?;
+        return Ok(());
+    }
+    let allocator = library
+        .and_then(|library| {
+            library.allocators.iter().find(|allocator| allocator.id == resource.allocator)
+        })
+        .ok_or(DeclarationError { code: "ZRYNA-C4105", detail: "allocator-pair" })?;
+    require(
+        allocator.kind == resource.kind
+            && allocator.release == resource.release
+            && (resource.access != Access::Create || allocator.create == operation.key),
+        "ZRYNA-C4105",
+        "allocator-pair",
+    )?;
+    if allocator.category == Category::Handle {
+        let expected =
+            if resource.access == Access::Create { AbiType::HandleOut } else { AbiType::HandleIn };
+        require(
+            types == [expected]
+                && resource.null_rule == NullRule::Nonnull
+                && resource.max_bytes.is_none()
+                && resource.encoding == Encoding::None
+                && resource.expected_length_slot.is_none(),
+            "ZRYNA-C4105",
+            "handle-policy",
+        )?;
+    } else {
+        require(
+            resource.max_bytes.is_some() && resource.encoding != Encoding::None,
+            "ZRYNA-C4105",
+            "byte-policy",
+        )?;
+        if resource.access == Access::Create {
+            require(
+                types == [AbiType::BytesOwnedOut, AbiType::CountOut]
+                    && resource.null_rule == NullRule::NullZero,
+                "ZRYNA-C4105",
+                "byte-output-signature",
+            )?;
+            if let Some(count) = resource.expected_length_slot {
+                require(
+                    operation
+                        .parameters
+                        .get(usize::from(count))
+                        .is_some_and(|parameter| parameter.abi == AbiType::Count)
+                        && operation.resources.iter().any(|input| {
+                            input.kind == "borrowed-bytes"
+                                && input.access == Access::Read
+                                && input.slots.get(1) == Some(&count)
+                                && input.max_bytes == resource.max_bytes
+                                && input.encoding == resource.encoding
+                        }),
+                    "ZRYNA-C4105",
+                    "expected-length-slot",
+                )?;
+            }
+        } else {
+            require(
+                resource.access == Access::Consume
+                    && types == [AbiType::BytesRelease]
+                    && resource.null_rule == NullRule::Nonnull,
+                "ZRYNA-C4105",
+                "byte-release-signature",
+            )?;
+        }
+    }
+    Ok(())
+}
+
+fn owner_policy(
+    operation: &zryna_syntax::native_c_v0::raw::Operation,
+    resource: &zryna_syntax::native_c_v0::raw::Resource,
+) -> Result<(), DeclarationError> {
+    require(resource.valid_pointer_guarantee, "ZRYNA-C4105", "pointer-guarantee")?;
+    match resource.access {
+        Access::Read => require(
+            resource.owner_before == Owner::Caller
+                && resource.owner_after == Owner::Caller
+                && resource.borrow_end == BorrowEnd::Return
+                && !resource.fresh
+                && !resource.releasable_on_malformed
+                && resource.expected_length_slot.is_none(),
+            "ZRYNA-C4105",
+            "read-owner-policy",
+        )?,
+        Access::Create => require(
+            resource.owner_before == Owner::None
+                && resource.owner_after == Owner::Caller
+                && resource.borrow_end == BorrowEnd::None
+                && resource.fresh
+                && operation.mode == Mode::Status,
+            "ZRYNA-C4105",
+            "create-owner-policy",
+        )?,
+        Access::Consume => require(
+            resource.owner_before == Owner::Caller
+                && resource.owner_after == Owner::Consumed
+                && resource.borrow_end == BorrowEnd::None
+                && !resource.fresh
+                && !resource.releasable_on_malformed
+                && resource.expected_length_slot.is_none()
+                && resource.release == operation.key
+                && operation.mode == Mode::Void
+                && operation.parameters.len() == 1
+                && operation.resources.len() == 1,
+            "ZRYNA-C4105",
+            "consume-owner-policy",
+        )?,
     }
     Ok(())
 }

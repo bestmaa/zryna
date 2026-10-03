@@ -105,7 +105,7 @@ pub(super) fn rules<'a>(
             }
         }
         FlowStep::Reserve { trap, cleanup, .. } => {
-            result.push(ExitRule::new(BoundaryExitKind::ForeignTrap(*trap), cleanup))
+            result.push(ExitRule::new(BoundaryExitKind::ForeignTrap(*trap), cleanup));
         }
         FlowStep::Call {
             unknown_status_route,
@@ -153,7 +153,7 @@ pub(super) fn rules<'a>(
             result.push(failure);
         }
         FlowStep::Return { cleanup, .. } => {
-            result.push(ExitRule::new(BoundaryExitKind::Return, cleanup))
+            result.push(ExitRule::new(BoundaryExitKind::Return, cleanup));
         }
         _ => {}
     }

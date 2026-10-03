@@ -1,6 +1,7 @@
 use super::{LibraryMaterial, verify};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
+use std::fmt::Write;
 use zryna_source::{SourceFileInput, SourceMap};
 use zryna_syntax::{native_c_source_v0::authenticate_sources, native_c_v0::raw::AbiType};
 
@@ -75,8 +76,10 @@ fn native_c_v0_declaration_authority_authenticates_fixed_independent_captures() 
     assert_eq!(verified.declaration_bytes(), DECLARATIONS);
     assert_eq!(verified.header_bytes("fixture-c-v0@0"), Some(HEADER));
     assert_eq!(verified.policy_bytes("fixture-c-v0@0"), Some(POLICY));
-    let digest =
-        verified.declaration_sha256().iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+    let digest = verified.declaration_sha256().iter().fold(String::new(), |mut digest, byte| {
+        write!(digest, "{byte:02x}").expect("string formatting");
+        digest
+    });
     assert_eq!(digest, "7eb6d630326d1dac6542a3579e9e1db42768f923358ffa4ed33d6dbcd556aa1e");
     assert!(verified.belongs_to(&sources));
     assert!(!verified.belongs_to(&self::sources()));
@@ -120,7 +123,8 @@ fn native_c_v0_declaration_authority_rejects_all_independent_malformed_records()
             selected = if let Some(key) = field.as_str() {
                 &mut selected[key]
             } else {
-                &mut selected[field.as_u64().expect("array index") as usize]
+                &mut selected
+                    [usize::try_from(field.as_u64().expect("array index")).expect("bounded index")]
             };
         }
         let last = fields.last().expect("field key");
@@ -132,7 +136,9 @@ fn native_c_v0_declaration_authority_rejects_all_independent_malformed_records()
         } else if let Some(key) = last.as_str() {
             selected[key] = row["value"].clone();
         } else {
-            selected[last.as_u64().expect("array index") as usize] = row["value"].clone();
+            selected
+                [usize::try_from(last.as_u64().expect("array index")).expect("bounded index")] =
+                row["value"].clone();
         }
         let policy = if row["reseal"] == true {
             capture_changed_policy(&mut document)

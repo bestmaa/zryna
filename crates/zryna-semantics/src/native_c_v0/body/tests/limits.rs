@@ -77,7 +77,7 @@ fn native_c_body_v0_more_than_64_released_lifetime_acquisitions_do_not_exhaust_t
                 FlowStep::Reserve { maximum_new_owners: 1, cleanup, .. } => Some(cleanup),
                 _ => None,
             })
-            .all(|cleanup| cleanup.is_empty()),
+            .all(Vec::is_empty),
         "only actual still-live obligations enter preflight cleanup"
     );
     assert!(

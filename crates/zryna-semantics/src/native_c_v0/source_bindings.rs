@@ -61,7 +61,7 @@ pub(super) fn check(
                         "release-call",
                     )?,
                     Primitive::ForeignError => {
-                        require(operation.mode == Mode::Status, "ZRYNA-C4105", "error-call")?
+                        require(operation.mode == Mode::Status, "ZRYNA-C4105", "error-call")?;
                     }
                     _ => {
                         return Err(DeclarationError {
@@ -113,6 +113,14 @@ pub(super) fn check(
             "parsed-primitive-site",
         )?;
     }
+    bind_operations(document, syntax, &source_digests)
+}
+
+fn bind_operations(
+    document: &DeclarationSet,
+    syntax: &AuthenticatedForeignSources,
+    source_digests: &BTreeMap<zryna_source::FileId, String>,
+) -> Result<Vec<Span>, DeclarationError> {
     let mut spans = Vec::new();
     let mut exports = BTreeSet::new();
     for (ordinal, operation) in document.operations.iter().enumerate() {

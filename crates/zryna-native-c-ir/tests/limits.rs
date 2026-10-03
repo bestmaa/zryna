@@ -1,4 +1,5 @@
 //! Genuine exact-bound source plus hostile first-extra IR and runtime-reservation plans.
+use std::fmt::Write as _;
 #[allow(dead_code)]
 mod capture;
 
@@ -9,7 +10,8 @@ use zryna_semantics::native_c_v0::body::{FlowStep, TrapRequirement};
 fn genuine_exact_value_arena_is_admitted_and_first_extra_raw_definition_rejects() {
     let mut extra = String::from("\nfunction arena(): i32 {\n");
     for index in 0..2340 {
-        extra.push_str(&format!("const v{index}: i32 = 1 + 2 + 3 + 4;\n"));
+        writeln!(extra, "const v{index}: i32 = 1 + 2 + 3 + 4;")
+            .expect("bounded fixture formatting");
     }
     extra.push_str("1;\nreturn v0 + 1;\n}\n");
     let input =
@@ -55,9 +57,10 @@ fn exact_declaration_count_reaches_identity_stage_and_first_extra_stops_at_budge
 fn handles(count: usize, release: bool) -> String {
     let mut text = String::from("\nfunction many(seed: i32): i32 {\n");
     for index in 0..count {
-        text.push_str(&format!("const o{index}: FfiHandleOut = Ffi.outHandle(\"fixture-c-v0@0/fixture_handle\");\nconst s{index}: i32 = Ffi.rawCall(\"fixture-c-v0@0/fixture_open\", seed, o{index});\nif (s{index} !== 0) {{ return Ffi.foreignError(\"fixture-c-v0@0/fixture_open\", s{index}); }}\nconst h{index}: FfiHandle = Ffi.takeHandle(o{index});\n"));
+        write!(text, "const o{index}: FfiHandleOut = Ffi.outHandle(\"fixture-c-v0@0/fixture_handle\");\nconst s{index}: i32 = Ffi.rawCall(\"fixture-c-v0@0/fixture_open\", seed, o{index});\nif (s{index} !== 0) {{ return Ffi.foreignError(\"fixture-c-v0@0/fixture_open\", s{index}); }}\nconst h{index}: FfiHandle = Ffi.takeHandle(o{index});\n").expect("bounded fixture formatting");
         if release {
-            text.push_str(&format!("Ffi.release(\"fixture-c-v0@0/fixture_close\", h{index});\n"));
+            writeln!(text, "Ffi.release(\"fixture-c-v0@0/fixture_close\", h{index});")
+                .expect("bounded fixture formatting");
         }
     }
     text.push_str("return 0;\n}\n");

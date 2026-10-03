@@ -32,13 +32,19 @@ function prefix(): i32 {
             _ => None,
         })
         .collect();
-    assert_eq!(guards[0].1.iter().map(|entry| entry.owner_id()).collect::<Vec<_>>(), [0]);
-    assert_eq!(guards[1].1.iter().map(|entry| entry.owner_id()).collect::<Vec<_>>(), [1]);
-    assert!(
-        guards.iter().all(|(_, entries)| entries.iter().all(|entry| entry.validation_required()))
+    assert_eq!(
+        guards[0].1.iter().map(super::super::cleanup::CleanupEntry::owner_id).collect::<Vec<_>>(),
+        [0]
     );
+    assert_eq!(
+        guards[1].1.iter().map(super::super::cleanup::CleanupEntry::owner_id).collect::<Vec<_>>(),
+        [1]
+    );
+    assert!(guards.iter().all(|(_, entries)| {
+        entries.iter().all(super::super::cleanup::CleanupEntry::validation_required)
+    }));
     assert!(matches!(function.steps().last(), Some(FlowStep::Return { cleanup, .. })
-        if cleanup.iter().map(|entry| entry.owner_id()).collect::<Vec<_>>() == [1, 0]));
+        if cleanup.iter().map(super::super::cleanup::CleanupEntry::owner_id).collect::<Vec<_>>() == [1, 0]));
     assert!(
         function
             .expressions()
@@ -60,14 +66,14 @@ fn native_c_body_v0_copy_trap_retains_foreign_owner_and_safe_empty_release_is_no
         .expect("byte copy wrapper");
     assert!(copied.steps().iter().any(|step| matches!(step,
         FlowStep::Copy { owner: 0, trap: TrapRequirement::PreservePrivatePreparationIdentity, cleanup, .. }
-        if cleanup.iter().map(|entry| entry.owner_id()).collect::<Vec<_>>() == [0]
+        if cleanup.iter().map(super::super::cleanup::CleanupEntry::owner_id).collect::<Vec<_>>() == [0]
     )));
     assert!(copied.steps().iter().any(|step| matches!(step,
         FlowStep::Call { entry: CallEntry::NonEmptyOwner(0), created_owners, .. } if created_owners.is_empty()
     )));
     assert!(copied.steps().iter().any(|step| matches!(step,
         FlowStep::ConfirmRelease { owner: 0, unresolved_on_fault, .. }
-        if unresolved_on_fault.iter().map(|entry| entry.owner_id()).collect::<Vec<_>>() == [0]
+        if unresolved_on_fault.iter().map(super::super::cleanup::CleanupEntry::owner_id).collect::<Vec<_>>() == [0]
     )));
     assert!(
         matches!(copied.steps().last(), Some(FlowStep::Return { cleanup, .. }) if cleanup.is_empty())
@@ -136,16 +142,16 @@ function mixed(seed: i32, bytes: Vec<i32>): Vec<i32> {
     assert_eq!(function.owner_origins()[1].kind(), "fixture-c-v0@0/owned_bytes");
     assert!(function.steps().iter().any(|step| matches!(step,
         FlowStep::StatusGuard { call: 1, cleanup, .. }
-        if cleanup.iter().map(|entry| entry.owner_id()).collect::<Vec<_>>() == [0]
+        if cleanup.iter().map(super::super::cleanup::CleanupEntry::owner_id).collect::<Vec<_>>() == [0]
     )));
     assert!(function.steps().iter().any(|step| matches!(step,
         FlowStep::Copy { owner: 1, cleanup, .. }
-        if cleanup.iter().map(|entry| entry.owner_id()).collect::<Vec<_>>() == [1, 0]
+        if cleanup.iter().map(super::super::cleanup::CleanupEntry::owner_id).collect::<Vec<_>>() == [1, 0]
     )));
     assert!(function.steps().iter().any(|step| matches!(step,
         FlowStep::ConfirmRelease { owner: 1, fault_route: super::super::FailureRoute::ReleaseFailureOverridesUnresolved, unresolved_on_fault, .. }
-        if unresolved_on_fault.iter().map(|entry| entry.owner_id()).collect::<Vec<_>>() == [1, 0]
+        if unresolved_on_fault.iter().map(super::super::cleanup::CleanupEntry::owner_id).collect::<Vec<_>>() == [1, 0]
     )));
     assert!(matches!(function.steps().last(), Some(FlowStep::Return { cleanup, .. })
-        if cleanup.iter().map(|entry| entry.owner_id()).collect::<Vec<_>>() == [0]));
+        if cleanup.iter().map(super::super::cleanup::CleanupEntry::owner_id).collect::<Vec<_>>() == [0]));
 }

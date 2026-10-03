@@ -104,6 +104,13 @@ pub(super) fn declarations(
     }
     super::storage::identity(program, authority)?;
     decoded.map_err(|e| IrError::new(e.code(), e.detail()))?;
+    contract(candidate, &original)
+}
+
+fn contract(
+    candidate: &declaration::DeclarationSet,
+    original: &declaration::DeclarationSet,
+) -> Result<(), IrError> {
     require(candidate.target == original.target, "ZRYNA-C4103", "ir-native-target")?;
     require(
         candidate.abi == original.abi
@@ -150,7 +157,7 @@ pub(super) fn declarations(
     )?;
     require(candidate.sites == original.sites, "ZRYNA-C4106", "ir-exact-source-sites")?;
     // Equality covers every schema field after category-specific admission, including unused records.
-    require(candidate == &original, "ZRYNA-C4102", "ir-complete-declaration-contract")
+    require(candidate == original, "ZRYNA-C4102", "ir-complete-declaration-contract")
 }
 
 pub(super) fn function(
@@ -164,15 +171,7 @@ pub(super) fn function(
     let mut successful = BTreeSet::new();
     let mut live = BTreeSet::new();
     for (effect, source) in claim.effects.iter().zip(original.steps()) {
-        if let (
-            FlowStep::Call { safety, carriers, .. },
-            FlowStep::Call { safety: actual_safety, carriers: actual_carriers, .. },
-        ) = (&effect.operation, source)
-        {
-            require(carriers == actual_carriers, "ZRYNA-C4104", "ir-source-call-carriers")?;
-            require(safety == actual_safety, "ZRYNA-C4106", "ir-explicit-call-safety")?;
-        }
-        require(&effect.operation == source, "ZRYNA-C4105", "ir-source-call-flow")?;
+        source_flow(&effect.operation, source)?;
         match &effect.operation {
             FlowStep::OutputSlot { token, ty, .. } => {
                 require(
@@ -190,54 +189,16 @@ pub(super) fn function(
                     "ir-pre-effect-reservation",
                 )?;
             }
-            FlowStep::Call {
-                call,
-                operation,
-                carriers,
-                outputs: slots,
-                created_owners,
-                recoverable,
-                ..
-            } => {
-                let imported = declarations
-                    .operations
-                    .get(*operation)
-                    .ok_or_else(|| IrError::new("ZRYNA-C4105", "ir-import-ordinal"))?;
-                require(
-                    imported.direction == declaration::Direction::Import
-                        && reservation.take() == Some((*call, created_owners.len()))
-                        && calls.insert(*call, *operation).is_none(),
-                    "ZRYNA-C4105",
-                    "ir-exact-reserved-call",
+            step @ FlowStep::Call { .. } => {
+                replay_call(
+                    step,
+                    declarations,
+                    &mut reservation,
+                    &mut calls,
+                    &mut outputs,
+                    &mut live,
+                    &mut successful,
                 )?;
-                require(
-                    carriers.iter().copied().eq(imported.parameters.iter().map(|p| p.abi)),
-                    "ZRYNA-C4104",
-                    "ir-call-carriers",
-                )?;
-                require(
-                    recoverable.iter().copied().eq(imported
-                        .statuses
-                        .iter()
-                        .filter(|s| s.kind == declaration::StatusKind::Recoverable)
-                        .map(|s| s.code)),
-                    "ZRYNA-C4105",
-                    "ir-exact-status-domain",
-                )?;
-                let distinct: BTreeSet<_> = slots.iter().copied().collect();
-                require(distinct.len() == slots.len(), "ZRYNA-C4105", "ir-output-alias")?;
-                for slot in slots {
-                    let entry = outputs.get_mut(slot).ok_or_else(|| {
-                        IrError::new("ZRYNA-C4105", "ir-output-created-before-call")
-                    })?;
-                    entry.1 = Some(*call);
-                }
-                for owner in created_owners {
-                    require(live.insert(*owner), "ZRYNA-C4105", "ir-fresh-conditional-owner")?;
-                }
-                if imported.mode != declaration::Mode::Status {
-                    successful.insert(*call);
-                }
             }
             FlowStep::StatusGuard { call, recoverable, .. } => {
                 let operation = calls
@@ -299,4 +260,81 @@ pub(super) fn function(
         }
     }
     require(reservation.is_none(), "ZRYNA-C4105", "ir-unconsumed-reservation")
+}
+
+type OutputState = BTreeMap<usize, (zryna_semantics::native_c_v0::body::ValueType, Option<usize>)>;
+fn replay_call(
+    step: &FlowStep,
+    declarations: &declaration::DeclarationSet,
+    reservation: &mut Option<(usize, usize)>,
+    calls: &mut BTreeMap<usize, usize>,
+    outputs: &mut OutputState,
+    live: &mut BTreeSet<usize>,
+    successful: &mut BTreeSet<usize>,
+) -> Result<(), IrError> {
+    let FlowStep::Call {
+        call,
+        operation,
+        carriers,
+        outputs: slots,
+        created_owners,
+        recoverable,
+        ..
+    } = step
+    else {
+        return Err(IrError::new("ZRYNA-C4105", "ir-import-ordinal"));
+    };
+    let imported = declarations
+        .operations
+        .get(*operation)
+        .ok_or_else(|| IrError::new("ZRYNA-C4105", "ir-import-ordinal"))?;
+    require(
+        imported.direction == declaration::Direction::Import
+            && reservation.take() == Some((*call, created_owners.len()))
+            && calls.insert(*call, *operation).is_none(),
+        "ZRYNA-C4105",
+        "ir-exact-reserved-call",
+    )?;
+    require(
+        carriers.iter().copied().eq(imported.parameters.iter().map(|p| p.abi)),
+        "ZRYNA-C4104",
+        "ir-call-carriers",
+    )?;
+    require(
+        recoverable.iter().copied().eq(imported
+            .statuses
+            .iter()
+            .filter(|s| s.kind == declaration::StatusKind::Recoverable)
+            .map(|s| s.code)),
+        "ZRYNA-C4105",
+        "ir-exact-status-domain",
+    )?;
+    let distinct: BTreeSet<_> = slots.iter().copied().collect();
+    require(distinct.len() == slots.len(), "ZRYNA-C4105", "ir-output-alias")?;
+    for slot in slots {
+        let entry = outputs
+            .get_mut(slot)
+            .ok_or_else(|| IrError::new("ZRYNA-C4105", "ir-output-created-before-call"))?;
+        entry.1 = Some(*call);
+    }
+    for owner in created_owners {
+        require(live.insert(*owner), "ZRYNA-C4105", "ir-fresh-conditional-owner")?;
+    }
+    if imported.mode != declaration::Mode::Status {
+        successful.insert(*call);
+    }
+    Ok(())
+}
+
+fn source_flow(claim: &FlowStep, source: &FlowStep) -> Result<(), IrError> {
+    if let (
+        FlowStep::Call { safety, carriers, .. },
+        FlowStep::Call { safety: actual_safety, carriers: actual_carriers, .. },
+    ) = (claim, source)
+    {
+        require(carriers == actual_carriers, "ZRYNA-C4104", "ir-source-call-carriers")?;
+        require(safety == actual_safety, "ZRYNA-C4106", "ir-explicit-call-safety")?;
+    }
+    require(claim == source, "ZRYNA-C4105", "ir-source-call-flow")?;
+    Ok(())
 }

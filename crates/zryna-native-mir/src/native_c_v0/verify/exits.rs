@@ -1,7 +1,10 @@
 //! Independent finite terminal machine replay; release failure has no retry or suffix action.
 
 use super::super::{MirError, raw, require};
-use zryna_native_c_ir::{VerifiedFunction, contract::*};
+use zryna_native_c_ir::{
+    VerifiedFunction,
+    contract::{BoundaryExitKind, FailureRoute},
+};
 
 pub(super) fn check(
     function: &raw::Function,

@@ -122,7 +122,7 @@ fn native_c_private_boundary_v0_mixed_copy_failure_reverses_private_and_foreign_
             .iter()
             .filter_map(|drop| match drop {
                 BoundaryDrop::Foreign(entry) => Some(entry.owner_id()),
-                _ => None,
+                BoundaryDrop::Private(_) => None,
             })
             .collect::<Vec<_>>(),
         [1, 0]
@@ -288,7 +288,7 @@ function untaken(bytes: Vec<i32>): i32 {
     );
     assert!(returned.cleanup.iter().all(|drop| match drop {
         BoundaryDrop::Foreign(entry) => entry.validation_required(),
-        _ => true,
+        BoundaryDrop::Private(_) => true,
     }));
     let unknown = function
         .steps

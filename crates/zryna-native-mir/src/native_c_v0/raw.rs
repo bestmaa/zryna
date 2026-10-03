@@ -4,7 +4,11 @@ use super::abi::{OutputSlot, Signature};
 use super::entry::{DispatcherEntry, PrivateEntry};
 use zryna_layout::TypeId;
 use zryna_native_c_ir::{
-    contract::*,
+    contract::{
+        Binding, BoundaryCheck, BoundaryExit, BoundaryOwner, CallEntry, FileId, FlowStep,
+        Operation, PrivateOwner, PrivatePreparation, SourceMapIdentity, Span, Statement,
+        StorageStage, ValueType,
+    },
     raw::{Storage, Value},
 };
 

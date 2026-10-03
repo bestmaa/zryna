@@ -33,97 +33,7 @@ pub fn lower_unverified(
     for (source, boundary) in
         authority.body_authority().functions().iter().zip(authority.functions())
     {
-        let range = source.declaration_range();
-        let span = sources
-            .span(source.file_id(), range.start, range.end)
-            .map_err(|_| IrError::new("ZRYNA-C4106", "ir-function-span"))?;
-        let mut bindings = BTreeMap::new();
-        for (index, parameter) in source.parameters().iter().enumerate() {
-            bindings.insert(parameter.name.as_str(), index);
-        }
-        let mut values = Vec::new();
-        let mut next_binding = source.parameters().len();
-        for statement in source.statements() {
-            let root = match &statement.kind {
-                syntax::StatementKind::Const(_, root)
-                | syntax::StatementKind::Return(root)
-                | syntax::StatementKind::Guard(_, root)
-                | syntax::StatementKind::Expression(root) => *root,
-            };
-            while values.len() <= root {
-                let id = values.len();
-                let expression = source
-                    .expressions()
-                    .get(id)
-                    .ok_or_else(|| IrError::new("ZRYNA-C4106", "ir-source-arena"))?;
-                let kind = match expression.source_kind() {
-                    syntax::ExpressionKind::I32(v) => raw::ValueKind::I32(*v),
-                    syntax::ExpressionKind::Bool(v) => raw::ValueKind::Bool(*v),
-                    syntax::ExpressionKind::Key(v) => raw::ValueKind::Key(v.clone()),
-                    syntax::ExpressionKind::Local(name) => raw::ValueKind::Local(
-                        *bindings
-                            .get(name.as_str())
-                            .ok_or_else(|| IrError::new("ZRYNA-C4106", "ir-local-binding"))?,
-                    ),
-                    syntax::ExpressionKind::Add(a, b) => raw::ValueKind::WrappingAdd(*a, *b),
-                    syntax::ExpressionKind::Intrinsic(p, args) => {
-                        raw::ValueKind::Primitive(*p, args.clone())
-                    }
-                };
-                let range = expression.range();
-                values.push(raw::Value {
-                    id,
-                    span: sources
-                        .span(source.file_id(), range.start, range.end)
-                        .map_err(|_| IrError::new("ZRYNA-C4106", "ir-value-span"))?,
-                    ty: expression.value_type(),
-                    kind,
-                    token: expression.token_id(),
-                    status_call: expression.status_call(),
-                    origin: *boundary
-                        .expression_origins
-                        .get(id)
-                        .ok_or_else(|| IrError::new("ZRYNA-C4106", "ir-private-origin"))?,
-                });
-            }
-            if let syntax::StatementKind::Const(binding, _) = &statement.kind {
-                bindings.insert(binding.name.as_str(), next_binding);
-                next_binding += 1;
-            }
-        }
-        require(
-            source.steps().len() == boundary.steps.len(),
-            "ZRYNA-C4106",
-            "ir-complete-effects",
-        )?;
-        let effects = source
-            .steps()
-            .iter()
-            .zip(&boundary.steps)
-            .enumerate()
-            .map(|(id, (operation, plan))| raw::Effect {
-                id,
-                operation: operation.clone(),
-                preparation: plan.preparation.clone(),
-                exits: plan.exits.clone(),
-                completed: plan.completed.clone(),
-            })
-            .collect();
-        functions.push(raw::Function {
-            file: source.file_id(),
-            ordinal: source.source_function_index(),
-            span,
-            name: source.name().into(),
-            parameters: source.parameters().to_vec(),
-            parameter_layouts: boundary.parameter_types.clone(),
-            result: source.result_type(),
-            result_layout: boundary.result_type,
-            export: source.export_operation_index(),
-            statements: source.statements().to_vec(),
-            values,
-            effects,
-            private_owners: boundary.private_owners.clone(),
-        });
+        functions.push(lower_function(sources, source, boundary)?);
     }
     Ok(raw::Program {
         source_map: sources.identity(),
@@ -135,5 +45,99 @@ pub fn lower_unverified(
             runtime: authority.runtime_abi().identifier().into(),
         },
         functions,
+    })
+}
+
+fn lower_function(
+    sources: &SourceMap,
+    source: &zryna_semantics::native_c_v0::body::TypedFunction,
+    boundary: &zryna_semantics::native_c_v0::body::FunctionBoundary,
+) -> Result<raw::Function, IrError> {
+    let range = source.declaration_range();
+    let span = sources
+        .span(source.file_id(), range.start, range.end)
+        .map_err(|_| IrError::new("ZRYNA-C4106", "ir-function-span"))?;
+    let mut bindings = BTreeMap::new();
+    for (index, parameter) in source.parameters().iter().enumerate() {
+        bindings.insert(parameter.name.as_str(), index);
+    }
+    let mut values = Vec::new();
+    let mut next_binding = source.parameters().len();
+    for statement in source.statements() {
+        let root = match &statement.kind {
+            syntax::StatementKind::Const(_, root)
+            | syntax::StatementKind::Return(root)
+            | syntax::StatementKind::Guard(_, root)
+            | syntax::StatementKind::Expression(root) => *root,
+        };
+        while values.len() <= root {
+            let id = values.len();
+            let expression = source
+                .expressions()
+                .get(id)
+                .ok_or_else(|| IrError::new("ZRYNA-C4106", "ir-source-arena"))?;
+            let kind = match expression.source_kind() {
+                syntax::ExpressionKind::I32(v) => raw::ValueKind::I32(*v),
+                syntax::ExpressionKind::Bool(v) => raw::ValueKind::Bool(*v),
+                syntax::ExpressionKind::Key(v) => raw::ValueKind::Key(v.clone()),
+                syntax::ExpressionKind::Local(name) => raw::ValueKind::Local(
+                    *bindings
+                        .get(name.as_str())
+                        .ok_or_else(|| IrError::new("ZRYNA-C4106", "ir-local-binding"))?,
+                ),
+                syntax::ExpressionKind::Add(a, b) => raw::ValueKind::WrappingAdd(*a, *b),
+                syntax::ExpressionKind::Intrinsic(p, args) => {
+                    raw::ValueKind::Primitive(*p, args.clone())
+                }
+            };
+            let range = expression.range();
+            values.push(raw::Value {
+                id,
+                span: sources
+                    .span(source.file_id(), range.start, range.end)
+                    .map_err(|_| IrError::new("ZRYNA-C4106", "ir-value-span"))?,
+                ty: expression.value_type(),
+                kind,
+                token: expression.token_id(),
+                status_call: expression.status_call(),
+                origin: *boundary
+                    .expression_origins
+                    .get(id)
+                    .ok_or_else(|| IrError::new("ZRYNA-C4106", "ir-private-origin"))?,
+            });
+        }
+        if let syntax::StatementKind::Const(binding, _) = &statement.kind {
+            bindings.insert(binding.name.as_str(), next_binding);
+            next_binding += 1;
+        }
+    }
+    require(source.steps().len() == boundary.steps.len(), "ZRYNA-C4106", "ir-complete-effects")?;
+    let effects = source
+        .steps()
+        .iter()
+        .zip(&boundary.steps)
+        .enumerate()
+        .map(|(id, (operation, plan))| raw::Effect {
+            id,
+            operation: operation.clone(),
+            preparation: plan.preparation.clone(),
+            exits: plan.exits.clone(),
+            completed: plan.completed.clone(),
+        })
+        .collect();
+    Ok(raw::Function {
+        file: source.file_id(),
+        ordinal: source.source_function_index(),
+        span,
+        name: source.name().into(),
+        parameters: source.parameters().to_vec(),
+        parameter_layouts: boundary.parameter_types.clone(),
+        result: source.result_type(),
+        result_layout: boundary.result_type,
+        export: source.export_operation_index(),
+        statements: source.statements().to_vec(),
+        values,
+        effects,
+        private_owners: boundary.private_owners.clone(),
     })
 }

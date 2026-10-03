@@ -1,5 +1,6 @@
 use super::{authenticate_sources, parser, raw::ExpressionKind};
 use crate::native_c_v0::raw::Primitive;
+use std::fmt::Write as _;
 use zryna_source::{SourceFileInput, SourceMap};
 
 fn map(text: &str) -> SourceMap {
@@ -44,7 +45,10 @@ fn native_c_source_v0_complete_reference_has_exact_sites_and_original_map_identi
     for (file, claim) in
         syntax.files().iter().zip(claims["sources"].as_array().expect("source claims"))
     {
-        let digest = file.sha256().iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+        let digest = file.sha256().iter().fold(String::new(), |mut text, byte| {
+            write!(text, "{byte:02x}").expect("digest formatting");
+            text
+        });
         assert_eq!(digest, claim["sha256"].as_str().expect("independent fixed source digest"));
     }
     for ((file, site), claim) in actual.iter().zip(claims["sites"].as_array().expect("site claims"))
@@ -60,9 +64,9 @@ fn native_c_source_v0_complete_reference_has_exact_sites_and_original_map_identi
 
 #[test]
 fn native_c_source_v0_token_and_expression_arena_bounds_are_exact() {
-    assert!(super::lexer::lex(&"0;".repeat(131072)).is_ok());
+    assert!(super::lexer::lex(&"0;".repeat(131_072)).is_ok());
     assert_eq!(
-        super::lexer::lex(&format!("{}0", "0;".repeat(131072)))
+        super::lexer::lex(&format!("{}0", "0;".repeat(131_072)))
             .expect_err("first extra token")
             .detail(),
         "tokens"
@@ -160,9 +164,10 @@ fn native_c_source_v0_scalar_limits_and_flat_arenas_are_exact() {
 #[test]
 fn native_c_source_v0_function_statement_and_site_budgets_are_exact() {
     let functions = |count| {
-        (0..count)
-            .map(|index| format!("function f{index}(): i32 {{ return 0; }}"))
-            .collect::<String>()
+        (0..count).fold(String::new(), |mut text, index| {
+            write!(text, "function f{index}(): i32 {{ return 0; }}").expect("fixture formatting");
+            text
+        })
     };
     assert_eq!(parser::parse(&functions(256)).expect("exact functions").len(), 256);
     assert_eq!(
@@ -244,9 +249,10 @@ fn native_c_source_v0_project_function_statement_and_expression_budgets_are_exac
             metric
         );
     };
-    let functions = (0..256)
-        .map(|index| format!("function f{index}(): i32 {{ return 0; }}"))
-        .collect::<String>();
+    let functions = (0..256).fold(String::new(), |mut text, index| {
+        write!(text, "function f{index}(): i32 {{ return 0; }}").expect("fixture formatting");
+        text
+    });
     check(vec![functions; 16], "project-functions");
     let statements = format!("function f(): i32 {{ {} }}", "0;".repeat(4096));
     check(vec![statements; 16], "project-statements");

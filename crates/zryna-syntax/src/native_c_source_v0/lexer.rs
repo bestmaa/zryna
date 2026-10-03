@@ -43,10 +43,7 @@ pub(super) fn lex(text: &str) -> Result<Vec<Token<'_>>, SourceAuthError> {
                 cursor += 1;
             }
             if cursor == bytes.len() {
-                return Err(error(
-                    "unterminated-comment",
-                    Range { start: start as u32, end: cursor as u32 },
-                ));
+                return Err(error("unterminated-comment", range(start, cursor)?));
             }
             cursor += 2;
             continue;
@@ -71,18 +68,12 @@ pub(super) fn lex(text: &str) -> Result<Vec<Token<'_>>, SourceAuthError> {
             cursor += 1;
             while cursor < bytes.len() && bytes[cursor] != b'"' {
                 if !matches!(bytes[cursor], 32..=126) || bytes[cursor] == b'\\' {
-                    return Err(error(
-                        "escaped-or-nonascii-key",
-                        Range { start: start as u32, end: (cursor + 1) as u32 },
-                    ));
+                    return Err(error("escaped-or-nonascii-key", range(start, cursor + 1)?));
                 }
                 cursor += 1;
             }
             if cursor == bytes.len() {
-                return Err(error(
-                    "unterminated-key",
-                    Range { start: start as u32, end: cursor as u32 },
-                ));
+                return Err(error("unterminated-key", range(start, cursor)?));
             }
             cursor += 1;
         } else if bytes[cursor..].starts_with(b"!==") {
@@ -92,12 +83,9 @@ pub(super) fn lex(text: &str) -> Result<Vec<Token<'_>>, SourceAuthError> {
             kind = Kind::Punctuation;
             cursor += 1;
         } else {
-            return Err(error(
-                "unsupported-token",
-                Range { start: start as u32, end: (start + 1) as u32 },
-            ));
+            return Err(error("unsupported-token", range(start, start + 1)?));
         }
-        let range = Range { start: start as u32, end: cursor as u32 };
+        let range = range(start, cursor)?;
         if (kind == Kind::Name && cursor - start > 128)
             || (kind == Kind::Key && cursor - start > 259)
             || (kind == Kind::Integer && cursor - start > 10)
@@ -111,7 +99,16 @@ pub(super) fn lex(text: &str) -> Result<Vec<Token<'_>>, SourceAuthError> {
         }
         tokens.push(Token { kind, text: token, range });
     }
-    let end = bytes.len() as u32;
+    let end = u32::try_from(bytes.len())
+        .map_err(|_| limit("source-bytes", Range { start: 0, end: 0 }))?;
     tokens.push(Token { kind: Kind::End, text: "", range: Range { start: end, end } });
     Ok(tokens)
+}
+
+fn range(start: usize, end: usize) -> Result<Range, SourceAuthError> {
+    let overflow = || limit("source-bytes", Range { start: 0, end: 0 });
+    Ok(Range {
+        start: u32::try_from(start).map_err(|_| overflow())?,
+        end: u32::try_from(end).map_err(|_| overflow())?,
+    })
 }

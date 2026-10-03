@@ -191,11 +191,11 @@ fn native_c_v0_raw_collection_limits_do_not_depend_on_identity_or_policy_accepta
             "sites" => exact.sites = vec![exact.sites[0].clone(); maximum],
             "parameters" => {
                 exact.operations[0].parameters =
-                    vec![exact.operations[0].parameters[0].clone(); maximum]
+                    vec![exact.operations[0].parameters[0].clone(); maximum];
             }
             "resources" => {
                 exact.operations[1].resources =
-                    vec![exact.operations[1].resources[0].clone(); maximum]
+                    vec![exact.operations[1].resources[0].clone(); maximum];
             }
             "statuses" => {
                 let open = exact
@@ -208,11 +208,11 @@ fn native_c_v0_raw_collection_limits_do_not_depend_on_identity_or_policy_accepta
             }
             "kinds" => {
                 exact.libraries[0].kinds =
-                    (0..maximum).map(|index| format!("fixture-c-v0@0/k{index}")).collect()
+                    (0..maximum).map(|index| format!("fixture-c-v0@0/k{index}")).collect();
             }
             _ => {
                 exact.libraries[0].allocators =
-                    vec![exact.libraries[0].allocators[0].clone(); maximum]
+                    vec![exact.libraries[0].allocators[0].clone(); maximum];
             }
         }
         validation::check(&exact).expect("exact raw shape budget; identities remain unverified");

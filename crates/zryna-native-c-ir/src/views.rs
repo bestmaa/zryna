@@ -47,6 +47,7 @@ impl VerifiedNativeCProgram {
         &self.program.declarations.target
     }
     /// Complete imports and exports, including operations unused by source calls.
+    #[must_use]
     pub fn operations(&self) -> impl ExactSizeIterator<Item = VerifiedOperation<'_>> {
         self.program
             .declarations
@@ -56,6 +57,7 @@ impl VerifiedNativeCProgram {
             .map(|(index, record)| VerifiedOperation { index, record })
     }
     /// Complete original source function inventory.
+    #[must_use]
     pub fn functions(&self) -> impl ExactSizeIterator<Item = VerifiedFunction<'_>> {
         self.program.functions.iter().map(|record| VerifiedFunction { record })
     }
@@ -117,10 +119,12 @@ impl<'a> VerifiedFunction<'a> {
         self.record.export
     }
     /// Complete dense value definitions.
+    #[must_use]
     pub fn values(self) -> impl ExactSizeIterator<Item = VerifiedValue<'a>> {
         self.record.values.iter().map(|record| VerifiedValue { record })
     }
     /// Complete operations with explicit private stages and terminal edges.
+    #[must_use]
     pub fn effects(self) -> impl ExactSizeIterator<Item = VerifiedEffect<'a>> {
         self.record.effects.iter().map(|record| VerifiedEffect { record })
     }

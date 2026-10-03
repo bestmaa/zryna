@@ -19,7 +19,7 @@ fn native_c_private_boundary_v0_foreign_origin_and_validation_promise_cannot_be_
                     .flat_map(|exit| &mut exit.cleanup)
                     .find_map(|drop| match drop {
                         BoundaryDrop::Foreign(owner) => Some(owner),
-                        _ => None,
+                        BoundaryDrop::Private(_) => None,
                     })
                     .expect("conditional foreign owner");
                 match defect {
@@ -226,7 +226,7 @@ fn native_c_private_boundary_v0_wrong_completion_source_and_private_release_issu
                 .iter_mut()
                 .find_map(|drop| match drop {
                     BoundaryDrop::Private(owner) => Some(owner),
-                    _ => None,
+                    BoundaryDrop::Foreign(_) => None,
                 })
                 .expect("private drop");
             drop.release = wrong;

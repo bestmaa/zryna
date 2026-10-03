@@ -152,7 +152,7 @@ impl std::error::Error for BoundaryError {}
 ///
 /// Only original source and its opaque complete bodies enter. Public record copies cannot enter
 /// this API. Existing layout/runtime verifiers issue the retained private authorities; the old
-/// protocol-v4 SemanticInput, M3 IR and every executable/native sealer remain separate.
+/// protocol-v4 `SemanticInput`, M3 IR and every executable/native sealer remain separate.
 ///
 /// # Errors
 /// Rejects source identity, layout/runtime derivation, compiler budgets or private replay defects.

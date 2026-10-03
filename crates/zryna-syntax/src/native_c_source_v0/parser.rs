@@ -16,7 +16,10 @@ struct Parser<'a> {
 }
 
 fn primitive(text: &str) -> Option<(Primitive, Option<usize>)> {
-    use Primitive::*;
+    use Primitive::{
+        BorrowBytes, BorrowUtf8, ByteLength, CopyBytes, ForeignError, OutBytes, OutCount,
+        OutHandle, OutI32, RawCall, ReadI32, Release, TakeBytes, TakeHandle,
+    };
     Some(match text {
         "rawCall" => (RawCall, None),
         "borrowBytes" => (BorrowBytes, Some(1)),
@@ -82,7 +85,10 @@ impl<'a> Parser<'a> {
         Ok(token)
     }
     fn ty(&mut self) -> Result<raw::Type, SourceAuthError> {
-        use raw::Type::*;
+        use raw::Type::{
+            Bool, Bytes, BytesOut, CountOut, Handle, HandleOut, I32, I32Out, OwnedBytes, String,
+            VecI32,
+        };
         let token = self.peek();
         self.cursor += 1;
         Ok(match token.text {

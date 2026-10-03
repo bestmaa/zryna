@@ -115,7 +115,7 @@ impl AuthenticatedForeignSources {
     /// Returns complete original bytes for an authenticated file, rejecting foreign file ids.
     #[must_use]
     pub fn source_text(&self, file: FileId) -> Option<&str> {
-        self.sources.source(file).map(|s| s.text())
+        self.sources.source(file).map(zryna_source::SourceFile::text)
     }
     /// Constructs an exact span through the retained immutable source map.
     ///
@@ -151,13 +151,14 @@ pub fn authenticate_sources(
     let mut statements = 0;
     let mut files = Vec::new();
     for index in 0..sources.len() {
-        let file =
-            sources.verify_file_id(index as u32).map_err(|_| error("source-file", origin))?;
+        let file = sources
+            .verify_file_id(u32::try_from(index).map_err(|_| limit("sources", origin))?)
+            .map_err(|_| error("source-file", origin))?;
         let source = sources.source(file).ok_or_else(|| error("source-file", origin))?;
         let path = source.path().as_str();
         if !path.is_ascii()
             || path.len() > 256
-            || !path.ends_with(".zry")
+            || std::path::Path::new(path).extension() != Some(std::ffi::OsStr::new("zry"))
             || !path.bytes().all(|b| b.is_ascii_alphanumeric() || b"_/.-".contains(&b))
         {
             return Err(error("source-path", origin));

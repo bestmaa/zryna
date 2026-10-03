@@ -95,113 +95,121 @@ pub(super) fn check(declarations: &DeclarationSet) -> Result<(), DecodeError> {
         digest(&source.sha256)?;
     }
     for library in &declarations.libraries {
-        text(&library.id, 128, "library-id-bytes")?;
-        text(&library.version, 128, "library-version-bytes")?;
-        let parts = library.id.split('@').collect::<Vec<_>>();
-        require(
-            parts.len() == 2
-                && !parts[0].is_empty()
-                && !parts[1].is_empty()
-                && parts[0].as_bytes()[0].is_ascii_alphabetic()
-                && parts[0]
-                    .bytes()
-                    .all(|byte| byte.is_ascii_alphanumeric() || b"_-".contains(&byte))
-                && parts[1]
-                    .bytes()
-                    .all(|byte| byte.is_ascii_alphanumeric() || b"_.-".contains(&byte))
-                && library
-                    .version
-                    .bytes()
-                    .all(|byte| byte.is_ascii_alphanumeric() || b"_.-".contains(&byte)),
-            "ZRYNA-C4101",
-            "library-id-or-version",
-        )?;
-        digest(&library.header_sha256)?;
-        digest(&library.policy_sha256)?;
-        bound(library.kinds.len(), 16, "kinds")?;
-        bound(library.allocators.len(), 16, "allocators")?;
-        require(
-            library.kinds.iter().collect::<BTreeSet<_>>().len() == library.kinds.len(),
-            "ZRYNA-C4101",
-            "duplicate-kind",
-        )?;
-        for kind in &library.kinds {
-            key(kind)?;
-        }
-        for allocator in &library.allocators {
-            for value in [&allocator.id, &allocator.kind, &allocator.create, &allocator.release] {
-                key(value)?;
-            }
-        }
+        check_library(library)?;
     }
     for operation in &declarations.operations {
-        key(&operation.key)?;
-        key(&operation.library)?;
-        name(&operation.logical_name)?;
-        name(&operation.symbol)?;
-        bound(operation.parameters.len(), 16, "parameters")?;
-        bound(operation.resources.len(), 8, "resources")?;
-        bound(operation.statuses.len(), 16, "statuses")?;
-        require(
-            matches!(
-                operation.result,
-                AbiType::CI32 | AbiType::CInt | AbiType::Bool32 | AbiType::Unit
-            ),
-            "ZRYNA-C4101",
-            "result-carrier",
-        )?;
-        for parameter in &operation.parameters {
-            name(&parameter.name)?;
-            require(
-                parameter.abi != AbiType::Unit && parameter.resource.is_none_or(|index| index < 8),
-                "ZRYNA-C4101",
-                "parameter-carrier-or-resource",
-            )?;
-        }
-        for resource in &operation.resources {
-            for value in [&resource.kind, &resource.allocator, &resource.release] {
-                key(value)?;
-            }
-            slots(&resource.slots, 4, 16)?;
-            require(
-                !resource.slots.is_empty()
-                    && resource.owner_before != Owner::Consumed
-                    && resource.max_bytes.is_none_or(|bytes| bytes <= 4096)
-                    && resource.expected_length_slot.is_none_or(|slot| slot < 16),
-                "ZRYNA-C4101",
-                "resource-shape",
-            )?;
-        }
-        for status in &operation.statuses {
-            require(
-                status.code <= 2_147_483_647 && status.preserves_inputs,
-                "ZRYNA-C4101",
-                "status-shape",
-            )?;
-            slots(&status.initialized, 16, 16)?;
-            slots(&status.new_owners, 8, 8)?;
-        }
-        path(&operation.source_binding.path)?;
-        digest(&operation.source_binding.sha256)?;
+        check_operation(operation)?;
     }
     for site in &declarations.sites {
-        if let Some(operation) = &site.operation {
-            key(operation)?;
+        check_site(site)?;
+    }
+    Ok(())
+}
+
+fn check_library(library: &super::raw::Library) -> Result<(), DecodeError> {
+    text(&library.id, 128, "library-id-bytes")?;
+    text(&library.version, 128, "library-version-bytes")?;
+    let parts = library.id.split('@').collect::<Vec<_>>();
+    require(
+        parts.len() == 2
+            && !parts[0].is_empty()
+            && !parts[1].is_empty()
+            && parts[0].as_bytes()[0].is_ascii_alphabetic()
+            && parts[0].bytes().all(|byte| byte.is_ascii_alphanumeric() || b"_-".contains(&byte))
+            && parts[1].bytes().all(|byte| byte.is_ascii_alphanumeric() || b"_.-".contains(&byte))
+            && library
+                .version
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || b"_.-".contains(&byte)),
+        "ZRYNA-C4101",
+        "library-id-or-version",
+    )?;
+    digest(&library.header_sha256)?;
+    digest(&library.policy_sha256)?;
+    bound(library.kinds.len(), 16, "kinds")?;
+    bound(library.allocators.len(), 16, "allocators")?;
+    require(
+        library.kinds.iter().collect::<BTreeSet<_>>().len() == library.kinds.len(),
+        "ZRYNA-C4101",
+        "duplicate-kind",
+    )?;
+    for kind in &library.kinds {
+        key(kind)?;
+    }
+    for allocator in &library.allocators {
+        for value in [&allocator.id, &allocator.kind, &allocator.create, &allocator.release] {
+            key(value)?;
         }
-        path(&site.path)?;
-        digest(&site.source_sha256)?;
-        bound(site.spelling.len(), 4096, "primitive-spelling-bytes")?;
+    }
+    Ok(())
+}
+
+fn check_operation(operation: &super::raw::Operation) -> Result<(), DecodeError> {
+    key(&operation.key)?;
+    key(&operation.library)?;
+    name(&operation.logical_name)?;
+    name(&operation.symbol)?;
+    bound(operation.parameters.len(), 16, "parameters")?;
+    bound(operation.resources.len(), 8, "resources")?;
+    bound(operation.statuses.len(), 16, "statuses")?;
+    require(
+        matches!(operation.result, AbiType::CI32 | AbiType::CInt | AbiType::Bool32 | AbiType::Unit),
+        "ZRYNA-C4101",
+        "result-carrier",
+    )?;
+    for parameter in &operation.parameters {
+        name(&parameter.name)?;
         require(
-            site.spelling.strip_prefix("Ffi.").is_some_and(|suffix| {
-                suffix.split_once('(').is_some_and(|(name, _)| {
-                    !name.is_empty()
-                        && name.as_bytes()[0].is_ascii_alphabetic()
-                        && name.bytes().all(|byte| byte.is_ascii_alphanumeric())
-                })
-            }),
+            parameter.abi != AbiType::Unit && parameter.resource.is_none_or(|index| index < 8),
             "ZRYNA-C4101",
-            "primitive-spelling",
+            "parameter-carrier-or-resource",
         )?;
     }
+    for resource in &operation.resources {
+        for value in [&resource.kind, &resource.allocator, &resource.release] {
+            key(value)?;
+        }
+        slots(&resource.slots, 4, 16)?;
+        require(
+            !resource.slots.is_empty()
+                && resource.owner_before != Owner::Consumed
+                && resource.max_bytes.is_none_or(|bytes| bytes <= 4096)
+                && resource.expected_length_slot.is_none_or(|slot| slot < 16),
+            "ZRYNA-C4101",
+            "resource-shape",
+        )?;
+    }
+    for status in &operation.statuses {
+        require(
+            status.code <= 2_147_483_647 && status.preserves_inputs,
+            "ZRYNA-C4101",
+            "status-shape",
+        )?;
+        slots(&status.initialized, 16, 16)?;
+        slots(&status.new_owners, 8, 8)?;
+    }
+    path(&operation.source_binding.path)?;
+    digest(&operation.source_binding.sha256)?;
+    Ok(())
+}
+
+fn check_site(site: &super::raw::Site) -> Result<(), DecodeError> {
+    if let Some(operation) = &site.operation {
+        key(operation)?;
+    }
+    path(&site.path)?;
+    digest(&site.source_sha256)?;
+    bound(site.spelling.len(), 4096, "primitive-spelling-bytes")?;
+    require(
+        site.spelling.strip_prefix("Ffi.").is_some_and(|suffix| {
+            suffix.split_once('(').is_some_and(|(name, _)| {
+                !name.is_empty()
+                    && name.as_bytes()[0].is_ascii_alphabetic()
+                    && name.bytes().all(|byte| byte.is_ascii_alphanumeric())
+            })
+        }),
+        "ZRYNA-C4101",
+        "primitive-spelling",
+    )?;
     Ok(())
 }

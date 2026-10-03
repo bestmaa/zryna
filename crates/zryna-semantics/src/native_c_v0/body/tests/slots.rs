@@ -14,7 +14,7 @@ fn native_c_body_v0_scoped_loan_and_slot_aliases_keep_the_same_origin_without_cl
         .expressions()
         .iter()
         .filter(|expression| expression.value_type() == super::ValueType::Bytes)
-        .filter_map(|expression| expression.token_id())
+        .filter_map(super::super::types::TypedExpression::token_id)
         .collect();
     assert!(loans.iter().all(|token| *token == loans[0]));
 }

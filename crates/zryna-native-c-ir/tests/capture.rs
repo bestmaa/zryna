@@ -22,6 +22,9 @@ pub struct Capture {
     pub authority: VerifiedPrivateBoundaries,
 }
 
+/// # Panics
+/// Panics if independently recaptured fixture source or declaration material is invalid.
+#[must_use]
 pub fn reference() -> Capture {
     let sources = map(BUFFER, HANDLE, SCALAR, false);
     let syntax = authenticate_sources(&sources).expect("actual original syntax");
@@ -43,6 +46,9 @@ pub fn reference() -> Capture {
     Capture { sources, authority }
 }
 
+/// # Panics
+/// Panics if independently recaptured fixture source or declaration material is invalid.
+#[must_use]
 pub fn edited(buffer: &str, handle: &str, scalar: &str) -> Capture {
     recaptured(
         buffer,
@@ -53,6 +59,9 @@ pub fn edited(buffer: &str, handle: &str, scalar: &str) -> Capture {
     )
 }
 
+/// # Panics
+/// Panics if independently recaptured fixture source or declaration material is invalid.
+#[must_use]
 pub fn compact_handle(extra: &str) -> Capture {
     let text =
         std::str::from_utf8(DECLARATIONS).expect("fixture UTF-8").replace("fixture-c-v0@0", "l@0");

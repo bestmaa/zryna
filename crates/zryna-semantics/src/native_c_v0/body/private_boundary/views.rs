@@ -103,7 +103,7 @@ pub struct PrivateLoan {
     pub backing_stride: u64,
     /// Byte scratch or String byte storage alignment; no i32 pointer cast supplies it.
     pub backing_alignment: u64,
-    /// Linux native pointer and size_t lane width.
+    /// Linux native pointer and `size_t` lane width.
     pub native_bits: u8,
     /// Zero length requires null/zero backing without acquiring scratch storage.
     pub empty_without_allocation: bool,
@@ -126,7 +126,7 @@ pub struct PrivateCopy {
     pub stride: u64,
     /// Verified native element alignment.
     pub alignment: u64,
-    /// Genuine VecAllocate operation.
+    /// Genuine `VecAllocate` operation.
     pub allocation: OperationIdentity,
     /// Issued allocation/capacity faults; foreign statuses cannot substitute.
     pub faults: Vec<PrivateFault>,

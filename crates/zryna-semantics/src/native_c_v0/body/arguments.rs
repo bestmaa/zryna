@@ -69,10 +69,10 @@ impl Frame<'_> {
             }
             match parameter.abi {
                 AbiType::Count => {
-                    checks.push(BoundaryCheck::CountConversion { expression: *argument })
+                    checks.push(BoundaryCheck::CountConversion { expression: *argument });
                 }
                 AbiType::Bool32 => {
-                    checks.push(BoundaryCheck::BooleanCarrier { expression: *argument })
+                    checks.push(BoundaryCheck::BooleanCarrier { expression: *argument });
                 }
                 _ => {}
             }

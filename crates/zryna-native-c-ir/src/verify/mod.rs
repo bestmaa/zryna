@@ -54,76 +54,7 @@ fn preflight(program: &raw::Program) -> Result<(), IrError> {
     count(0, d.operations.len(), 256, "ir-operation-budget")?;
     count(0, d.sites.len(), 4096, "ir-site-budget")?;
     count(0, program.functions.len(), syntax::MAX_PROJECT_FUNCTIONS, "ir-function-budget")?;
-    let mut strings = 0;
-    let mut string = |s: &str, maximum, metric| {
-        count(0, s.len(), maximum, metric)?;
-        strings = count(strings, s.len(), 65_536, "ir-declaration-string-budget")?;
-        Ok::<(), IrError>(())
-    };
-    for s in [
-        &d.format,
-        &d.target,
-        &d.abi,
-        &d.convention,
-        &d.carriers,
-        &d.ownership,
-        &d.runtime_contract,
-    ] {
-        string(s, 128, "ir-identity-string-budget")?;
-    }
-    for record in &d.sources {
-        string(&record.path, 256, "ir-path-budget")?;
-        string(&record.sha256, 64, "ir-digest-budget")?;
-    }
-    for library in &d.libraries {
-        string(&library.id, 128, "ir-name-budget")?;
-        string(&library.version, 128, "ir-name-budget")?;
-        string(&library.header_sha256, 64, "ir-digest-budget")?;
-        string(&library.policy_sha256, 64, "ir-digest-budget")?;
-        count(0, library.kinds.len(), 16, "ir-kind-budget")?;
-        count(0, library.allocators.len(), 16, "ir-allocator-budget")?;
-        for kind in &library.kinds {
-            string(kind, 257, "ir-key-budget")?;
-        }
-        for a in &library.allocators {
-            for s in [&a.id, &a.kind, &a.create, &a.release] {
-                string(s, 257, "ir-key-budget")?;
-            }
-        }
-    }
-    for operation in &d.operations {
-        count(0, operation.parameters.len(), 16, "ir-carrier-budget")?;
-        count(0, operation.resources.len(), 8, "ir-resource-budget")?;
-        count(0, operation.statuses.len(), 16, "ir-status-budget")?;
-        for s in [&operation.key, &operation.library] {
-            string(s, 257, "ir-key-budget")?;
-        }
-        string(&operation.symbol, 128, "ir-symbol-budget")?;
-        string(&operation.logical_name, 128, "ir-name-budget")?;
-        string(&operation.source_binding.path, 256, "ir-path-budget")?;
-        string(&operation.source_binding.sha256, 64, "ir-digest-budget")?;
-        for parameter in &operation.parameters {
-            string(&parameter.name, 128, "ir-name-budget")?;
-        }
-        for resource in &operation.resources {
-            count(0, resource.slots.len(), 16, "ir-resource-slot-budget")?;
-            for s in [&resource.kind, &resource.allocator, &resource.release] {
-                string(s, 257, "ir-key-budget")?;
-            }
-        }
-        for status in &operation.statuses {
-            count(0, status.initialized.len(), 16, "ir-output-budget")?;
-            count(0, status.new_owners.len(), 8, "ir-acquisition-budget")?;
-        }
-    }
-    for site in &d.sites {
-        string(&site.path, 256, "ir-path-budget")?;
-        string(&site.source_sha256, 64, "ir-digest-budget")?;
-        string(&site.spelling, 4096, "ir-spelling-budget")?;
-        if let Some(key) = &site.operation {
-            string(key, 257, "ir-key-budget")?;
-        }
-    }
+    declaration_payloads(d)?;
     // Runtime reservations remain conditional across frames. This is not a static 64-owner cap.
     let mut values = 0;
     let mut parameters = 0;
@@ -215,4 +146,78 @@ fn preflight(program: &raw::Program) -> Result<(), IrError> {
         }
     }
     require(program.storage.runtime.len() <= 128, "ZRYNA-C4107", "ir-runtime-string-budget")
+}
+
+fn declaration_payloads(d: &zryna_syntax::native_c_v0::raw::DeclarationSet) -> Result<(), IrError> {
+    let mut strings = 0;
+    let mut string = |s: &str, maximum, metric| {
+        count(0, s.len(), maximum, metric)?;
+        strings = count(strings, s.len(), 65_536, "ir-declaration-string-budget")?;
+        Ok::<(), IrError>(())
+    };
+    for s in [
+        &d.format,
+        &d.target,
+        &d.abi,
+        &d.convention,
+        &d.carriers,
+        &d.ownership,
+        &d.runtime_contract,
+    ] {
+        string(s, 128, "ir-identity-string-budget")?;
+    }
+    for record in &d.sources {
+        string(&record.path, 256, "ir-path-budget")?;
+        string(&record.sha256, 64, "ir-digest-budget")?;
+    }
+    for library in &d.libraries {
+        string(&library.id, 128, "ir-name-budget")?;
+        string(&library.version, 128, "ir-name-budget")?;
+        string(&library.header_sha256, 64, "ir-digest-budget")?;
+        string(&library.policy_sha256, 64, "ir-digest-budget")?;
+        count(0, library.kinds.len(), 16, "ir-kind-budget")?;
+        count(0, library.allocators.len(), 16, "ir-allocator-budget")?;
+        for kind in &library.kinds {
+            string(kind, 257, "ir-key-budget")?;
+        }
+        for a in &library.allocators {
+            for s in [&a.id, &a.kind, &a.create, &a.release] {
+                string(s, 257, "ir-key-budget")?;
+            }
+        }
+    }
+    for operation in &d.operations {
+        count(0, operation.parameters.len(), 16, "ir-carrier-budget")?;
+        count(0, operation.resources.len(), 8, "ir-resource-budget")?;
+        count(0, operation.statuses.len(), 16, "ir-status-budget")?;
+        for s in [&operation.key, &operation.library] {
+            string(s, 257, "ir-key-budget")?;
+        }
+        string(&operation.symbol, 128, "ir-symbol-budget")?;
+        string(&operation.logical_name, 128, "ir-name-budget")?;
+        string(&operation.source_binding.path, 256, "ir-path-budget")?;
+        string(&operation.source_binding.sha256, 64, "ir-digest-budget")?;
+        for parameter in &operation.parameters {
+            string(&parameter.name, 128, "ir-name-budget")?;
+        }
+        for resource in &operation.resources {
+            count(0, resource.slots.len(), 16, "ir-resource-slot-budget")?;
+            for s in [&resource.kind, &resource.allocator, &resource.release] {
+                string(s, 257, "ir-key-budget")?;
+            }
+        }
+        for status in &operation.statuses {
+            count(0, status.initialized.len(), 16, "ir-output-budget")?;
+            count(0, status.new_owners.len(), 8, "ir-acquisition-budget")?;
+        }
+    }
+    for site in &d.sites {
+        string(&site.path, 256, "ir-path-budget")?;
+        string(&site.source_sha256, 64, "ir-digest-budget")?;
+        string(&site.spelling, 4096, "ir-spelling-budget")?;
+        if let Some(key) = &site.operation {
+            string(key, 257, "ir-key-budget")?;
+        }
+    }
+    Ok(())
 }

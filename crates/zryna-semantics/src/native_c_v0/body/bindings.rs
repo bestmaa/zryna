@@ -15,7 +15,7 @@ impl<'a> Frame<'a> {
             file,
             function,
             bindings: Vec::new(),
-            names: Default::default(),
+            names: std::collections::BTreeMap::default(),
             tokens: Vec::new(),
             calls: Vec::new(),
             owners: Vec::new(),
@@ -77,10 +77,10 @@ impl<'a> Frame<'a> {
         if !binding.available {
             return Err(self.resource_error(range, "moved-binding"));
         }
-        if let Some(token) = binding.value.token {
-            if !self.tokens[token].live {
-                return Err(self.resource_error(range, "stale-token"));
-            }
+        if let Some(token) = binding.value.token
+            && !self.tokens[token].live
+        {
+            return Err(self.resource_error(range, "stale-token"));
         }
         Ok(binding.value.clone())
     }

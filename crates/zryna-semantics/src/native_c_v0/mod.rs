@@ -118,6 +118,7 @@ impl VerifiedOperation<'_> {
         self.span
     }
     /// Ordered exact C argument spellings; `c-int` remains distinct from `c-i32`.
+    #[must_use]
     pub fn parameter_carriers(&self) -> impl ExactSizeIterator<Item = raw::AbiType> + '_ {
         self.operation.parameters.iter().map(|parameter| parameter.abi)
     }

@@ -63,7 +63,8 @@ pub(super) fn check(
     let i32_type = type_id(authority, ValueType::I32)?;
     let vector = type_id(authority, ValueType::VecI32)?;
     require(
-        native.type_by_id(vector).and_then(|ty| ty.referenced_type()) == Some(i32_type),
+        native.type_by_id(vector).and_then(zryna_layout::VerifiedType::referenced_type)
+            == Some(i32_type),
         "ZRYNA-C4104",
         "ir-private-vector-element",
     )?;
@@ -100,17 +101,18 @@ pub(super) fn check(
             "ir-private-result-layout",
         )?;
         for owner in &function.private_owners {
-            let operation =
-                match owner.ty.and_then(|id| native.type_by_id(id)).map(|ty| ty.category()) {
-                    Some(TypeCategory::String) => LogicalOperation::StringRelease,
-                    Some(TypeCategory::Vec) => LogicalOperation::VecReleaseStorage,
-                    None if owner.ty.is_none()
-                        && matches!(owner.origin, PrivateOrigin::Packed(_)) =>
-                    {
-                        LogicalOperation::Release
-                    }
-                    _ => return Err(IrError::new("ZRYNA-C4105", "ir-private-owner-layout")),
-                };
+            let operation = match owner
+                .ty
+                .and_then(|id| native.type_by_id(id))
+                .map(zryna_layout::VerifiedType::category)
+            {
+                Some(TypeCategory::String) => LogicalOperation::StringRelease,
+                Some(TypeCategory::Vec) => LogicalOperation::VecReleaseStorage,
+                None if owner.ty.is_none() && matches!(owner.origin, PrivateOrigin::Packed(_)) => {
+                    LogicalOperation::Release
+                }
+                _ => return Err(IrError::new("ZRYNA-C4105", "ir-private-owner-layout")),
+            };
             require(
                 owner.release == operation_id(authority, operation)? && owner.nonempty_storage_only,
                 "ZRYNA-C4105",
@@ -124,96 +126,11 @@ pub(super) fn check(
                 "ir-authenticated-preparation",
             )?;
             match (&effect.operation, &effect.preparation) {
-                (
-                    FlowStep::PrepareLoan {
-                        expression,
-                        token,
-                        source_expression,
-                        utf8,
-                        maximum_bytes,
-                        ..
-                    },
-                    Some(PrivatePreparation::Loan(loan)),
-                ) => {
-                    require(
-                        loan.expression == *expression
-                            && loan.token == *token
-                            && loan.maximum_bytes == *maximum_bytes
-                            && *maximum_bytes == 4096
-                            && function
-                                .values
-                                .get(*source_expression)
-                                .is_some_and(|v| v.origin == Some(loan.source))
-                            && loan.source_type
-                                == type_id(
-                                    authority,
-                                    if *utf8 { ValueType::String } else { ValueType::VecI32 },
-                                )?
-                            && loan.backing_stride == 1
-                            && loan.backing_alignment == 1
-                            && loan.native_bits == 64
-                            && loan.empty_without_allocation,
-                        "ZRYNA-C4105",
-                        "ir-retained-byte-loan",
-                    )?;
-                    if *utf8 {
-                        require(
-                            loan.scratch.is_none()
-                                && loan.allocation.is_none()
-                                && loan.faults.is_empty()
-                                && loan.source_stride == 1
-                                && loan.stages == [S::Utf8, S::Length],
-                            "ZRYNA-C4105",
-                            "ir-string-loan-without-allocation",
-                        )?;
-                    } else {
-                        let allocation = operation_id(authority, LogicalOperation::Allocate)?;
-                        require(
-                            loan.source_stride == 4
-                                && loan.scratch == Some(PrivateOrigin::Packed(*expression))
-                                && loan.allocation == Some(allocation)
-                                && loan.stages
-                                    == [
-                                        S::Length,
-                                        S::ByteRange,
-                                        S::AllocateNonempty,
-                                        S::Initialize,
-                                        S::Commit,
-                                    ],
-                            "ZRYNA-C4105",
-                            "ir-distinct-byte-packing",
-                        )?;
-                        faults(&loan.faults, allocation, authority)?;
-                    }
+                (step @ FlowStep::PrepareLoan { .. }, Some(PrivatePreparation::Loan(loan))) => {
+                    check_loan(function, step, loan, authority)?;
                 }
-                (
-                    FlowStep::Copy { expression, owner, .. },
-                    Some(PrivatePreparation::Copy(copy)),
-                ) => {
-                    let allocation = operation_id(authority, LogicalOperation::VecAllocate)?;
-                    require(
-                        copy.expression == *expression
-                            && copy.foreign_owner == *owner
-                            && copy.result == PrivateOrigin::Copy(*expression)
-                            && copy.vector_type == vector
-                            && copy.element_type == i32_type
-                            && copy.stride == 4
-                            && copy.alignment == 4
-                            && copy.allocation == allocation
-                            && copy.zero_extend_bytes
-                            && copy.empty_without_allocation
-                            && copy.stages
-                                == [
-                                    S::ValidateForeign,
-                                    S::CheckedCapacity,
-                                    S::AllocateNonempty,
-                                    S::Initialize,
-                                    S::Commit,
-                                ],
-                        "ZRYNA-C4105",
-                        "ir-distinct-private-byte-copy",
-                    )?;
-                    faults(&copy.faults, allocation, authority)?;
+                (step @ FlowStep::Copy { .. }, Some(PrivatePreparation::Copy(copy))) => {
+                    check_copy(step, copy, vector, i32_type, authority)?;
                 }
                 (FlowStep::PrepareLoan { .. } | FlowStep::Copy { .. }, _) | (_, Some(_)) => {
                     return Err(IrError::new("ZRYNA-C4105", "ir-preparation-site"));
@@ -249,7 +166,7 @@ fn operation_id(
         .runtime_abi()
         .operations()
         .find(|operation| operation.operation() == logical)
-        .map(|operation| operation.id())
+        .map(zryna_ownership_runtime_abi::VerifiedOperation::id)
         .ok_or_else(|| IrError::new("ZRYNA-C4105", "ir-private-operation-issuer"))
 }
 
@@ -275,5 +192,97 @@ fn faults(
             "ir-private-trap-domain",
         )?;
     }
+    Ok(())
+}
+
+fn check_loan(
+    function: &raw::Function,
+    step: &FlowStep,
+    loan: &zryna_semantics::native_c_v0::body::PrivateLoan,
+    authority: &VerifiedPrivateBoundaries,
+) -> Result<(), IrError> {
+    let FlowStep::PrepareLoan { expression, token, source_expression, utf8, maximum_bytes, .. } =
+        step
+    else {
+        return Err(IrError::new("ZRYNA-C4105", "ir-preparation-site"));
+    };
+    require(
+        loan.expression == *expression
+            && loan.token == *token
+            && loan.maximum_bytes == *maximum_bytes
+            && *maximum_bytes == 4096
+            && function
+                .values
+                .get(*source_expression)
+                .is_some_and(|v| v.origin == Some(loan.source))
+            && loan.source_type
+                == type_id(authority, if *utf8 { ValueType::String } else { ValueType::VecI32 })?
+            && loan.backing_stride == 1
+            && loan.backing_alignment == 1
+            && loan.native_bits == 64
+            && loan.empty_without_allocation,
+        "ZRYNA-C4105",
+        "ir-retained-byte-loan",
+    )?;
+    if *utf8 {
+        require(
+            loan.scratch.is_none()
+                && loan.allocation.is_none()
+                && loan.faults.is_empty()
+                && loan.source_stride == 1
+                && loan.stages == [S::Utf8, S::Length],
+            "ZRYNA-C4105",
+            "ir-string-loan-without-allocation",
+        )?;
+    } else {
+        let allocation = operation_id(authority, LogicalOperation::Allocate)?;
+        require(
+            loan.source_stride == 4
+                && loan.scratch == Some(PrivateOrigin::Packed(*expression))
+                && loan.allocation == Some(allocation)
+                && loan.stages
+                    == [S::Length, S::ByteRange, S::AllocateNonempty, S::Initialize, S::Commit],
+            "ZRYNA-C4105",
+            "ir-distinct-byte-packing",
+        )?;
+        faults(&loan.faults, allocation, authority)?;
+    }
+    Ok(())
+}
+
+fn check_copy(
+    step: &FlowStep,
+    copy: &zryna_semantics::native_c_v0::body::PrivateCopy,
+    vector: TypeId,
+    i32_type: TypeId,
+    authority: &VerifiedPrivateBoundaries,
+) -> Result<(), IrError> {
+    let FlowStep::Copy { expression, owner, .. } = step else {
+        return Err(IrError::new("ZRYNA-C4105", "ir-preparation-site"));
+    };
+    let allocation = operation_id(authority, LogicalOperation::VecAllocate)?;
+    require(
+        copy.expression == *expression
+            && copy.foreign_owner == *owner
+            && copy.result == PrivateOrigin::Copy(*expression)
+            && copy.vector_type == vector
+            && copy.element_type == i32_type
+            && copy.stride == 4
+            && copy.alignment == 4
+            && copy.allocation == allocation
+            && copy.zero_extend_bytes
+            && copy.empty_without_allocation
+            && copy.stages
+                == [
+                    S::ValidateForeign,
+                    S::CheckedCapacity,
+                    S::AllocateNonempty,
+                    S::Initialize,
+                    S::Commit,
+                ],
+        "ZRYNA-C4105",
+        "ir-distinct-private-byte-copy",
+    )?;
+    faults(&copy.faults, allocation, authority)?;
     Ok(())
 }

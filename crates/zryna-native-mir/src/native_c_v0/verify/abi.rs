@@ -1,6 +1,10 @@
 //! Independent physical C ABI derivation from sealed declarations, never lowering output.
 
-use super::super::{MirError, abi::*, raw, require};
+use super::super::{
+    MirError,
+    abi::{Location, Register, ResultLane},
+    raw, require,
+};
 use zryna_native_c_ir::{VerifiedNativeCProgram, contract::AbiType};
 
 pub(super) fn check(

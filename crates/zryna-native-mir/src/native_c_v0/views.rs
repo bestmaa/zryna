@@ -6,7 +6,14 @@ use super::{
     raw,
 };
 use zryna_layout::TypeId;
-use zryna_native_c_ir::{VerifiedNativeCProgram, contract::*, raw::Value};
+use zryna_native_c_ir::{
+    VerifiedNativeCProgram,
+    contract::{
+        Binding, BoundaryExit, BoundaryOwner, FileId, FlowStep, Operation, PrivateOwner,
+        PrivatePreparation, Span, Statement, ValueType,
+    },
+    raw::Value,
+};
 
 impl VerifiedMirProgram {
     /// Exact retained original IR authority, including actual source/material/layout issuers.
@@ -25,10 +32,12 @@ impl VerifiedMirProgram {
         &self.program.dispatcher
     }
     /// Complete declarations, including unused imports, with verified physical signatures.
+    #[must_use]
     pub fn operations(&self) -> impl ExactSizeIterator<Item = VerifiedOperation<'_>> {
         self.program.operations.iter().map(|record| VerifiedOperation { record })
     }
     /// Complete original source functions with verified machine plans.
+    #[must_use]
     pub fn functions(&self) -> impl ExactSizeIterator<Item = VerifiedFunction<'_>> {
         self.program.functions.iter().map(|record| VerifiedFunction { record })
     }
@@ -127,6 +136,7 @@ impl<'a> VerifiedFunction<'a> {
         self.record.output_frame_bytes
     }
     /// Complete independently admitted effect sequence.
+    #[must_use]
     pub fn effects(self) -> impl ExactSizeIterator<Item = VerifiedEffect<'a>> {
         self.record.effects.iter().map(|record| VerifiedEffect { record })
     }

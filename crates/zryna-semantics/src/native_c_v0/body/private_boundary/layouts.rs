@@ -160,7 +160,7 @@ impl LayoutAuthority {
         self.runtime
             .operations()
             .find(|record| record.operation() == wanted)
-            .map(|record| record.id())
+            .map(zryna_ownership_runtime_abi::VerifiedOperation::id)
             .ok_or_else(|| BoundaryError::source("boundary-operation-issuer"))
     }
 

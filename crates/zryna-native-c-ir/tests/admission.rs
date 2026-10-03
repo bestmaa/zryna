@@ -72,7 +72,7 @@ fn total_scalar_export_retains_wrapping_body_and_exact_public_symbol() {
     assert!(
         function
             .effects()
-            .flat_map(|e| e.exits())
+            .flat_map(zryna_native_c_ir::VerifiedEffect::exits)
             .all(|exit| exit.kind == BoundaryExitKind::Return)
     );
 }
@@ -92,7 +92,7 @@ fn packing_copy_faults_and_dual_layout_runtime_issuers_remain_distinct() {
     let mut packed = false;
     let mut copied = false;
     let mut utf8 = false;
-    for effect in program.functions().flat_map(|f| f.effects()) {
+    for effect in program.functions().flat_map(zryna_native_c_ir::VerifiedFunction::effects) {
         match effect.preparation() {
             Some(PrivatePreparation::Loan(loan)) if loan.scratch.is_some() => {
                 packed = true;
@@ -145,7 +145,11 @@ fn mixed_private_foreign_cleanup_and_process_failure_domains_are_complete() {
         .expect("private fault");
     assert!(fault.cleanup.iter().any(|drop| matches!(drop.owner(), BoundaryOwner::Foreign(_))));
     assert!(fault.cleanup.iter().any(|drop| matches!(drop.owner(), BoundaryOwner::Private(_))));
-    for exit in program.functions().flat_map(|f| f.effects()).flat_map(|e| e.exits()) {
+    for exit in program
+        .functions()
+        .flat_map(zryna_native_c_ir::VerifiedFunction::effects)
+        .flat_map(zryna_native_c_ir::VerifiedEffect::exits)
+    {
         assert_eq!(exit.release_failure_route, FailureRoute::ReleaseFailureOverridesUnresolved);
         if matches!(
             exit.kind,
@@ -176,7 +180,7 @@ function retained(text: String): String {
     assert_eq!(function.private_owners().len(), 1);
     let exit = function
         .effects()
-        .flat_map(|e| e.exits())
+        .flat_map(zryna_native_c_ir::VerifiedEffect::exits)
         .find(|exit| exit.kind == BoundaryExitKind::Return)
         .expect("return");
     assert_eq!(exit.protected_result, Some(PrivateOrigin::Parameter(0)));

@@ -1,7 +1,10 @@
 //! Exact retained source and issuer binding, before inspecting machine-controlled payloads.
 
 use super::super::{MirError, raw, require};
-use zryna_native_c_ir::{VerifiedNativeCProgram, contract::*};
+use zryna_native_c_ir::{
+    VerifiedNativeCProgram,
+    contract::{AbiType, Direction, Mode},
+};
 
 pub(super) fn check(
     program: &raw::Program,
