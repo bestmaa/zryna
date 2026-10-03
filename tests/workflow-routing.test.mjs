@@ -183,6 +183,7 @@ test('manual, shared, unknown and malformed changes fail safe to every lane', ()
   assert.deepEqual(classifyWorkflowPaths([], { full: true }), all);
   for (const changedPath of [
     'Cargo.lock',
+    'crates/zryna-process/src/lib.rs',
     '.github/workflows/ci.yml',
     'scripts/classify-workflow-paths.mjs',
     'future-root/contract.json',

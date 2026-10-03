@@ -373,28 +373,28 @@ int main(void) {{
     let executable = root.workspace.join("cleanup.elf");
     fs::write(&source, runtime).expect("runtime harness");
     fs::write(&object_path, object.bytes()).expect("object bytes");
-    let output = std::process::Command::new("/usr/bin/gcc")
-        .args([
-            "-std=c11",
-            "-pedantic",
-            "-Wall",
-            "-Wextra",
-            "-Werror",
-            "-O2",
-            "-fno-stack-protector",
-            "-fno-pie",
-            "-no-pie",
-        ])
-        .arg(&source)
-        .arg(&object_path)
-        .arg("-o")
-        .arg(&executable)
-        .output()
-        .expect("cleanup verifier compile");
+    let output = crate::process_spawn::output(
+        std::process::Command::new("/usr/bin/gcc")
+            .args([
+                "-std=c11",
+                "-pedantic",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "-O2",
+                "-fno-stack-protector",
+                "-fno-pie",
+                "-no-pie",
+            ])
+            .arg(&source)
+            .arg(&object_path)
+            .arg("-o")
+            .arg(&executable),
+    )
+    .expect("cleanup verifier compile");
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     assert!(
-        std::process::Command::new(&executable)
-            .status()
+        crate::process_spawn::status(&mut std::process::Command::new(&executable))
             .expect("cleanup verifier execute")
             .success()
     );
