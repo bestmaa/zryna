@@ -52,7 +52,9 @@ snapshots are captured before parsing, authenticated through #413, and kept aliv
 and IR verification and JavaScript/WebAssembly emission. Native process-worker results and retained
 in-process results use the same source map and produce equal artifact bytes. M2/V4 graph identities
 match their preparse seals. Persistent source mutation must either be denied by retained handles
-or rejected before dispatch; no mutated authority is accepted.
+or rejected before dispatch; Windows write denial must be the exact sharing violation (raw OS
+error 32), with unchanged source bytes and successful retained-state revalidation. No mutated
+authority is accepted.
 
 The compiled executable is copied alone into a fresh private installation, hash-compared to the
 built executable, and launched by absolute path from an unrelated working directory. Runtime

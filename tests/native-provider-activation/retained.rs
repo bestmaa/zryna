@@ -133,7 +133,7 @@ pub fn smoke(cwd: &Path) -> Result<Vec<String>> {
             return Err(format!("unexpected write failure: {error}").into());
             #[cfg(windows)]
             {
-                assert_eq!(error.kind(), std::io::ErrorKind::PermissionDenied);
+                assert_eq!(error.raw_os_error(), Some(32), "expected Windows sharing violation");
                 assert_eq!(
                     fs::read_to_string(project.join("main.zry"))?,
                     "export function main(): i32 { return 7; }"
