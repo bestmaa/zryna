@@ -79,6 +79,7 @@ test('rejects stale sources, rewritten commands, missing/extra/duplicate gates a
     value => { value.receipt.closureStatus = 'passed'; },
     value => { value.receipt.exemption = 'approved'; },
     value => { value.receipt.tools.pop(); },
+    value => { value.receipt.tools[0] = { name: 'node', version: null, error: 123 }; },
     value => { value.receipt.host = 'windows-x86_64'; },
   ]) {
     const value = fixture();
@@ -95,6 +96,7 @@ test('rejects log tampering, cross-attempt substitution, fabricated counts and f
     value => { value.receipt.results[0].attempts[0].tests.passed += 100; },
     value => { value.receipt.results[0].attempts[0].exitCode = 1; },
     value => { value.receipt.results[0].attempts[0].error = 'ETIMEDOUT'; },
+    value => { value.receipt.results[0].attempts[0].error = 123; },
     value => { value.receipt.results[0].attempts[0].signal = 'SIGKILL'; },
     value => { value.receipt.results[0].attempts[0].elapsedMs = Infinity; },
     value => { value.receipt.results[0].attempts[0].elapsedMs = 1e12; },
@@ -168,6 +170,7 @@ test('canonical bounded JSON rejects duplicate keys, unknown representations and
   const cycle = {}; cycle.self = cycle;
   assert.throws(() => canonical(cycle), /cyclic/);
   assert.throws(() => canonical(Array.from({ length: 9000 }, () => 0)), /resource/);
+  assert.throws(() => canonical({ oversized: 'x'.repeat(MAX_DOCUMENT + 1) }), /string byte budget/);
   let nested = []; for (let index = 0; index < 26; index += 1) nested = [nested];
   assert.throws(() => canonical(nested), /resource/);
 });

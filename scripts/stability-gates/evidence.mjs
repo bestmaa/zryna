@@ -45,8 +45,8 @@ export function validateReceipt(receipt, { registry, source, host, root, readLog
   assert.deepEqual(receipt.tools.map(tool => tool.name), Object.keys(registry.toolchains), 'S418: tool inventory');
   for (const tool of receipt.tools) {
     exact(tool, ['name', 'version', 'error'], 'tool');
-    assert(tool.version === null || typeof tool.version === 'string' && tool.version.length <= 128, 'S418: tool version');
-    assert(tool.error === null || /^[A-Z0-9_]{1,32}$/.test(tool.error), 'S418: tool error');
+    assert(tool.version === null || typeof tool.version === 'string' && tool.version.length > 0 && tool.version.length <= 128, 'S418: tool version');
+    assert(tool.error === null || typeof tool.error === 'string' && /^[A-Z0-9_]{1,32}$/.test(tool.error), 'S418: tool error');
     assert(tool.version === null ? tool.error !== null : tool.error === null, 'S418: tool observation consistency');
   }
   assert(Array.isArray(receipt.results), 'S418: result inventory required');
@@ -60,7 +60,7 @@ export function validateReceipt(receipt, { registry, source, host, root, readLog
       exact(attempt, ['exitCode', 'signal', 'error', 'elapsedMs', 'tests', 'stdout', 'stderr'], 'attempt');
       assert(attempt.exitCode === null || Number.isSafeInteger(attempt.exitCode) && attempt.exitCode >= 0, 'S418: exit code');
       assert(attempt.signal === null || /^SIG[A-Z0-9]{1,20}$/.test(attempt.signal), 'S418: signal');
-      assert(attempt.error === null || /^[A-Z0-9_]{1,32}$/.test(attempt.error), 'S418: process error');
+      assert(attempt.error === null || typeof attempt.error === 'string' && /^[A-Z0-9_]{1,32}$/.test(attempt.error), 'S418: process error');
       assert(Number.isFinite(attempt.elapsedMs) && attempt.elapsedMs > 0, 'S418: elapsed time');
       // A process may exceed its deadline slightly while termination is observed.
       assert(attempt.elapsedMs <= gate.timeoutMs + 60_000, 'S418: elapsed-time ceiling');

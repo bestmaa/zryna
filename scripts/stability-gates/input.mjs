@@ -67,17 +67,24 @@ function bounded(value) {
   const pending = [{ value, depth: 0 }];
   const seen = new WeakSet();
   let count = 0;
+  let stringBytes = 0;
   while (pending.length) {
     const entry = pending.pop();
     if (++count > 8192 || entry.depth > 24) reject('JSON resource budget');
     if (entry.value !== null && typeof entry.value === 'object') {
       if (seen.has(entry.value)) reject('cyclic JSON');
       seen.add(entry.value);
-      for (const child of Object.values(entry.value)) pending.push({ value: child, depth: entry.depth + 1 });
+      for (const [key, child] of Object.entries(entry.value)) {
+        stringBytes += Buffer.byteLength(key);
+        pending.push({ value: child, depth: entry.depth + 1 });
+      }
+    } else if (typeof entry.value === 'string') {
+      stringBytes += Buffer.byteLength(entry.value);
     } else if (typeof entry.value === 'number' && !Number.isFinite(entry.value)) reject('nonfinite JSON');
     else if (entry.value !== null && !['string', 'number', 'boolean'].includes(typeof entry.value)) {
       reject('non-JSON value');
     }
+    if (stringBytes > MAX_DOCUMENT) reject('JSON string byte budget');
   }
 }
 
