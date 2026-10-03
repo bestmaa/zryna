@@ -14,10 +14,32 @@ impl FileParser<'_> {
         body: &mut Body,
         block_depth: u32,
     ) -> Result<u32, ParseError> {
-        let first = self.current().ok_or_else(|| unsupported(None, "missing expression"))?;
+        self.current().ok_or_else(|| unsupported(None, "missing expression"))?;
+        if let Some(diagnostic) = crate::native_parser::depth::source_diagnostic(
+            self.sources,
+            self.text,
+            &self.tokens[self.position..],
+            block_depth,
+            4,
+            crate::native_parser::depth::ExpressionBudgets {
+                function: body.expressions.len(),
+                project: self.previous_expressions + body.expressions.len(),
+                aggregate: self.aggregate_operands,
+            },
+        ) {
+            return Err(ParseError { diagnostic });
+        }
         let (id, depth) = self.binary_expression(body, 1)?;
         if depth + block_depth > syntax::MAX_NESTING_DEPTH {
-            return Err(unsupported(Some(first), "expression depth exceeds protocol-v4 limit"));
+            return Err(ParseError {
+                diagnostic: crate::native_parser::depth::v4_diagnostic(
+                    self.sources,
+                    &body.expressions,
+                    id,
+                    block_depth,
+                )
+                .expect("overflowing expression depth"),
+            });
         }
         Ok(id)
     }
@@ -61,9 +83,6 @@ impl FileParser<'_> {
         let (rhs, rhs_depth) = values.pop().expect("binary right operand");
         let (lhs, lhs_depth) = values.pop().expect("binary left operand");
         let depth = lhs_depth.max(rhs_depth) + 1;
-        if depth > syntax::MAX_NESTING_DEPTH {
-            return Err(resource("expression depth exceeds protocol-v4 limit"));
-        }
         let span = UntrustedSpan {
             file: self.file,
             start: body.expressions[lhs as usize].span.start,
@@ -167,9 +186,6 @@ impl FileParser<'_> {
         (id, depth) = self.postfix(body, id, depth, nesting)?;
         for minus in minuses.into_iter().rev() {
             depth += 1;
-            if depth > syntax::MAX_NESTING_DEPTH {
-                return Err(resource("expression depth exceeds protocol-v4 limit"));
-            }
             let span = UntrustedSpan {
                 file: self.file,
                 start: minus.span().start(),
@@ -297,9 +313,6 @@ impl FileParser<'_> {
             } else {
                 break;
             }
-            if depth > syntax::MAX_NESTING_DEPTH {
-                return Err(resource("expression depth exceeds protocol-v4 limit"));
-            }
         }
         Ok((id, depth))
     }
@@ -307,12 +320,25 @@ impl FileParser<'_> {
     fn call(&mut self, body: &mut Body, nesting: u32) -> Result<(u32, u32), ParseError> {
         let callee = self.identifier()?;
         let open = self.take(TokenKind::OpenParen)?;
+        let count = super::super::super::collections::bounds(&self.tokens, self.position - 1)
+            .map_or(0, |(_, count)| count);
+        let required = match callee.text.as_str() {
+            "clone" | "shared" | "downgrade" | "borrow" | "borrowMut" => Some(1),
+            "push" => Some(2),
+            _ => None,
+        };
+        if required.is_some_and(|required| count != required) {
+            return Err(unsupported(Some(open), "wrong intrinsic argument count"));
+        }
+        if count > syntax::MAX_PARAMETERS_PER_FUNCTION {
+            return Err(resource("call exceeds the argument limit"));
+        }
         let mut arguments = Vec::new();
         let mut commas = Vec::new();
         let mut depth = 0;
         while self.current().is_some_and(|token| token.kind() != TokenKind::CloseParen) {
             if arguments.len() >= syntax::MAX_PARAMETERS_PER_FUNCTION {
-                return Err(resource("call argument inventory exceeds protocol-v4 limit"));
+                return Err(resource("call exceeds the argument limit"));
             }
             let (argument, argument_depth) = self.binary_expression(body, nesting + 1)?;
             arguments.push(argument);
@@ -387,7 +413,13 @@ impl FileParser<'_> {
             || self.previous_expressions + body.expressions.len()
                 >= syntax::MAX_EXPRESSIONS_PER_PROJECT
         {
-            return Err(resource("expression inventory exceeds protocol-v4 limit"));
+            return Err(resource(
+                if body.expressions.len() >= syntax::MAX_EXPRESSIONS_PER_FUNCTION {
+                    "function exceeds the expression limit"
+                } else {
+                    "project exceeds the expression limit"
+                },
+            ));
         }
         let id = u32::try_from(body.expressions.len()).expect("bounded expressions");
         body.expressions.push(expression);

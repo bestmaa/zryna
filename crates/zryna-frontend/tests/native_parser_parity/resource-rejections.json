@@ -1,0 +1,321 @@
+[
+  {
+    "version": 2,
+    "name": "parameters-257",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the parameter limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 2,
+    "name": "functions-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "source file exceeds the function limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 2,
+    "name": "statements-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the statement limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 2,
+    "name": "expressions-16385",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the expression limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "parameters-257",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the parameter limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "functions-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "module exceeds the function limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "statements-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the statement limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "expressions-16385",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the expression limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "call-arguments-257",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "call exceeds the argument limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "import-bindings-257",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "import exceeds the imported-name limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "blocks-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the lexical-block limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "parameters-257",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the parameter limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "functions-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "module exceeds the function limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "statements-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the statement limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "expressions-16385",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the expression limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "call-arguments-257",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "call exceeds the argument limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "import-bindings-257",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "import exceeds the imported-name limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "blocks-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the lexical-block limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "members-1025",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "data declaration exceeds the member limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "initializers-1025",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "struct construction exceeds the initializer limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "array-elements-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "array construction exceeds the element limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "locals-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the statement limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 3,
+    "name": "imports-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "module exceeds the import-declaration limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "locals-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "function exceeds the statement limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "imports-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "module exceeds the import-declaration limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "declarations-4097",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "module exceeds the nominal-declaration limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "match-arms-1025",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "match exceeds the arm limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "type-depth-129",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "type syntax exceeds the nesting limit",
+        "span": null
+      }
+    }
+  },
+  {
+    "version": 4,
+    "name": "array-length-1048577",
+    "response": {
+      "error": {
+        "code": "ZRYNA-F1002",
+        "message": "fixed-array length must be canonical and at most 1048576",
+        "span": null
+      }
+    }
+  }
+]

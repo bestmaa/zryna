@@ -62,12 +62,32 @@ impl FileParser<'_> {
         let keyword = self.take(TokenKind::Keyword(Keyword::Function))?;
         let name = self.identifier()?;
         self.take(TokenKind::OpenParen)?;
+        let count = super::super::collections::separated_bounds(
+            &self.tokens,
+            self.position - 1,
+            TokenKind::Comma,
+            true,
+        )
+        .map_or(0, |(_, count)| count);
+        if count > syntax::MAX_PARAMETERS_PER_FUNCTION
+            || self.previous_parameters + count > syntax::MAX_PARAMETERS_PER_PROJECT
+        {
+            return Err(resource(if count > syntax::MAX_PARAMETERS_PER_FUNCTION {
+                "function exceeds the parameter limit"
+            } else {
+                "project exceeds the parameter limit"
+            }));
+        }
         let mut parameters = Vec::new();
         while self.current().is_some_and(|token| token.kind() != TokenKind::CloseParen) {
             if parameters.len() >= syntax::MAX_PARAMETERS_PER_FUNCTION
                 || self.previous_parameters + parameters.len() >= syntax::MAX_PARAMETERS_PER_PROJECT
             {
-                return Err(resource("parameter inventory exceeds protocol-v4 limit"));
+                return Err(resource(if parameters.len() >= syntax::MAX_PARAMETERS_PER_FUNCTION {
+                    "function exceeds the parameter limit"
+                } else {
+                    "project exceeds the parameter limit"
+                }));
             }
             let name = self.identifier()?;
             let type_syntax = self.optional_type(name.span.end)?;
@@ -102,7 +122,7 @@ impl FileParser<'_> {
 
     fn body(&mut self, open: Token) -> Result<(syntax::RawFunctionBodySyntax, Token), ParseError> {
         if self.previous_blocks >= syntax::MAX_BLOCKS_PER_PROJECT {
-            return Err(resource("block inventory exceeds protocol-v4 limit"));
+            return Err(resource("project exceeds the lexical-block limit"));
         }
         let mut body = Body {
             blocks: vec![unfinished_block(open)],
@@ -133,7 +153,13 @@ impl FileParser<'_> {
                 || self.previous_statements + body.statements.len()
                     >= syntax::MAX_STATEMENTS_PER_PROJECT
             {
-                return Err(resource("statement inventory exceeds protocol-v4 limit"));
+                return Err(resource(
+                    if body.statements.len() >= syntax::MAX_STATEMENTS_PER_FUNCTION {
+                        "function exceeds the statement limit"
+                    } else {
+                        "project exceeds the statement limit"
+                    },
+                ));
             }
             let id = body.statements.len();
             frames
@@ -281,6 +307,14 @@ impl FileParser<'_> {
     ) -> Result<(), ParseError> {
         self.position += 1;
         self.take(TokenKind::OpenParen)?;
+        let arguments = super::super::collections::arguments(&self.tokens, self.position - 1)
+            .ok_or_else(|| unsupported(Some(keyword), "unsupported weak upgrade"))?;
+        if arguments.len() != 3 {
+            return Err(unsupported(Some(keyword), "unsupported weak upgrade"));
+        }
+        if !self.weak_callback(arguments[1], true) || !self.weak_callback(arguments[2], false) {
+            return Err(unsupported(Some(keyword), "unsupported weak upgrade callbacks"));
+        }
         let block_depth = u32::try_from(frames.len()).expect("bounded block depth");
         let weak = self.expression(body, block_depth)?;
         self.take(TokenKind::Comma)?;
@@ -308,6 +342,25 @@ impl FileParser<'_> {
         self.open_child(body, frames, Owner::WeakSuccess(statement))
     }
 
+    fn weak_callback(&self, (start, end): (usize, usize), success: bool) -> bool {
+        if self.tokens.get(start).is_none_or(|token| token.kind() != TokenKind::OpenParen) {
+            return false;
+        }
+        let Some((close, _)) = super::super::collections::bounds(&self.tokens, start) else {
+            return false;
+        };
+        let parameters = if success {
+            close == start + 3 && self.tokens[start + 1].kind() == TokenKind::Identifier
+        } else {
+            close == start + 2
+        };
+        parameters
+            && self.tokens.get(close).is_some_and(|token| token.kind() == TokenKind::FatArrow)
+            && self.tokens.get(close + 1).is_some_and(|token| token.kind() == TokenKind::OpenBrace)
+            && super::super::collections::bounds(&self.tokens, close + 1)
+                .is_some_and(|(close, _)| close == end)
+    }
+
     fn open_child(
         &mut self,
         body: &mut Body,
@@ -317,7 +370,11 @@ impl FileParser<'_> {
         if body.blocks.len() >= syntax::MAX_BLOCKS_PER_FUNCTION
             || self.previous_blocks + body.blocks.len() >= syntax::MAX_BLOCKS_PER_PROJECT
         {
-            return Err(resource("block inventory exceeds protocol-v4 limit"));
+            return Err(resource(if body.blocks.len() >= syntax::MAX_BLOCKS_PER_FUNCTION {
+                "function exceeds the lexical-block limit"
+            } else {
+                "project exceeds the lexical-block limit"
+            }));
         }
         if frames.len() >= syntax::MAX_NESTING_DEPTH as usize {
             return Err(resource("block nesting exceeds protocol-v4 limit"));
@@ -326,6 +383,17 @@ impl FileParser<'_> {
         let block = body.blocks.len();
         body.blocks.push(unfinished_block(open));
         frames.push(Frame { block, open, owner: Some(owner), statements: Vec::new() });
+        Ok(())
+    }
+
+    fn local_room(&self, locals: usize) -> Result<(), ParseError> {
+        if locals >= 4_096 || self.previous_locals + locals >= 65_536 {
+            return Err(resource(if locals >= 4_096 {
+                "function exceeds the local limit"
+            } else {
+                "project exceeds the local limit"
+            }));
+        }
         Ok(())
     }
 
@@ -347,15 +415,13 @@ impl FileParser<'_> {
                 }
             }
             TokenKind::Keyword(Keyword::Const | Keyword::Let) => {
-                if body.locals >= 4_096 || self.previous_locals + body.locals >= 65_536 {
-                    return Err(resource("local inventory exceeds protocol-v4 limit"));
-                }
+                self.local_room(body.locals)?;
                 body.locals += 1;
                 self.position += 1;
                 let name = self.identifier()?;
                 self.take(TokenKind::Colon)?;
                 let type_syntax = self.type_syntax()?;
-                let equals = self.take(TokenKind::Equals)?;
+                let equals_span = self.initializer_equals()?;
                 let initializer = self.expression(body, block_depth)?;
                 let semicolon = self.take(TokenKind::Semicolon)?;
                 syntax::RawStatementKind::LocalDeclaration {
@@ -363,7 +429,7 @@ impl FileParser<'_> {
                     mutable: first.kind() == TokenKind::Keyword(Keyword::Let),
                     name,
                     type_syntax,
-                    equals_span: raw(equals),
+                    equals_span,
                     initializer,
                     semicolon_span: raw(semicolon),
                 }

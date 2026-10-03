@@ -1,6 +1,7 @@
-# Generic instantiation verified IR v1 proposal
+# Generic instantiation verified IR v1
 
-Status: specified candidate for [Issue #415](https://github.com/zryna/zryna/issues/415).
+State: **specified-only** for [Issue #415](https://github.com/zryna/zryna/issues/415).
+Normal integration records this reviewed future contract; it provides no runtime proof.
 This is a future versioned extension; current `DataOwnershipV1` verified IR must
 continue rejecting user generics, `Option` and `Result`.
 
@@ -14,7 +15,7 @@ backend-consumable function-instance IDs. A raw producer may
 claim IDs but cannot make them authoritative.
 
 Each verified function instance carries its declaration identity, ordered type
-argument keys, substituted parameter/result types, source call site, private
+argument keys, substituted parameter/result types, all referring source call sites, private
 symbol identity and full ownership/drop plan. Every call names one existing
 instance ID and has exact arity, argument types, result type and ownership
 transfer. No type parameter, unresolved application, type erasure, dynamic
@@ -33,7 +34,7 @@ discriminants are rejected at any future authenticated aggregate boundary before
 constructing a verified value.
 
 Resource preflight must bound the complete substituted graph, dense IDs, edges,
-drop actions and diagnostics before sealing. The exact candidate ceilings are in
+drop actions and diagnostics before sealing. The exact specified ceilings are in
 the language contract; existing IR/ownership ceilings remain effective. Exhaustion
 returns no partially verified module. Traversal and diagnostic selection use
 canonical key order and source spans, independent of hash-map or backend order.
@@ -43,4 +44,28 @@ instantiations of one function and one nominal type; separate hostile raw-IR
 mutations of key, substitution, target ID, variant, payload and cleanup; and
 exact/first-extra, overflow and replay fixtures. A valid producer output alone
 does not prove the verifier boundary. The eventual implementation must freeze
-exact new IR tags and diagnostic codes before executable use.
+its separately versioned raw-IR wire tags before executable use; diagnostic
+codes and logical operation semantics are fixed by this contract.
+
+The successor's logical operations are `ClosedGenericCall(instanceId,
+arguments)`, `ClosedEnumConstruct(typeId, ordinal, payload?)` and
+`ClosedEnumMatch(typeId, scrutinee, mode, successors)`, where mode is exactly
+`value`, `shared-borrow` or `exclusive-borrow`. These are logical contract names,
+not additional tags in current raw IR. Each successor contains ordinal, optional
+payload binding/type, exact result type, source span and verified owner/loan
+transfers. Bindings and successors occur in ordinal order; execution selects
+only the discriminant's edge. The constructor has zero payload operands for
+none and exactly one for every payload variant. Generic-call arguments retain
+source evaluation order. All reachable and unreachable claimed blocks are
+verified under the existing canonical graph rules; no orphan claim can hide an
+invalid owner, variant or new instance.
+
+The verifier binds the whole complete instance inventory, declaration and
+SourceMap identities, both successor layout fingerprints, selected future
+language contract and ownership-runtime declaration identity. It rejects omitted
+or extra inventory members, duplicate keys, nondense/sorted IDs, wrong source
+provenance, invented private symbols, and graph authority from another compilation.
+One deduplicated instance can have multiple call sites; call-site provenance is
+not part of its key or ID. Physical wire tag allocation is a separate new-version
+serialization gate in #416; no producer can execute these logical operations
+until that schema and independent hostile decoding tests are frozen.

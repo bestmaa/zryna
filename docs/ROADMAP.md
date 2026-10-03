@@ -563,10 +563,14 @@ Completion gate: editor and playground behavior is driven by compiler contracts 
 - native Zryna lexer, parser, resolver, and snapshot provider;
 - provider conformance against the bootstrap TypeScript adapter;
 - bounded generics and monomorphization, `Option`, and `Result` after the
-  [#415 specification candidate](../spec/language/BOUNDED_GENERICS_OPTION_RESULT_V1.md)
-  is reviewed: freeze provider syntax and fixtures, then closed-type semantics and
+  [#415 specified-only contract](../spec/language/BOUNDED_GENERICS_OPTION_RESULT_V1.md)
+  is normally integrated: freeze provider syntax and fixtures, then closed-type semantics and
   instance budgets, versioned layout/IR/ABI authorities, owned match/cleanup,
-  three-target conformance, and finally a separate public activation gate;
+  three-target conformance, and finally a separate public activation gate.
+  [#416](https://github.com/zryna/zryna/issues/416) follows the
+  [dependency-ready slice table](../spec/language/BOUNDED_GENERICS_DECISIONS_V1.md#compatibility-dependencies-and-delivery)
+  only after normal integration of the whole reviewed #415 packet; its schema/fixture
+  checks establish specification evidence, not implementation or public support;
 - native-only FFI under the [#364 ABI contract](../spec/abi/NATIVE_C_INTEROP_V0.md)
   and [complete declaration contract](../spec/abi/NATIVE_C_INTEROP_V0_REVIEW.md):
   specified-only syntax, exact identities, owner/failure policy and limits;

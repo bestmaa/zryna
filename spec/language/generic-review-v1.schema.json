@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://zryna.com/spec/generic-review-v1.schema.json",
+  "title": "Proposed generic specification review fixtures, not syntax protocol",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "status", "sourceCases", "moduleCases", "limits", "keyBoundary", "observations", "dependencies"],
+  "properties": {
+    "format": { "const": "zryna.generic-review.v1" },
+    "status": { "const": "candidate-only" },
+    "sourceCases": {
+      "type": "array", "minItems": 1, "maxItems": 256,
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "moduleCases": {
+      "type": "array", "minItems": 1, "maxItems": 32,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "files", "expectedFunctionKeys", "expectedDataKeys", "expectedExecutableExports", "expectedObservation", "forbiddenEntrypoints", "rejectionCode"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "files": {
+            "type": "array", "minItems": 1, "maxItems": 256,
+            "items": {
+              "type": "object", "additionalProperties": false, "required": ["path", "source"],
+              "properties": {
+                "path": { "type": "string", "pattern": "^[a-z][a-z0-9-]*\\.zry$" },
+                "source": { "type": "string", "minLength": 1, "maxLength": 8192 }
+              }
+            }
+          },
+          "expectedFunctionKeys": { "$ref": "#/$defs/keys" },
+          "expectedDataKeys": { "$ref": "#/$defs/keys" },
+          "expectedExecutableExports": { "$ref": "#/$defs/names" },
+          "expectedObservation": { "type": "string", "pattern": "^i32:-?[0-9]+$" },
+          "forbiddenEntrypoints": { "$ref": "#/$defs/names" },
+          "rejectionCode": { "const": "ZRYNA-M7005" }
+        }
+      }
+    },
+    "limits": {
+      "type": "array", "minItems": 7, "maxItems": 7,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["metric", "limit", "firstExtraCode"],
+        "properties": {
+          "metric": { "enum": ["parameters", "arguments", "functions", "data", "edges", "depth", "keyBytes"] },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 65536 },
+          "firstExtraCode": { "enum": ["ZRYNA-D7001", "ZRYNA-M7001", "ZRYNA-M7201"] }
+        }
+      }
+    },
+    "keyBoundary": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["resultNodes", "optionWrappers", "keyBytes", "sha256", "expected"],
+        "properties": {
+          "resultNodes": { "type": "integer", "minimum": 0, "maximum": 300 },
+          "optionWrappers": { "type": "integer", "minimum": 0, "maximum": 64 },
+          "keyBytes": { "enum": [4096, 4097] },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "expected": { "enum": ["admit", "ZRYNA-M7201"] }
+        }
+      }
+    },
+    "observations": {
+      "type": "array", "minItems": 4, "maxItems": 256,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "scenario", "outcome", "trace"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "scenario": { "type": "string", "minLength": 1, "maxLength": 2048 },
+          "outcome": { "type": "string", "pattern": "^(i32:-?[0-9]+|zryna\\.trap\\.(bounds|allocation|capacity|refcount|utf8)-v1)$" },
+          "trace": { "type": "array", "maxItems": 256, "items": { "type": "string", "minLength": 1, "maxLength": 128 } }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "pattern": "^spec/(language|memory-model|abi)/[A-Z0-9_]+\\.md$" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "keys": { "type": "array", "minItems": 1, "maxItems": 4096, "uniqueItems": true, "items": { "type": "string", "pattern": "^([0-9a-f]{2})+$" } },
+    "names": { "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 256 } },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "source", "parserErrors", "decision", "code", "primaryToken", "primaryOccurrence"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "source": { "type": "string", "minLength": 1, "maxLength": 8192 },
+        "parserErrors": { "enum": [0, 1] },
+        "decision": { "enum": ["admit", "reject"] },
+        "code": { "enum": [null, "parser", "ZRYNA-D7001", "ZRYNA-M7001", "ZRYNA-M7002", "ZRYNA-M7003", "ZRYNA-M7004", "ZRYNA-M7005", "ZRYNA-M7006", "ZRYNA-M7007", "ZRYNA-L3002"] },
+        "primaryToken": { "type": ["string", "null"], "maxLength": 128 },
+        "primaryOccurrence": { "type": ["integer", "null"], "minimum": 0, "maximum": 255 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "decision": { "const": "admit" } } },
+          "then": { "properties": { "code": { "const": null }, "primaryToken": { "const": null }, "primaryOccurrence": { "const": null }, "parserErrors": { "const": 0 } } },
+          "else": { "properties": { "code": { "type": "string" }, "primaryToken": { "type": "string", "minLength": 1 }, "primaryOccurrence": { "type": "integer" } } }
+        }
+      ]
+    }
+  }
+}

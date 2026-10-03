@@ -1,20 +1,25 @@
 # Bounded generics, Option, and Result v1
 
-Status: **specified proposal for Issue #415; no public or compiler activation**. The
-syntax, diagnostic codes, binary key and limits below are candidate decisions for
-review. Acceptance of this document alone does not change `DataOwnershipV1`, syntax
+Contract identity: `zryna.bounded-generics-option-result.v1`. State:
+**specified-only; no public or compiler activation**. The syntax, diagnostic
+codes, binary keys and limits below define the reviewed future internal contract.
+On normal PR integration, the complete companion packet is the Issue #415
+specification. Integration does not change `DataOwnershipV1`, syntax
 protocol v4, verified IR, aggregate layout v1, scalar ABI v1, any target backend, or
-the public profile. A future protocol and implementation issue must freeze and test
-the candidate encoding before executable use.
+the public profile. Issue #416 must implement the exact encoding and independently
+verify it before executable use; its separately versioned protocol remains a gate.
 
-Companion proposals cover the [verified IR](../ir/GENERIC_INSTANTIATION_V1.md),
+Companion contracts cover the [verified IR](../ir/GENERIC_INSTANTIATION_V1.md),
 [closed layout](../memory-model/GENERIC_ENUM_LAYOUT_V1.md),
 [ABI boundary](../abi/GENERIC_VALUE_BOUNDARIES_V1.md), and
 [conformance/resource evidence](../../docs/M7_GENERIC_CONFORMANCE.md).
+The [complete decision catalogue](BOUNDED_GENERICS_DECISIONS_V1.md) fixes exact
+source forms, exclusions, Copy/Clone, borrowed match, diagnostic selection and
+the dependency-ready #416 plan. Read these documents as one contract unit.
 
 ## 1. Authority and admitted forms
 
-This proposal extends the [M3 ownership contract](DATA_OWNERSHIP_V1.md) without
+This future contract extends the [M3 ownership contract](DATA_OWNERSHIP_V1.md) without
 reinterpreting existing values. Names resolve through the authenticated final M2
 module map. Source type checking, instantiation and ownership checking belong to
 Zryna semantics; a provider reports source syntax and spans only. The mandatory IR
@@ -24,12 +29,14 @@ The initial user-defined forms are top-level functions and nominal struct/enum
 declarations with one or two invariant type parameters. A parameter occurs only in
 value parameter/result types, fields, variant payloads, and admitted nested M3
 containers. No locally declared generic functions or types, methods, closures, aliases, interfaces
-other than the nominal markers, or generic exports at scalar ABI v1 are admitted.
+other than the nominal markers, or executable generic exports at scalar ABI v1 are admitted.
+Source-module `export` on a template exposes only its compile-time declaration
+for exact named imports; it never creates an executable export or host symbol.
 All function parameters and results retain explicit types. Generic values must be
 fully instantiated before layout, IR sealing or code generation. Bare generic names
 are never runtime values.
 
-The proposed TypeScript-compatible source spelling is:
+The specified TypeScript-compatible source spelling is:
 
 ```ts
 export interface Box<T extends ZrynaValue> extends ZrynaStruct {
@@ -47,7 +54,7 @@ function identity<T extends ZrynaValue>(value: T): T {
 ```
 
 `ZrynaValue` is a compiler-reserved bound marker, not an ordinary interface, an
-object type, an implicit conversion or an erasable runtime trait. Its candidate
+object type, an implicit conversion or an erasable runtime trait. Its specified
 admission rule is recursive over complete, storable types: the M3 scalars and
 `String`; closed M3 and user generic nominal structs/enums whose fields or
 payloads satisfy the rule; `Option<T>` and `Result<T,E>` with admitted arguments;
@@ -83,8 +90,9 @@ followed by property access, such as `Option<i32>.some(7)`, is excluded because
 it is not TypeScript-compatible source syntax. The future provider must preserve
 the callee/member and each explicit argument span without assigning its meaning.
 Inference from arguments, expected results, or omitted generic arguments is
-excluded. Importing a generic declaration follows the existing exact named-import
-and module-closure rules. A source-level generic function name remains unique in
+excluded. Importing a generic function or data declaration follows the existing
+exact named-import and module-closure rules. Its original declaration identity
+survives every import path and diamond. A source-level generic function name remains unique in
 its module: overload sets and specialization are excluded. The source call graph,
 including imported generic calls, remains acyclic. Instantiation cannot introduce
 direct or mutual function recursion. A future syntax protocol must define distinct nodes
@@ -93,12 +101,12 @@ arguments; protocol v4 must reject these forms unchanged.
 
 ## 2. Closed instantiation and monomorphization
 
-Closed data instances use the exact proposed type keys in the
+Closed data instances use the exact specified type keys in the
 [successor layout contract](../memory-model/GENERIC_ENUM_LAYOUT_V1.md): tags
 `12`/`13` plus `(ModuleId, data-declaration-index)` for user generic structs
 and enums, and reserved tags `14`/`15` plus arguments for compiler-owned
 `Option`/`Result`. The latter have no source module or declaration index.
-Function keys use a disjoint candidate namespace:
+Function keys use a disjoint specified namespace:
 
 ```text
 40 || u32 ModuleId || u32 functionIndex || u32 argCount || childKey[argCount]
@@ -137,7 +145,7 @@ spellings only from these sealed IDs and verified keys; it may not discover new
 instances. The same closed source graph gives the same IDs across targets and
 repeated builds.
 
-Candidate compile-time ceilings are below. Every count uses checked arithmetic;
+Specified compile-time ceilings are below. Every count uses checked arithmetic;
 the exact-limit member is admitted and the first extra member is rejected before
 producing a partial inventory or IR. Existing stricter source, type, layout, IR and
 runtime limits still apply.
@@ -214,7 +222,7 @@ later widening requires a new contract.
 `Option<T>` and `Result<T, E>` are reserved, compiler-owned nominal enum families,
 not user-definable or structurally compatible with a same-shaped enum. Their only
 admitted arguments satisfy `ZrynaValue`. Constructor and match notation is a
-proposed extension of the v4 enum forms:
+specified extension of the v4 enum forms for the future protocol:
 
 ```ts
 const found: Option<i32> = Option.some<i32>(7);
@@ -267,7 +275,7 @@ Scalar ABI v1 rejects all Option/Result parameters and results, including a gene
 export that could instantiate to them. A later aggregate or component ABI must
 independently specify carriers, validation, resource lifetimes and versioning.
 WIT, JS/WASM adapters, native FFI and host grants cannot infer exposure from this
-internal representation. In particular this proposal makes no #400 F1/F2 host
+internal representation. In particular this contract makes no #400 F1/F2 host
 permission decision. Existing `upgradeWeak` keeps its two-successor operation;
 it does not silently start constructing `Option<Shared<T>>`.
 
@@ -276,10 +284,10 @@ it does not silently start constructing `Option<Shared<T>>`.
 Malformed source, unknown/non-value arguments, missing or extra arguments, illegal
 generic operations, unclosed types, forbidden recursion, invalid nominal identity,
 wrong variant and nonexhaustive match are compile-time errors before backend
-emission. These are proposed exact codes, awaiting maintainer acceptance and
-future protocol/IR versioning; no current executable path may emit them:
+emission. These exact codes belong to the future versioned language/IR contract;
+no current executable path may emit them:
 
-| Proposed code | Owning rejection |
+| Specified code | Owning rejection |
 | --- | --- |
 | `ZRYNA-D7001` | Invalid generic declaration form, bound or parameter list |
 | `ZRYNA-M7001` | Missing, extra, unclosed or bound-violating type argument |
@@ -287,6 +295,8 @@ future protocol/IR versioning; no current executable path may emit them:
 | `ZRYNA-M7003` | Function recursion or expanding nominal instantiation |
 | `ZRYNA-M7004` | Wrong standard variant or inexact/nonexhaustive match |
 | `ZRYNA-M7005` | Generic or standard enum at a forbidden public ABI boundary |
+| `ZRYNA-M7006` | Exact payload, field, call or match-result type/arity mismatch |
+| `ZRYNA-M7007` | Generic/standard-enum move, borrow, initialization or cleanup misuse |
 | `ZRYNA-M7201` | Terminal instantiation resource exhaustion |
 | `ZRYNA-I7001` | Unclosed, mismatched or forged verified-IR instance/variant/cleanup |
 | `ZRYNA-L7001` | Invalid closed layout key, record, ordinal or fingerprint |
@@ -296,7 +306,7 @@ Malformed provider syntax must fail in a future versioned syntax verifier before
 semantic codes apply; it cannot be retrofitted to v4. Selection follows
 authoritative source location, then canonical instance key and complete numeric
 tie-break data. Budget exhaustion is terminal and cannot return a partial sealed
-program. No existing diagnostic code is reassigned by this proposal.
+program. No existing diagnostic code is reassigned by this contract.
 
 The implementation must provide at least these checked fixtures, with exact
 accepted/rejected outcome and stable diagnostics recorded by its owning phase:
@@ -318,25 +328,24 @@ one exact revision. Those results cannot be claimed from this document.
 
 ## 5. Review decisions and implementation order
 
-Before freezing syntax, reviewers must decide whether `ZrynaValue` is the only
-initial bound and whether explicit application syntax can be represented without
-ambiguity by the replacement frontend. An authenticated portable-candidate
-TypeScript 6.0.3 parser check accepts eight generic declaration/call forms above
-and rejects `Option<i32>.some(7)`; a future provider-neutral protocol/schema and
-native-provider conformance remain implementation work. The candidate limits,
-diagnostics and canonical layout encodings
-require exact-limit/first-extra and independent digest fixtures before adoption.
+The specified decision is exactly one initial bound, `ZrynaValue`, and explicit
+application syntax as fixed in the complete decision catalogue. Checked-in
+review fixtures and pinned TypeScript 6.0.3 AST checks make syntax ambiguity
+review reproducible. They do not implement a future provider-neutral protocol;
+its schema and native-provider conformance remain #416 work. Specified limits,
+diagnostics and canonical layout encodings are reviewed with the fixed schema,
+exact-limit/first-extra reference fixtures and independent digest checks.
 The public ABI of these types, aggregate export policy, WIT/component mapping and
 host resource policy remain separate proposals. No current supported profile is
 expanded by approving internal semantics.
 
-Issue #415 specification acceptance remains open until the reviewer approves
-the candidate bound, syntax, exact diagnostic codes, instance budgets and
-successor encoding, and the new fixture/schema/ambiguity/dependency checks are
-reviewed. Later provider,
-compiler, runtime, backend and public activation evidence is implementation work.
-This draft does not waive issue requirements or claim that the public aggregate
-ABI or #400 host decisions have been settled.
+The bound, syntax, exact diagnostic codes, instance budgets, successor encoding,
+and fixture/schema/ambiguity/dependency packet are fixed by this engineering
+review. Required repository checks and normal PR integration still govern
+specification delivery. After integration the contract state is specified-only;
+provider, compiler, runtime, backend and public activation evidence remains #416
+implementation work. Neither contract review nor integration establishes a
+public aggregate ABI or settles #400 host decisions.
 
 Dependency-ready slices are: (1) syntax protocol and provider-neutral fixtures;
 (2) semantic closed-type and deterministic instantiation authority; (3) versioned
