@@ -266,6 +266,44 @@ function evaluateGraph(jobs, leaves) {
 }
 
 const WINDOWS_RUST_TIMEOUT = "${{ matrix.os == 'windows-latest' && 60 || 40 }}";
+const WINDOWS_PROVIDER_TIMEOUT = "${{ matrix.os == 'windows-latest' && 40 || 30 }}";
+
+function withoutWindowsProviderBudget(candidate) {
+  const original = structuredClone(candidate);
+  const job = original.jobs['provider-conformance-v4'];
+  assert.equal(job['timeout-minutes'], WINDOWS_PROVIDER_TIMEOUT);
+  assert.deepEqual(job.strategy.matrix, { os: ['ubuntu-latest', 'windows-latest'] });
+  job['timeout-minutes'] = 30;
+  return original;
+}
+
+test('Windows provider budget preserves Linux and all other workflow authority', () => {
+  const original = withoutWindowsProviderBudget(workflow);
+  assert.equal(original.jobs['provider-conformance-v4']['timeout-minutes'], 30);
+  original.jobs['provider-conformance-v4']['timeout-minutes'] = WINDOWS_PROVIDER_TIMEOUT;
+  assert.deepEqual(original, workflow);
+});
+
+test('provider budget values, operating systems and operators reject before normalization', () => {
+  for (const value of [
+    undefined, null, true, 0, 30, 40, 60,
+    "${{ matrix.os == 'windows-latest' && 39 || 30 }}",
+    "${{ matrix.os == 'windows-latest' && 41 || 30 }}",
+    "${{ matrix.os == 'windows-latest' && 40 || 29 }}",
+    "${{ matrix.os == 'windows-latest' && 40 || 31 }}",
+    "${{ matrix.os == 'windows-latest' && 30 || 40 }}",
+    "${{ matrix.os == 'ubuntu-latest' && 40 || 30 }}",
+    "${{ matrix.arch == 'windows-latest' && 40 || 30 }}",
+    "${{ matrix.os != 'windows-latest' && 40 || 30 }}",
+    "${{ matrix.os == 'windows-latest' || 40 && 30 }}",
+    "${{ matrix.os == 'windows-latest' && 40 && 30 }}",
+  ]) {
+    const changed = structuredClone(workflow);
+    if (value === undefined) delete changed.jobs['provider-conformance-v4']['timeout-minutes'];
+    else changed.jobs['provider-conformance-v4']['timeout-minutes'] = value;
+    assert.throws(() => withoutWindowsProviderBudget(changed));
+  }
+});
 
 function withoutWindowsRustBudget(candidate) {
   const original = structuredClone(candidate);
@@ -402,7 +440,7 @@ test('M0 aggregate checks out the pinned verifier before execution', () => {
 
 test('routing preserves all other pinned workflow authority', () => {
   bootstrapOrder(workflow, packageDocument);
-  const original = withoutWindowsRustBudget(workflow);
+  const original = withoutWindowsProviderBudget(withoutWindowsRustBudget(workflow));
   const editorIndex = original.jobs.rust.steps.findIndex(step => step.name === "Verify and package editor client");
   assert(editorIndex >= 0);
   assert.deepEqual(original.jobs.rust.steps[editorIndex], {
