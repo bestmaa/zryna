@@ -47,12 +47,21 @@ Existing outputs are refused; failures preserve known logs without recursive sou
 
 ```text
 node --test tests/stability-gates-v1.test.mjs tests/stability-gates-source-process.test.mjs
+node scripts/stability-gates/check-tests.mjs
 node scripts/stability-gates/run.mjs compatibility /tmp/zryna-418-compatibility
 node scripts/stability-gates/run.mjs security /tmp/zryna-418-security
 node scripts/stability-gates/run.mjs performance /tmp/zryna-418-performance
 node scripts/stability-gates/run.mjs all /tmp/zryna-418-all
 node scripts/stability-gates/validate.mjs /tmp/zryna-418-all
 ```
+
+The guarded CI runner selects the two evidence/source/process suites and the dedicated selection
+guard suite. All 21 exact named cases must execute once with nonzero TAP totals and no failures,
+cancellations, skips or todo cases. The existing Linux/Windows `adapter-platform` matrix runs
+this mandatory step after frozen dependency installation; its failures propagate through the
+adapter and M0 aggregates. Portable preflight also executes selection and workflow mutation
+guards. The distinct Rust insertion point used by #405 remains intact. This registration does
+not collect a performance baseline or certify blocked M7 prerequisites.
 
 Collection validates HEAD's full commit and tree, hashes every regular tracked source against its
 Git blob (including files hidden by index flags), and hashes the ordered complete source inventory.

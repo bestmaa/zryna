@@ -222,6 +222,8 @@ jobs:
           node-version: 22.22.1
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Verify stability evidence validator hostile cases
+        run: node scripts/stability-gates/check-tests.mjs
       - run: pnpm adapter:check
       - run: pnpm adapter:test
       - run: pnpm protocol:check

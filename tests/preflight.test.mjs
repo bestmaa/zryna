@@ -5,6 +5,7 @@ import { parseDocument } from 'yaml';
 import './ci-gate-cases.mjs';
 import './npm-timing.test.mjs';
 import './workflow-routing.test.mjs';
+import './stability-gates-test-selection.test.mjs';
 
 import {
   PREFLIGHT_COMMANDS,
