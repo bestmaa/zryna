@@ -2,11 +2,13 @@
 """Build a private native provider harness and smoke its relocated no-tool installation."""
 
 import argparse
+from contextlib import contextmanager
 import hashlib
 import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import tempfile
 import tomllib
@@ -33,6 +35,16 @@ def expected_cases(retained):
 
 
 def verify_receipt(receipt, retained, version):
+    if type(receipt) is not dict:
+        raise ValueError("receipt must be an object")
+    for field, kind in (("schema_version", int), ("provider", str), ("provider_version", str),
+                        ("retained", bool), ("public_activation", bool), ("passed", list),
+                        ("failed", list), ("ignored", list)):
+        if type(receipt.get(field)) is not kind:
+            raise ValueError(f"receipt field {field} has the wrong exact JSON type")
+    if any(type(case) is not str for field in ("passed", "failed", "ignored")
+           for case in receipt[field]):
+        raise ValueError("receipt cases must be strings")
     expected = {
         "schema_version": 1, "provider": PROVIDER, "provider_version": version,
         "passed": expected_cases(retained), "failed": [], "ignored": [],
@@ -58,12 +70,59 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+@contextmanager
+def owned_directory(prefix):
+    """Retain failure directories for inspection instead of deleting uncertain process inputs."""
+    path = Path(tempfile.mkdtemp(prefix=prefix))
+    try:
+        yield path
+    except BaseException:
+        raise
+    else:
+        shutil.rmtree(path)
+
+
+def stop_tree(process, output):
+    if os.name == "posix":
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    elif os.name == "nt":
+        system_root = os.environ.get("SYSTEMROOT") or os.environ.get("SystemRoot")
+        if not system_root:
+            raise RuntimeError("cannot confirm Windows process-tree cleanup without system root")
+        cleanup = subprocess.run(
+            [str(Path(system_root) / "System32/taskkill.exe"), "/PID", str(process.pid), "/T", "/F"],
+            stdout=output, stderr=subprocess.STDOUT, timeout=10, check=False,
+        )
+        if cleanup.returncode:
+            raise RuntimeError(f"Windows process-tree cleanup exited {cleanup.returncode}")
+    else:
+        raise RuntimeError("unsupported process-tree cleanup platform")
+    process.wait(timeout=10)
+    if os.name == "posix":
+        try:
+            os.killpg(process.pid, 0)
+        except ProcessLookupError:
+            return
+        raise RuntimeError("process group still exists after termination; cleanup unconfirmed")
+
+
 def run(command, cwd, log, env=None, timeout=1800):
     with log.open("w", encoding="utf-8") as output:
-        result = subprocess.run(command, cwd=cwd, env=env, stdout=output,
-                                stderr=subprocess.STDOUT, timeout=timeout, check=False)
-    if result.returncode:
-        raise RuntimeError(f"command exited {result.returncode}: {command}; evidence: {log}")
+        options = {"start_new_session": True} if os.name == "posix" else {
+            "creationflags": subprocess.CREATE_NEW_PROCESS_GROUP,
+        }
+        process = subprocess.Popen(command, cwd=cwd, env=env, stdout=output,
+                                   stderr=subprocess.STDOUT, **options)
+        try:
+            result = process.wait(timeout=timeout)
+        except BaseException:
+            stop_tree(process, output)
+            raise
+    if result:
+        raise RuntimeError(f"command exited {result}: {command}; evidence: {log}")
 
 
 def git(*args):
@@ -141,8 +200,9 @@ def main():
         state["cargo_version"] = cargo_version
         state["repository_lock_sha256"] = digest(ROOT / "Cargo.lock")
         original = tomllib.loads((ROOT / "Cargo.lock").read_text())
-        with tempfile.TemporaryDirectory(prefix="zryna-414-build-") as build_dir:
+        with owned_directory("zryna-414-build-") as build_dir:
             package = Path(build_dir)
+            state["build_directory"] = str(package)
             src = package / "src"
             src.mkdir()
             shutil.copy2(ROOT / "rustfmt.toml", package / "rustfmt.toml")
@@ -180,8 +240,9 @@ def main():
             run([*lint, "--", "-D", "warnings"], package, evidence / "clippy.log", env=build_env)
             suffix = ".exe" if os.name == "nt" else ""
             binary = target / "debug" / (PROVIDER + suffix)
-            with tempfile.TemporaryDirectory(prefix="zryna-414-install-") as installation:
+            with owned_directory("zryna-414-install-") as installation:
                 installed = Path(installation)
+                state["installation_directory"] = str(installed)
                 executable = installed / (PROVIDER + suffix)
                 shutil.copy2(binary, executable)
                 assert digest(executable) == digest(binary)
@@ -204,6 +265,7 @@ def main():
         if git("status", "--porcelain") or git("rev-parse", "HEAD") != state["repository_sha"]:
             raise ValueError("repository changed during exact-revision smoke")
         state["status"] = "passed"
+        state["temporary_directories_removed"] = True
     except Exception as error:
         state["error"] = str(error)
         raise

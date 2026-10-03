@@ -6,6 +6,9 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import subprocess
+import sys
+import time
 import unittest
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts/run-native-provider-activation.py"
@@ -25,7 +28,8 @@ class RunnerTests(unittest.TestCase):
             receipt = self.receipt(retained)
             RUNNER.verify_receipt(receipt, retained, "0.2.3")
             mutations = []
-            for key, value in (("provider", "typescript-6"), ("provider_version", "stale"),
+            for key, value in (("schema_version", True), ("retained", int(retained)),
+                               ("public_activation", 0), ("provider", "typescript-6"), ("provider_version", "stale"),
                                ("retained", not retained), ("public_activation", True),
                                ("failed", ["v2:identity"]), ("ignored", ["v2:identity"]),
                                ("schema_version", 2)):
@@ -73,6 +77,29 @@ class RunnerTests(unittest.TestCase):
             forged["package"][0][field] = "substituted"
             with self.assertRaises(ValueError):
                 RUNNER.verify_registry_lock(original, forged)
+
+    def test_owned_directories_are_removed_only_on_success(self):
+        with RUNNER.owned_directory("zryna-414-test-") as success:
+            (success / "owned").write_text("fixture")
+        self.assertFalse(success.exists())
+        with self.assertRaises(RuntimeError):
+            with RUNNER.owned_directory("zryna-414-test-") as failure:
+                (failure / "owned").write_text("retain")
+                raise RuntimeError("unconfirmed")
+        self.assertTrue((failure / "owned").is_file())
+        RUNNER.shutil.rmtree(failure)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process-group timeout boundary")
+    def test_timeout_terminates_descendant_before_owned_cleanup(self):
+        with tempfile.TemporaryDirectory() as owned:
+            root = Path(owned)
+            marker = root / "orphan.marker"
+            child = "import time,pathlib;time.sleep(0.5);pathlib.Path(%r).write_text('orphan')" % str(marker)
+            parent = "import subprocess,time;subprocess.Popen(%r);time.sleep(10)" % [sys.executable, "-c", child]
+            with self.assertRaises((subprocess.TimeoutExpired, RuntimeError)):
+                RUNNER.run([sys.executable, "-c", parent], root, root / "timeout.log", timeout=0.1)
+            time.sleep(0.6)
+            self.assertFalse(marker.exists(), "descendant outlived the timeout boundary")
 
     def test_manifest_adds_only_existing_paths_and_exact_serde_pins(self):
         lock = {"package": [{"name": "serde", "version": "1.0.1"},

@@ -29,17 +29,19 @@ python scripts/run-native-provider-activation.py --retained --evidence-dir <exte
 verification. Evidence/cache directories must be outside the controlled repository. Every run
 requires a clean Git checkout, pins the #413 ancestor for the retained lane, records the exact
 repository/lock/binary identities, checks that the revision stays unchanged, and preserves logs
-and a pass/failure receipt. Temporary build/install directories are owned and cleaned by the
-runner; evidence survives failures. Never use another revision's binary receipt as current proof.
+and a pass/failure receipt. Temporary build/install directories are removed only after successful execution. Failure
+directories and evidence are retained for inspection; timeout cleanup terminates the POSIX process
+group or requests Windows tree termination, and unconfirmed cleanup is an explicit failure. Never use another revision's binary receipt as current proof.
 
 ## Executed obligations
 
 The frontend-only lane requires exactly 36 cases with zero failed/ignored cases. For each protocol
 it admits genuine native syntax with original UTF-8/CRLF source identity, then independently rejects
 wrong provider identity/version/protocol, widened module or semantic capabilities, extra handshake
-fields and wrong response IDs. V3/V4 additionally reject missing control-flow capabilities; V4
-rejects missing ownership syntax capability. Analysis markers prove no source analysis is sent
-after a failed handshake. Following an admitted handshake, wrong snapshot schema/path and an
+fields and wrong response IDs. V3/V4 additionally reject false control-flow capabilities; V4
+rejects a false ownership syntax capability. Analysis markers require successful admission to send real analysis and reject observed
+analysis after a failed handshake. Marker absence has a scheduling limit; the unchanged worker
+ordering checks the complete handshake before writing the analysis request. Following an admitted handshake, wrong snapshot schema/path and an
 extra response frame reject at the existing worker/verifier boundary.
 
 The retained lane requires those same 36 plus four cases. M1, imported M2 and Copy-aggregate M3
