@@ -4,7 +4,10 @@ import { fileURLToPath } from 'node:url';
 
 const fixture = fileURLToPath(import.meta.url);
 const [role, ready, output, implementation, detached = 'false'] = process.argv.slice(2);
-if (role === 'grandchild') {
+if (role === 'directory-owner') {
+  process.send({ pid: process.pid, cwd: process.cwd() });
+  setInterval(() => {}, 1000);
+} else if (role === 'grandchild') {
   process.on('SIGINT', () => {});
   process.on('SIGTERM', () => {});
   process.send({ pid: process.pid });

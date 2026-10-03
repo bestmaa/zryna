@@ -56,7 +56,7 @@ node scripts/stability-gates/validate.mjs /tmp/zryna-418-all
 ```
 
 The guarded CI runner selects evidence, source/process, interruption and selection guard suites.
-All 27 exact named cases must execute once with nonzero TAP totals and no failures,
+All 28 exact named cases must execute once with nonzero TAP totals and no failures,
 cancellations, skips or todo cases. The existing Linux/Windows `adapter-platform` matrix runs
 this mandatory step after frozen dependency installation; its failures propagate through the
 adapter and M0 aggregates. Portable preflight also executes selection and workflow mutation
