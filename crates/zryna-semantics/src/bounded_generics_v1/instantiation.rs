@@ -114,6 +114,18 @@ fn push<T>(values: &mut Vec<T>, value: T) -> Result<(), InstantiationFailure> {
     Ok(())
 }
 
+fn copy_bytes(bytes: &[u8]) -> Result<Vec<u8>, InstantiationFailure> {
+    let mut result = reserve(bytes.len())?;
+    result.extend_from_slice(bytes);
+    Ok(result)
+}
+
+fn checked_count(mut counts: impl Iterator<Item = usize>) -> Result<usize, InstantiationFailure> {
+    counts.try_fold(0usize, |total, count| {
+        total.checked_add(count).ok_or(InstantiationFailure::InternalFailure)
+    })
+}
+
 fn failure(
     bodies: &BodyTypeContext<'_, '_>,
     code: &str,

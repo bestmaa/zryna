@@ -39,6 +39,7 @@ pub(super) struct Builder<'b, 'c, 's> {
     pub(super) function_order: Vec<usize>,
     pub(super) edges: Vec<(Vec<u8>, Vec<u8>)>,
     pub(super) generated: Vec<(usize, usize)>,
+    pub(super) generated_reverse: Vec<Vec<usize>>,
     pub(super) argument_uses: Vec<(usize, Option<UntrustedSpan>)>,
     pub(super) bounds: super::value_bounds::Bounds,
     generic_data: usize,
@@ -55,6 +56,7 @@ impl<'b, 'c, 's> Builder<'b, 'c, 's> {
             function_order: Vec::new(),
             edges: Vec::new(),
             generated: Vec::new(),
+            generated_reverse: Vec::new(),
             argument_uses: Vec::new(),
             bounds: super::value_bounds::Bounds::new(bodies)?,
             generic_data: 0,
@@ -118,8 +120,12 @@ impl<'b, 'c, 's> Builder<'b, 'c, 's> {
             ));
         }
         self.type_order.try_reserve(1).map_err(|_| InstantiationFailure::AllocationFailure)?;
+        self.generated_reverse
+            .try_reserve(1)
+            .map_err(|_| InstantiationFailure::AllocationFailure)?;
         let id = self.types.len();
         push(&mut self.types, node)?;
+        self.generated_reverse.push(Vec::new());
         self.type_order.insert(position, id);
         self.generic_data += usize::from(generic);
         Ok(id)

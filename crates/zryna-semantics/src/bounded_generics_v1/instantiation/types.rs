@@ -185,7 +185,7 @@ pub(super) fn dependency(
     pending.push(id);
     while let Some(id) = pending.pop() {
         if builder.generic(builder.types[id].shape) {
-            let key = builder.types[id].key.clone();
+            let key = super::copy_bytes(&builder.types[id].key)?;
             builder.edge(from, &key, at)?;
         }
         for child in builder.types[id].arguments.into_iter().flatten() {
@@ -201,9 +201,9 @@ fn generated_edge(
     to: usize,
     at: Option<UntrustedSpan>,
 ) -> Result<(), InstantiationFailure> {
-    if builder.generated.contains(&(from, to)) {
+    let Err(position) = builder.generated.binary_search(&(from, to)) else {
         return Ok(());
-    }
+    };
     if let TypeShape::Nominal(target) = builder.types[to].shape
         && builder.generic(builder.types[to].shape)
     {
@@ -219,14 +219,18 @@ fn generated_edge(
             if builder.types[id].shape == TypeShape::Nominal(target) && id != to {
                 return Err(failure(builder.bodies,"ZRYNA-M7003",at,"declaration-generated application repeats a generic declaration with different closed arguments".into()));
             }
-            for &(parent, child) in &builder.generated {
-                if child == id {
-                    push(&mut pending, parent)?;
-                }
+            for &parent in &builder.generated_reverse[id] {
+                push(&mut pending, parent)?;
             }
         }
     }
-    push(&mut builder.generated, (from, to))
+    builder.generated.try_reserve(1).map_err(|_| InstantiationFailure::AllocationFailure)?;
+    builder.generated_reverse[to]
+        .try_reserve(1)
+        .map_err(|_| InstantiationFailure::AllocationFailure)?;
+    builder.generated.insert(position, (from, to));
+    builder.generated_reverse[to].push(from);
+    Ok(())
 }
 
 pub(super) fn source(

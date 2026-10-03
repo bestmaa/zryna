@@ -204,3 +204,12 @@ fn invalid_supplied_nominal_is_rejected_before_declaration_expansion() {
         u32::try_from(source.rfind("Bad>").expect("argument text")).expect("fixture offset");
     assert_eq!((span.start(), span.end()), (start, start + 3));
 }
+
+#[test]
+fn generated_diamonds_and_same_key_cycles_keep_separate_argument_paths() {
+    let source = "interface A<T extends ZrynaValue> extends ZrynaStruct {left:Vec<B<T>>;right:Vec<C<T>>;} interface B<T extends ZrynaValue> extends ZrynaStruct {next:Vec<D<T>>;} interface C<T extends ZrynaValue> extends ZrynaStruct {next:Vec<D<T>>;} interface D<T extends ZrynaValue> extends ZrynaStruct {next:Vec<A<T>>;} function read(a:A<i32>,b:A<bool>):i32 {return 0;}";
+    let (types, functions, edges) = check(&[("main.zry", source)]).expect("finite generated paths");
+    assert_eq!(types.iter().filter(|key| key[0] == 0x12).count(), 8);
+    assert!(functions.is_empty());
+    assert_eq!(edges, 12);
+}

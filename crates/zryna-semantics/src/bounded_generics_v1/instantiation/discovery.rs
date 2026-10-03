@@ -5,8 +5,9 @@ use zryna_syntax::v5::{RawDataDeclarationKind, RawExpressionKind};
 
 pub(super) fn source_calls(builder: &Builder<'_, '_, '_>) -> Result<(), InstantiationFailure> {
     let declarations = builder.bodies.declarations();
-    let mut owners =
-        reserve(declarations.syntax().files().iter().map(|file| file.functions.len()).sum())?;
+    let mut owners = reserve(super::checked_count(
+        declarations.syntax().files().iter().map(|file| file.functions.len()),
+    )?)?;
     owners.extend(
         declarations
             .modules()
@@ -33,11 +34,12 @@ pub(super) fn source_calls(builder: &Builder<'_, '_, '_>) -> Result<(), Instanti
     }
     let mut states = reserve(owners.len())?;
     states.resize(owners.len(), 0u8);
+    let mut stack = reserve(owners.len())?;
     for root in 0..owners.len() {
         if states[root] != 0 {
             continue;
         }
-        let mut stack = reserve(owners.len())?;
+        debug_assert!(stack.is_empty());
         states[root] = 1;
         stack.push((root, 0));
         while let Some((index, next)) = stack.last_mut() {
@@ -129,7 +131,7 @@ pub(super) fn pending(builder: &mut Builder<'_, '_, '_>) -> Result<(), Instantia
 fn process_type(builder: &mut Builder<'_, '_, '_>, id: usize) -> Result<(), InstantiationFailure> {
     builder.types[id].processed = true;
     if matches!(builder.types[id].shape, super::TypeShape::Option | super::TypeShape::Result) {
-        let key = builder.types[id].key.clone();
+        let key = super::copy_bytes(&builder.types[id].key)?;
         for member in builder.types[id].arguments.into_iter().flatten() {
             types::dependency(builder, &key, member, None)?;
         }
@@ -139,7 +141,7 @@ fn process_type(builder: &mut Builder<'_, '_, '_>, id: usize) -> Result<(), Inst
         return Ok(());
     };
     let environment = Environment { owner, arguments: builder.types[id].arguments };
-    let key = builder.types[id].key.clone();
+    let key = super::copy_bytes(&builder.types[id].key)?;
     let data = &builder.bodies.declarations().syntax().files()[owner.module().index() as usize]
         .data_declarations[owner.source_index() as usize];
     match &data.kind {
@@ -166,7 +168,7 @@ fn process_function(
     builder.functions[id].processed = true;
     let owner = builder.functions[id].owner;
     let environment = Environment { owner, arguments: builder.functions[id].arguments };
-    let key = builder.functions[id].key.clone();
+    let key = super::copy_bytes(&builder.functions[id].key)?;
     let function = &builder.bodies.declarations().syntax().files()[owner.module().index() as usize]
         .functions[owner.source_index() as usize];
     for parameter in &function.parameters {
@@ -207,7 +209,7 @@ fn process_function(
             }
             let target_id = builder.function(target, arguments, Some(callee.span))?;
             if builder.functions[target_id].generic {
-                let target_key = builder.functions[target_id].key.clone();
+                let target_key = super::copy_bytes(&builder.functions[target_id].key)?;
                 builder.edge(&key, &target_key, Some(callee.span))?;
             }
         }

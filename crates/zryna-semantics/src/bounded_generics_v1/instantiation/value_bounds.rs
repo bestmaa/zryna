@@ -13,8 +13,9 @@ pub(super) struct Bounds {
 impl Bounds {
     pub(super) fn new(bodies: &BodyTypeContext<'_, '_>) -> Result<Self, InstantiationFailure> {
         let declarations = bodies.declarations();
-        let count =
-            declarations.syntax().files().iter().map(|file| file.data_declarations.len()).sum();
+        let count = super::checked_count(
+            declarations.syntax().files().iter().map(|file| file.data_declarations.len()),
+        )?;
         let mut owners = reserve(count)?;
         owners.extend(
             declarations

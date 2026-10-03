@@ -146,4 +146,9 @@ fn key_storage_exact_first_extra_and_allocation_failure_are_distinct() {
         assert_eq!(size, length + 9);
     }
     assert!(matches!(reserve::<u64>(usize::MAX), Err(InstantiationFailure::AllocationFailure)));
+    assert_eq!(checked_count([usize::MAX, 0].into_iter()).expect("exact arithmetic"), usize::MAX);
+    assert!(matches!(
+        checked_count([usize::MAX, 1].into_iter()),
+        Err(InstantiationFailure::InternalFailure)
+    ));
 }
