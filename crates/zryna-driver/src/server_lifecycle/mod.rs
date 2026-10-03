@@ -39,6 +39,8 @@ impl Server {
                 entries: BTreeMap::new(),
             }),
             wake: std::sync::Condvar::new(),
+            #[cfg(test)]
+            stop_hook: Mutex::new(None),
         });
         let watched = Arc::clone(&shared);
         let worker = thread::Builder::new()
@@ -58,9 +60,7 @@ impl Server {
     pub(crate) fn admit(&self, input: &Input<'_>) -> Result<Request, Error> {
         let reservation = input.reservation(self.shared.limits)?;
         let mut state = self.shared.lock()?;
-        if state.stopped {
-            return Err(Error::Inactive);
-        }
+        state.active()?;
         if input.deadline <= std::time::Instant::now() {
             return Err(Error::Deadline);
         }

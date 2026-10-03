@@ -35,6 +35,7 @@ impl Request {
     /// Check activity at every future adapter callback and before publication.
     pub(crate) fn check(&self) -> Result<(), Error> {
         let mut state = self.shared.lock()?;
+        state.active()?;
         let entry = state.entries.get(&self.id).ok_or(Error::Inactive)?;
         if entry.deadline <= Instant::now() {
             let removed = state.remove(self.id);
@@ -51,6 +52,7 @@ impl Request {
     pub(crate) fn copy_input(&self, output: &mut [u8]) -> Result<usize, Error> {
         self.check()?;
         let state = self.shared.lock()?;
+        state.active()?;
         let entry = state.entries.get(&self.id).ok_or(Error::Inactive)?;
         if entry.deadline <= Instant::now() {
             return Err(Error::Deadline);
@@ -66,6 +68,7 @@ impl Request {
     pub(crate) fn retain<T: Send + 'static>(&self, authority: T) -> Result<(), Error> {
         self.check()?;
         let mut state = self.shared.lock()?;
+        state.active()?;
         let entry = state.entries.get_mut(&self.id).ok_or(Error::Inactive)?;
         if entry.deadline <= Instant::now() {
             return Err(Error::Deadline);
@@ -88,6 +91,7 @@ impl Request {
     pub(crate) fn finish(self, status: u16, body: &[u8]) -> Result<Vec<u8>, Error> {
         let (entry, response) = {
             let mut state = self.shared.lock()?;
+            state.active()?;
             let entry = state.remove(self.id).ok_or(Error::Inactive)?;
             let response = if entry.deadline <= Instant::now() {
                 Err(Error::Deadline)
@@ -104,8 +108,14 @@ impl Request {
         let deadline = entry.deadline;
         self.shared.retire(entry)?;
         self.shared.wake.notify_all();
-        if response.is_ok() && deadline <= Instant::now() {
-            return Err(Error::Deadline);
+        if response.is_ok() {
+            // Cleanup may reenter or overlap termination. Publication is ordered by this
+            // final state lock, after authority destruction, rather than response preparation.
+            let state = self.shared.lock()?;
+            state.active()?;
+            if deadline <= Instant::now() {
+                return Err(Error::Deadline);
+            }
         }
         response
     }
@@ -113,6 +123,7 @@ impl Request {
     pub(crate) fn route(&self) -> Result<(String, String), Error> {
         self.check()?;
         let state = self.shared.lock()?;
+        state.active()?;
         let Entry { method, path, deadline, .. } =
             state.entries.get(&self.id).ok_or(Error::Inactive)?;
         if *deadline <= Instant::now() {

@@ -8,6 +8,13 @@ use std::{
 
 use super::{Error, Limits};
 
+#[cfg(test)]
+#[path = "termination_tests.rs"]
+mod termination_tests;
+
+#[cfg(test)]
+type StopHook = Box<dyn FnOnce() + Send>;
+
 pub(super) struct Entry {
     pub(super) deadline: Instant,
     pub(super) reservation: usize,
@@ -28,6 +35,15 @@ pub(super) struct State {
 }
 
 impl State {
+    pub(super) fn active(&self) -> Result<(), Error> {
+        if self.stopped { Err(Error::Inactive) } else { Ok(()) }
+    }
+
+    fn stop(&mut self) -> BTreeMap<u64, Entry> {
+        self.stopped = true;
+        std::mem::take(&mut self.entries)
+    }
+
     pub(super) fn remove(&mut self, id: u64) -> Option<Entry> {
         self.entries.remove(&id)
     }
@@ -37,6 +53,8 @@ pub(super) struct Shared {
     pub(super) limits: Limits,
     pub(super) state: Mutex<State>,
     pub(super) wake: Condvar,
+    #[cfg(test)]
+    pub(super) stop_hook: Mutex<Option<StopHook>>,
 }
 
 impl Shared {
@@ -65,16 +83,20 @@ impl Shared {
         let mut state = self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         state.bytes -= bytes;
         state.live -= 1;
-        if !destroyed {
+        let revoked = if destroyed {
+            BTreeMap::new()
+        } else {
             state.failed = true;
-            state.stopped = true;
-        }
+            // Stopping and detaching siblings share one transition; no callback can slip
+            // between a stopped flag and a later acquisition of the revocation lock.
+            state.stop()
+        };
         drop(state);
         self.wake.notify_all();
         if destroyed {
             Ok(())
         } else {
-            self.stop();
+            self.retire_all(revoked);
             Err(Error::Host)
         }
     }
@@ -91,12 +113,25 @@ impl Shared {
         // Poison cannot preserve authority during termination.
         let entries = {
             let mut state = self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-            state.stopped = true;
-            std::mem::take(&mut state.entries)
+            state.stop()
         };
         self.wake.notify_all();
+        self.retire_all(entries);
+    }
+
+    fn retire_all(&self, entries: BTreeMap<u64, Entry>) {
+        #[cfg(test)]
+        self.before_stop_cleanup();
         for entry in entries.into_values() {
             let _ = self.retire(entry);
+        }
+    }
+
+    #[cfg(test)]
+    fn before_stop_cleanup(&self) {
+        let hook = { self.stop_hook.lock().expect("test hook mutex").take() };
+        if let Some(hook) = hook {
+            hook();
         }
     }
 

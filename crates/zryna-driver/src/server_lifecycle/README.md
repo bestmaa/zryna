@@ -44,16 +44,19 @@ callback. Callback and response boundaries independently check expiry. This does
 running guest code: a future runtime must enforce fuel, memory and epoch interruption itself.
 
 A response consumes the request, admits a status in 200–599 and at most the configured body
-limit, and copies its bytes while holding the publication/cancellation lock. Invalid responses
-also destroy the request. Cancellation or termination that wins that lock prevents publication;
-publication that wins first completes cleanup and rechecks expiry before returning its bytes.
-A deadline that expires during resource destruction suppresses that response. HTTP outparam binding
-and wire publication remain future adapter obligations.
+limit, and prepares its bytes while holding the publication/cancellation lock. Invalid responses
+also destroy the request. Cancellation that removes the request before preparation prevents a
+response; cancellation after that consuming claim is idempotent. After resource destruction,
+successful publication rechecks host activity
+and expiry under that lock. Termination or expiry during cleanup suppresses the response even if
+response preparation started first. A successful final check orders the response before later
+termination. HTTP outparam binding and wire publication remain future adapter obligations.
 
 Resources are destroyed outside the registry lock. Their quota remains charged until actual
 destruction completes. Shutdown stops admission, destroys outstanding entries, joins the owned
 worker, and waits for concurrent cancellation/destruction before returning success. Resource
-destructor failure stops the host, revokes sibling requests, and returns `Host`; it never
+destructor failure stops the host and detaches all sibling requests in one locked transition,
+then destroys them outside the mutex and returns `Host`; it never
 certifies successful cleanup. Trusted adapter destructors must be bounded and must not retain
 or recursively shut down their own host. Fatal process termination and operating-system failure
 do not acquire a cleanup guarantee from Rust destructors.
@@ -62,7 +65,11 @@ do not acquire a cleanup guarantee from Rust destructors.
 
 The dedicated harness tests real owned buffers, actual threads, autonomous expiry, competing
 admission and publication, instrumented resource destruction, blocked-destructor quota reuse,
-shutdown waiting, panic recovery and repeated startup. Those observations are distinct from
+shutdown waiting, panic recovery and repeated startup. A one-shot test-only stop hook pauses
+outside the mutex to deterministically check sibling revocation before cleanup and termination
+during response destruction; reentrant destruction checks that no mutex is held and no resource
+is destroyed twice. All original 21 cases remain, with three termination regressions added.
+Those observations are distinct from
 WASI component execution, imported-capability enforcement and supported-host conformance.
 
 Normal Cargo execution with the repository-pinned Rust toolchain is:
