@@ -12,6 +12,7 @@ serde_json.workspace = true
 same-file.workspace = true
 toml.workspace = true
 zryna-diagnostics = { path = "../zryna-diagnostics" }
+zryna-process = { path = "../zryna-process" }
 
 [target.'cfg(unix)'.dependencies]
 libc.workspace = true

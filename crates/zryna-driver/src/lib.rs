@@ -43,6 +43,8 @@ mod package_build;
 mod package_resolution;
 mod pipeline;
 mod pipeline_runtime;
+#[cfg(any(unix, test))]
+mod process_spawn;
 mod profile_composition;
 mod project;
 mod runtime;

@@ -7,7 +7,9 @@ use zryna_source::{SourceFileInput, SourceMap};
 use super::{FormattingDocument, FormattingError, layout};
 
 fn frontend() -> WorkerFrontendV3 {
-    let output = Command::new("node").args(["-p", "process.execPath"]).output().expect("node path");
+    let output =
+        crate::process_spawn::output(Command::new("node").args(["-p", "process.execPath"]))
+            .expect("node path");
     assert!(output.status.success());
     let node = PathBuf::from(String::from_utf8(output.stdout).expect("node UTF-8").trim());
     let expected = ProviderExpectationV3::new("typescript-6", "6.0.3").expect("provider");
