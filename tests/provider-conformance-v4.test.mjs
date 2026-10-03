@@ -140,7 +140,7 @@ test('package command and routed Linux/Windows workflow keep conformance fail cl
     'fail-fast': false, matrix: { os: ['ubuntu-latest', 'windows-latest'] },
   });
   assert.equal(job['runs-on'], '${{ matrix.os }}');
-  assert.equal(job['timeout-minutes'], 30);
+  assert.equal(job['timeout-minutes'], "${{ matrix.os == 'windows-latest' && 40 || 30 }}");
   assert.equal(job.steps.at(-2).run, 'pnpm provider:conformance:v4');
   assert.equal(job.steps.at(-1).run, 'node scripts/run-native-lexer-resource-tests.mjs');
   assert(!Object.hasOwn(job, 'continue-on-error'));

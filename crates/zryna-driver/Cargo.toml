@@ -46,3 +46,7 @@ wasmparser.workspace = true
 
 [lints]
 workspace = true
+
+[[test]]
+name = "native_activation_parity"
+path = "src/native_activation_parity.rs"
