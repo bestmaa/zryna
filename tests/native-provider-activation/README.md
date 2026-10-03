@@ -5,10 +5,10 @@ handshake. Its identity is `zryna-native-activation-harness` at the workspace ve
 separate from any future supported native provider identity. No public selector, fallback,
 provider default, CLI route, source serializer or frozen corpus changes.
 
-The retained-source lane is stacked on draft #512 at
-`69af4dd853ac99b5ba99f45712e5406d04077a45`. It consumes only the exported #413
-capture/verify/revalidate API. Review and integration of #413 remain prerequisites; this harness
-neither duplicates its resolver nor certifies its Windows or complete resource proof.
+The retained-source lane pins merged #512 at
+`af415a682330b1015818e9c0a8d61555fdd8d18c`. It consumes only the exported #413
+capture/verify/revalidate API, preserved by that squash merge. This harness neither duplicates its
+resolver nor substitutes for the source snapshot implementation's platform/resource proof.
 
 ## Run from a clean checkout
 
@@ -66,7 +66,7 @@ absolute executables installed elsewhere on the host.
 ## Remaining acceptance gates
 
 #414 stays open. Ordinary compiler installation/use without Node/pnpm requires coordinated CLI,
-installation and architecture-gate integration after reviewed #413. Public defaults remain on the
+installation and architecture-gate integration around the merged #413 API. Public defaults remain on the
 bootstrap route until complete Linux/Windows frozen M1–M3 parity, exact diagnostics/spans, IR,
 manifests and all target artifacts, complete M0–M4 gates, public clean-machine CLI smoke and
 reproducibility checks pass. The existing #508 downstream-parity proof remains independent.

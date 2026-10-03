@@ -14,7 +14,7 @@ import tempfile
 import tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
-DEPENDENCY_SHA = "69af4dd853ac99b5ba99f45712e5406d04077a45"
+DEPENDENCY_SHA = "af415a682330b1015818e9c0a8d61555fdd8d18c"
 PROVIDER = "zryna-native-activation-harness"
 
 
