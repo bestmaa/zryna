@@ -31,7 +31,9 @@ export const REQUIRED_STABILITY_TESTS = Object.freeze([
   'repeated interruptions preserve the first signal and do not leak cleanup handlers',
   'prior cancellation prevents process start and cannot qualify successful proof',
   'collector interruption preserves actual logs and never starts the later gates',
-  'stability CI selects all 27 distinct cases from four exact files',
+  'collector readiness separates bounded startup from the five-second owned-tree deadline',
+  'fixture failure cleanup closes its owner before removing the current directory',
+  'stability CI selects all 29 distinct cases from four exact files',
   'stability proof rejects omitted, renamed, duplicate and nonpassing cases',
   'stability proof rejects empty, partial and ambiguous TAP summaries',
   'stability runner uses bounded direct selection and propagates process failure',
@@ -44,9 +46,9 @@ export function verifyStabilityTestOutput(output) {
   const lines = output.split(/\r?\n/u);
   const results = lines.filter(line => /^(?:not )?ok /u.test(line));
   const count = REQUIRED_STABILITY_TESTS.length;
-  if (count !== 27 || results.length !== count
+  if (count !== 29 || results.length !== count
     || results.some((line, index) => !line.startsWith(`ok ${index + 1} - `))) {
-    throw new Error('stability tests must pass all 27 cases exactly once');
+    throw new Error('stability tests must pass all 29 cases exactly once');
   }
   for (const name of REQUIRED_STABILITY_TESTS) {
     if (results.filter(line => line.replace(/^ok [1-9][0-9]* - /u, '')
@@ -55,8 +57,8 @@ export function verifyStabilityTestOutput(output) {
     }
   }
   for (const [prefix, expected] of [
-    ['TAP version ', 'TAP version 13'], ['1..', '1..27'],
-    ['# tests ', '# tests 27'], ['# suites ', '# suites 0'], ['# pass ', '# pass 27'],
+    ['TAP version ', 'TAP version 13'], ['1..', '1..29'],
+    ['# tests ', '# tests 29'], ['# suites ', '# suites 0'], ['# pass ', '# pass 29'],
     ['# fail ', '# fail 0'], ['# cancelled ', '# cancelled 0'],
     ['# skipped ', '# skipped 0'], ['# todo ', '# todo 0'],
   ]) {
@@ -82,7 +84,7 @@ export function runStabilityTests(spawn = spawnSync, output = process.stdout) {
   if (result.status !== 0 || result.signal) throw new Error('stability test process did not complete successfully');
   verifyStabilityTestOutput(result.stdout ?? '');
   output.write(`Stability evidence tests passed on ${process.platform}/${process.arch}: `
-    + '27/27 required cases from 4 exact files, 0 failed/cancelled/skipped/todo; performance baseline remains blocked.\n');
+    + '29/29 required cases from 4 exact files, 0 failed/cancelled/skipped/todo; performance baseline remains blocked.\n');
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === SCRIPT) {
