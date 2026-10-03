@@ -12,6 +12,8 @@ import time
 import unittest
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts/run-native-provider-activation.py"
+# Importing the runner must not leave bytecode in the controlled checkout.
+sys.dont_write_bytecode = True
 SPEC = importlib.util.spec_from_file_location("activation_runner", SCRIPT)
 RUNNER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(RUNNER)
