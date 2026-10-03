@@ -114,6 +114,8 @@ test('empty, skipped, cancelled, ignored and unexecuted proof never qualifies', 
   assert.equal(counts(tap.replace('# pass 2', '# pass 1').replace('# cancelled 0', '# cancelled 1'), 'node-tests').complete, false);
   assert.equal(counts(rust.replace('0 ignored', '1 ignored'), 'rust-tests').complete, false);
   assert.equal(counts(rust.replace('1 passed', '0 passed'), 'rust-tests').complete, false);
+  assert.deepEqual(counts('test result: FAILED. 322 passed; 1 failed; 2 ignored; 0 measured; 0 filtered out; finished in 1s\n', 'rust-tests'),
+    { passed: 322, failed: 1, skipped: 2, complete: false });
   assert.equal(counts(rust, 'm2').complete, false);
   assert.throws(() => counts(tap.replace('# tests 2', '# tests 5'), 'node-tests'), /inconsistent TAP/);
 });

@@ -2,7 +2,7 @@ import { compare } from './performance.mjs';
 import { reject } from './input.mjs';
 
 export function counts(stdout, proof) {
-  const rust = [...stdout.matchAll(/^test result: ok\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out;/gm)];
+  const rust = [...stdout.matchAll(/^test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out;/gm)];
   const tap = [...stdout.matchAll(/^# tests (\d+)\r?\n# suites (\d+)\r?\n# pass (\d+)\r?\n# fail (\d+)\r?\n# cancelled (\d+)\r?\n# skipped (\d+)\r?\n# todo (\d+)$/gm)];
   let passed = 0;
   let failed = 0;
@@ -24,7 +24,7 @@ export function counts(stdout, proof) {
     m2: /^M2 conformance passed:/m, m3: /^M3 full gate passed on (?:linux|win32)\/x64\.$/m };
   const complete = (proof === 'node-tests' ? tap.length === 1 :
     proof === 'rust-tests' ? rust.length > 0 : Boolean(banners[proof]?.test(stdout))) &&
-    passed > 0 && failed === 0 && skipped === 0;
+    passed > 0 && failed === 0 && skipped === 0 && !/^test result: FAILED\./m.test(stdout);
   return { passed, failed, skipped, complete };
 }
 
