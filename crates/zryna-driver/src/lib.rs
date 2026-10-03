@@ -81,7 +81,7 @@ pub use native::{
     NATIVE_OBJECT_ARTIFACT_EXTENSION, NativeExecutableBuildError, NativeExecutableBuildSuccess,
     NativeObjectBuildError, NativeObjectBuildSuccess, NativeObjectOutputRoot, NativeProcessLimits,
     NativeRunError, PublishedNativeExecutableArtifact, PublishedNativeObjectArtifact,
-    compile_native_invocation, compile_native_object, discover_linux_native_toolchain,
+    compile_native_invocation, compile_native_object, discover_linux_native_toolchain, native_c_v0,
     publish_native_object, run_native_invocation, select_native_object_target,
 };
 pub use ownership_api::*;

@@ -66,7 +66,7 @@ fn changed_argument_register_width_and_c_spelling_are_abi_rejected() {
     reject(
         |program| {
             program.operations[0].signature.parameters[0].location =
-                Location::Register(Register::R9)
+                Location::Register(Register::R9);
         },
         "ZRYNA-C4104",
     );
@@ -174,7 +174,7 @@ fn registration_output_initialization_and_commits_cannot_move_before_status_chec
         |program| {
             call(program).instructions.retain(|action| {
                 !matches!(action, Instruction::SettleKnownStatusReservation { .. })
-            })
+            });
         },
         "ZRYNA-C4106",
     );

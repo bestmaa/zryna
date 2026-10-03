@@ -21,6 +21,7 @@ zryna-native-mir = { path = "../zryna-native-mir" }
 [dev-dependencies]
 serde_json.workspace = true
 sha2.workspace = true
+zryna-native-c-ir = { path = "../zryna-native-c-ir" }
 zryna-semantics = { path = "../zryna-semantics" }
 zryna-source = { path = "../zryna-source" }
 zryna-syntax = { path = "../zryna-syntax" }

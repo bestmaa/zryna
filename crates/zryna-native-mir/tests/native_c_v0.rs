@@ -162,7 +162,8 @@ fn terminal_actions_end_loans_then_release_and_stop_before_result_transfer() {
     let mut releases = 0;
     let mut process = 0;
     let mut protected = 0;
-    for effect in mir.functions().flat_map(|function| function.effects()) {
+    for effect in mir.functions().flat_map(zryna_native_mir::native_c_v0::VerifiedFunction::effects)
+    {
         for (exit, actions) in effect.exits().iter().zip(effect.exit_instructions()) {
             assert_eq!(actions.last(), Some(&ExitInstruction::Finish));
             for (index, action) in actions.iter().enumerate() {

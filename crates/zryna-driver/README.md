@@ -224,3 +224,19 @@ Linux x86-64 native artifacts execute and publish through one private transactio
 manifest v3 identity. Exact public `--profile data-ownership-v1` calls these same library entrypoints and publishes
 the public `zryna-data-ownership-v1` manifest identity. See the
 [candidate driver and manifest contract](../../docs/M3_CANDIDATE_DRIVER.md).
+
+## Internal native C scalar invocation
+
+`native_c_v0::prepare_scalar_export` consumes the backend's sealed scalar-export artifact and an
+exact logical export key. It rejects wrong arity or carrier types before staging, generates one
+strict typed C11 harness, and uses the existing retained GNU toolchain, bounded process runner,
+link audit and consuming stage cleanup. The private prepared executable retains its object and
+source authority. Results use the existing four-byte scalar channel; process exit is health only.
+Unsupported hosts reject before staging. No public selector or executable publication is added.
+
+Linux tests in `src/native/native_c_v0/tests.rs` link the independently authored reverse C client,
+exercise wrapping i32 arithmetic, zero/7/8/9/16 argument exports, C-int and Bool32, and reject wrong
+requests, missing symbols, header mismatches and noncanonical raw Boolean arguments. Run
+`cargo test --locked -p zryna-driver --lib native_c_v0`. The raw tiny-C fixture's manual resource
+cleanup is separate evidence: generated imports, safe resource wrappers, exactly-once foreign
+cleanup and exact library/recipe linkage remain unfinished #417 requirements.

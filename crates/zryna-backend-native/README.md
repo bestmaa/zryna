@@ -77,3 +77,19 @@ The named evidence is:
 This remains an internal candidate capability. Public `--profile data-ownership-v1`, manifest v3,
 multi-target transactions, non-Linux execution, dynamic libraries, general FFI, raw pointers,
 custom linkers, performance claims, and three-target M3 conformance remain outside this boundary.
+
+## Internal native C scalar exports
+
+`native_c_v0::emit_scalar_exports` accepts only the independently verified native C MIR and the
+existing exact Linux x86-64 target capability. It emits every admitted total public scalar export,
+retains the complete original program authority, and preserves distinct `c-i32`, `c-int` and
+`c-bool32` header spelling. Boolean carriers outside 0/1 terminate before the source body runs.
+The generated C11 header checks the target and carrier size/alignment. The independent audit
+requires the closed ELF section inventory, exact public symbol set, fixed file metadata,
+non-overlapping text definitions and no undefined symbols or relocations.
+
+This separate artifact emits no imported operation, private entry, foreign dispatcher, resource
+ledger or safe wrapper. Focused evidence is `cargo test --locked -p zryna-backend-native --lib
+native_c_v0`. Raw-to-verified MIR rejection remains independently tested by the MIR component.
+Driver linking and reverse C execution are a separate boundary. Neither this API nor its tests
+activate a public CLI profile or complete the #417 foreign-resource matrix.

@@ -47,7 +47,10 @@ fn private_channels_retain_genuine_layouts_without_changing_public_c_signatures(
             assert_eq!(lane.location, Location::Register(register));
         }
     }
-    let public = machine.functions().find_map(|f| f.export()).expect("original scalar export");
+    let public = machine
+        .functions()
+        .find_map(zryna_native_mir::native_c_v0::VerifiedFunction::export)
+        .expect("original scalar export");
     let operation = machine.operations().nth(public).expect("complete public operation");
     assert_eq!(operation.declaration().symbol, "zryna_c_v0_e_add");
     assert_eq!(operation.signature().parameters.len(), 2);
@@ -99,4 +102,28 @@ fn private_entry_payload_bounds_reject_before_machine_expansion() {
     reject(|p| p.functions[0].entry.contract = "x".repeat(129), "ZRYNA-C4107");
     reject(|p| p.dispatcher.symbol = "x".repeat(129), "ZRYNA-C4107");
     reject(|p| p.dispatcher.contract = "x".repeat(129), "ZRYNA-C4107");
+}
+
+#[test]
+fn public_boolean_and_c_int_export_spellings_survive_private_entry_planning() {
+    for (source, spelling, count) in [
+        (capture::constant_export(), zryna_native_mir::native_c_v0::contract::AbiType::CI32, 0),
+        (capture::boolean_export(), zryna_native_mir::native_c_v0::contract::AbiType::Bool32, 1),
+        (capture::c_int_export(), zryna_native_mir::native_c_v0::contract::AbiType::CInt, 2),
+    ] {
+        let machine = lower(&source).expect("genuine different scalar spelling");
+        let function =
+            machine.functions().find(|function| function.export().is_some()).expect("export");
+        let operation =
+            machine.operations().nth(function.export().expect("ordinal")).expect("operation");
+        assert_eq!(operation.signature().parameters.len(), count);
+        assert!(
+            operation
+                .signature()
+                .parameters
+                .iter()
+                .all(|lane| lane.abi == spelling && lane.bits == 32)
+        );
+        assert_eq!(operation.signature().result.expect("scalar result").abi, spelling);
+    }
 }

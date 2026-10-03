@@ -190,6 +190,66 @@ pub(super) fn stack_export(parameters: usize) -> VerifiedNativeCProgram {
     );
     recapture(&scalar, document, header.as_bytes())
 }
+pub(super) fn constant_export() -> VerifiedNativeCProgram {
+    let scalar = SCALAR.replace(
+        "export function add(left: i32, right: i32): i32 {\n  return left + right;\n}",
+        "export function add(): i32 {\n  return -2147483648;\n}",
+    );
+    let mut document: Value = serde_json::from_slice(DECLARATIONS).expect("declarations");
+    let export = document["operations"]
+        .as_array_mut()
+        .expect("operations")
+        .iter_mut()
+        .find(|operation| operation["direction"] == "export")
+        .expect("export");
+    export["parameters"] = serde_json::json!([]);
+    let header = std::str::from_utf8(HEADER).expect("header").replace(
+        "int32_t zryna_c_v0_e_add(int32_t left, int32_t right);",
+        "int32_t zryna_c_v0_e_add(void);",
+    );
+    recapture(&scalar, document, header.as_bytes())
+}
+
+pub(super) fn boolean_export() -> VerifiedNativeCProgram {
+    let scalar = SCALAR.replace(
+        "export function add(left: i32, right: i32): i32 {\n  return left + right;\n}",
+        "export function add(flag: bool): bool {\n  return flag;\n}",
+    );
+    let mut document: Value = serde_json::from_slice(DECLARATIONS).expect("declarations");
+    let export = document["operations"]
+        .as_array_mut()
+        .expect("operations")
+        .iter_mut()
+        .find(|operation| operation["direction"] == "export")
+        .expect("export");
+    export["parameters"] = serde_json::json!([{"name":"flag","abi":"bool32","resource":null}]);
+    export["result"] = "bool32".into();
+    let header = std::str::from_utf8(HEADER).expect("header").replace(
+        "int32_t zryna_c_v0_e_add(int32_t left, int32_t right);",
+        "uint32_t zryna_c_v0_e_add(uint32_t flag);",
+    );
+    recapture(&scalar, document, header.as_bytes())
+}
+
+pub(super) fn c_int_export() -> VerifiedNativeCProgram {
+    let mut document: Value = serde_json::from_slice(DECLARATIONS).expect("declarations");
+    let export = document["operations"]
+        .as_array_mut()
+        .expect("operations")
+        .iter_mut()
+        .find(|operation| operation["direction"] == "export")
+        .expect("export");
+    for parameter in export["parameters"].as_array_mut().expect("parameters") {
+        parameter["abi"] = "c-int".into();
+    }
+    export["result"] = "c-int".into();
+    let header = std::str::from_utf8(HEADER).expect("header").replace(
+        "int32_t zryna_c_v0_e_add(int32_t left, int32_t right);",
+        "int zryna_c_v0_e_add(int left, int right);",
+    );
+    recapture(SCALAR, document, header.as_bytes())
+}
+
 pub(super) fn boolean_import() -> VerifiedNativeCProgram {
     let mut document: Value =
         serde_json::from_slice(DECLARATIONS).expect("fixed declaration bytes");

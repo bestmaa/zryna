@@ -40,6 +40,7 @@ zryna-source = { path = "../zryna-source" }
 zryna-windows-filesystem = { path = "../zryna-windows-filesystem" }
 
 [dev-dependencies]
+zryna-native-c-ir = { path = "../zryna-native-c-ir" }
 wasm-encoder.workspace = true
 wasmparser.workspace = true
 zryna-syntax = { path = "../zryna-syntax" }

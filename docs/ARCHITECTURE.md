@@ -147,6 +147,15 @@ SysV INTEGER placement, low-width Bool32 checks, caller output-slot initializati
 packing/copy faults and every conditional reserve/register/release/terminal cleanup action.
 Only total scalar exports have a public C signature. This MIR slice grants no native object,
 runtime execution, foreign ledger, link or public support capability.
+
+The separate native backend scalar-export boundary consumes that actual MIR seal, emits only
+total public scalar functions and independently audits the closed ELF inventory. Its artifact
+retains the complete program. The driver consumes only that artifact for typed bounded scalar
+invocation through the existing GNU link/audit/cleanup boundary. Native C IR dependencies in
+backend and driver are dev-only for genuine recapture tests; normal production edges remain
+through native MIR. Imports, private entry execution, foreign resource accounting and public
+activation remain separate unfinished gates.
+
 `zryna-semantics` is a compiler
 component and cannot depend on `zryna-frontend`; backends cannot depend on either provider layer.
 The architecture engine has a negative graph fixture for both forbidden edges.

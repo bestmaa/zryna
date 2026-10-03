@@ -21,11 +21,13 @@ issuer-specific allocation faults. Every terminal plan ends loans before reverse
 releases, stops immediately on release failure and transfers a result only after cleanup. Process
 failure supplies no cleanup promise. Only total scalar functions have public C signatures.
 
-This machine authority emits no native object and introduces no execution instance, foreign
+The machine authority itself emits no native object. The separate backend scalar-export path
+consumes this seal for total public scalar definitions, while imports and private entries remain
+plans. The MIR introduces no execution instance, foreign
 ledger, runtime allocation, linking, support activation or public selector. Those #417 gates and
 the full tiny-C Linux failure/cleanup fixture remain required. SQLite and Rust-through-C-shim
-are later independent library pilots. Focused proposed tests are `cargo test --locked
--p zryna-native-mir --test native_c_v0`; authored tests do not establish execution evidence.
+are later independent library pilots. Focused tests are `cargo test --locked
+-p zryna-native-mir --test native_c_v0`; exact-revision receipts must accompany execution claims.
 Machine bounds derive from existing admitted IR cardinalities. Each effect admits at most 32
 ordinary actions (the admitted 25 boundary checks plus fixed call/status/commit actions); each
 terminal edge adds one action per loan, two per drop and one finish. Production checks the
