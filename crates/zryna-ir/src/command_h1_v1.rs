@@ -7,6 +7,7 @@ use zryna_syntax::command_h1_v1::CommandSyntax;
 
 use crate::data_ownership_v1::{self as owned, raw};
 
+mod consumption;
 mod identity;
 mod source_body;
 pub use identity::{MemoryPartition, ProgramIdentity};
@@ -103,6 +104,7 @@ pub fn verify(
         .ok_or_else(|| vec![error("command source is absent")])?
         .id();
     let body = owned::verify_owned(program, sources, entry, linear32, linux_x86_64, Some(source))?;
+    consumption::verify(&body, source)?;
     let identity = ProgramIdentity::issue(sources.identity())
         .ok_or_else(|| vec![error("command issuing identity space is exhausted")])?;
     Ok(VerifiedProgram { body, source: source.clone(), identity })

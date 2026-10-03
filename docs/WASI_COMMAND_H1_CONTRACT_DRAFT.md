@@ -68,6 +68,10 @@ result must be consumed by an exhaustive match inside the command and cannot cro
 entry boundary. Its target layout stays sealed behind the accepted language/layout verifier;
 these tags do not publish the private String record or a host ABI. This is a new source gate,
 not an inference from current internal M3 String or enum support.
+An unused helper's match does not consume the lookup's actual owned result. Forwarding that
+result into a private helper that exhaustively matches it is allowed. The command verifier checks
+the existing sealed ownership state at successful cleanup; failure/trap cleanup remains available
+before matching, and ordinary M3 ownership rules are unchanged.
 The built-in name `EnvLookupV1` is reserved, not a user-defined enum. The existing v4 match
 expression shape can name its two closed arms as `"EnvLookupV1.Found"` and
 `"EnvLookupV1.Missing"`; the new semantic and IR verifiers must authenticate the arm

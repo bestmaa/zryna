@@ -8,6 +8,43 @@ use std::fs;
 use support::{Case, Input, guard, input_path, read_json};
 
 #[test]
+fn actual_cli_unused_helper_match_cannot_consume_the_lookup_result() {
+    let _guard = guard();
+    let case = Case::new();
+    let input = Input::new("MODE", Some("on"));
+    let output = case.run(
+        "tests/wasi-command-source-fixtures/unused-environment-match-helper.zry",
+        Some(&input),
+        &[],
+    );
+    assert_eq!(
+        output.status.code(),
+        Some(3),
+        "lookup result must actually reach an exhaustive match: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(!case.bundle.exists(), "rejected source has no final execution bundle");
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("ZRYNA-I4100"),
+        "command consumption rejection: {}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    for value in [Some("on"), None] {
+        let forwarded = Case::new();
+        let input = Input::new("MODE", value);
+        let output = forwarded.run(
+            "tests/wasi-command-source-fixtures/forwarded-environment-match-helper.zry",
+            Some(&input),
+            &[],
+        );
+        assert_eq!(output.status.code(), Some(if value.is_some() { 0 } else { 5 }));
+        let manifest = read_json(&forwarded.manifest());
+        assert_eq!(manifest["execution"]["runReturn"], if value.is_some() { "ok" } else { "err" });
+        assert_eq!(manifest["teardown"], "confirmed");
+    }
+}
+
+#[test]
 fn actual_cli_pure_and_declared_error_commit_distinct_complete_command_bundles() {
     let _guard = guard();
     for (source, expected, exit) in
