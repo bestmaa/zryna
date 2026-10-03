@@ -59,7 +59,7 @@ fn native_sources_reject_cycles_duplicate_bindings_and_portable_collisions() {
         let error = capture_native_workspace_sources(&root, path("main.zry"))
             .err()
             .expect("invalid graph must reject before complete parsing");
-        assert_eq!(code(error), expected);
+        assert_eq!(code(&error), expected);
     }
 }
 
@@ -70,7 +70,7 @@ fn native_encoding_rejects_invalid_utf8_without_repair_or_partial_authority() {
     let root = workspace.root();
     assert_eq!(
         code(
-            capture_native_workspace_sources(&root, path("main.zry"))
+            &capture_native_workspace_sources(&root, path("main.zry"))
                 .err()
                 .expect("invalid UTF-8 rejects")
         ),
@@ -127,7 +127,7 @@ fn native_snapshot_rejects_concurrent_replacement_and_retains_original_bytes() {
     writer.join().expect("independent writer completed");
     let id = source.sources().file_id(&path("main.zry")).expect("original file id");
     assert_eq!(source.sources().source(id).expect("immutable original source").text(), original);
-    assert_eq!(code(source.revalidate().err().expect("stale binding rejects")), "ZRYNA-D3004");
+    assert_eq!(code(&source.revalidate().expect_err("stale binding rejects")), "ZRYNA-D3004");
     assert!(source.verify_v3().is_err(), "stale source cannot enter final syntax verification");
 }
 
@@ -157,7 +157,7 @@ fn native_snapshot_rejects_in_place_write_parent_swap_and_root_swap() {
                 fs::create_dir(workspace.0.join("project")).expect("foreign root");
             }
         }
-        assert_eq!(code(source.revalidate().err().expect("stale retained owner")), "ZRYNA-D3004");
+        assert_eq!(code(&source.revalidate().expect_err("stale retained owner")), "ZRYNA-D3004");
     }
 }
 

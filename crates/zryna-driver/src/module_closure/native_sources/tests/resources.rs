@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use super::{Workspace, code, path};
 use crate::{MAX_MODULE_FILES, MAX_MODULE_SOURCE_BYTES, capture_native_workspace_sources};
 use zryna_source::MAX_SOURCE_FILE_BYTES;
@@ -14,7 +16,8 @@ fn native_snapshot_exact_binding_edge_count_and_first_extra_are_enforced() {
                     .map(|binding| format!("v{}", declaration * 256 + binding))
                     .collect::<Vec<_>>()
                     .join(",");
-                text.push_str(&format!("import {{ {names} }} from './m{}.zry';\n", module + 1));
+                writeln!(text, "import {{ {names} }} from './m{}.zry';", module + 1)
+                    .expect("resource source text");
             }
             if module == 0 && extra == 1 {
                 text.push_str("import { extra } from './m1.zry';\n");
@@ -31,7 +34,7 @@ fn native_snapshot_exact_binding_edge_count_and_first_extra_are_enforced() {
         } else {
             // The unchanged syntax import-binding limit shares the same exact ceiling and
             // rejects the first extra before graph allocation.
-            assert_eq!(code(result.err().expect("first extra named edge")), "ZRYNA-F1002");
+            assert_eq!(code(&result.err().expect("first extra named edge")), "ZRYNA-F1002");
         }
     }
 }
@@ -61,7 +64,7 @@ fn native_snapshot_exact_source_file_bytes_and_first_extra_are_enforced() {
                 .verify_v3()
                 .expect("genuine empty executable-syntax candidate at exact byte limit");
         } else {
-            assert_eq!(code(result.err().expect("first extra source byte")), "ZRYNA-D3201");
+            assert_eq!(code(&result.err().expect("first extra source byte")), "ZRYNA-D3201");
         }
     }
 }
@@ -82,7 +85,9 @@ fn native_snapshot_exact_aggregate_bytes_and_first_extra_are_enforced() {
         }
         if extra == 1 {
             // Add one reachable source byte without making any individual file oversized.
-            let mut first = format!("import {{ value }} from './module1.zry';\nimport {{ extra }} from './extra.zry';\n//").into_bytes();
+            let mut first =
+                b"import { value } from './module1.zry';\nimport { extra } from './extra.zry';\n//"
+                    .to_vec();
             first.resize(MAX_SOURCE_FILE_BYTES, b'x');
             workspace.write("module0.zry", first);
             workspace.write("extra.zry", " ");
@@ -106,7 +111,7 @@ fn native_snapshot_exact_aggregate_bytes_and_first_extra_are_enforced() {
             assert_eq!(bytes, MAX_MODULE_SOURCE_BYTES);
             snapshot.verify_v3().expect("genuine exact-limit source graph syntax");
         } else {
-            assert_eq!(code(result.err().expect("first aggregate extra byte")), "ZRYNA-D3201");
+            assert_eq!(code(&result.err().expect("first aggregate extra byte")), "ZRYNA-D3201");
         }
     }
 }
@@ -132,7 +137,7 @@ fn native_snapshot_exact_file_count_and_first_extra_are_enforced() {
             assert_eq!(snapshot.modules().len(), MAX_MODULE_FILES);
             snapshot.verify_v3().expect("complete genuine exact-file-limit syntax");
         } else {
-            assert_eq!(code(result.err().expect("first extra reachable file")), "ZRYNA-D3201");
+            assert_eq!(code(&result.err().expect("first extra reachable file")), "ZRYNA-D3201");
         }
     }
 }

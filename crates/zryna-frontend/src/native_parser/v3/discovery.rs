@@ -73,10 +73,10 @@ pub fn discover_import_candidates(
                 TokenKind::OpenBrace => delimiters.push(TokenKind::CloseBrace),
                 TokenKind::OpenParen => delimiters.push(TokenKind::CloseParen),
                 TokenKind::OpenBracket => delimiters.push(TokenKind::CloseBracket),
-                TokenKind::CloseBrace | TokenKind::CloseParen | TokenKind::CloseBracket => {
-                    if delimiters.pop() != Some(token.kind()) {
-                        return Err(parser.error_here("unbalanced source during import discovery"));
-                    }
+                TokenKind::CloseBrace | TokenKind::CloseParen | TokenKind::CloseBracket
+                    if delimiters.pop() != Some(token.kind()) =>
+                {
+                    return Err(parser.error_here("unbalanced source during import discovery"));
                 }
                 _ => {}
             }

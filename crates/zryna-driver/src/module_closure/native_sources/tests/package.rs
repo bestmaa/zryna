@@ -11,7 +11,7 @@ fn write_package(
     locator: &str,
     name: &str,
     files: &[(&str, &[u8])],
-    dependencies: serde_json::Value,
+    dependencies: &serde_json::Value,
 ) {
     let inventory = files
         .iter()
@@ -59,7 +59,7 @@ fn native_package_capture_proves_exact_file_and_byte_limits_and_rejects_first_ex
         .collect::<Vec<_>>();
     let files =
         sources.iter().map(|(name, text)| (name.as_str(), text.as_slice())).collect::<Vec<_>>();
-    write_package(&workspace, "packages/app", "app", &files, json!([]));
+    write_package(&workspace, "packages/app", "app", &files, &json!([]));
     let resolved = resolve_package(&request(&workspace, PackageLockMode::Update))
         .expect("exact package limits");
     let source = capture_native_package_sources(
@@ -105,7 +105,7 @@ fn native_package_capture_matches_workspace_graph_and_retains_exact_instance_and
         "packages/app",
         "app",
         &[("dep.zry", dep), ("main.zry", main)],
-        json!([]),
+        &json!([]),
     );
     let resolved = resolve_package(&request(&workspace, PackageLockMode::Update))
         .expect("genuine package resolution");
@@ -147,14 +147,14 @@ fn native_package_capture_selects_only_an_exact_admitted_dependency_instance() {
         "packages/app",
         "app",
         &[("main.zry", b"export function main(): i32 { return 1; }\n")],
-        json!([{ "alias": "math", "name": "library", "source": {"kind": "local", "locator": "packages/library", "revision": ""}, "version": "1.0.0" }]),
+        &json!([{ "alias": "math", "name": "library", "source": {"kind": "local", "locator": "packages/library", "revision": ""}, "version": "1.0.0" }]),
     );
     write_package(
         &workspace,
         "packages/library",
         "library",
         &[("main.zry", b"export function value(): i32 { return 7; }\n")],
-        json!([]),
+        &json!([]),
     );
     let resolved = resolve_package(&request(&workspace, PackageLockMode::Update)).expect("graph");
     let dependency = resolved
@@ -173,7 +173,7 @@ fn native_package_capture_selects_only_an_exact_admitted_dependency_instance() {
     source.verify_v3().expect("complete dependency syntax");
     assert_eq!(
         code(
-            capture_native_package_sources(
+            &capture_native_package_sources(
                 &request(&workspace, PackageLockMode::Frozen),
                 &"0".repeat(64),
                 path("main.zry")
@@ -201,7 +201,7 @@ fn native_package_capture_rejects_updates_escape_missing_inventory_aliases_and_w
             "packages/app",
             "app",
             &[("main.zry", body.as_bytes())],
-            json!([]),
+            &json!([]),
         );
         let resolved =
             resolve_package(&request(&workspace, PackageLockMode::Update)).expect("graph");
@@ -216,7 +216,7 @@ fn native_package_capture_rejects_updates_escape_missing_inventory_aliases_and_w
         );
         assert_eq!(
             code(
-                capture_native_package_sources(
+                &capture_native_package_sources(
                     &request(&workspace, PackageLockMode::Update),
                     package_id,
                     path("main.zry")
@@ -233,14 +233,14 @@ fn native_package_capture_rejects_updates_escape_missing_inventory_aliases_and_w
         "packages/app",
         "app",
         &[("main.zry", b"export function main(): i32 { return 1; }\n")],
-        json!([]),
+        &json!([]),
     );
     let resolved = resolve_package(&request(&workspace, PackageLockMode::Update)).expect("graph");
     let before = std::fs::read(resolved.lock_path()).expect("original lock");
     workspace.write("packages/app/main.zry", "export function main(): i32 { return 9; }\n");
     assert_eq!(
         code(
-            capture_native_package_sources(
+            &capture_native_package_sources(
                 &request(&workspace, PackageLockMode::Frozen),
                 resolved.graph().root(),
                 path("main.zry")
@@ -258,7 +258,7 @@ fn native_package_capture_rejects_updates_escape_missing_inventory_aliases_and_w
 fn native_package_snapshot_keeps_original_bytes_and_rejects_stale_retained_source() {
     let workspace = Workspace::new("package-stale");
     let original = b"export function main(): i32 { return 7; }\n";
-    write_package(&workspace, "packages/app", "app", &[("main.zry", original)], json!([]));
+    write_package(&workspace, "packages/app", "app", &[("main.zry", original)], &json!([]));
     let resolved = resolve_package(&request(&workspace, PackageLockMode::Update)).expect("graph");
     let source = capture_native_package_sources(
         &request(&workspace, PackageLockMode::Frozen),
@@ -269,5 +269,5 @@ fn native_package_snapshot_keeps_original_bytes_and_rejects_stale_retained_sourc
     workspace.write("packages/app/main.zry", "export function main(): i32 { return 9; }\n");
     let id = source.sources().file_id(&path("main.zry")).expect("original id");
     assert_eq!(source.sources().source(id).expect("immutable source").text().as_bytes(), original);
-    assert_eq!(code(source.revalidate().err().expect("stale source")), "ZRYNA-P4004");
+    assert_eq!(code(&source.revalidate().expect_err("stale source")), "ZRYNA-P4004");
 }

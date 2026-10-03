@@ -51,8 +51,8 @@ pub(super) fn path(value: &str) -> NormalizedSourcePath {
     NormalizedSourcePath::new(value).expect("portable fixture path")
 }
 
-pub(super) fn code(error: ModuleClosureError) -> String {
-    error.diagnostics().first().expect("stable rejection diagnostic").code().to_owned()
+pub(super) fn code(error: &ModuleClosureError) -> &str {
+    error.diagnostics().first().expect("stable rejection diagnostic").code()
 }
 
 #[test]
@@ -70,6 +70,8 @@ fn native_snapshot_matches_canonical_driver_graph_and_original_worker_fixture() 
         "/../zryna-frontend/tests/native_parser_v3_calls/calls.snapshot.json"
     ));
     let workspace = Workspace::new("canonical");
+    // The independent worker receipt was captured with CRLF source offsets.
+    let main = main.replace("\r\n", "\n").replace('\n', "\r\n");
     workspace.write("src/main.zry", main);
     workspace.write("src/math.zry", math);
     let root = workspace.root();
@@ -219,7 +221,7 @@ fn native_discovery_rejects_independent_wrong_hashes_graph_ids_and_edges() {
             }
         }
         assert_eq!(
-            code(graph::authenticate(&source).err().expect("malformed graph rejects")),
+            code(&graph::authenticate(&source).expect_err("malformed graph rejects")),
             "ZRYNA-D3102"
         );
         assert!(

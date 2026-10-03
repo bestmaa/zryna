@@ -1,5 +1,6 @@
 use std::{fs, path::Path, time::Duration};
 
+use sha2::{Digest as _, Sha256};
 use zryna_frontend::{
     VerifiedFrontendProviderV4, WorkerError, native_lexer, native_parser, syntax_v4,
 };
@@ -90,15 +91,39 @@ fn native_resolution_matches_all_admitted_m3_fixture_graphs_and_preserves_hostil
     let workspace = Workspace::new("complete-m3-corpus");
     let fixture_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/m3-fixtures");
     let fixtures = copy_sources(&workspace, &fixture_root, 95);
+    let registry: serde_json::Value = serde_json::from_str(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../tests/m3-conformance-v1.json"
+    )))
+    .expect("frozen conformance registry");
+    let registered = registry["fixtures"].as_array().expect("registered sources");
     let root = workspace.root();
     let mut accepted = 0;
     let mut hostile = 0;
     for fixture in fixtures {
+        let registered_path =
+            format!("tests/m3-fixtures/{}", fixture.strip_prefix("src/").expect("corpus path"));
+        if let Some(dependency) = registered
+            .iter()
+            .find(|source| source["path"] == registered_path)
+            .and_then(|source| source["dependency"].as_str())
+        {
+            let source = registered
+                .iter()
+                .find(|source| source["id"] == dependency)
+                .expect("registered dependency");
+            let filename = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../..")
+                .join(source["path"].as_str().expect("dependency path"));
+            let bytes = fs::read(filename).expect("original dependency bytes");
+            assert_eq!(format!("{:x}", Sha256::digest(&bytes)), source["sha256"]);
+            workspace.write("src/conformance/math.zry", bytes);
+        }
         let native = capture_native_workspace_sources(&root, path(&fixture))
             .and_then(super::super::NativeSourceSnapshot::verify_v4);
         if fixture == "src/borrow-exclusive-nonreference.zry" {
             assert_eq!(
-                super::code(native.err().expect("known independently hostile source")),
+                super::code(&native.err().expect("known independently hostile source")),
                 "ZRYNA-Y4002"
             );
             hostile += 1;
