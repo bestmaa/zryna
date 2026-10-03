@@ -38,7 +38,7 @@ pub(crate) fn output(command: &mut std::process::Command) -> io::Result<std::pro
     spawn(|| command.spawn())?.wait_with_output()
 }
 
-#[cfg(test)]
+#[cfg(all(test, target_os = "linux", target_arch = "x86_64"))]
 pub(crate) fn status(command: &mut std::process::Command) -> io::Result<std::process::ExitStatus> {
     spawn(|| command.spawn())?.wait()
 }
