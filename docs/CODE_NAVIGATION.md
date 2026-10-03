@@ -77,8 +77,7 @@ Use [GETTING_STARTED](GETTING_STARTED.md) for M1/M2, [M3_GETTING_STARTED](M3_GET
 
 - Start: [native MIR README](../crates/zryna-native-mir/README.md), [native backend README](../crates/zryna-backend-native/README.md), [M2 native contract](M2_NATIVE_BACKEND.md).
 - MIR `src/lib.rs::{lower,verify}` independently seals claims; `src/data_ownership_v1/` owns the M3 raw-to-verified profile; backend `src/lib.rs::{select_object_target,emit_object}` emits/audits objects. M2 has separate profile modules.
-- Linking/execution: `crates/zryna-driver/src/native.rs::{discover_linux_native_toolchain,compile_native_invocation,run_native_invocation}`; process failures belong here, not in code generation.
-- Snapshot writer/fork ordering: `crates/zryna-driver/src/process_spawn.rs` excludes driver-owned child creation from the open-to-close private ELF snapshot writer interval; it releases before child waiting and does not coordinate independently spawned embedding-application processes.
+- Linking/execution: `crates/zryna-driver/src/native.rs::{discover_linux_native_toolchain,compile_native_invocation,run_native_invocation}`; process failures belong here, not in code generation. `src/process_spawn.rs` coordinates driver snapshot writers and child creation, releasing before child waiting.
 - Focus: `cargo test --locked -p zryna-native-mir`, `cargo test --locked -p zryna-backend-native`, then the relevant driver native tests and `pnpm m2:quick`.
 - Object emission and Linux GNU link/run have different prerequisites. Do not infer Windows native support from Windows Rust tests; finish with full gates.
 
