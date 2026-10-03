@@ -1,5 +1,6 @@
 //! Driver access to the shared process boundary used by frontend and architecture spawns.
 
+#[cfg(unix)]
 pub(crate) use zryna_process::spawn;
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]

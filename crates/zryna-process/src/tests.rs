@@ -8,10 +8,7 @@ fn snapshot_writer_excludes_child_creation_and_spawn_releases_before_waiting() {
     drop(writer);
     let mut child = spawn(|| {
         assert!(matches!(SNAPSHOT_AND_SPAWN.try_lock(), Err(TryLockError::WouldBlock)));
-        Command::new("/bin/sh")
-            .args(["-c", "read ignored"])
-            .stdin(Stdio::piped())
-            .spawn()
+        Command::new("/bin/sh").args(["-c", "read ignored"]).stdin(Stdio::piped()).spawn()
     })
     .expect("child creation under gate");
     // The child is alive and blocked on its pipe; a new writer must already be admitted.

@@ -14,6 +14,7 @@ export const CONTRACT_LANES = Object.freeze([
 ]);
 
 const ALL_LANES_PATHS = Object.freeze([
+  /^crates\/zryna-process\//,
   /^(?:Cargo\.lock|Cargo\.toml|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|rust-toolchain\.toml|zryna\.workspace\.json)$/,
   /^\.github\/(?:actions|workflows)\//,
   /^scripts\/classify-workflow-paths\.mjs$/,
