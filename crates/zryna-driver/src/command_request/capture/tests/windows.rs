@@ -167,10 +167,14 @@ New-Item -ItemType Junction -Path $path -Target $target | Out-Null
 fn actual_foreign_owner_rejects_when_restore_privilege_is_available() -> io::Result<()> {
     let fixture = private()?;
     let path = fixture.path();
+    eprintln!(
+        "foreign-owner fixture platform=windows stage=eligibility outcome=checking owner_sid=S-1-5-32-544"
+    );
     // SetOwner is confined to the new fixture. Successful setup independently verifies
     // the actual foreign owner SID; a denied setup gives no owner-rejection coverage.
     let script = r"
 $ErrorActionPreference = 'Stop'
+try {
 $path = $env:ZRYNA_COMMAND_INPUT_FIXTURE
 $foreign = [System.Security.Principal.SecurityIdentifier]::new('S-1-5-32-544')
 $acl = [System.IO.File]::GetAccessControl($path)
@@ -178,18 +182,38 @@ $acl.SetOwner($foreign)
 [System.IO.File]::SetAccessControl($path,$acl)
 $observed = [System.IO.File]::GetAccessControl($path).GetOwner([System.Security.Principal.SecurityIdentifier])
 if ($observed -ne $foreign) { throw 'foreign fixture owner was not established' }
+} catch {
+  $failure = $_.Exception.GetBaseException()
+  $privilege = $failure.PSObject.Properties['PrivilegeName']
+  $name = if ($null -eq $privilege) { 'none-reported' } else { [string]$privilege.Value }
+  [Console]::Error.WriteLine(('foreign-owner fixture platform=windows stage=setup outcome=error exception={0} hresult={1:X8} privilege={2}' -f $failure.GetType().FullName, $failure.HResult, $name))
+  exit 1
+}
 ";
     let output = Command::new("powershell.exe")
         .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
         .env("ZRYNA_COMMAND_INPUT_FIXTURE", &path)
         .output()?;
     if !output.status.success() {
-        eprintln!("foreign-owner fixture eligibility: unavailable");
+        for line in String::from_utf8_lossy(&output.stderr).lines() {
+            if line.starts_with("foreign-owner fixture platform=windows stage=setup outcome=error ")
+            {
+                eprintln!("{line}");
+            }
+        }
+        eprintln!(
+            "foreign-owner fixture platform=windows stage=eligibility outcome=unavailable setup_exit_code={:?}",
+            output.status.code()
+        );
         return Ok(());
     }
-    eprintln!("foreign-owner fixture eligibility: actual foreign owner established");
+    eprintln!(
+        "foreign-owner fixture platform=windows stage=setup outcome=established owner_sid=S-1-5-32-544"
+    );
     rejected(&path, Some("MODE"));
+    eprintln!("foreign-owner fixture platform=windows stage=rejection outcome=observed");
     acl(&path, false)?;
     CapturedRequest::capture(&path, Some("MODE")).expect("foreign-owner fixture recovery");
+    eprintln!("foreign-owner fixture platform=windows stage=recovery outcome=observed");
     Ok(())
 }
