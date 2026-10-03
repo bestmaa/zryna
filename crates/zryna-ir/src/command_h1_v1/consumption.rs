@@ -2,8 +2,8 @@
 
 use super::{error, outcome_shape, raw};
 use crate::data_ownership_v1::{
-    PlaceIdentity, VerifiedDropAction, VerifiedInstructionKind, VerifiedProgram,
-    VerifiedTerminatorKind,
+    PlaceIdentity, VerifiedDropAction, VerifiedInstructionKind, VerifiedModule, VerifiedPlace,
+    VerifiedProgram, VerifiedTerminatorKind,
 };
 use zryna_diagnostics::Diagnostic;
 use zryna_syntax::command_h1_v1::CommandSyntax;
@@ -17,14 +17,14 @@ pub(super) fn verify(
     }
     let declaration = u32::try_from(source.syntax().files()[0].data_declarations().len())
         .map_err(|_| vec![error("command outcome declaration exceeds its bound")])?;
-    for function in body.modules().flat_map(|module| module.functions()) {
+    for function in body.modules().flat_map(VerifiedModule::functions) {
         let outcomes = function
             .places()
             .filter(|place| {
                 outcome_shape(body.linear32_layouts(), raw::TypeId(place.ty().index()))
                     == Some((0, declaration))
             })
-            .map(|place| place.id())
+            .map(VerifiedPlace::id)
             .collect::<Vec<_>>();
         if outcomes.is_empty() {
             continue;
