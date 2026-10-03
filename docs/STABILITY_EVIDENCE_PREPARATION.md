@@ -55,8 +55,8 @@ node scripts/stability-gates/run.mjs all /tmp/zryna-418-all
 node scripts/stability-gates/validate.mjs /tmp/zryna-418-all
 ```
 
-The guarded CI runner selects the two evidence/source/process suites and the dedicated selection
-guard suite. All 21 exact named cases must execute once with nonzero TAP totals and no failures,
+The guarded CI runner selects evidence, source/process, interruption and selection guard suites.
+All 27 exact named cases must execute once with nonzero TAP totals and no failures,
 cancellations, skips or todo cases. The existing Linux/Windows `adapter-platform` matrix runs
 this mandatory step after frozen dependency installation; its failures propagate through the
 adapter and M0 aggregates. Portable preflight also executes selection and workflow mutation
@@ -118,9 +118,28 @@ must match the exact candidate; unrelated machines or commands cannot provide it
 | Release/supply chain | Protected-release and release-evidence rejection fixtures | Current dependency audit, independent clean builds, artifact comparison and authenticated source-to-release chain |
 
 The runner executes only trusted registry commands using literal argument vectors, no stdin and
-bounded combined output. Linux uses a process group and kills it on interruption; surviving groups
-at completion fail cleanup. Windows uses bounded direct `taskkill /T /F` on interruption. The
-complete Windows interruption/descendant confirmation matrix remains required before closure.
+bounded combined output. Scoped SIGINT/SIGTERM handlers remain active through cleanup and evidence
+writing. The first signal wins; repeated signals do not restart cleanup, and disposed handlers
+are removed. Linux freezes the live owned group and captures descendants, including separate
+descendant groups, through bounded `/proc` ancestry and PID/start-time identity checks before
+killing the known tree. Capture is limited to 8,192 process records, 16 passes and one second;
+unreadable or changed identities, exhausted capture, or unconfirmed removal fail cleanup. The
+existing ten-second cleanup deadline, command deadlines and combined output ceiling remain.
+Windows uses bounded direct `taskkill /T /F`. Regression tests deliver actual OS signals on Linux;
+Windows dispatches the Node signal-handler events and executes real tree termination. Native
+Windows console/CI hard-termination coverage remains a separate closure requirement. SIGKILL,
+forced host termination and descendants that sever observable ancestry before capture cannot be
+made safe by JavaScript signal handlers; the runner is not a native execution sandbox.
+
+Handled interruption stops collection before another gate or performance sample starts. Known
+raw logs and completed results are retained in `interruption.json` with format
+`zryna.stability-interruption.v1`, the first signal, actual process error/terminal observations,
+source reinspection and the uncollected inventory. CLI status is 130 for SIGINT or 143 for SIGTERM.
+This journal is incomplete failed evidence: it does not fabricate missing attempts or test counts,
+does not write a qualifying `receipt.json`, and cannot pass the versioned lane receipt validator.
+Cleanup uncertainty is retained as `CLEANUP`; confirmed cancellation is `ECANCELED`, with a null
+exit code and the parent signal. A missing executable also has a null exit code, rather than a
+negative libuv spawn status incorrectly presented as a child process exit.
 This runner and existing compiler tests are not an OS sandbox for hostile arbitrary native code.
 Evidence reads reject persistent links and detect final-file replacement/modification; concurrently
 hostile ancestor swaps and arbitrary Windows reparse attributes need stronger platform-specific

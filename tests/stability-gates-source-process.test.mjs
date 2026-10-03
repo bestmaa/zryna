@@ -48,6 +48,7 @@ test('bounded process preserves literal argument vectors and actual failure code
   assert.equal(result.error, null);
   const missing = await execute('zryna-stability-missing-executable-418', [], { root: tmpdir(), timeoutMs: 5000 });
   assert.equal(missing.error, 'ENOENT');
+  assert.equal(missing.exitCode, null);
 });
 
 test('deadline terminates a live process and output exhaustion fails closed', async () => {
