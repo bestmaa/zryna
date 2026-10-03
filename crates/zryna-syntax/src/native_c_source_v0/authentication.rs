@@ -182,13 +182,9 @@ pub fn authenticate_sources(
             if statements > MAX_PROJECT_STATEMENTS {
                 return Err(limit("project-statements", function.range));
             }
-            sources
-                .span(file, function.range.start, function.range.end)
-                .map_err(|_| error("function-span", function.range))?;
+            validate_range(sources, file, function.range, "function-span")?;
             for expression in &function.expressions {
-                sources
-                    .span(file, expression.range.start, expression.range.end)
-                    .map_err(|_| error("expression-span", expression.range))?;
+                validate_range(sources, file, expression.range, "expression-span")?;
             }
             for (expression_index, expression) in function.expressions.iter().enumerate() {
                 if let ExpressionKind::Intrinsic(primitive, args) = &expression.kind {
@@ -231,4 +227,68 @@ pub fn authenticate_sources(
     }
     files.sort_by(|left, right| left.path.cmp(&right.path));
     Ok(AuthenticatedForeignSources { sources: sources.clone(), files })
+}
+
+// Authentication needs exact map ownership and UTF-8 range validity here, not rendered columns.
+// Retained intrinsic sites and the public span issuer still use SourceMap::span unchanged.
+fn validate_range(
+    sources: &SourceMap,
+    file: FileId,
+    range: raw::Range,
+    detail: &'static str,
+) -> Result<(), SourceAuthError> {
+    let reject = || error(detail, range);
+    let source = sources.source(file).ok_or_else(reject)?;
+    let length = u32::try_from(source.text().len()).map_err(|_| reject())?;
+    if range.start > range.end || range.end > length {
+        return Err(reject());
+    }
+    let start = usize::try_from(range.start).map_err(|_| reject())?;
+    let end = usize::try_from(range.end).map_err(|_| reject())?;
+    source.text().get(start..end).ok_or_else(reject)?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod range_tests {
+    use super::*;
+    use zryna_source::{NormalizedSourcePath, SourceFileInput};
+
+    #[test]
+    fn bounds_validation_matches_span_issuance_without_discarding_map_identity() {
+        let path = NormalizedSourcePath::new("f.zry").expect("path");
+        for text in ["", "a\r\nb", "aé😀\nβ"] {
+            let sources =
+                SourceMap::build(vec![SourceFileInput { path: "f.zry".into(), text: text.into() }])
+                    .expect("source map");
+            let file = sources.file_id(&path).expect("issued file");
+            for start in 0..=u32::try_from(text.len()).expect("fixture length") + 1 {
+                for end in 0..=u32::try_from(text.len()).expect("fixture length") + 1 {
+                    let range = raw::Range { start, end };
+                    let result = validate_range(&sources, file, range, "expression-span");
+                    assert_eq!(
+                        result.is_ok(),
+                        sources.span(file, start, end).is_ok(),
+                        "{text:?} {range:?}"
+                    );
+                    if let Err(error) = result {
+                        assert_eq!(error.code(), "ZRYNA-C4106");
+                        assert_eq!(error.detail(), "expression-span");
+                        assert_eq!(error.range(), range);
+                    }
+                }
+            }
+            let foreign =
+                SourceMap::build(vec![SourceFileInput { path: "f.zry".into(), text: text.into() }])
+                    .expect("identical bytes with another issuer");
+            let range = raw::Range { start: 0, end: 0 };
+            assert!(foreign.span(file, 0, 0).is_err());
+            assert_eq!(
+                validate_range(&foreign, file, range, "function-span")
+                    .expect_err("foreign file id")
+                    .detail(),
+                "function-span"
+            );
+        }
+    }
 }
