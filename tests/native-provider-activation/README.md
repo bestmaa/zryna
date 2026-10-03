@@ -30,8 +30,11 @@ verification. Evidence/cache directories must be outside the controlled reposito
 requires a clean Git checkout, pins the #413 ancestor for the retained lane, records the exact
 repository/lock/binary identities, checks that the revision stays unchanged, and preserves logs
 and a pass/failure receipt. Temporary build/install directories are removed only after successful execution. Failure
-directories and evidence are retained for inspection; timeout cleanup terminates the POSIX process
-group or requests Windows tree termination, and unconfirmed cleanup is an explicit failure. Never use another revision's binary receipt as current proof.
+directories and evidence are retained for inspection. Outer timeouts request POSIX parent-group
+termination or Windows tree termination and always report cleanup as unconfirmed: native worker
+groups or reparented descendants can escape that outer scope. The unchanged Rust worker retains
+its own session deadline/cleanup contract. No timeout receipt permits automatic deletion of
+installation inputs or claims that every descendant stopped. Never use another revision's binary receipt as current proof.
 
 ## Executed obligations
 

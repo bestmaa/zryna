@@ -101,12 +101,10 @@ def stop_tree(process, output):
     else:
         raise RuntimeError("unsupported process-tree cleanup platform")
     process.wait(timeout=10)
-    if os.name == "posix":
-        try:
-            os.killpg(process.pid, 0)
-        except ProcessLookupError:
-            return
-        raise RuntimeError("process group still exists after termination; cleanup unconfirmed")
+    # WorkerFrontend may own a separate process group, and exited intermediate processes
+    # can hide descendants from taskkill as well. Never certify an outer-timeout cleanup.
+    raise RuntimeError("outer-timeout process-tree cleanup unconfirmed; separate worker groups "
+                       "may remain alive, and temporary inputs are retained")
 
 
 def run(command, cwd, log, env=None, timeout=1800):
@@ -213,6 +211,7 @@ def main():
             if not rust_version.startswith("rustc 1.97.1 "):
                 raise ValueError(f"expected pinned Rust 1.97.1, observed {rust_version}")
             state["rustc_version"] = rust_version
+            build_env["RUSTC"] = str(rustc)
             if subprocess.check_output([cargo, "--version"], cwd=package, env=build_env,
                                        text=True).strip() != cargo_version:
                 raise ValueError("external package changed pinned Cargo selection")

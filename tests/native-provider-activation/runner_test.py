@@ -101,6 +101,25 @@ class RunnerTests(unittest.TestCase):
             time.sleep(0.6)
             self.assertFalse(marker.exists(), "descendant outlived the timeout boundary")
 
+    @unittest.skipUnless(os.name == "posix", "separate POSIX worker group")
+    def test_separate_worker_group_timeout_never_claims_cleanup(self):
+        with tempfile.TemporaryDirectory() as owned:
+            root = Path(owned)
+            pid_file = root / "worker.pid"
+            child = "import os,pathlib,time;pathlib.Path(%r).write_text(str(os.getpid()));time.sleep(10)" % str(pid_file)
+            parent = ("import subprocess,time;subprocess.Popen(%r,start_new_session=True);time.sleep(10)"
+                      % [sys.executable, "-c", child])
+            try:
+                with self.assertRaisesRegex(RuntimeError, "cleanup unconfirmed"):
+                    RUNNER.run([sys.executable, "-c", parent], root, root / "timeout.log", timeout=0.2)
+                self.assertTrue(pid_file.is_file(), "separate worker actually started")
+            finally:
+                if pid_file.is_file():
+                    try:
+                        os.kill(int(pid_file.read_text()), RUNNER.signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+
     def test_manifest_adds_only_existing_paths_and_exact_serde_pins(self):
         lock = {"package": [{"name": "serde", "version": "1.0.1"},
                             {"name": "serde_json", "version": "1.0.2"}]}
