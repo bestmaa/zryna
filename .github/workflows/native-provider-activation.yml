@@ -1,0 +1,94 @@
+name: Pinned native activation harness
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/native-provider-activation.yml
+      - tests/native-provider-activation-ci/**
+      - tests/native-provider-activation-workflow.test.mjs
+      - tests/workflow-routing.test.mjs
+  workflow_dispatch:
+
+concurrency:
+  group: native-activation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Preparation proof for this immutable consumer, not coverage of future source revisions.
+env:
+  ACTIVATION_CONSUMER_SHA: f09f5abb69fe7e05352221c3a0302138ccde4984
+
+jobs:
+  smoke:
+    name: pinned native activation (${{ matrix.os }})
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 60 || 40 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout exact CI tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          path: coverage
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Checkout pinned activation consumer
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          path: consumer
+          ref: ${{ env.ACTIVATION_CONSUMER_SHA }}
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
+          components: rustfmt, clippy
+      - name: Verify exact checkouts and Python requirement
+        shell: pwsh
+        env:
+          COVERAGE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python -c "import sys; assert sys.version_info >= (3, 11); print(sys.version)"
+          if ($LASTEXITCODE -ne 0) { throw 'Python requirement failed' }
+          foreach ($checkoutPath in @('coverage', 'consumer')) {
+            $expected = if ($checkoutPath -eq 'coverage') { $env:COVERAGE_HEAD } else { $env:ACTIVATION_CONSUMER_SHA }
+            $actual = git -C $checkoutPath rev-parse HEAD
+            if ($LASTEXITCODE -ne 0 -or $actual -ne $expected) { throw 'Exact checkout differs' }
+            $status = git -C $checkoutPath status --porcelain
+            if ($LASTEXITCODE -ne 0 -or $status) { throw 'Checkout is not clean' }
+          }
+      - name: Verify independent CI receipt controls
+        run: python coverage/tests/native-provider-activation-ci/verify_receipts_test.py
+      - name: Fetch locked consumer dependencies
+        working-directory: consumer
+        run: cargo fetch --locked
+      - name: Verify consumer runner controls
+        working-directory: consumer
+        run: python tests/native-provider-activation/runner_test.py
+      - name: Run relocated native frontend smoke
+        working-directory: consumer
+        shell: pwsh
+        run: python scripts/run-native-provider-activation.py --evidence-dir "$env:RUNNER_TEMP/activation-frontend" --target-dir "$env:RUNNER_TEMP/activation-target"
+      - name: Require exact frontend receipt
+        shell: pwsh
+        run: python coverage/tests/native-provider-activation-ci/verify_receipts.py --consumer consumer --evidence-dir "$env:RUNNER_TEMP/activation-frontend" --target-dir "$env:RUNNER_TEMP/activation-target"
+      - name: Run relocated retained-source smoke
+        working-directory: consumer
+        shell: pwsh
+        run: python scripts/run-native-provider-activation.py --retained --evidence-dir "$env:RUNNER_TEMP/activation-retained" --target-dir "$env:RUNNER_TEMP/activation-target"
+      - name: Require exact retained receipt
+        shell: pwsh
+        run: python coverage/tests/native-provider-activation-ci/verify_receipts.py --retained --consumer consumer --evidence-dir "$env:RUNNER_TEMP/activation-retained" --target-dir "$env:RUNNER_TEMP/activation-target"
+      - name: Preserve exact consumer receipts and logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-activation-${{ matrix.os }}-${{ env.ACTIVATION_CONSUMER_SHA }}
+          path: |
+            ${{ runner.temp }}/activation-frontend
+            ${{ runner.temp }}/activation-retained
+          if-no-files-found: error
+          retention-days: 7

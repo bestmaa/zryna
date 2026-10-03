@@ -1,3 +1,4 @@
+import './native-provider-activation-workflow.test.mjs';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -327,10 +328,11 @@ test('consolidation preserves every prior contract command and pinned action', (
   }
 });
 
-test('only CI handles pull requests and every superseded pull-request run cancels', () => {
+test('pull-request workflows stay inventoried and every superseded run cancels', () => {
   const names = readdirSync(resolve(root, '.github/workflows')).sort();
   assert.deepEqual(names, [
-    'ci.yml', 'documentation.yml', 'portable-setup.yml', 'release-production-candidate.yml',
+    'ci.yml', 'documentation.yml', 'native-provider-activation.yml', 'portable-setup.yml',
+    'release-production-candidate.yml',
     'release-qualification.yml', 'release.yml',
   ]);
   for (const name of names) {
