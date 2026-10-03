@@ -114,7 +114,8 @@ fn wrong_elf_identity_symbol_kind_visibility_section_flags_and_missing_definitio
     forged[text + 8] = 7; // SHF_WRITE must never be added to executable code.
     assert!(audit::check(&forged, artifact.program()).is_err());
     let mut renamed = bytes.to_vec();
-    let name = renamed.windows(16).position(|w| w == b"zryna_c_v0_e_add\0").expect("exact symbol");
+    let symbol = b"zryna_c_v0_e_add\0";
+    let name = renamed.windows(symbol.len()).position(|w| w == symbol).expect("exact symbol");
     renamed[name + 13] = b'x';
     assert!(audit::check(&renamed, artifact.program()).is_err());
 }
