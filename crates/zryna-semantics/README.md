@@ -68,6 +68,21 @@ provider parity, target execution and driver/profile admission remain separate r
 It provides no conversion to existing M3 authority. Its focused tests and compile-fail
 obligations require execution evidence before this implementation can be considered verified.
 
+The separate `bounded_generics_v1::body_types::check_body_types` consumes that exact declaration
+context and checks every original body, including unused templates. Its draft implementation
+retains declaration-owned opaque parameters, explicit ordered substitutions, exact nominal and
+Option/Result identities, lexical bindings and borrowed match payload types. Source predicate
+rows derive Copy/Clone requirements without expanding substituted type trees or nominal fields.
+Opaque-operation diagnostics precede generic argument and exact-type candidates; allocation and
+internal failures return no partial context and do not become source resource diagnostics.
+
+The read-only result reports original expression types and actual table/predicate capacity bytes.
+It retains use occurrences without certifying initialization, moves, loans, cleanup, closed
+instances, recursive layout validity or target execution. The new body fixtures and compile-fail
+boundaries have not yet been compiled or run on this draft. The driver and public profiles do not
+select this phase; the remaining issue #416 contracts still require separate implementation and
+verification.
+
 ## Internal M2 semantics boundary
 
 The separate `control_flow_v1` module consumes only an exact source-map-bound verified

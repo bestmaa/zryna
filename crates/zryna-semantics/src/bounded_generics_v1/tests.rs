@@ -1,3 +1,4 @@
+pub(super) mod body_fixtures;
 mod fixtures;
 mod identity;
 mod modules;

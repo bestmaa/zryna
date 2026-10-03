@@ -16,6 +16,8 @@ mod module_graph;
 mod parameter_scopes;
 mod resources;
 
+pub mod body_types;
+
 pub use identity::{DeclarationIdentity, DeclarationKind, ModuleIdentity, TypeParameterIdentity};
 pub use input::SemanticInput;
 pub use parameter_scopes::TypeParameterView;
