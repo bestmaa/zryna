@@ -46,12 +46,19 @@ Run with pinned Node 22.22.1 after the required frozen dependency installation:
 
 ```sh
 node --test tests/native-recipe-identity.test.mjs tests/native-recipe-materials.test.mjs tests/native-recipe-provenance.test.mjs
+node scripts/run-native-recipe-tests.mjs
 pnpm package:contract
 pnpm build-plan:contract
 pnpm structure:check
 pnpm preflight
 pnpm m0:check
 ```
+
+The guarded runner selects these three files and requires all 17 exact test names
+to pass once with nonzero TAP totals and no failures, cancellations, skips or todo
+cases. Both existing Linux and Windows Rust CI authorities run it unconditionally;
+their results remain required by the M0 aggregate. Portable preflight registers
+the selection and workflow mutation guards. This does not admit recipe execution.
 
 Integration stays with the #417 and driver owners. Before enabling execution,
 review the native appendix version/status, a retained exact host executable and
