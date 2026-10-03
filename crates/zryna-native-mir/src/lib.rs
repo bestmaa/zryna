@@ -10,7 +10,7 @@ use zryna_ir::{ExprKind, Type, UniversalProfile, VerifiedFunction, VerifiedProgr
 /// Separately versioned native MIR for the M2 structured control-flow profile.
 pub mod control_flow_v1;
 pub mod data_ownership_v1;
-
+pub mod generic_copy_v1;
 /// Maximum functions accepted in one native MIR module.
 pub const MAX_MIR_FUNCTIONS: usize = 16_384;
 /// Maximum parameters accepted in one native MIR function.

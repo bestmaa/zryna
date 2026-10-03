@@ -93,3 +93,9 @@ Owned values, loans, mutable CFG and nominal declarations still reject at this n
 boundary. Full owner/loan/drop and runtime fault replay, native, protocol-v5 provider parity,
 driver admission and supported-platform generic conformance remain unfinished under #416.
 The older layout/runtime/IR constructors and current public profiles remain unchanged.
+
+The separate [Copy native lane](M7_GENERIC_COPY_NATIVE.md) now retains the same program seal in
+bounded native MIR and emits audited Linux x86-64 ELF with private stack result transport.
+Real single/imported programs have a direct three-target fixed-oracle runner. This remains the
+zero-loan/zero-drop lane; the required full successor owner/loan/cleanup plan and public admission
+are still unfinished. No existing C interop or runtime ABI entrypoint changes.

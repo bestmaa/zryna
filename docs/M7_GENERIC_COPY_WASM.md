@@ -69,6 +69,8 @@ drift and truncation; a pristine replay follows the rejections.
 Exact/first-extra lane and writer tests are synthetic encoding/layout-boundary proofs, not source
 admission or giant-module execution claims. The existing immutable Copy ownership proof remains
 zero loans and zero drops. Full owned construction/move/borrow/drop replay and controlled runtime
-fault traces, mutable/nominal source support, native generic execution, provider parity, production
+fault traces, mutable/nominal source support, full owned native execution, provider parity, production
 host adapters, driver/profile admission and the complete Linux/Windows generic acceptance matrix
 remain unfinished. Required gates and exact-revision receipts govern each review candidate.
+The separate [native Copy continuation](M7_GENERIC_COPY_NATIVE.md) executes the same immutable
+program seal; its zero-loan/zero-drop evidence does not establish owned runtime conformance.

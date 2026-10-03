@@ -27,7 +27,7 @@ use zryna_native_mir::{
 pub mod control_flow_v1;
 /// Internal DataOwnershipV1 Linux x86-64 object emission.
 pub mod data_ownership_v1;
-
+pub mod generic_copy_v1;
 /// The only native object target implemented by the M1 scalar profile.
 pub const NATIVE_OBJECT_TARGET: &str = "x86_64-unknown-linux-gnu";
 /// Maximum encoded object bytes accepted by the native object audit.
