@@ -28,7 +28,7 @@ pub fn smoke(cwd: &Path) -> Result<Vec<String>> {
         let main = if protocol == 3 {
             "// 😀 preserved\r\nimport { value } from './dep.zry';\r\nexport function main(): i32 { return value(); }\r\n"
         } else if protocol == 4 {
-            "struct Pair { left: i32; right: i32; }\r\nexport function main(): i32 { const pair: Pair = Pair { left: 4, right: 3 }; return pair.left + pair.right; }\r\n"
+            "interface Pair extends ZrynaStruct { left: i32; right: i32; }\r\nexport function main(): i32 { const pair: Pair = Pair({ left: 4, right: 3 }); return pair.left + pair.right; }\r\n"
         } else {
             "// 😀 preserved\r\nexport function main(): i32 { return 7; }\r\n"
         };
