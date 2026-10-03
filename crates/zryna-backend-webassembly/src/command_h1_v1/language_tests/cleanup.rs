@@ -68,7 +68,7 @@ fn command_consumed_environment_payload_has_exact_sealed_root_and_value_drop_tra
     let mut drops = blocks[0]
         .instructions()
         .filter(|instruction| instruction.kind() == K::DropPlace)
-        .flat_map(|instruction| instruction.derived_drop_actions())
+        .flat_map(zryna_ir::data_ownership_v1::VerifiedInstruction::derived_drop_actions)
         .collect::<Vec<_>>();
     drops.extend(blocks[0].terminator().derived_drop_actions());
     assert_eq!(
@@ -98,7 +98,7 @@ fn command_consumed_environment_payload_has_exact_sealed_root_and_value_drop_tra
             block
                 .instructions()
                 .filter(|instruction| instruction.kind() == K::DropPlace)
-                .flat_map(|instruction| instruction.derived_drop_actions())
+                .flat_map(zryna_ir::data_ownership_v1::VerifiedInstruction::derived_drop_actions)
                 .chain(block.terminator().derived_drop_actions())
         })
         .filter(|action| action.active_variant() == Some(0))

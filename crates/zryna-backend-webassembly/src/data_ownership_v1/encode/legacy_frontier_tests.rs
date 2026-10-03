@@ -30,6 +30,7 @@ struct Expected {
 
 impl Ordinary {
     fn new(name: &str) -> Self {
+        static ENGINE: OnceLock<Engine> = OnceLock::new();
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/m3-fixtures");
         let text =
             std::fs::read_to_string(root.join(format!("{name}.zry"))).expect("ordinary source");
@@ -55,7 +56,6 @@ impl Ordinary {
             panic!("one scalar public source entry");
         };
         let export_name = export.webassembly_name();
-        static ENGINE: OnceLock<Engine> = OnceLock::new();
         let engine = ENGINE.get_or_init(|| {
             let mut config = Config::new();
             config.consume_fuel(true).max_wasm_stack(65_536);
@@ -334,7 +334,7 @@ fn normal_drops(function: VerifiedFunction<'_>) -> Vec<VerifiedDropAction> {
     let mut drops = blocks[0]
         .instructions()
         .filter(|instruction| instruction.kind() == K::DropPlace)
-        .flat_map(|instruction| instruction.derived_drop_actions())
+        .flat_map(zryna_ir::data_ownership_v1::VerifiedInstruction::derived_drop_actions)
         .collect::<Vec<_>>();
     drops.extend(blocks[0].terminator().derived_drop_actions());
     drops
