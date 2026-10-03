@@ -5,7 +5,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use sha2::{Digest, Sha256};
 use zryna_diagnostics::{Diagnostic, Severity};
 use zryna_frontend::{WorkerError, syntax_v3};
 use zryna_source::{
@@ -15,6 +14,7 @@ use zryna_source::{
 use crate::source_session::{ModuleSourceRoot, ModuleSourceSession};
 use crate::workspace_source::{MAX_DIRECTORY_ENTRIES, StableSource};
 pub(crate) mod entry;
+pub(crate) mod native_sources;
 pub use entry::{discover_module_closure, discover_native_import_only_closure};
 
 /// Maximum modules in one M2 closure.
@@ -39,7 +39,6 @@ pub const MAX_MODULE_IMPORT_DECLARATIONS: usize = 65_536;
 pub const MAX_MODULE_DIRECTORY_ENTRIES: usize = MAX_DIRECTORY_ENTRIES;
 
 const GRAPH_DOMAIN: &[u8] = b"ZRYNA-M2-GRAPH\0";
-const GRAPH_VERSION: u32 = 1;
 
 /// One canonical module identity in normalized path order.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -706,35 +705,13 @@ fn graph_identity(
     modules: &[ModuleRecord],
     edges: &[ModuleEdge],
 ) -> Result<[u8; 32], ModuleClosureError> {
-    let mut document = Vec::new();
-    document.extend_from_slice(GRAPH_DOMAIN);
-    push_u32(&mut document, GRAPH_VERSION)?;
-    push_text(&mut document, entrypoint.as_str())?;
-    push_u32(&mut document, modules.len())?;
-    for module in modules {
-        push_text(&mut document, module.path.as_str())?;
-        document.extend_from_slice(&module.source_sha256);
-    }
-    push_u32(&mut document, edges.len())?;
-    for edge in edges {
-        push_text(&mut document, edge.importer.as_str())?;
-        push_text(&mut document, &edge.specifier)?;
-        push_text(&mut document, &edge.imported)?;
-        push_text(&mut document, &edge.local)?;
-    }
-    Ok(Sha256::digest(document).into())
-}
-
-fn push_text(document: &mut Vec<u8>, value: &str) -> Result<(), ModuleClosureError> {
-    push_u32(document, value.len())?;
-    document.extend_from_slice(value.as_bytes());
-    Ok(())
-}
-
-fn push_u32(document: &mut Vec<u8>, value: impl TryInto<u32>) -> Result<(), ModuleClosureError> {
-    let value = value.try_into().map_err(|_| invariant_rejection())?;
-    document.extend_from_slice(&value.to_le_bytes());
-    Ok(())
+    crate::source_graph_identity::hash(
+        GRAPH_DOMAIN,
+        entrypoint,
+        modules,
+        edges,
+        invariant_rejection,
+    )
 }
 
 fn checked_increment(value: usize) -> Result<usize, ModuleClosureError> {

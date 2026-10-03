@@ -3,6 +3,12 @@
 Versioned, provider-neutral boundary for replaceable TypeScript and native Zryna frontends.
 
 Provider output is untrusted. Protocol-v1 adapters retain their declaration-only legacy contract.
+
+`native_parser::v3::discover_import_candidates` extracts only untrusted top-level import candidates
+from original bound native tokens. It skips balanced bodies without constructing executable syntax.
+The driver alone resolves these candidates through retained source capabilities, seals one original
+source map and graph, then requires complete parsing and existing versioned syntax verification.
+See [native source snapshots](../../docs/NATIVE_SOURCE_SNAPSHOTS.md) for ownership and exclusions.
 The protocol-v2 and protocol-v3 process runners launch an absolute executable directly without a
 shell, perform an exact identity/version/protocol/capability handshake, and only then send the
 authoritative `SourceMap` contents for analysis. Their typed expectations and verified result APIs

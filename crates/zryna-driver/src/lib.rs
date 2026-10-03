@@ -48,6 +48,8 @@ mod project;
 mod runtime;
 mod scalar_adapter_interface;
 mod source_api;
+mod source_graph_identity;
+mod source_identity;
 mod source_session;
 mod webassembly;
 mod workspace_source;
@@ -67,6 +69,10 @@ pub use javascript::{
     publish_javascript,
 };
 pub use module_closure::entry::discover_native_straight_line_closure;
+pub use module_closure::native_sources::{
+    NativeModuleSnapshot, NativeOwnershipSnapshot, NativeSourceSnapshot, NativeSyntaxSnapshot,
+    capture_native_package_sources, capture_native_workspace_sources,
+};
 pub use module_closure::{
     MAX_MODULE_DIRECTORY_ENTRIES, MAX_MODULE_DISCOVERY_ROUNDS, MAX_MODULE_DISCOVERY_WALL_TIME,
     MAX_MODULE_EDGE_MANIFEST_BYTES, MAX_MODULE_FILES, MAX_MODULE_IMPORT_DECLARATIONS,

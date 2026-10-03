@@ -11,8 +11,10 @@ use zryna_syntax::v3 as syntax;
 
 use crate::native_lexer::{Keyword, LexedProject, Token, TokenKind};
 
+mod discovery;
 mod straight_line;
 
+pub use discovery::{RawModuleImports, discover_import_candidates};
 pub use straight_line::parse_v3_straight_line_candidate;
 
 /// One deterministic protocol-v3 candidate rejection.
