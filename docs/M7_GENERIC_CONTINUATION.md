@@ -45,15 +45,35 @@ four-node graph oracle checks selection independently of edge insertion order. S
 size and inventory arithmetic checks reject overflow without allocation or wraparound. These
 checks do not establish complete whole-phase generated-error or resource witness conformance.
 
-Successor sealed layouts on both storage targets, separately versioned closed raw-IR tags and
-hostile decoding, ownership/loan/drop plans, real Option/Result construction and matching,
+The separate `zryna-layout::generic_v1` entrypoint now seals a complete closed raw graph after
+independent key/source/arity/ordinal/cycle/resource verification on both storage targets. Its
+distinct fingerprint document reproduces all four fixed #415 records and owned nested prefixes.
+Hostile record-byte, target, ID, payload, source-identity and by-value-cycle checks are separate
+from the source producer. Synthetic complete raw graphs exercise 65,536 types, 4,096 generic data
+instances, depth 64, valid 4,096-byte keys and checked object arithmetic; they are not claims that
+those graphs are source-admissible. Existing M3 raw declarations moved to a cohesive module with
+the same public path; existing M3 seal entrypoints and bytes remain separate.
+
+`bounded_generics_v1::instantiation::layouts::verify_layouts` derives original declarations,
+ordered arguments and substituted members from the exact retained context, calls the independent
+layout verifier, and checks equality with every complete semantic type key before returning its
+new seal. Authenticated v5 source fixtures cover Box/Option/Result fixed target fingerprints,
+imported aliases/distinct arguments, unit enum variants, owned nested prefixes, by-value versus
+Vec-indirected cycles, and complete 4,096-byte versus first-extra 4,097-byte source keys.
+These are source-to-layout observations, not runtime or provider-parity evidence. Full successor
+layout conformance remains an acceptance requirement.
+
+Separately versioned closed raw-IR tags and hostile decoding, ownership/loan/drop plans,
+real Option/Result construction and matching,
 runtime fault traces, JS/Wasm/native execution, provider parity and driver/profile admission
 remain unfinished. Current `DataOwnershipV1` does not receive a conversion or new admission.
 Issue #417 retains separate C interop ownership; this slice edits the isolated v5/bounded-generic
-syntax and semantics modules and does not change shared layout/IR/ABI interfaces.
+syntax and semantics modules plus the separate successor layout namespace. Existing executable
+IR/MIR/ABI admission remains unchanged; further IR dependency edits need shared-manifest coordination.
 
 The draft PR and external cloud receipt record the exact tested revision, pinned tools, commands,
 exit codes and passed/failed/ignored/unrun counts. Plain cloud process-tree cleanup and scoped
 subreaper execution are recorded separately: supervised success cannot erase a plain-run failure.
-Windows validation is pending its separate local run. No release, deployment or issue closure
+The earlier PR #511 revision has successful hosted CI, including its Windows jobs. This later
+revision requires its own hosted CI; separate local Windows validation remains unrun. No release, deployment or issue closure
 is implied by this continuation.

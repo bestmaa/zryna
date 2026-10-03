@@ -15,6 +15,9 @@ mod diagnostics;
 mod discovery;
 mod expansion;
 mod keys;
+#[cfg(test)]
+mod layout_tests;
+pub mod layouts;
 mod model;
 #[cfg(test)]
 mod resource_tests;
