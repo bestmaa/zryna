@@ -7,6 +7,8 @@ import './code-navigation-cases.mjs';
 import './cross-target-profile-contract.test.mjs';
 import './minimal-library-contract.test.mjs';
 import './js-wasm-adapter-contract.test.mjs';
+import './docs-playground.test.mjs';
+import './docs-playground-output.test.mjs';
 import './native-c-review-contract.test.mjs';
 
 import {

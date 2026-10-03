@@ -5,7 +5,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { exportDocsBundle, validateDocsBundle } from '../scripts/docs/bundle.mjs';
 import { exportPlaygroundDocs } from '../scripts/docs/export-playground.mjs';
-import { capturePlaygroundDocsSource, PLAYGROUND_CHANNEL, PLAYGROUND_REF,
+import { capturePlaygroundDocsSource, PLAYGROUND_CHANNEL, PLAYGROUND_REF, verifyGitProvenance,
   readSelectedDocsInput, validateProvenance } from '../scripts/docs/provenance.mjs';
 import { documents, fixture } from './docs-playground/fixture.mjs';
 
@@ -19,6 +19,22 @@ const route = f => exportPlaygroundDocs({ workspaceRoot: f.source, output: f.out
   evidenceOutput: f.evidence, sourceCommit: f.commit, sourceTree: f.tree, environment: f.environment });
 const expectations = (f, sha256) => ({ expectedManifestSha256: sha256, expectedChannel: PLAYGROUND_CHANNEL,
   expectedSourceCommit: f.commit, expectedSourceRef: PLAYGROUND_REF });
+
+test('ordinary docs provenance uses an explicit fixture environment and retains production workflow guards', async t => {
+  const f = await fixture(t), sourceRef = 'refs/heads/main';
+  // Select the simulated environment for this call only; never rewrite process.env or the guard.
+  verifyGitProvenance(f.source, f.commit, sourceRef, {});
+  const workflow = { GITHUB_ACTIONS: 'true', GITHUB_SHA: f.commit, GITHUB_REF: sourceRef };
+  verifyGitProvenance(f.source, f.commit, sourceRef, workflow);
+  for (const mutation of [{ GITHUB_SHA: 'f'.repeat(40) }, { GITHUB_REF: PLAYGROUND_REF }]) {
+    assert.throws(() => verifyGitProvenance(f.source, f.commit, sourceRef,
+      { ...workflow, ...mutation }), /authenticated workflow context/);
+  }
+  assert.throws(() => verifyGitProvenance(f.source, 'f'.repeat(40), sourceRef, workflow), /checked-out HEAD/);
+  assert.throws(() => verifyGitProvenance(f.source, f.commit, PLAYGROUND_REF, {}), /checked-out branch/);
+  await writeFile(path.join(f.source, 'docs/M6_TOOLING.md'), 'dirty fixture\n');
+  assert.throws(() => verifyGitProvenance(f.source, f.commit, sourceRef, workflow), /tracked compiler input is dirty/);
+});
 
 test('next and compiler-version provenance stay distinct from the fixed playground channel', () => {
   const sourceCommit = '1'.repeat(40);
