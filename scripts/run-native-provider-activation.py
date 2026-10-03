@@ -140,6 +140,7 @@ def main():
             package = Path(build_dir)
             src = package / "src"
             src.mkdir()
+            shutil.copy2(ROOT / "rustfmt.toml", package / "rustfmt.toml")
             for source in (ROOT / "tests/native-provider-activation").glob("*.rs"):
                 shutil.copy2(source, src / source.name)
             manifest(package, args.retained, version, original)
