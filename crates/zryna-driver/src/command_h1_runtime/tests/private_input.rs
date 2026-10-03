@@ -95,9 +95,6 @@ if ($env:ZRYNA_COMMAND_RUNTIME_BROAD -eq 'yes') {
         assert!(fs::rename(&self.path, self.root.join("replacement.json")).is_err());
     }
 
-    #[cfg(not(windows))]
-    pub(in crate::command_h1_runtime) fn assert_retained(&self) {}
-
     pub(in crate::command_h1_runtime) fn assert_released(&self) -> io::Result<()> {
         let moved = self.root.join("released.json");
         fs::rename(&self.path, &moved)?;

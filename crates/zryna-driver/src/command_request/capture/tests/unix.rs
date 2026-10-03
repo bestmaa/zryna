@@ -29,6 +29,27 @@ fn actual_private_file_retains_same_handle_and_recovers() -> io::Result<()> {
 }
 
 #[test]
+fn retained_identity_accepts_regular_objects_and_rejects_link_metadata() -> io::Result<()> {
+    use cap_std::fs::MetadataExt as _;
+
+    let fixture = private()?;
+    let directory =
+        cap_std::fs::Dir::open_ambient_dir(&fixture.root, cap_std::ambient_authority())?;
+    for path in ["nested", "nested/request.json"] {
+        let metadata = directory.symlink_metadata(path)?;
+        assert_eq!(
+            super::super::platform::identity(&metadata).expect("retained regular identity"),
+            (metadata.dev(), metadata.ino())
+        );
+    }
+    symlink(fixture.path(), fixture.root.join("alias.json"))?;
+    let metadata = directory.symlink_metadata("alias.json")?;
+    assert!(metadata.is_symlink(), "independent no-follow metadata");
+    assert!(super::super::platform::identity(&metadata).is_err());
+    Ok(())
+}
+
+#[test]
 fn actual_permission_modes_and_post_capture_changes_reject() -> io::Result<()> {
     let fixture = private()?;
     let path = fixture.path();

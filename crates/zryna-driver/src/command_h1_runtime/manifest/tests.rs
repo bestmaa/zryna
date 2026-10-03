@@ -109,6 +109,7 @@ fn actual_missing_present_empty_and_present_manifest_exclude_value_path_and_valu
         assert_eq!(manifest.document.grants.requested, grant(Some("MODE")));
         assert_eq!(manifest.document.grants.effective, grant(Some("MODE")));
         assert_eq!(manifest.document.grants.static_quota[2..4], [1, 1088]);
+        #[cfg(windows)]
         fixture.assert_retained();
         drop(run);
         fixture.assert_released()?;

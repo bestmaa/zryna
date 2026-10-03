@@ -66,6 +66,9 @@ pub(super) fn privacy(_: &PrivateFile, _: &Metadata) -> io::Result<()> {
 #[cfg(unix)]
 pub(super) fn identity(metadata: &Metadata) -> io::Result<(u64, u64)> {
     use cap_std::fs::MetadataExt as _;
+    if !metadata.is_file() && !metadata.is_dir() {
+        return Err(invalid());
+    }
     Ok((metadata.dev(), metadata.ino()))
 }
 

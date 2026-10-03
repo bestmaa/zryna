@@ -38,9 +38,11 @@ fn actual_found_empty_ascii_multibyte_and_exact_1024_bytes_run_ok() -> io::Resul
         let input = PrivateInput::new("MODE", Some(&value))?;
         let policy = CommandH1HostPolicy::environment("MODE").expect("explicit root approval");
         let prepared = source.prepare(Some(&input), &policy).expect("private captured input");
+        #[cfg(windows)]
         input.assert_retained();
         let run = prepared.execute(&policy).expect("actual environment component execution");
         returned(&run, CommandH1RunReturn::Ok);
+        #[cfg(windows)]
         input.assert_retained();
         drop(run);
         input.assert_released()?;
