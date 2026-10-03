@@ -86,7 +86,7 @@ enum branch. Every branch transfers only its active payload through explicit typ
 
 The internal JavaScript backend consumes only this new opaque program. Its private immutable
 records never cross a public host boundary; it uses sealed scalar export names/carriers, exact
-arity and parallel edge transfers. The frozen source/DTO test with a Unicode comment and CRLF
+arity and parallel edge transfers. The frozen source/DTO test with a Unicode comment and exact LF bytes
 executes generic forwarding and both variants of both families under pinned Node 22.22.1.
 This is authenticated DTO-to-JavaScript execution, not protocol-v5 parser/provider parity,
 Wasm/native conformance, a runtime allocator proof, a driver route or a public profile.
