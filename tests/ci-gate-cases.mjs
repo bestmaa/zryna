@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { parseDocument } from 'yaml';
 import { withoutBootstrapTiming } from './npm-timing-workflow-cases.mjs';
+import { withoutPlaygroundContracts } from './playground-ci-cases.mjs';
 
 const document = parseDocument(readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8'));
 assert.deepEqual(document.errors, []);
@@ -440,7 +441,7 @@ test('M0 aggregate checks out the pinned verifier before execution', () => {
 
 test('routing preserves all other pinned workflow authority', () => {
   bootstrapOrder(workflow, packageDocument);
-  const original = withoutWindowsProviderBudget(withoutWindowsRustBudget(workflow));
+  const original = withoutPlaygroundContracts(withoutWindowsProviderBudget(withoutWindowsRustBudget(workflow)));
   const editorIndex = original.jobs.rust.steps.findIndex(step => step.name === "Verify and package editor client");
   assert(editorIndex >= 0);
   assert.deepEqual(original.jobs.rust.steps[editorIndex], {
