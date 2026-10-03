@@ -11,6 +11,11 @@ Boolean/optional presence values are exactly one byte 0 or 1. Unknown tags, nonc
 invalid UTF-8 export names, truncation and trailing bytes reject the whole message.
 No decoded claim is executable authority.
 
+The original-body pass treats opaque parameters and potentially owned containers as affine
+before specialization. Such bindings currently permit at most one whole-body reference,
+including unused templates. This conservative restriction also rejects some valid shadowed
+or mutually exclusive uses; full path-specific owner/loan/drop replay remains required by #416.
+
 The complete message ceiling is 32 MiB. The decoder checks each vector count before reserving
 storage, checks a minimum encoded size against the remaining bytes, and bounds the sum of
 vector children to 1,048,576. Keys are at most 4,096 bytes; export names at most 256 bytes.

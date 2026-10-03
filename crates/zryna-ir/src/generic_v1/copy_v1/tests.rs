@@ -1,6 +1,7 @@
 //! Hostile successor Copy authority tests.
 
 mod fixtures;
+mod opaque_owners;
 mod wire;
 use super::*;
 use crate::generic_v1::wire::{decode, encode};

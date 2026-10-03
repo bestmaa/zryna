@@ -12,6 +12,7 @@ use zryna_syntax::{v4::RawStatementKind, v5::RawFunctionSyntax};
 
 mod enums;
 mod expressions;
+mod opaque_owners;
 
 #[derive(Clone)]
 struct Value {
@@ -147,6 +148,9 @@ impl<'b> Builder<'_, 'b> {
     }
 
     fn bind(&mut self, name: &'b str, value: Value) -> Result<(), Failure> {
+        if self.symbolic {
+            opaque_owners::check_binding(self.original, name, &value.ty)?;
+        }
         if self.locals[self.scope_start..].iter().any(|(prior, _)| prior.eq_ignore_ascii_case(name))
         {
             return Err(reject("source value bindings collide under portable folding"));
