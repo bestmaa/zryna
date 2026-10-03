@@ -20,7 +20,7 @@ export async function fixture(context, { version = '0.2.3', executable, lightwei
     }
     await rm(root, { recursive: true, force: true });
   });
-  const source = path.join(root, 'source');
+  let source = path.join(root, 'source');
   await mkdir(source);
   for (const directory of ['docs', 'spec/tooling', 'schemas', '.github/workflows']) {
     await mkdir(path.join(source, directory), { recursive: true });
@@ -39,6 +39,8 @@ export async function fixture(context, { version = '0.2.3', executable, lightwei
     env: { ...process.env, GIT_AUTHOR_DATE: '2000-01-01T00:00:00Z', GIT_COMMITTER_DATE: '2000-01-01T00:00:00Z' },
     stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'] }).trim();
   git(['init', '-b', 'main']);
+  // Git can canonicalize Windows temporary paths differently from os.tmpdir().
+  source = path.resolve(git(['rev-parse', '--show-toplevel']));
   git(['config', 'user.name', 'Fixture Contributor']);
   git(['config', 'user.email', 'fixture@example.invalid']);
   git(['config', 'core.autocrlf', 'false']);
