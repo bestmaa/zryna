@@ -41,6 +41,9 @@ pub struct HandleLinkRequirements {
     private_header_sha256: [u8; 32],
     declaration_sha256: [u8; 32],
     libraries: Vec<LibraryRequirement>,
+    private_runtime_source: Option<Vec<u8>>,
+    private_runtime_source_sha256: Option<[u8; 32]>,
+    private_runtime_header_sha256: Option<[u8; 32]>,
 }
 impl HandleLinkRequirements {
     /// Original audited object, exact selected entries/import symbols and complete machine seal.
@@ -67,6 +70,22 @@ impl HandleLinkRequirements {
     #[must_use]
     pub fn libraries(&self) -> &[LibraryRequirement] {
         &self.libraries
+    }
+    /// Exact required checked private runtime source, retaining its original ABI/layout issuer.
+    /// Source provenance is not a runtime-object audit or native execution permission.
+    #[must_use]
+    pub fn private_runtime_source(&self) -> Option<&[u8]> {
+        self.private_runtime_source.as_deref()
+    }
+    /// Digest of the rendered checked private runtime implementation and sealed element cases.
+    #[must_use]
+    pub const fn private_runtime_source_sha256(&self) -> Option<&[u8; 32]> {
+        self.private_runtime_source_sha256.as_ref()
+    }
+    /// Digest of the exact checked runtime header retained by the branded declaration issuer.
+    #[must_use]
+    pub const fn private_runtime_header_sha256(&self) -> Option<&[u8; 32]> {
+        self.private_runtime_header_sha256.as_ref()
     }
 }
 
@@ -96,12 +115,24 @@ pub fn handle_link_requirements(
             policy_sha256: Sha256::digest(policy).into(),
         });
     }
+    let private_runtime_source = object
+        .imported_runtime_operations()
+        .next()
+        .map(|_| crate::ownership_runtime_v1::render_native_c_source(object.program()));
+    let private_runtime_source_sha256 =
+        private_runtime_source.as_ref().map(|source| Sha256::digest(source).into());
+    let private_runtime_header_sha256 = private_runtime_source.as_ref().map(|_| {
+        Sha256::digest(object.program().source().runtime_abi().native_linux_x86_64_header()).into()
+    });
     Ok(HandleLinkRequirements {
         object: object.clone(),
         object_sha256: Sha256::digest(object.bytes()).into(),
         private_header_sha256: Sha256::digest(object.header().as_bytes()).into(),
         declaration_sha256: *authority.declaration_sha256(),
         libraries,
+        private_runtime_source,
+        private_runtime_source_sha256,
+        private_runtime_header_sha256,
     })
 }
 

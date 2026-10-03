@@ -38,6 +38,9 @@ pub(super) fn release(
 }
 
 pub(super) fn confirm_explicit(state: &mut State<'_, '_>, owner: usize) -> Result<(), Diagnostic> {
+    if super::storage::confirm_empty(state, owner)? {
+        return Ok(());
+    }
     let arguments = state.owner_arguments(owner, 2)?;
     let retained = state.helper(ledger::LOOKUP, &arguments)?;
     checked_release(state, retained)?;
@@ -75,11 +78,20 @@ pub(super) fn terminal(
     if !exit.cleanup_required {
         return Err(invariant_error());
     }
+    super::storage::end_loans(state, &exit.end_loans)?;
     let mut selected_tag = state.builder.ins().iconst(types::I32, i64::from(tag));
     for drop in &exit.cleanup {
         let BoundaryDrop::Foreign(owner) = drop else {
-            return Err(invariant_error());
+            let BoundaryDrop::Private(owner) = drop else {
+                return Err(invariant_error());
+            };
+            super::storage::release(state, owner)?;
+            continue;
         };
+        if super::storage::foreign_bytes(state, owner.owner_id())? {
+            selected_tag = super::storage::terminal_drop(state, owner, selected_tag)?;
+            continue;
+        }
         if owner.validation_required() {
             let (_, status) =
                 *state.calls.get(&owner.creating_call()).ok_or_else(invariant_error)?;
@@ -92,7 +104,14 @@ pub(super) fn terminal(
         }
         release(state, owner.owner_id(), true)?;
     }
-    state.finish_tag(selected_tag, operation, status, u8::from(tag == 2), value)
+    state.finish_tag(
+        selected_tag,
+        operation,
+        status,
+        super::storage::trap_code(kind)?,
+        value,
+        exit.protected_result,
+    )
 }
 
 pub(super) fn check_or_exit(

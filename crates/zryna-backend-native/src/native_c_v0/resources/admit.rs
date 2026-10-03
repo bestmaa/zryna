@@ -5,12 +5,26 @@ use std::collections::BTreeSet;
 use zryna_diagnostics::Diagnostic;
 use zryna_native_mir::native_c_v0::{
     VerifiedFunction, VerifiedMirProgram,
-    contract::{AbiType, BoundaryDrop, FlowStep, ValueType},
+    contract::{AbiType, BoundaryDrop, FlowStep, SourceType, ValueType},
 };
 
 pub(super) fn entries(
     program: &VerifiedMirProgram,
     names: &[&str],
+) -> Result<Vec<usize>, Diagnostic> {
+    select(program, names, false)
+}
+
+pub(super) fn storage_entries(
+    program: &VerifiedMirProgram,
+    names: &[&str],
+) -> Result<Vec<usize>, Diagnostic> {
+    select(program, names, true)
+}
+fn select(
+    program: &VerifiedMirProgram,
+    names: &[&str],
+    storage: bool,
 ) -> Result<Vec<usize>, Diagnostic> {
     if names.is_empty() || names.len() > program.functions().len() {
         return Err(invariant_error());
@@ -27,12 +41,23 @@ pub(super) fn entries(
     }) {
         return Err(invariant_error());
     }
+    if program.operations().any(|operation| {
+        program
+            .source()
+            .runtime_abi()
+            .native_linux_x86_64_functions()
+            .any(|runtime| runtime.symbol().eq_ignore_ascii_case(&operation.declaration().symbol))
+            || operation.declaration().symbol.eq_ignore_ascii_case(super::storage::UTF8)
+    }) {
+        return Err(invariant_error());
+    }
     let mut selected = Vec::new();
     let mut total_units = 0_usize;
     for (ordinal, function) in program.functions().enumerate() {
         if requested.contains(function.entry().symbol.as_str()) {
-            total_units =
-                total_units.checked_add(check(function, program)?).ok_or_else(invariant_error)?;
+            total_units = total_units
+                .checked_add(check(function, program, storage)?)
+                .ok_or_else(invariant_error)?;
             if total_units > 1_000_000 {
                 return Err(invariant_error());
             }
@@ -47,30 +72,14 @@ pub(super) fn entries(
 fn check(
     function: VerifiedFunction<'_>,
     program: &VerifiedMirProgram,
+    storage: bool,
 ) -> Result<usize, Diagnostic> {
     if function.parameters().len() > 16
-        || !matches!(function.result().1, ValueType::I32 | ValueType::Bool)
-        || !function.private_owners().is_empty()
-        || function.bindings().iter().any(|binding| {
-            !matches!(
-                binding.ty,
-                zryna_native_mir::native_c_v0::contract::SourceType::I32
-                    | zryna_native_mir::native_c_v0::contract::SourceType::Bool
-            )
-        })
-        || function.values().iter().any(|value| {
-            !matches!(
-                value.ty,
-                ValueType::I32
-                    | ValueType::Bool
-                    | ValueType::Key
-                    | ValueType::Unit
-                    | ValueType::Terminal
-                    | ValueType::I32Out
-                    | ValueType::HandleOut
-                    | ValueType::Handle
-            )
-        })
+        || !(matches!(function.result().1, ValueType::I32 | ValueType::Bool)
+            || storage && matches!(function.result().1, ValueType::VecI32 | ValueType::String))
+        || (!storage && !function.private_owners().is_empty())
+        || function.bindings().iter().any(|binding| !is_parameter(binding.ty, storage))
+        || function.values().iter().any(|value| !is_value(value.ty, storage))
     {
         return Err(invariant_error());
     }
@@ -79,9 +88,10 @@ fn check(
     for effect in function.effects() {
         units = units.checked_add(effect.instructions().len()).ok_or_else(invariant_error)?;
         for exit in effect.exits() {
-            if !exit.end_loans.is_empty()
-                || exit.protected_result.is_some()
-                || exit.cleanup.iter().any(|drop| matches!(drop, BoundaryDrop::Private(_)))
+            if !storage
+                && (!exit.end_loans.is_empty()
+                    || exit.protected_result.is_some()
+                    || exit.cleanup.iter().any(|drop| matches!(drop, BoundaryDrop::Private(_))))
             {
                 return Err(invariant_error());
             }
@@ -93,7 +103,9 @@ fn check(
             return Err(invariant_error());
         }
         match effect.operation() {
-            FlowStep::PrepareLoan { .. } | FlowStep::Copy { .. } => return Err(invariant_error()),
+            FlowStep::PrepareLoan { .. } | FlowStep::Copy { .. } if !storage => {
+                return Err(invariant_error());
+            }
             FlowStep::Call { operation, created_owners, .. } => {
                 if created_owners.len() > 1 {
                     return Err(invariant_error());
@@ -108,17 +120,11 @@ fn check(
                 {
                     return Err(invariant_error());
                 }
-                if declaration.parameters.iter().any(|parameter| {
-                    !matches!(
-                        parameter.abi,
-                        AbiType::CI32
-                            | AbiType::CInt
-                            | AbiType::Bool32
-                            | AbiType::I32Out
-                            | AbiType::HandleIn
-                            | AbiType::HandleOut
-                    )
-                }) {
+                if declaration
+                    .parameters
+                    .iter()
+                    .any(|parameter| !is_carrier(parameter.abi, storage))
+                {
                     return Err(invariant_error());
                 }
             }
@@ -171,4 +177,50 @@ pub(super) fn release_for(
         }
     }
     None
+}
+
+fn is_parameter(ty: SourceType, storage: bool) -> bool {
+    matches!(ty, SourceType::I32 | SourceType::Bool)
+        || storage && matches!(ty, SourceType::String | SourceType::VecI32)
+}
+fn is_value(ty: ValueType, storage: bool) -> bool {
+    matches!(
+        ty,
+        ValueType::I32
+            | ValueType::Bool
+            | ValueType::Key
+            | ValueType::Unit
+            | ValueType::Terminal
+            | ValueType::I32Out
+            | ValueType::HandleOut
+            | ValueType::Handle
+    ) || storage
+        && matches!(
+            ty,
+            ValueType::String
+                | ValueType::VecI32
+                | ValueType::Bytes
+                | ValueType::BytesOut
+                | ValueType::CountOut
+                | ValueType::OwnedBytes
+        )
+}
+fn is_carrier(ty: AbiType, storage: bool) -> bool {
+    matches!(
+        ty,
+        AbiType::CI32
+            | AbiType::CInt
+            | AbiType::Bool32
+            | AbiType::I32Out
+            | AbiType::HandleIn
+            | AbiType::HandleOut
+    ) || storage
+        && matches!(
+            ty,
+            AbiType::Count
+                | AbiType::BytesIn
+                | AbiType::BytesOwnedOut
+                | AbiType::CountOut
+                | AbiType::BytesRelease
+        )
 }

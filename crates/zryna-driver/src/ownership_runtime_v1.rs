@@ -42,6 +42,22 @@ fn render_layouts(layouts: impl IntoIterator<Item = (u32, u64, u64)>) -> Vec<u8>
         .into_bytes()
 }
 
+/// Exact checked runtime implementation with element cases from the retained native C issuer.
+/// Rendering these required bytes grants no runtime object, native recipe or host execution.
+pub(crate) fn render_native_c_source(
+    program: &zryna_native_mir::native_c_v0::VerifiedMirProgram,
+) -> Vec<u8> {
+    let target = program.source().native_layouts().target();
+    render_layouts(
+        program
+            .source()
+            .runtime_abi()
+            .element_layouts()
+            .filter(|element| element.target() == target)
+            .map(|element| (element.element().index(), element.stride(), element.alignment())),
+    )
+}
+
 fn align_up(value: u64, alignment: u64) -> Option<u64> {
     value.checked_add(alignment.checked_sub(1)?).map(|value| value & !(alignment - 1))
 }

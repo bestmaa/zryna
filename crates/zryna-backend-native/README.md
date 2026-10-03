@@ -122,6 +122,31 @@ changed bits; they cannot detect an identical-bit write or a missing write of ze
 library's reviewed initialization and failure-atomicity promises remain required.
 
 This artifact provides no foreign library acquisition, native recipe permission, OS containment,
-public CLI or Windows C target. The full #417 byte/private-owner and library proof matrix remains
+public CLI or Windows C target. The full #417 library and host proof matrix remains
 unfinished. Focus with `cargo test --locked -p zryna-backend-native --lib native_c_v0` and the
 driver's separate execution tests.
+
+
+## Internal native C byte execution
+
+`native_c_v0::resources::emit_byte_entries` is a separate private selection over the original MIR
+seal. The handle-only API and its header ABI remain closed. The byte channel has its own context
+magic and physical storage records; it accepts compiler-private owned String/Vec inputs and moves
+an owned result only after the current terminal edge's exact reverse cleanup succeeds. Structural
+input checks do not establish backing-memory provenance for arbitrary C callers.
+
+Generated bodies execute the sealed preparation order: complete UTF-8 validation for String
+loans, bounded Vec length and 0..255 element checks before packed allocation, canonical empty
+loans, signed count checks and loan bounds before C entry. Foreign byte owners register in the
+shared 64-obligation ledger before metadata exposure. Captured null/count/maximum/expected-length
+and encoding policy governs validation and malformed cleanup. Successful copies allocate distinct
+private Vec storage, zero-extend bytes to i32 and commit length after initialization; foreign
+allocation is never adopted. Exact private runtime imports come from the retained runtime issuer.
+
+Private allocation traps retain their declared AllocationV1/CapacityV1 identity. Unknown statuses,
+changed failure outputs and failed releases report host failure with unresolved obligations;
+release is never retried and a prepared result is withheld. The ELF audit closes the added private
+imports and UTF-8 helper. Driver execution tests include empty and 4096/4097 lengths, invalid bytes,
+UTF-8 boundaries, failed allocation/release, malformed-policy branches and independent fault
+wrappers. Their manual disposal of deliberately unresolved test allocations is not generated
+recovery evidence. Multi-owner creators and creators taking an existing handle still reject.

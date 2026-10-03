@@ -5,7 +5,7 @@ use cranelift_codegen::ir::{InstBuilder, MemFlagsData, condcodes::IntCC, types};
 use zryna_diagnostics::Diagnostic;
 use zryna_native_mir::native_c_v0::{
     VerifiedEffect,
-    contract::{AbiType, Access, BoundaryExitKind, FailureRoute, FlowStep},
+    contract::{AbiType, Access, BoundaryExitKind, CallEntry, FailureRoute, FlowStep, ValueKind},
     raw::Operand,
 };
 
@@ -18,10 +18,10 @@ pub(super) fn invoke(
 ) -> Result<(), Diagnostic> {
     let mut arguments = Vec::with_capacity(operands.len());
     for operand in operands {
-        let Operand::Value(expression) = operand else {
-            return Err(invariant_error());
+        let expression = match operand {
+            Operand::Value(expression) | Operand::OwnerPointer(expression) => *expression,
         };
-        arguments.push(state.value(*expression)?);
+        arguments.push(state.value(expression)?);
     }
     let declaration = state
         .environment
@@ -31,11 +31,14 @@ pub(super) fn invoke(
         .ok_or_else(invariant_error)?
         .declaration();
     for (index, parameter) in declaration.parameters.iter().enumerate() {
-        if parameter.abi != AbiType::HandleIn {
+        if parameter.abi == AbiType::Count {
+            arguments[index] = state.builder.ins().uextend(types::I64, arguments[index]);
+        }
+        if !matches!(parameter.abi, AbiType::HandleIn | AbiType::BytesRelease) {
             continue;
         }
-        let Operand::Value(expression) = operands[index] else {
-            return Err(invariant_error());
+        let expression = match operands[index] {
+            Operand::Value(expression) | Operand::OwnerPointer(expression) => expression,
         };
         let owner = state.handle_owner(expression)?;
         let resource = parameter
@@ -45,9 +48,18 @@ pub(super) fn invoke(
         let phase = u8::from(resource.access == Access::Consume);
         let mut checked = state.owner_arguments(owner, phase)?;
         checked[2] = arguments[index];
+        let next = state.builder.create_block();
+        if parameter.abi == AbiType::BytesRelease {
+            let present = state.builder.ins().icmp_imm_s(IntCC::NotEqual, checked[2], 0);
+            let entered = state.builder.create_block();
+            state.builder.ins().brif(present, entered, &[], next, &[]);
+            state.builder.switch_to_block(entered);
+        }
         let valid = state.helper(ledger::LOOKUP, &checked)?;
         let route = BoundaryExitKind::ForeignFailure(FailureRoute::HostAbiFailure);
         cleanup::check_or_exit(state, valid, effect, &route, 3, Some(operation), None)?;
+        state.builder.ins().jump(next, &[]);
+        state.builder.switch_to_block(next);
     }
     let FlowStep::Call { outputs, .. } = effect.operation() else {
         return Err(invariant_error());
@@ -61,12 +73,25 @@ pub(super) fn invoke(
     }
     state.snapshots.insert(call, snapshots);
     let reference = *state.environment.imports.get(&operation).ok_or_else(invariant_error)?;
+    let next = state.builder.create_block();
+    state.builder.append_block_param(next, types::I32);
+    if let FlowStep::Call { entry: CallEntry::NonEmptyOwner(owner), .. } = effect.operation() {
+        let record = state.record(*owner)?;
+        let present = state.builder.ins().icmp_imm_s(IntCC::NotEqual, record, 0);
+        let entered = state.builder.create_block();
+        let zero = state.builder.ins().iconst(types::I32, 0);
+        state.builder.ins().brif(present, entered, &[], next, &[zero.into()]);
+        state.builder.switch_to_block(entered);
+    }
     let instruction = state.builder.ins().call(reference, &arguments);
     let result = if declaration.result == AbiType::Unit {
         state.builder.ins().iconst(types::I32, 0)
     } else {
         *state.builder.inst_results(instruction).first().ok_or_else(invariant_error)?
     };
+    state.builder.ins().jump(next, &[result.into()]);
+    state.builder.switch_to_block(next);
+    let result = state.builder.block_params(next)[0];
     state.calls.insert(call, (operation, result));
     let FlowStep::Call { expression, .. } = effect.operation() else {
         return Err(invariant_error());
@@ -138,10 +163,45 @@ pub(super) fn register(
         let argument = usize::from(*resource.slots.first().ok_or_else(invariant_error)?);
         let token_index = declaration.parameters[..argument]
             .iter()
-            .filter(|parameter| matches!(parameter.abi, AbiType::HandleOut | AbiType::I32Out))
+            .filter(|parameter| {
+                matches!(
+                    parameter.abi,
+                    AbiType::HandleOut
+                        | AbiType::I32Out
+                        | AbiType::BytesOwnedOut
+                        | AbiType::CountOut
+                )
+            })
             .count();
         let token = *outputs.get(token_index).ok_or_else(invariant_error)?;
         let pointer = state.slot_value(token)?;
+        let pointer_slot = *state.owner_pointers.get(owner).ok_or_else(invariant_error)?;
+        state.builder.ins().stack_store(types::I64, pointer, pointer_slot, 0);
+        if let Some(policy) = super::super::storage::bytes_policy(state, *owner)? {
+            if let Some(argument) = policy.expected_argument {
+                let FlowStep::Call { expression, .. } = effect.operation() else {
+                    return Err(invariant_error());
+                };
+                let ValueKind::Primitive(_, args) = &state
+                    .environment
+                    .function
+                    .values()
+                    .get(*expression)
+                    .ok_or_else(invariant_error)?
+                    .kind
+                else {
+                    return Err(invariant_error());
+                };
+                let expression = *args.get(argument + 1).ok_or_else(invariant_error)?;
+                let expected = state.value(expression)?;
+                let expected = state.builder.ins().uextend(types::I64, expected);
+                let slot = *state.owner_expected.get(owner).ok_or_else(invariant_error)?;
+                state.builder.ins().stack_store(types::I64, expected, slot, 0);
+            }
+            let length = state.slot_value(policy.count)?;
+            let slot = *state.owner_lengths.get(owner).ok_or_else(invariant_error)?;
+            state.builder.ins().stack_store(types::I64, length, slot, 0);
+        }
         let nonnull = state.builder.ins().icmp_imm_s(IntCC::NotEqual, pointer, 0);
         let present = state.builder.create_block();
         let empty = state.builder.create_block();

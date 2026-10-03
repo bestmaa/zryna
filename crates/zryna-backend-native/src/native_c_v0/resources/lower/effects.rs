@@ -6,7 +6,7 @@ use zryna_diagnostics::Diagnostic;
 use zryna_native_mir::native_c_v0::{
     VerifiedEffect,
     contract::{BoundaryCheck, BoundaryExitKind, FailureRoute, FlowStep, TrapRequirement},
-    raw::{Instruction, Operand},
+    raw::Instruction,
 };
 
 pub(super) fn apply(
@@ -48,9 +48,6 @@ pub(super) fn apply(
             }
             Instruction::Check(check) => check_boundary(state, effect, check)?,
             Instruction::Invoke { call, operation, arguments, .. } => {
-                if arguments.iter().any(|operand| matches!(operand, Operand::OwnerPointer(_))) {
-                    return Err(invariant_error());
-                }
                 super::calls::invoke(state, effect, *call, *operation, arguments)?;
             }
             Instruction::ClassifyStatus { call } => super::calls::classify(state, effect, *call)?,
@@ -79,6 +76,9 @@ pub(super) fn apply(
                 let FlowStep::Take { expression, .. } = effect.operation() else {
                     return Err(invariant_error());
                 };
+                if super::super::storage::take(state, effect, *owner)? {
+                    continue;
+                }
                 let arguments = state.owner_arguments(*owner, 0)?;
                 let valid = state.helper(ledger::LOOKUP, &arguments)?;
                 checked_metadata(state, valid, effect)?;
@@ -102,7 +102,7 @@ pub(super) fn apply(
                 // Foreign registration already precedes metadata validation; this sealed completion
                 // inventory records eligibility for the attached later reverse cleanup edges.
             }
-            Instruction::Storage(_) => return Err(invariant_error()),
+            Instruction::Storage(action) => super::super::storage::stage(state, effect, *action)?,
         }
     }
     Ok(())
@@ -122,7 +122,7 @@ fn check_boundary(
             state.calls.get(call).ok_or_else(invariant_error)?.1
         }
         BoundaryCheck::CountConversion { .. } | BoundaryCheck::Borrow { .. } => {
-            return Err(invariant_error());
+            return super::super::storage::boundary(state, effect, check);
         }
     };
     let valid = state.builder.ins().icmp_imm_u(IntCC::UnsignedLessThanOrEqual, value, 1);

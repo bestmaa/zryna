@@ -4,6 +4,7 @@ use super::{
     super::{codegen_error, invariant_error},
     admit, ledger, lower, release_emit,
     state::Environment,
+    storage,
 };
 use crate::{LinuxX8664ObjectTarget, NATIVE_OBJECT_TARGET};
 use cranelift_codegen::{
@@ -58,7 +59,8 @@ pub(super) fn object(
             .map_err(codegen_error)?;
     builder.per_function_section(false);
     let mut object = ObjectModule::new(builder);
-    let helpers = ledger::define(&mut object)?;
+    let byte_channel = storage::enabled(program, selected);
+    let helpers = ledger::define(&mut object, byte_channel)?;
     let needed = admit::imports(program, selected);
     let mut imports = BTreeMap::new();
     for operation in program.operations() {
@@ -73,6 +75,18 @@ pub(super) fn object(
             imports.insert(operation.index(), id);
         }
     }
+    let mut private_imports = BTreeMap::new();
+    let required = storage::runtime_imports(program, selected);
+    for runtime in program.source().runtime_abi().native_linux_x86_64_functions() {
+        if required.contains(runtime.symbol()) {
+            let signature = storage::runtime_signature(runtime)?;
+            let id = object
+                .declare_function(runtime.symbol(), Linkage::Import, &signature)
+                .map_err(codegen_error)?;
+            private_imports.insert(runtime.symbol().to_owned(), id);
+        }
+    }
+    let storage_helpers = storage::define(program, selected, &mut object)?;
     let releases = release_emit::define(program, selected, &imports, &helpers, &mut object)?;
     let mut functions = BTreeMap::new();
     let mut frontend = FunctionBuilderContext::new();
@@ -94,7 +108,10 @@ pub(super) fn object(
             .collect();
         let runtime = helpers
             .iter()
-            .map(|(name, id)| (*name, object.declare_func_in_func(*id, &mut context.func)))
+            .map(|(name, id)| (name.to_string(), *id))
+            .chain(private_imports.iter().map(|(name, id)| (name.clone(), *id)))
+            .chain(storage_helpers.iter().map(|(name, id)| (name.clone(), *id)))
+            .map(|(name, id)| (name, object.declare_func_in_func(id, &mut context.func)))
             .collect();
         let releases = releases
             .iter()
@@ -103,7 +120,7 @@ pub(super) fn object(
             })
             .collect();
         lower::build(
-            Environment { program, function, ordinal, imports, runtime, releases },
+            Environment { program, function, ordinal, imports, runtime, byte_channel, releases },
             &mut context,
             &mut frontend,
             object.target_config(),

@@ -31,6 +31,7 @@ pub(super) fn build(
     let bad = state.builder.create_block();
     state.builder.ins().brif(valid, good, &[], bad, &[]);
     state.builder.switch_to_block(bad);
+    super::storage::rejected(&mut state);
     let tag = state.builder.ins().iconst(types::I32, 3);
     state.builder.ins().return_(&[tag]);
     state.builder.switch_to_block(good);
@@ -39,10 +40,23 @@ pub(super) fn build(
     for slot in state.initialized.values() {
         state.builder.ins().stack_store(types::I64, zero, *slot, 0);
     }
-    for slot in state.owners.values().chain(state.owner_pointers.values()) {
+    for slot in state
+        .owners
+        .values()
+        .chain(state.owner_pointers.values())
+        .chain(state.owner_lengths.values())
+        .chain(state.owner_expected.values())
+    {
         state.builder.ins().stack_store(types::I64, null, *slot, 0);
     }
+    super::storage::parameters(&mut state)?;
     for (index, parameter) in state.environment.function.bindings().iter().enumerate() {
+        if matches!(parameter.ty, SourceType::String | SourceType::VecI32) {
+            let origin = zryna_native_mir::native_c_v0::contract::PrivateOrigin::Parameter(index);
+            let value = super::storage::address(&mut state, origin)?;
+            state.locals.push(value);
+            continue;
+        }
         let offset = index
             .checked_mul(4)
             .and_then(|value| value.checked_add(8))

@@ -46,6 +46,7 @@ pub(super) fn signature(name: &str) -> Result<Signature, Diagnostic> {
 }
 pub(super) fn define(
     object: &mut ObjectModule,
+    byte_channel: bool,
 ) -> Result<BTreeMap<&'static str, FuncId>, Diagnostic> {
     let mut ids = BTreeMap::new();
     let mut frontend = FunctionBuilderContext::new();
@@ -64,7 +65,11 @@ pub(super) fn define(
             builder.switch_to_block(entry);
             let parameters = builder.block_params(entry).to_vec();
             match name {
-                ENTER => context::enter(&mut builder, &parameters),
+                ENTER => context::enter(
+                    &mut builder,
+                    &parameters,
+                    if byte_channel { super::storage::MAGIC } else { super::header::MAGIC },
+                ),
                 RESERVE => context::reserve(&mut builder, &parameters),
                 REGISTER => owners::register(&mut builder, &parameters),
                 LOOKUP => owners::lookup(&mut builder, &parameters),

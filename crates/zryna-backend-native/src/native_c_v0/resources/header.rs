@@ -37,6 +37,9 @@ uint32_t zryna_c_v0_i_dispatch(struct zryna_c_v0_context *, const struct zryna_c
                 .map_err(|_| invariant_error())?;
         }
     }
+    if super::storage::enabled(program, selected) {
+        header = super::storage::header(&header);
+    }
     header.push_str("#endif\n");
     Ok(header)
 }

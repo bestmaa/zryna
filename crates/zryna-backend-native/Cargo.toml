@@ -17,6 +17,7 @@ zryna-abi = { path = "../zryna-abi" }
 zryna-diagnostics = { path = "../zryna-diagnostics" }
 zryna-ir = { path = "../zryna-ir" }
 zryna-native-mir = { path = "../zryna-native-mir" }
+zryna-ownership-runtime-abi = { path = "../zryna-ownership-runtime-abi" }
 
 [dev-dependencies]
 serde_json.workspace = true

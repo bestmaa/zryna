@@ -1,11 +1,11 @@
 //! Entry, shared reservation and typed terminal framing; no foreign allocation is adopted.
 
-use super::super::header::{CONTEXT_BYTES, MAGIC, RECORD_BYTES, RECORDS};
+use super::super::header::{CONTEXT_BYTES, RECORD_BYTES, RECORDS};
 use super::{boolean_return, require};
 use cranelift_codegen::ir::{InstBuilder, MemFlagsData, Value, condcodes::IntCC, types};
 use cranelift_frontend::FunctionBuilder;
 
-pub(super) fn enter(builder: &mut FunctionBuilder<'_>, arguments: &[Value]) {
+pub(super) fn enter(builder: &mut FunctionBuilder<'_>, arguments: &[Value], magic_value: i64) {
     let [context, inputs, outcome, arity] = arguments else {
         return;
     };
@@ -32,7 +32,7 @@ pub(super) fn enter(builder: &mut FunctionBuilder<'_>, arguments: &[Value]) {
         require(builder, aligned, bad);
     }
     let magic = builder.ins().load(types::I64, MemFlagsData::new(), *context, 0);
-    let expected_magic = builder.ins().iconst(types::I64, MAGIC);
+    let expected_magic = builder.ins().iconst(types::I64, magic_value);
     let exact_magic = builder.ins().icmp(IntCC::Equal, magic, expected_magic);
     require(builder, exact_magic, bad);
     let live = builder.ins().load(types::I32, MemFlagsData::new(), *context, 12);

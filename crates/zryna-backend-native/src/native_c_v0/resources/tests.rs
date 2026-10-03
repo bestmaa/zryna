@@ -4,6 +4,7 @@
 mod capture;
 
 use super::*;
+mod bytes;
 mod malformed;
 
 fn fixture() -> VerifiedMirProgram {

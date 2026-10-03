@@ -32,6 +32,7 @@ zryna-diagnostics = { path = "../zryna-diagnostics" }
 zryna-frontend = { path = "../zryna-frontend" }
 zryna-ir = { path = "../zryna-ir" }
 zryna-native-mir = { path = "../zryna-native-mir" }
+zryna-ownership-runtime-abi = { path = "../zryna-ownership-runtime-abi" }
 zryna-package = { path = "../zryna-package" }
 zryna-semantics = { path = "../zryna-semantics" }
 zryna-source = { path = "../zryna-source" }

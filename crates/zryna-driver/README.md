@@ -260,7 +260,15 @@ evidence without a leak-free claim. Sanitizer runs separately instrument the C f
 for success/error and 64-owner cleanup; the generated machine object is not ASan-instrumented,
 and sanitizer executables do not acquire the production closed executable seal.
 
-These tests are private reviewed fixture linkage, not a production foreign-library or recipe
-linker API. Foreign bytes, private String/Vec copying, arbitrary native libraries, actual host
+Byte selections use the same retained requirement boundary. When exact private runtime imports
+are required, it also retains checked runtime C source bytes, their SHA-256 and the retained
+runtime header SHA-256. The renderer uses the sealed target/layout/runtime records; these source
+requirements supply no acquisition or execution permission. Linux-only byte tests execute actual
+generated String loans, packed Vec loans, foreign byte copies and cleanup-before-result transfer.
+Separate C wrappers observe declared private traps, unknown statuses, malformed byte policies,
+failure atomicity, alias refusal and failed releases. Unresolved fault cases deliberately retain
+allocations; subsequent oracle disposal is not generated cleanup or leak-free evidence.
+
+These tests remain private reviewed fixture linkage. Arbitrary foreign libraries, actual host
 authorization/containment and the full #417 acceptance matrix remain unfinished. No CLI selector,
 executable publication or Windows native C target is added.

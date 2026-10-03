@@ -157,8 +157,14 @@ through native MIR. A distinct backend handle artifact now emits exact selected 
 handle bodies, closed imported symbols and a shared 64-obligation private context, with nominal
 registration and checked reverse cleanup. Independent ELF mutation and driver C observation
 tests exercise that increment. The driver exposes only immutable exact linking requirements;
-reviewed fixture linkage is test-only. No foreign library/recipe execution grant, OS proof, private
-String/Vec or byte-copy execution, Windows C target or public activation follows from this stage.
+reviewed fixture linkage is test-only. A separate private byte selection now executes sealed
+String/Vec preparation, borrowed bytes and distinct foreign-byte-to-Vec copying. Normal backend
+and driver edges to the ownership runtime ABI retain the actual runtime issuer and checked C
+source requirements; no frontend/layout dependency is added. A distinct channel magic preserves
+the handle-only ABI. Exact imported runtime operations, allocation trap identity, conditional
+malformed-byte cleanup and cleanup-before-result transfer remain audited and observed separately.
+No foreign library/recipe execution grant, OS proof, Windows C target or public activation follows
+from this stage.
 
 `zryna-semantics` is a compiler
 component and cannot depend on `zryna-frontend`; backends cannot depend on either provider layer.

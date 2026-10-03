@@ -1,6 +1,6 @@
 //! Independent closed ELF inventory and call relocation admission from the original machine seal.
 
-use super::{super::audit_error, admit, ledger, release_emit};
+use super::{super::audit_error, admit, ledger, release_emit, storage};
 use object::{
     BinaryFormat, Endianness, Object, ObjectKind, ObjectSection, ObjectSymbol, RelocationFlags,
     RelocationTarget, SectionFlags, SectionKind, SymbolFlags, SymbolKind, SymbolSection,
@@ -36,11 +36,14 @@ pub(super) fn check(
     let mut helper_names = ledger::SYMBOLS.into_iter().map(str::to_owned).collect::<BTreeSet<_>>();
     helper_names
         .extend(release_emit::operations(program, selected).into_iter().map(release_emit::symbol));
+    helper_names.extend(storage::helper_names(program, selected));
+    let runtime_imports = storage::runtime_imports(program, selected);
     let required = admit::imports(program, selected);
     let operations = program.operations().collect::<Vec<_>>();
     let imports = required
         .iter()
         .map(|index| operations[*index].declaration().symbol.as_str())
+        .chain(runtime_imports.iter().map(String::as_str))
         .collect::<BTreeSet<_>>();
     let (text_index, text_size) = sections(&file)?;
     let ranges = symbols(&file, text_index, text_size, &expected, &helper_names, &imports)?;

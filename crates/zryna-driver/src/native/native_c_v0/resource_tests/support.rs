@@ -55,6 +55,26 @@ pub(super) fn emit(capture: &capture::Capture, name: &str) -> ValidatedHandleEnt
     .expect("independently audited handle object")
 }
 
+pub(super) fn emit_bytes(capture: &capture::Capture, name: &str) -> ValidatedHandleEntries {
+    let ir =
+        zryna_native_c_ir::lower(&capture.sources, &capture.authority).expect("genuine byte IR");
+    let mir = zryna_native_mir::native_c_v0::lower(&ir).expect("genuine byte machine seal");
+    let symbol = mir
+        .functions()
+        .find(|function| function.name() == name)
+        .expect("original byte body")
+        .entry()
+        .symbol
+        .clone();
+    zryna_backend_native::native_c_v0::resources::emit_byte_entries(
+        &mir,
+        &[&symbol],
+        zryna_backend_native::select_object_target(zryna_backend_native::NATIVE_OBJECT_TARGET)
+            .expect("exact Linux target"),
+    )
+    .expect("independently audited byte object")
+}
+
 pub(super) fn entry(artifact: &ValidatedHandleEntries, name: &str) -> String {
     artifact
         .program()
@@ -134,6 +154,19 @@ fn source(
     prefix: &str,
     replacement: &str,
 ) -> String {
+    let requirements = super::super::resource_identity::handle_link_requirements(artifact)
+        .expect("original private inputs");
+    let runtime = requirements
+        .private_runtime_source()
+        .map_or("", |source| std::str::from_utf8(source).expect("checked source UTF8"));
+    let mut runtime = runtime.to_owned();
+    for name in ["allocate", "release", "vec_allocate", "vec_release_storage"] {
+        let signature = format!("uint32_t zryna_rt_o1_{name}(");
+        if replacement.contains(&signature) {
+            runtime =
+                runtime.replace(&format!("zryna_rt_o1_{name}"), &format!("reviewed_rt_{name}"));
+        }
+    }
     let fixture_source = include_str!("../../../../../../tests/native-c-prototype/fixture.c")
         .replace(
             "#include \"../native-c-abi-v0/candidate.h\"",
@@ -155,5 +188,16 @@ fn source(
     } else {
         fixture_source
     };
-    format!("{}\n{prefix}\n{fixture_source}\n{replacement}\n{client}", artifact.header())
+    let mut fixture_source = fixture_source;
+    for (ty, name) in [
+        ("int32_t", "fixture_copy_bytes"),
+        ("void", "fixture_release_bytes"),
+        ("int32_t", "sum_bytes"),
+    ] {
+        let signature = format!("{ty} {name}(");
+        if replacement.contains(&signature) {
+            fixture_source = fixture_source.replace(&signature, &format!("{ty} reviewed_{name}("));
+        }
+    }
+    format!("{}\n{prefix}\n{runtime}\n{fixture_source}\n{replacement}\n{client}", artifact.header())
 }

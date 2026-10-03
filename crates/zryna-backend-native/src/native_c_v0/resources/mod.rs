@@ -12,12 +12,13 @@ mod ledger;
 mod lower;
 mod release_emit;
 mod state;
+mod storage;
 
 use crate::LinuxX8664ObjectTarget;
 use zryna_diagnostics::Diagnostic;
 use zryna_native_mir::native_c_v0::VerifiedMirProgram;
 
-/// Audited handle-entry object retaining the complete original machine/source authority.
+/// Audited private-entry object retaining the complete original machine/source authority.
 ///
 /// ```compile_fail
 /// let _ = zryna_backend_native::native_c_v0::resources::ValidatedHandleEntries {
@@ -55,6 +56,22 @@ impl ValidatedHandleEntries {
         let required = admit::imports(&self.program, &self.entries);
         self.program.operations().filter(move |operation| required.contains(&operation.index()))
     }
+    /// Whether this artifact requires the distinct generated private storage channel.
+    #[must_use]
+    pub fn uses_storage_channel(&self) -> bool {
+        storage::enabled(&self.program, &self.entries)
+    }
+    /// Exact private runtime imports from the retained branded issuer, without execution permission.
+    pub fn imported_runtime_operations(
+        &self,
+    ) -> impl Iterator<Item = zryna_ownership_runtime_abi::VerifiedNativeFunction<'_>> {
+        let names = storage::runtime_imports(&self.program, &self.entries);
+        self.program
+            .source()
+            .runtime_abi()
+            .native_linux_x86_64_functions()
+            .filter(move |operation| names.contains(operation.symbol()))
+    }
     /// Complete-program ordinals emitted by this distinct artifact, in original order.
     #[must_use]
     pub fn entries(&self) -> &[usize] {
@@ -83,3 +100,22 @@ pub fn emit_handle_entries(
 
 #[cfg(test)]
 mod tests;
+
+/// Emits selected source-bound byte loans, foreign byte copies and private owned results.
+///
+/// The distinct generated private storage channel is retained by this artifact. The existing
+/// handle-only entry point keeps its original admission and channel. Runtime declarations grant
+/// no runtime object, foreign recipe, host execution permission or public C aggregate ABI.
+/// # Errors
+/// Rejects unsupported effects, missing genuine runtime operations, emission or independent audit.
+pub fn emit_byte_entries(
+    program: &VerifiedMirProgram,
+    entries: &[&str],
+    target: LinuxX8664ObjectTarget,
+) -> Result<ValidatedHandleEntries, Diagnostic> {
+    let selected = admit::storage_entries(program, entries)?;
+    let bytes = emit::object(program, &selected, target)?;
+    audit::check(&bytes, program, &selected)?;
+    let header = header::generate(program, &selected)?;
+    Ok(ValidatedHandleEntries { bytes, header, entries: selected, program: program.clone() })
+}

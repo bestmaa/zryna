@@ -11,14 +11,18 @@ use cranelift_codegen::{
 use cranelift_frontend::{FunctionBuilder, FunctionBuilderContext};
 use std::collections::BTreeMap;
 use zryna_diagnostics::Diagnostic;
-use zryna_native_mir::native_c_v0::{VerifiedFunction, VerifiedMirProgram, contract::FlowStep};
+use zryna_native_mir::native_c_v0::{
+    VerifiedFunction, VerifiedMirProgram,
+    contract::{FlowStep, PrivateOrigin},
+};
 
 pub(super) struct Environment<'a> {
     pub(super) program: &'a VerifiedMirProgram,
     pub(super) function: VerifiedFunction<'a>,
     pub(super) ordinal: usize,
     pub(super) imports: BTreeMap<usize, FuncRef>,
-    pub(super) runtime: BTreeMap<&'static str, FuncRef>,
+    pub(super) runtime: BTreeMap<String, FuncRef>,
+    pub(super) byte_channel: bool,
     pub(super) releases: BTreeMap<usize, FuncRef>,
 }
 
@@ -33,7 +37,11 @@ pub(super) struct State<'a, 'b> {
     pub(super) locals: Vec<Value>,
     pub(super) initialized: BTreeMap<usize, StackSlot>,
     pub(super) owners: BTreeMap<usize, StackSlot>,
+    pub(super) owner_expected: BTreeMap<usize, StackSlot>,
+    pub(super) owner_lengths: BTreeMap<usize, StackSlot>,
     pub(super) owner_pointers: BTreeMap<usize, StackSlot>,
+    pub(super) private: BTreeMap<PrivateOrigin, (StackSlot, StackSlot)>,
+    pub(super) loans: BTreeMap<usize, StackSlot>,
     pub(super) calls: BTreeMap<usize, (usize, Value)>,
     pub(super) snapshots: BTreeMap<usize, Vec<(usize, Value)>>,
     pub(super) cursor: usize,
@@ -73,10 +81,28 @@ impl<'a, 'b> State<'a, 'b> {
             );
         }
         let mut owners = BTreeMap::new();
+        let mut owner_expected = BTreeMap::new();
+        let mut owner_lengths = BTreeMap::new();
         let mut owner_pointers = BTreeMap::new();
         for effect in environment.function.effects() {
             if let FlowStep::Call { created_owners, .. } = effect.operation() {
                 for owner in created_owners {
+                    owner_expected.insert(
+                        *owner,
+                        builder.create_sized_stack_slot(StackSlotData::new(
+                            StackSlotKind::ExplicitSlot,
+                            8,
+                            3,
+                        )),
+                    );
+                    owner_lengths.insert(
+                        *owner,
+                        builder.create_sized_stack_slot(StackSlotData::new(
+                            StackSlotKind::ExplicitSlot,
+                            8,
+                            3,
+                        )),
+                    );
                     owners.insert(
                         *owner,
                         builder.create_sized_stack_slot(StackSlotData::new(
@@ -96,6 +122,7 @@ impl<'a, 'b> State<'a, 'b> {
                 }
             }
         }
+        let PrivateFrame { private, loans } = private_frame(environment.function, &mut builder);
         let values = vec![None; environment.function.values().len()];
         Ok(Self {
             builder,
@@ -108,7 +135,11 @@ impl<'a, 'b> State<'a, 'b> {
             locals: Vec::new(),
             initialized,
             owners,
+            owner_expected,
+            owner_lengths,
             owner_pointers,
+            private,
+            loans,
             calls: BTreeMap::new(),
             snapshots: BTreeMap::new(),
             cursor: 0,
@@ -179,7 +210,7 @@ impl<'a, 'b> State<'a, 'b> {
         value: Option<Value>,
     ) -> Result<(), Diagnostic> {
         let tag = self.builder.ins().iconst(types::I32, i64::from(tag));
-        self.finish_tag(tag, operation, status, trap, value)
+        self.finish_tag(tag, operation, status, trap, value, None)
     }
     pub(super) fn finish_tag(
         &mut self,
@@ -188,6 +219,7 @@ impl<'a, 'b> State<'a, 'b> {
         status: Option<Value>,
         trap: u8,
         value: Option<Value>,
+        protected_result: Option<PrivateOrigin>,
     ) -> Result<(), Diagnostic> {
         let operation = match operation {
             Some(id) => self.constant(id)?,
@@ -197,6 +229,16 @@ impl<'a, 'b> State<'a, 'b> {
         let trap = self.builder.ins().iconst(types::I32, i64::from(trap));
         let controlled = self.builder.ins().icmp_imm_s(IntCC::Equal, tag, 2);
         let trap = self.builder.ins().select(controlled, trap, zero);
+        let exposed_scalar = if matches!(
+            self.environment.function.result().1,
+            zryna_native_mir::native_c_v0::contract::ValueType::VecI32
+                | zryna_native_mir::native_c_v0::contract::ValueType::String
+        ) {
+            None
+        } else {
+            value
+        };
+        let private_count = super::storage::finish(self, tag, value, protected_result)?;
         let result = self.helper(
             ledger::FINISH,
             &[
@@ -206,9 +248,10 @@ impl<'a, 'b> State<'a, 'b> {
                 operation,
                 status.unwrap_or(zero),
                 trap,
-                value.unwrap_or(zero),
+                exposed_scalar.unwrap_or(zero),
             ],
         )?;
+        super::storage::unresolved(self, private_count);
         self.builder.ins().return_(&[result]);
         Ok(())
     }
@@ -255,4 +298,36 @@ impl<'a, 'b> State<'a, 'b> {
         let phase = self.builder.ins().iconst(types::I32, i64::from(phase));
         Ok(vec![self.context, record, pointer, function, owner_id, release, phase])
     }
+}
+
+struct PrivateFrame {
+    private: BTreeMap<PrivateOrigin, (StackSlot, StackSlot)>,
+    loans: BTreeMap<usize, StackSlot>,
+}
+fn private_frame(
+    function: VerifiedFunction<'_>,
+    builder: &mut FunctionBuilder<'_>,
+) -> PrivateFrame {
+    let mut private = BTreeMap::new();
+    for owner in function.private_owners() {
+        let handle =
+            builder.create_sized_stack_slot(StackSlotData::new(StackSlotKind::ExplicitSlot, 24, 3));
+        let active =
+            builder.create_sized_stack_slot(StackSlotData::new(StackSlotKind::ExplicitSlot, 4, 2));
+        private.insert(owner.origin, (handle, active));
+    }
+    let mut loans = BTreeMap::new();
+    for effect in function.effects() {
+        if let FlowStep::PrepareLoan { token, .. } = effect.operation() {
+            loans.insert(
+                *token,
+                builder.create_sized_stack_slot(StackSlotData::new(
+                    StackSlotKind::ExplicitSlot,
+                    16,
+                    3,
+                )),
+            );
+        }
+    }
+    PrivateFrame { private, loans }
 }

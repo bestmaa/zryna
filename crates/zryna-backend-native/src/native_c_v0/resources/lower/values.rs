@@ -3,7 +3,7 @@
 use super::super::{super::invariant_error, state::State};
 use cranelift_codegen::ir::{InstBuilder, types};
 use zryna_diagnostics::Diagnostic;
-use zryna_native_mir::native_c_v0::contract::{FlowStep, ValueKind};
+use zryna_native_mir::native_c_v0::contract::{FlowStep, Primitive, ValueKind};
 
 pub(super) fn through(state: &mut State<'_, '_>, expression: usize) -> Result<(), Diagnostic> {
     if expression >= state.values.len() {
@@ -28,6 +28,12 @@ pub(super) fn through(state: &mut State<'_, '_>, expression: usize) -> Result<()
                 Some(state.builder.ins().iadd(left, right))
             }
             ValueKind::Key(_) => Some(state.builder.ins().iconst(types::I64, 0)),
+            ValueKind::Primitive(Primitive::ByteLength, arguments) => {
+                Some(super::super::storage::byte_length(
+                    state,
+                    *arguments.first().ok_or_else(invariant_error)?,
+                )?)
+            }
             ValueKind::Primitive(_, _) => None,
         };
         if let Some(value) = ordinary {
