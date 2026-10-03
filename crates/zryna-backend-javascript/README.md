@@ -54,4 +54,6 @@ The [internal wire/source contract](../../spec/ir/GENERIC_COPY_WIRE_V1.md) docum
 private enum records, exact active payload transfers, scalar entry exports and remaining #416
 obligations. Its complete-source fixture executes generic forwarding and both Option/Result
 variants under pinned Node, including canonical i32/bool and exact-arity boundary rejection.
+Its formatter rejects the first byte beyond 32 MiB with `ZRYNA-J2003` and preserves the bounded
+buffer; a separate formatter test checks the exact byte ceiling without claiming source admission.
 No existing backend entrypoint, driver route, runtime allocation helper or public profile changes.

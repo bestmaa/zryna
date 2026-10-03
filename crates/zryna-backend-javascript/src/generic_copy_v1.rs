@@ -186,9 +186,9 @@ impl Writer {
             .checked_add(text.len())
             .is_none_or(|length| length > crate::prelude::MAX_CONTROL_FLOW_JAVASCRIPT_BYTES)
         {
-            return Err(internal());
+            return Err(emission_budget());
         }
-        self.source.try_reserve(text.len()).map_err(|_| internal())?;
+        self.source.try_reserve(text.len()).map_err(|_| emission_budget())?;
         self.source.push_str(text);
         Ok(())
     }
@@ -203,7 +203,16 @@ fn internal() -> Diagnostic {
     Diagnostic::error(
         "ZRYNA-I7001",
         None,
-        "generic Copy JavaScript emission invariant or budget failed",
+        "generic Copy JavaScript emission invariant failed",
         "retain the complete sealed successor program",
+    )
+}
+
+fn emission_budget() -> Diagnostic {
+    Diagnostic::error(
+        "ZRYNA-J2003",
+        None,
+        "generic Copy JavaScript artifact exceeds its emission resource budget",
+        "reduce the complete sealed successor program below the JavaScript artifact budget",
     )
 }

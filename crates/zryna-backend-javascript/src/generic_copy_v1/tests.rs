@@ -14,6 +14,21 @@ use zryna_source::{SourceFileInput, SourceMap};
 use zryna_syntax::v5::{decode_snapshot, verify_snapshot};
 
 #[test]
+fn artifact_exact_byte_ceiling_then_first_extra_rejects_atomically() {
+    let limit = crate::prelude::MAX_CONTROL_FLOW_JAVASCRIPT_BYTES;
+    let mut writer = super::Writer { source: String::new() };
+    let chunk = "x".repeat(1024 * 1024);
+    for _ in 0..(limit / chunk.len()) {
+        writer.text(&chunk).expect("exact artifact byte ceiling");
+    }
+    assert_eq!(writer.source.len(), limit);
+    let error = writer.text("x").expect_err("first extra artifact byte");
+    assert_eq!(error.code, "ZRYNA-J2003");
+    assert_eq!(writer.source.len(), limit);
+    writer.text("").expect("failed append retains exact bounded artifact");
+}
+
+#[test]
 fn genuine_source_generic_forwarding_option_result_and_scalar_boundaries_execute() {
     let artifact = compile(
         &[("main.zry", include_str!("../../../../tests/m7-generic-copy-fixtures/main.zry"))],
