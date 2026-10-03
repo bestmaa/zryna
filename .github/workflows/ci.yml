@@ -180,6 +180,9 @@ jobs:
         run: cargo test --locked -p zryna-semantics --lib control_flow_v1
       - name: Verify M2 driver security
         run: cargo test --locked -p zryna-driver --lib
+      - name: Verify native source resource limits
+        if: runner.os == 'Windows'
+        run: node scripts/run-native-source-resource-tests.mjs
       - name: Verify exact Windows directory lifecycle
         if: runner.os == 'Windows'
         run: cargo test --locked -p zryna-windows-filesystem -- --show-output

@@ -4,10 +4,11 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { parseDocument } from 'yaml';
 import { withoutBootstrapTiming } from './npm-timing-workflow-cases.mjs';
+import { withoutNativeSourceResources } from './native-source-resource-runner.test.mjs';
 
 const document = parseDocument(readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8'));
 assert.deepEqual(document.errors, []);
-const budgetWorkflow = withoutBootstrapTiming(withoutPortableSetup(document.toJS()));
+const budgetWorkflow = withoutBootstrapTiming(withoutPortableSetup(withoutNativeSourceResources(document.toJS())));
 const packageDocument = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const bootstrapJobs = ['fast-contracts', 'owned-data-quick', 'preflight', 'rust', 'adapter-platform', 'm2-platform', 'm3-platform'];
 const nodeStep = {

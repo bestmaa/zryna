@@ -19,12 +19,15 @@ use crate::{
 };
 
 const GRAPH_DOMAIN: &[u8] = b"ZRYNA-M3-GRAPH\0";
-const GRAPH_VERSION: u32 = 1;
 
 mod overlay;
 mod support;
 pub use overlay::discover_ownership_module_closure_with_overlays;
 pub(crate) use overlay::discover_ownership_module_closure_with_overlays_bounded;
+pub(crate) use support::{
+    graph_identity as native_graph_identity, reject_cycles as validate_native_graph,
+    seal_native_closure,
+};
 #[cfg(test)]
 mod tests;
 use support::{

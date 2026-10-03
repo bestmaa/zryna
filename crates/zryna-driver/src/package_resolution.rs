@@ -111,6 +111,12 @@ pub(crate) fn capture_project_package(
     resolve_package_internal(request, Some(&request.package))
 }
 
+pub(crate) fn capture_package(
+    request: &PackageResolutionRequest,
+) -> Result<(PackageResolutionSuccess, CapturedProject), ResolveError> {
+    resolve_package_internal(request, None)
+}
+
 fn resolve_package_internal(
     request: &PackageResolutionRequest,
     local_scope: Option<&str>,
