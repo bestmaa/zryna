@@ -209,15 +209,25 @@ int main(void) {
         let executable = root.join("capacity-probe");
         let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../tests/m4-fixtures/allocation-core/native-capacity.c");
-        let output = Command::new("/usr/bin/gcc")
-            .args(["-std=c11", "-pedantic", "-Wall", "-Wextra", "-Werror", "-O2", "-fno-common"])
-            .arg(fixture)
-            .arg("-o")
-            .arg(&executable)
-            .output()
-            .expect("compile capacity probe");
+        let output = crate::process_spawn::output(
+            Command::new("/usr/bin/gcc")
+                .args([
+                    "-std=c11",
+                    "-pedantic",
+                    "-Wall",
+                    "-Wextra",
+                    "-Werror",
+                    "-O2",
+                    "-fno-common",
+                ])
+                .arg(fixture)
+                .arg("-o")
+                .arg(&executable),
+        )
+        .expect("compile capacity probe");
         assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-        let status = Command::new(&executable).status().expect("execute capacity probe");
+        let status = crate::process_spawn::status(&mut Command::new(&executable))
+            .expect("execute capacity probe");
         assert!(status.success(), "capacity probe status {status}");
         fs::remove_dir_all(root).expect("capacity probe cleanup");
     }
@@ -255,9 +265,10 @@ int main(void) {
             .arg(&harness)
             .arg("-o")
             .arg(&executable);
-        let output = command.output().expect("compile runtime test");
+        let output = crate::process_spawn::output(&mut command).expect("compile runtime test");
         assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-        let status = Command::new(&executable).status().expect("execute runtime test");
+        let status = crate::process_spawn::status(&mut Command::new(&executable))
+            .expect("execute runtime test");
         assert!(status.success(), "runtime harness status {status}");
         fs::remove_dir_all(root).expect("runtime test cleanup");
     }
@@ -325,22 +336,23 @@ int main(void) {
         let source = root.join("runtime.c");
         let object_path = root.join("runtime.o");
         fs::write(&source, render_layouts([(7, 8, 8)])).expect("runtime source");
-        let output = Command::new("/usr/bin/gcc")
-            .args([
-                "-std=c11",
-                "-pedantic",
-                "-Wall",
-                "-Wextra",
-                "-Werror",
-                "-O2",
-                "-fno-stack-protector",
-                "-c",
-            ])
-            .arg(&source)
-            .arg("-o")
-            .arg(&object_path)
-            .output()
-            .expect("compile runtime object");
+        let output = crate::process_spawn::output(
+            Command::new("/usr/bin/gcc")
+                .args([
+                    "-std=c11",
+                    "-pedantic",
+                    "-Wall",
+                    "-Wextra",
+                    "-Werror",
+                    "-O2",
+                    "-fno-stack-protector",
+                    "-c",
+                ])
+                .arg(&source)
+                .arg("-o")
+                .arg(&object_path),
+        )
+        .expect("compile runtime object");
         assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
         let bytes = fs::read(&object_path).expect("runtime object");
         let object = object::File::parse(bytes.as_slice()).expect("ELF runtime object");

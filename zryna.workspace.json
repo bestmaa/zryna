@@ -32,10 +32,17 @@
       "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
     },
     {
+      "id": "zryna-process",
+      "root": "crates/zryna-process",
+      "kind": "foundation",
+      "dependencies": [],
+      "allowedEntries": ["Cargo.toml", "README.md", "src"]
+    },
+    {
       "id": "zryna-architecture",
       "root": "crates/zryna-architecture",
       "kind": "foundation",
-      "dependencies": ["zryna-diagnostics"],
+      "dependencies": ["zryna-diagnostics", "zryna-process"],
       "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
     },
     {
@@ -56,7 +63,7 @@
       "id": "zryna-frontend",
       "root": "crates/zryna-frontend",
       "kind": "frontend",
-      "dependencies": ["zryna-diagnostics", "zryna-source", "zryna-syntax"],
+      "dependencies": ["zryna-diagnostics", "zryna-process", "zryna-source", "zryna-syntax"],
       "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
     },
     {
@@ -139,6 +146,7 @@
         "zryna-native-mir",
         "zryna-ownership-runtime-abi",
         "zryna-package",
+        "zryna-process",
         "zryna-semantics",
         "zryna-source",
         "zryna-syntax",

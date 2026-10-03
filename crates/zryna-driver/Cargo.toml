@@ -34,6 +34,7 @@ zryna-ir = { path = "../zryna-ir" }
 zryna-native-mir = { path = "../zryna-native-mir" }
 zryna-ownership-runtime-abi = { path = "../zryna-ownership-runtime-abi" }
 zryna-package = { path = "../zryna-package" }
+zryna-process = { path = "../zryna-process" }
 zryna-semantics = { path = "../zryna-semantics" }
 zryna-source = { path = "../zryna-source" }
 
@@ -41,6 +42,7 @@ zryna-source = { path = "../zryna-source" }
 zryna-windows-filesystem = { path = "../zryna-windows-filesystem" }
 
 [dev-dependencies]
+zryna-process = { path = "../zryna-process", features = ["test-observation"] }
 zryna-native-c-ir = { path = "../zryna-native-c-ir" }
 wasm-encoder.workspace = true
 wasmparser.workspace = true

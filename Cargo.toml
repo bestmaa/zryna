@@ -16,6 +16,7 @@ members = [
   "crates/zryna-layout",
   "crates/zryna-ownership-runtime-abi",
   "crates/zryna-package",
+  "crates/zryna-process",
   "crates/zryna-native-mir",
   "crates/zryna-semantics",
   "crates/zryna-source",
