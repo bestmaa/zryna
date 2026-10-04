@@ -1,11 +1,9 @@
-//! Capability-relative private staging writes and their snapshot/spawn exclusion lifetime.
-
-use std::{fs, io::Write as _, os::unix::fs::PermissionsExt as _, path::Path};
-
-use cap_std::fs::OpenOptionsExt as _;
-use zryna_diagnostics::Diagnostic;
+//! Capability-relative private staging writes and their shared spawn-exclusion lifetime.
 
 use super::{NativeStage, stage_support::staging_write_error};
+use cap_std::fs::OpenOptionsExt as _;
+use std::{fs, io::Write as _, os::unix::fs::PermissionsExt as _, path::Path};
+use zryna_diagnostics::Diagnostic;
 
 impl NativeStage {
     pub(super) fn write_input(&self, path: &Path, bytes: &[u8]) -> Result<(), Diagnostic> {

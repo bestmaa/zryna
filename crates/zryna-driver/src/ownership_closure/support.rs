@@ -9,9 +9,8 @@ use zryna_frontend::syntax_v4;
 use zryna_source::{NormalizedSourcePath, SourceMap, Span, UntrustedSpan};
 
 use super::{
-    DiscoveredSource, GRAPH_DOMAIN, GRAPH_VERSION, Import, ImportBinding,
-    MAX_MODULE_PROVIDER_CALLS, MAX_MODULE_PROVIDER_SOURCE_BYTES, ModuleClosureError, ModuleEdge,
-    ModuleRecord, add,
+    DiscoveredSource, GRAPH_DOMAIN, Import, ImportBinding, MAX_MODULE_PROVIDER_CALLS,
+    MAX_MODULE_PROVIDER_SOURCE_BYTES, ModuleClosureError, ModuleEdge, ModuleRecord, add,
 };
 
 pub(super) fn imports(
@@ -118,6 +117,47 @@ fn verified_span(sources: &SourceMap, span: UntrustedSpan) -> Result<Span, Modul
     sources.verify_span(span).map_err(|_| invariant())
 }
 
+pub(crate) fn seal_native_closure(
+    entrypoint: NormalizedSourcePath,
+    sources: SourceMap,
+    raw: syntax_v4::RawProjectSyntaxSnapshot,
+    expected_modules: &[ModuleRecord],
+    expected_edges: &[ModuleEdge],
+    expected_graph: [u8; 32],
+) -> Result<super::VerifiedOwnershipModuleClosure, ModuleClosureError> {
+    let syntax = syntax_v4::verify_snapshot(raw, &sources).map_err(ModuleClosureError::Rejected)?;
+    reject_provider_errors(&syntax)?;
+    let edges = final_edges(&syntax, &sources)?;
+    if !syntax.is_bound_to(&sources) || edges != expected_edges {
+        return Err(invariant());
+    }
+    let mut modules = Vec::with_capacity(sources.len());
+    for index in 0..sources.len() {
+        let id = u32::try_from(index).map_err(|_| invariant())?;
+        let source = sources
+            .source(sources.verify_file_id(id).map_err(|_| invariant())?)
+            .ok_or_else(invariant)?;
+        modules.push(ModuleRecord {
+            id,
+            path: source.path().clone(),
+            source_sha256: Sha256::digest(source.text().as_bytes()).into(),
+        });
+    }
+    reject_cycles(&modules, &edges)?;
+    let graph_sha256 = graph_identity(&entrypoint, &modules, &edges)?;
+    if modules != expected_modules || graph_sha256 != expected_graph {
+        return Err(invariant());
+    }
+    Ok(super::VerifiedOwnershipModuleClosure {
+        entrypoint,
+        sources,
+        syntax,
+        modules,
+        edges,
+        graph_sha256,
+    })
+}
+
 pub(super) fn reject_provider_errors(
     snapshot: &syntax_v4::ProjectSyntaxSnapshot,
 ) -> Result<(), ModuleClosureError> {
@@ -131,7 +171,7 @@ pub(super) fn reject_provider_errors(
     Ok(())
 }
 
-pub(super) fn reject_cycles(
+pub(crate) fn reject_cycles(
     modules: &[ModuleRecord],
     edges: &[ModuleEdge],
 ) -> Result<(), ModuleClosureError> {
@@ -188,37 +228,12 @@ pub(super) fn register_portable(
     Ok(())
 }
 
-pub(super) fn graph_identity(
+pub(crate) fn graph_identity(
     entrypoint: &NormalizedSourcePath,
     modules: &[ModuleRecord],
     edges: &[ModuleEdge],
 ) -> Result<[u8; 32], ModuleClosureError> {
-    let mut bytes = GRAPH_DOMAIN.to_vec();
-    push_u32(&mut bytes, GRAPH_VERSION)?;
-    push_text(&mut bytes, entrypoint.as_str())?;
-    push_u32(&mut bytes, modules.len())?;
-    for module in modules {
-        push_text(&mut bytes, module.path.as_str())?;
-        bytes.extend_from_slice(&module.source_sha256);
-    }
-    push_u32(&mut bytes, edges.len())?;
-    for edge in edges {
-        for value in [edge.importer.as_str(), &edge.specifier, &edge.imported, &edge.local] {
-            push_text(&mut bytes, value)?;
-        }
-    }
-    Ok(Sha256::digest(bytes).into())
-}
-
-fn push_text(bytes: &mut Vec<u8>, value: &str) -> Result<(), ModuleClosureError> {
-    push_u32(bytes, value.len())?;
-    bytes.extend_from_slice(value.as_bytes());
-    Ok(())
-}
-
-fn push_u32(bytes: &mut Vec<u8>, value: impl TryInto<u32>) -> Result<(), ModuleClosureError> {
-    bytes.extend_from_slice(&value.try_into().map_err(|_| invariant())?.to_le_bytes());
-    Ok(())
+    crate::source_graph_identity::hash(GRAPH_DOMAIN, entrypoint, modules, edges, invariant)
 }
 
 pub(super) fn account_provider(

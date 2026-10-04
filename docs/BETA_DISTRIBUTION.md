@@ -1,11 +1,16 @@
 # Beta distribution definition
 
-Status: prerequisite contract candidate for [#422](https://github.com/zryna/zryna/issues/422)
-and the distribution input to [#406](https://github.com/zryna/zryna/issues/406). This document
-specifies required behavior; it does not implement packaging, installed-compiler admission,
-signing, publication, or standalone installation. Those acceptance criteria remain open.
-The source-only [v0.1.0 preview policy](DEVELOPER_PREVIEW.md) remains unchanged. No beta
-version, tag, minimum supported host, or downloadable artifact is activated here.
+Status: distribution contract implemented through [#422](https://github.com/zryna/zryna/issues/422),
+[#407](https://github.com/zryna/zryna/issues/407) and
+[#406](https://github.com/zryna/zryna/issues/406). The immutable
+[`v0.2.3` Developer Preview](https://github.com/zryna/zryna/releases/tag/v0.2.3) has downloadable
+Linux and Windows archives; [#423's completion evidence](https://github.com/zryna/zryna/issues/423#issuecomment-5663028888)
+records clean-host installation and public upgrade verification. See
+[installation and removal](BETA_INSTALLATION.md) for the exact observed release boundary.
+The requirements below remain binding for each new candidate; this document does not independently
+authorize publication or extend support. The source-only [v0.1.0 preview policy](DEVELOPER_PREVIEW.md)
+remains unchanged. The external pilot and final beta record in
+[#424](https://github.com/zryna/zryna/issues/424) remain open, and no stable support is activated here.
 
 ## Products and ownership
 
@@ -290,7 +295,10 @@ Linux/Windows M0 and all affected profile/provider/security gates, plus required
 Receipts identify source/tree, platform, commands, exits and executed/ignored counts. Contract
 review, a test listing or another revision's result is not executed acceptance evidence.
 
-Before release, #406 must supply approved protected-tag/environment configuration, least-privilege
-signing/attestation authority and an independent verification policy. #407 project integration,
-#422 execution/packaging and #406 publication remain separate unfinished obligations. This
-prerequisite definition alone closes none of those issues.
+Each new release still requires approved protected-tag/environment configuration, least-privilege
+signing/attestation authority and an independent verification policy under #406. The separate
+#407 project, #422 distribution and #406 publication boundaries are implemented for the observed
+v0.2.3 release; the [release run](https://github.com/zryna/zryna/actions/runs/34834478150) completed
+all 15 jobs, including installed acceptance, reproduction and four public upgrade paths. Those
+results do not qualify a later revision, the outer portable setup candidate, or #424's external
+pilot. Publication and pilot completion require their own exact-candidate evidence.

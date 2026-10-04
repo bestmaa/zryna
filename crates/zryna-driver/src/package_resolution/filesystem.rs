@@ -8,7 +8,6 @@ use std::{
 use cap_fs_ext::{DirExt as _, FollowSymlinks, OpenOptionsFollowExt as _};
 use cap_std::{ambient_authority, fs::Dir};
 use same_file::Handle;
-use sha2::{Digest as _, Sha256};
 use zryna_package::ResolveError;
 
 pub(super) struct CapturedRoot {
@@ -86,25 +85,12 @@ pub(super) struct RetainedFile {
     name: String,
     pub(super) handle: Handle,
     metadata: fs::Metadata,
-    sha256: [u8; 32],
-    limit: usize,
 }
 
 impl RetainedFile {
     pub(super) fn revalidate(&mut self) -> Result<(), ResolveError> {
-        let (bytes, current) = open_and_read(&self.directory, &self.name, self.limit)?;
-        let metadata = current
-            .as_file()
-            .metadata()
-            .map_err(|_| ResolveError::source("package file cannot be revalidated"))?;
-        let digest: [u8; 32] = Sha256::digest(&bytes).into();
-        if current != self.handle
-            || !same_file_state(&self.metadata, &metadata)
-            || digest != self.sha256
-        {
-            return Err(ResolveError::source("package file changed during resolution"));
-        }
-        Ok(())
+        crate::source_identity::validate(&self.directory, &self.name, &self.handle, &self.metadata)
+            .map_err(|_| ResolveError::source("package file changed during resolution"))
     }
 }
 
@@ -113,23 +99,20 @@ pub(super) fn read_retained(
     name: &str,
     limit: usize,
 ) -> Result<(Vec<u8>, RetainedFile), ResolveError> {
-    let (bytes, handle) = open_and_read(directory, name, limit)?;
-    let metadata = handle
-        .as_file()
-        .metadata()
-        .map_err(|_| ResolveError::source("package file metadata is unavailable"))?;
-    let sha256 = Sha256::digest(&bytes).into();
+    let (bytes, handle, metadata) = open_and_read(directory, name, limit)?;
     let directory = directory
         .try_clone()
         .map_err(|_| ResolveError::source("package directory capability cannot be retained"))?;
-    Ok((bytes, RetainedFile { directory, name: name.to_owned(), handle, metadata, sha256, limit }))
+    crate::source_identity::validate(&directory, name, &handle, &metadata)
+        .map_err(|_| ResolveError::source("package file changed during capture"))?;
+    Ok((bytes, RetainedFile { directory, name: name.to_owned(), handle, metadata }))
 }
 
 fn open_and_read(
     directory: &Dir,
     name: &str,
     limit: usize,
-) -> Result<(Vec<u8>, Handle), ResolveError> {
+) -> Result<(Vec<u8>, Handle, fs::Metadata), ResolveError> {
     let mut options = cap_std::fs::OpenOptions::new();
     options.read(true).follow(FollowSymlinks::No);
     configure_final_open(&mut options);
@@ -168,7 +151,9 @@ fn open_and_read(
     if bytes.len() > limit {
         return Err(ResolveError::source("package file exceeds its byte limit"));
     }
-    Ok((bytes, handle))
+    crate::source_identity::validate(directory, name, &handle, &metadata)
+        .map_err(|_| ResolveError::source("package file changed during read"))?;
+    Ok((bytes, handle, metadata))
 }
 
 pub(super) fn publish_lock(
