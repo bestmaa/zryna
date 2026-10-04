@@ -77,22 +77,22 @@ impl Drop for Revoker {
     }
 }
 
-pub(super) struct Pending {
+pub(crate) struct Pending {
     request: Request,
     control: Arc<Control>,
 }
 
 impl Pending {
     #[cfg(test)]
-    pub(super) fn revoked(&self) -> bool {
+    pub(crate) fn revoked(&self) -> bool {
         self.control.revoked.load(Ordering::SeqCst)
     }
     #[cfg(test)]
-    pub(super) fn response_ready(&self) -> Result<bool, Error> {
+    pub(crate) fn response_ready(&self) -> Result<bool, Error> {
         let state = self.control.state.lock().map_err(|_| Error::Host)?;
         Ok(state.done && matches!(state.result, Some(Ok(_))))
     }
-    pub(super) fn cancellation(&self) -> impl Fn() -> Result<(), Error> + Send + Sync + 'static {
+    pub(crate) fn cancellation(&self) -> impl Fn() -> Result<(), Error> + Send + Sync + 'static {
         let cancellation = self.request.cancellation();
         let control = Arc::clone(&self.control);
         move || {
@@ -104,7 +104,7 @@ impl Pending {
         }
     }
 
-    pub(super) fn wait(self) -> Result<(u16, Vec<u8>), Error> {
+    fn completed_status(&self) -> Result<u16, Error> {
         let result = {
             let mut state = self.control.state.lock().map_err(|_| Error::Host)?;
             while !state.done {
@@ -126,6 +126,19 @@ impl Pending {
             }
             Err(error) => return Err(error),
         };
+        Ok(status)
+    }
+
+    pub(crate) fn publish(
+        self,
+        publish: impl FnOnce(u16) -> Result<(), crate::server_lifecycle::Error>,
+    ) -> Result<(), Error> {
+        let status = self.completed_status()?;
+        self.request.publish(status, || publish(status)).map_err(Error::from)
+    }
+
+    pub(crate) fn wait(self) -> Result<(u16, Vec<u8>), Error> {
+        let status = self.completed_status()?;
         // The worker has already destroyed all actual guest state. finish orders publication
         // against cancellation/expiry/shutdown once more, after retained-authority destruction.
         Ok((status, self.request.finish(status, &[])?))

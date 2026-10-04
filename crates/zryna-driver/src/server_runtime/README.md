@@ -3,9 +3,11 @@
 This dedicated test target connects the merged lifecycle lease to an authenticated executable
 `zryna:capability-profiles/server@0.1.0` component. The component retains all eight exact resolved
 WASI 0.2.12 interfaces, computes a status through compiler-produced verified scalar IR, constructs
-real HTTP response/body resources and finishes an empty body. The exchange is in memory and has
-no listener or CLI selector. Source analysis uses the existing verified-provider boundary; the
-private test provider still passes the mandatory syntax verifier before normal driver lowering.
+real HTTP response/body resources and finishes an empty body. This runtime owns the in-memory
+execution and bounded publication seam; its dedicated target also loads the private loopback
+transport described in `../server_transport/README.md`. There is no shipped CLI selector. Existing
+runtime probes retain their verified private test provider; the transport exercises the normal
+authenticated production worker before the same driver lowering.
 
 Preparation binds immutable source bytes, the verified program, complete component bytes,
 authenticated WIT closure, fixed arrangement revision, admitted grants and request/store limits.
@@ -61,7 +63,9 @@ startup cannot create a guest Store or release its reservation while those bytes
 The existing expiry owner may finish detached-entry bookkeeping just after guest/input teardown;
 quota remains reserved through that final bookkeeping, and shutdown waits for it as well.
 
-Whole #401 acceptance remains open: reviewed #400 interface composition, source-level capability
-admission, fixed server corpus/example with build/run selectors, nonempty streaming HTTP bodies,
-approved network/random providers, host evidence and public support documentation are separate
-dependencies. No public server activation or issue-completion claim is made by this slice.
+Whole #401 acceptance remains open: reviewed #400 interface composition, source/interface capability
+admission, shipped build/run selectors, granted/denied public local example, current supported-host
+evidence and public support documentation remain dependencies. The private loopback implementation
+and fixed pure-source process corpus are independently implemented in the same dedicated target.
+Streaming bodies, outgoing HTTP and random providers are not requirements for the minimum interface.
+No public server activation or issue-completion claim is made by this slice.

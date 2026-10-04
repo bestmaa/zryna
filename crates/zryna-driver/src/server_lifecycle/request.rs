@@ -7,6 +7,10 @@ use super::{
     registry::{Entry, Shared},
 };
 
+#[cfg(test)]
+#[path = "../server_transport/lifecycle_publication_tests.rs"]
+mod publication_tests;
+
 /// A lease into one registry; stale handles cannot select a replacement request.
 pub(crate) struct Request {
     pub(super) shared: Arc<Shared>,
@@ -28,6 +32,38 @@ impl Cancellation {
 }
 
 impl Request {
+    /// Commit a bounded transport response while retaining the reservation. The callback must
+    /// close its socket and destroy transport buffers before returning, including on failure.
+    /// It must not reenter this registry. Cancellation before this lock suppresses publication;
+    /// cancellation after commit begins interrupts transport I/O and awaits its bounded cleanup.
+    /// Bytes already committed to a socket cannot be recalled.
+    pub(crate) fn publish(
+        self,
+        status: u16,
+        publish: impl FnOnce() -> Result<(), Error>,
+    ) -> Result<(), Error> {
+        let mut publish = Some(publish);
+        let (entry, result) = {
+            let mut state = self.shared.lock()?;
+            state.active()?;
+            let entry = state.entries.get(&self.id).ok_or(Error::Inactive)?;
+            let result = if entry.deadline <= Instant::now() {
+                Err(Error::Deadline)
+            } else if !(200..=599).contains(&status) {
+                Err(Error::Malformed)
+            } else {
+                publish.take().expect("publication callback consumed once")()
+            };
+            let entry = state.remove(self.id).ok_or(Error::Inactive)?;
+            (entry, result)
+        };
+        // A rejected candidate still owns the callback's transport state. Destroy it outside
+        // the registry lock, before retiring the entry and making its reservation reusable.
+        drop(publish);
+        self.shared.retire(entry)?;
+        result
+    }
+
     pub(crate) fn cancellation(&self) -> Cancellation {
         Cancellation { shared: Arc::clone(&self.shared), id: self.id }
     }

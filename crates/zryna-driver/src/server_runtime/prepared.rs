@@ -10,13 +10,13 @@ use zryna_source::SourceMap;
 
 use super::{Approval, Envelope, Error, Observation, envelope, grants::Grants};
 
-pub(super) struct Prepared {
+pub(crate) struct Prepared {
     artifact: ValidatedServerComponent,
     program: zryna_ir::VerifiedProgram,
     sources: SourceMap,
     seal: [u8; 32],
     pub(super) grants: Grants,
-    pub(super) envelope: Envelope,
+    pub(crate) envelope: Envelope,
     pub(super) engine: Engine,
     pub(super) component: Component,
     pub(super) observation: Arc<Observation>,
@@ -30,16 +30,16 @@ pub(super) struct Prepared {
 }
 
 #[derive(Clone, Copy)]
-pub(super) struct Preparation<'a> {
-    pub(super) export: &'a str,
-    pub(super) operation: ServerOperation,
-    pub(super) document: &'a [u8],
-    pub(super) approval: Approval,
-    pub(super) envelope: Envelope,
+pub(crate) struct Preparation<'a> {
+    pub(crate) export: &'a str,
+    pub(crate) operation: ServerOperation,
+    pub(crate) document: &'a [u8],
+    pub(crate) approval: Approval,
+    pub(crate) envelope: Envelope,
 }
 
 impl Prepared {
-    pub(super) fn new<Provider: VerifiedFrontendProvider>(
+    pub(crate) fn new<Provider: VerifiedFrontendProvider>(
         provider: &Provider,
         sources: SourceMap,
         preparation: Preparation<'_>,
@@ -94,7 +94,7 @@ impl Prepared {
     /// Deliberately unsealed raw arrangement used only to test runtime interruption/growth.
     /// Normal preparation never accepts replacement component bytes or excessive fuel.
     #[cfg(test)]
-    pub(super) fn runtime_probe(&mut self, grow: bool) -> Result<(), Error> {
+    pub(crate) fn runtime_probe(&mut self, grow: bool) -> Result<(), Error> {
         let bytes = super::tests::probes::replace_handle(self.artifact.bytes(), grow);
         self.component = Component::new(&self.engine, bytes).map_err(|_| Error::Artifact)?;
         if !grow {

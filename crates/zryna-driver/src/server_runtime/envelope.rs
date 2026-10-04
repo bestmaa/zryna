@@ -8,12 +8,12 @@ use super::Error;
 use crate::server_lifecycle::Limits;
 
 #[derive(Clone, Copy, Debug)]
-pub(super) struct Envelope {
-    pub(super) requests: Limits,
-    pub(super) memory_bytes: usize,
-    pub(super) fuel: u64,
-    pub(super) resources: usize,
-    pub(super) callbacks: u32,
+pub(crate) struct Envelope {
+    pub(crate) requests: Limits,
+    pub(crate) memory_bytes: usize,
+    pub(crate) fuel: u64,
+    pub(crate) resources: usize,
+    pub(crate) callbacks: u32,
 }
 
 impl Envelope {
@@ -54,7 +54,7 @@ impl Envelope {
             .build()
     }
 
-    pub(super) fn identity(self) -> Vec<u8> {
+    pub(crate) fn identity(self) -> Vec<u8> {
         let mut bytes = Vec::new();
         for value in [
             self.requests.requests as u64,

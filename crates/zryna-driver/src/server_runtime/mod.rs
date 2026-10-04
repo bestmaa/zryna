@@ -17,14 +17,14 @@ mod tests;
 
 use std::{fmt, sync::Arc};
 
-use envelope::Envelope;
-use execution::Pending;
-use grants::Approval;
-use observation::Observation;
-use prepared::Prepared;
+pub(crate) use envelope::Envelope;
+pub(crate) use execution::Pending;
+pub(crate) use grants::Approval;
+pub(crate) use observation::Observation;
+pub(crate) use prepared::{Preparation, Prepared};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(super) enum Error {
+pub(crate) enum Error {
     Grant,
     Limit,
     Artifact,
@@ -49,19 +49,19 @@ impl From<crate::server_lifecycle::Error> for Error {
     }
 }
 
-struct Server {
+pub(crate) struct Server {
     lifecycle: Option<crate::server_lifecycle::Server>,
     prepared: Arc<Prepared>,
 }
 
 impl Server {
-    pub(super) fn start(prepared: Prepared) -> Result<Self, Error> {
+    pub(crate) fn start(prepared: Prepared) -> Result<Self, Error> {
         prepared.revalidate()?;
         let lifecycle = crate::server_lifecycle::Server::start(prepared.envelope.requests)?;
         Ok(Self { lifecycle: Some(lifecycle), prepared: Arc::new(prepared) })
     }
 
-    pub(super) fn admit(
+    pub(crate) fn admit(
         &self,
         input: &crate::server_lifecycle::Input<'_>,
     ) -> Result<Pending, Error> {
@@ -69,11 +69,11 @@ impl Server {
         execution::start(request, input, &self.prepared)
     }
 
-    pub(super) fn usage(&self) -> Result<(usize, usize), Error> {
+    pub(crate) fn usage(&self) -> Result<(usize, usize), Error> {
         Ok(self.lifecycle.as_ref().ok_or(Error::Inactive)?.usage()?)
     }
 
-    pub(super) fn shutdown(mut self) -> Result<(), Error> {
+    pub(crate) fn shutdown(mut self) -> Result<(), Error> {
         self.terminate()
     }
 

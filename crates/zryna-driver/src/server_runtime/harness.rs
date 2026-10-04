@@ -5,6 +5,8 @@
 mod server_lifecycle;
 #[path = "mod.rs"]
 mod server_runtime;
+#[path = "../server_transport/mod.rs"]
+mod server_transport;
 
 // The lifecycle module includes its three existing termination regression cases. Their shared
 // fixtures are retained here without editing the separately owned lifecycle target.

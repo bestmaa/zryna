@@ -32,12 +32,12 @@ pub(super) struct Grants {
 
 /// Host-selected approval is separate from the untrusted request document.
 #[derive(Clone, Copy)]
-pub(super) struct Approval {
+pub(crate) struct Approval {
     clock_reads: u32,
 }
 
 impl Approval {
-    pub(super) const fn deny_all() -> Self {
+    pub(crate) const fn deny_all() -> Self {
         Self { clock_reads: 0 }
     }
 
