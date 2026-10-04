@@ -10,6 +10,7 @@ repository.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+zryna-process = { path = "../zryna-process" }
 zryna-diagnostics = { path = "../zryna-diagnostics" }
 zryna-source = { path = "../zryna-source" }
 zryna-syntax = { path = "../zryna-syntax" }

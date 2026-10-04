@@ -6,10 +6,12 @@ import { parseDocument } from 'yaml';
 import { withoutBootstrapTiming } from './npm-timing-workflow-cases.mjs';
 import { withoutNativeSourceResources } from './native-source-resource-runner.test.mjs';
 import { withoutStabilityTests } from './stability-gates-test-selection.test.mjs';
+import { withoutNativeRecipeTests } from './native-recipe-test-selection.test.mjs';
 
 const document = parseDocument(readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8'));
 assert.deepEqual(document.errors, []);
-const budgetWorkflow = withoutBootstrapTiming(withoutPortableSetup(withoutNativeSourceResources(withoutStabilityTests(document.toJS()))));
+const budgetWorkflow = withoutBootstrapTiming(withoutPortableSetup(withoutNativeSourceResources(
+  withoutStabilityTests(withoutNativeRecipeTests(document.toJS())))));
 const packageDocument = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const bootstrapJobs = ['fast-contracts', 'owned-data-quick', 'preflight', 'rust', 'adapter-platform', 'm2-platform', 'm3-platform'];
 const nodeStep = {

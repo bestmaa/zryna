@@ -1686,7 +1686,7 @@ fn load_cargo_metadata_with_executable(
     if frozen {
         command.arg("--frozen");
     }
-    let mut child = match command.spawn() {
+    let mut child = match zryna_process::spawn(|| command.spawn()) {
         Ok(value) => value,
         Err(error) => {
             diagnostics.push(architecture_error(
