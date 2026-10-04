@@ -139,9 +139,10 @@ pub(crate) fn publish_command_h1(
     let diagnostics = prepared.diagnostics().to_vec();
     let policy = prepared.approved_policy();
     let mut transaction = Transaction::create(output)?;
-    let bundle = output.path().join(format!("{}.wasi-command-run", stem));
+    let bundle = output.path().join(format!("{stem}.wasi-command-run"));
     let operation: Result<PublishedCommandH1Bundle, CommandFailure> = (|| {
         transaction.write_command_h1_artifact(stem, prepared.artifact().bytes())?;
+        revalidate()?;
         let executed = prepared.execute(&policy).map_err(|diagnostics| CommandFailure {
             kind: CommandFailureKind::Preparation,
             diagnostics,
@@ -155,7 +156,7 @@ pub(crate) fn publish_command_h1(
         transaction.commit(output, &bundle)?;
         let result = PublishedCommandH1Bundle {
             manifest_path: bundle.join(crate::COMMAND_H1_MANIFEST_NAME),
-            component_path: bundle.join("wasi-command").join(format!("{}.wasm", stem)),
+            component_path: bundle.join("wasi-command").join(format!("{stem}.wasm")),
             path: bundle,
             record: executed.record().clone(),
             diagnostics,

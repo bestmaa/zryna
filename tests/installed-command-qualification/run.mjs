@@ -13,7 +13,7 @@ const outside = relative(source, output);
 if (process.argv.length !== 3 || !outside
     || (!isAbsolute(outside) && outside.split(/[\\/]/)[0] !== '..')) throw new Error('External output required');
 mkdirSync(output, { recursive: false });
-const { installation, paths, proof } = await prepare(source, output);
+const { installation, paths, proof, assertCurrent } = await prepare(source, output);
 const relocated = join(output, 'relocated-install');
 renameSync(installation, relocated);
 const project = join(output, 'ordinary-user-project');
@@ -33,6 +33,7 @@ for (const key of ['SystemRoot', 'WINDIR', 'TEMP', 'TMP', 'TMPDIR']) {
 const common = ['--target', 'wasi-command', '--profile', 'command-h1-v1', '--export', 'main', '--json'];
 const manifestName = 'zryna-wasi-command-manifest-v1.json';
 function invoke(name, entry, extras = [], expected = undefined, projectRoot = project, verb = 'run', directory = cwd) {
+  assertCurrent();
   const args = [verb, entry, ...common, '--name', name,
     ...(projectRoot ? ['--project-root', projectRoot] : []), ...extras];
   const result = spawnSync(executable, args, { cwd: directory, env: environment, shell: false,
@@ -141,6 +142,7 @@ try { writeFileSync(extra, 'extra'); invoke('extra-installation-file', 'pure.zry
 finally { unlinkSync(extra); }
 invoke('restored-installation', 'pure.zry', [], { runReturn: 'ok', input: 'none' });
 writeFileSync(join(output, 'invocations.json'), `${JSON.stringify(rows, null, 2)}\n`);
+assertCurrent();
 const result = { ...proof, format: 'zryna.installed-command-qualification.v1',
   platform: process.platform, node: process.version, outsideCheckout: true,
   installation: relocated, project, cwd, invocationPath: executable,

@@ -30,6 +30,10 @@ export async function prepare(source, output) {
   if (run('git', ['status', '--porcelain=v1'], source)) throw new Error('Commit candidate first');
   const tree = run('git', ['show', '-s', '--format=%T', 'HEAD'], source);
   const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], source);
+  const assertCurrent = () => {
+    if (run('git', ['rev-parse', 'HEAD'], source) !== head
+        || run('git', ['status', '--porcelain=v1'], source)) throw new Error('Candidate changed during qualification');
+  };
   const epoch = Number(run('git', ['show', '-s', '--format=%ct', 'HEAD'], source));
   const target = process.platform === 'win32' ? 'x86_64-pc-windows-msvc' : 'x86_64-unknown-linux-gnu';
   const paths = targetPaths(target);
@@ -102,10 +106,12 @@ export async function prepare(source, output) {
       : { os: 'linux', distribution: 'ubuntu', version: '24.04', architecture: 'x86_64' } },
     recipe: { format: 'zryna.distribution-recipe.v1',
       sha256: sha256(readFileSync(join(source, 'scripts/distribution/release-recipe-v1.json'))) } };
+  assertCurrent();
   const prepared = preparePayload(identity, files, receipt, { productionCandidate: true });
   const digest = sha256(prepared.distribution);
   const env = { ...buildEnv, ZRYNA_DISTRIBUTION_SHA256: digest };
   run(cargo, ['build', '--locked', '-p', 'zryna', '--bin', 'zryna'], source, env);
+  assertCurrent();
   const buildRoot = process.env.CARGO_TARGET_DIR || join(source, 'target');
   const cli = readFileSync(join(buildRoot, 'debug', process.platform === 'win32' ? 'zryna.exe' : 'zryna'));
   verifyCompiledIdentity(cli, digest, target);
@@ -131,7 +137,9 @@ export async function prepare(source, output) {
   const proof = { status: 'test-only-review-candidate', productionAdmission: 'forbidden',
     observedSource: { head, tree, branch }, intendedSourceRef: identity.source.ref,
     archive: expected, cliSha256: sha256(cli), distributionSha256: digest,
-    recipeApplied: false, buildProfile: 'dev', signatureAuthentication: 'not-performed' };
+    recipeApplied: false, buildProfile: 'dev', buildCommand: [cargo, 'build', '--locked', '-p', 'zryna', '--bin', 'zryna'],
+    directRustTools: { cargo, rustc, rustdoc: buildEnv.RUSTDOC }, sourceCleanBeforeAndAfterBuild: true,
+    signatureAuthentication: 'not-performed' };
   writeFileSync(join(output, 'candidate.json'), `${JSON.stringify(proof, null, 2)}\n`, { flag: 'wx' });
-  return { installation, paths, proof };
+  return { installation, paths, proof, assertCurrent };
 }

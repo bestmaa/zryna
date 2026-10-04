@@ -47,9 +47,11 @@ zryna run   <ENTRYPOINT> --target wasi-command --profile command-h1-v1 --export 
 zryna run   <ENTRYPOINT> --target wasi-command --profile command-h1-v1 --export main [--project-root <PATH>] [--grant-file <ABSOLUTE_PATH>] [--name <STEM>] [--json] # installed candidate
 ```
 
-`architecture check` and `doctor` run the same mandatory fail-closed workspace gate. Every
+`architecture check` and `doctor` run the same mandatory fail-closed workspace gate. Every checkout
 `build` and `run` performs that gate before reading source, creating output, discovering a target
 runtime, or doing target work. There is no bypass flag.
+Installed commands validate the build-bound installation and its retained source architecture
+receipt; they require no compiler checkout and accept no compiler-root/runtime override.
 Architecture and doctor `--json` output retains the existing deterministic `ValidationReport`
 shape containing its `diagnostics` array.
 
