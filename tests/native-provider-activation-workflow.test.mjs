@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { parseDocument } from 'yaml';
 
-const CONSUMER_SHA = 'aaeaa5b2be0afe3abd748e75cb309e02ec383d50';
+const CONSUMER_SHA = '6c0f3f64a1278a53a61e2d732ef5e43246ab826f';
 const CHECKOUT = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1';
 const RUST = 'dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c';
 const UPLOAD = 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a';

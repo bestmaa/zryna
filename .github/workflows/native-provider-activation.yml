@@ -18,7 +18,7 @@ permissions:
 
 # Preparation proof for this immutable consumer, not coverage of future source revisions.
 env:
-  ACTIVATION_CONSUMER_SHA: aaeaa5b2be0afe3abd748e75cb309e02ec383d50
+  ACTIVATION_CONSUMER_SHA: 6c0f3f64a1278a53a61e2d732ef5e43246ab826f
 
 jobs:
   smoke:
