@@ -603,15 +603,21 @@ and documentation manifest identify the same reviewed commit and experimental su
 
 ## M9 — Downloadable Beta Distribution
 
-Status: planned after M8. The beta adds installable artifacts without changing the preview into a
-stable compatibility promise.
+Status: distributions and clean-host verification are completed for the immutable
+[`v0.2.3` Developer Preview](https://github.com/zryna/zryna/releases/tag/v0.2.3); the bounded
+external pilot and final beta record in #424 remain open. Installable artifacts do not change
+the preview into a stable compatibility promise or qualify a later candidate.
 
-1. [#422](https://github.com/zryna/zryna/issues/422) builds separately audited standalone Linux
-   and Windows distributions.
-2. [#423](https://github.com/zryna/zryna/issues/423) verifies clean-machine install, upgrade,
-   uninstall, and external-project workflows.
-3. [#424](https://github.com/zryna/zryna/issues/424) runs the bounded beta pilot and publishes the
-   downloadable beta with its observed support and recovery limits.
+1. [#422](https://github.com/zryna/zryna/issues/422) completed separately audited standalone Linux
+   and Windows distributions through the protected #406 release route and #407 project boundary.
+2. [#423](https://github.com/zryna/zryna/issues/423) completed clean-machine install, upgrade,
+   uninstall, and external-project verification. Its
+   [completion record](https://github.com/zryna/zryna/issues/423#issuecomment-5663028888) links the
+   exact source, candidate and release evidence, including four public v0.2.3 upgrade paths.
+3. [#424](https://github.com/zryna/zryna/issues/424) still requires external participant workflows,
+   reproducible blocker triage and the exact final beta publication record. The
+   [pilot kit](BETA_PILOT_KIT.md) prepares this work; its checkout M2/M3 comparison lane is not
+   installed-distribution evidence, and the outer portable setup remains a review candidate.
 
 Completion gate: every distributed binary is bound to its source, checksums, provenance, SBOM,
 platform contract, clean-machine evidence, and tested removal or rollback path.

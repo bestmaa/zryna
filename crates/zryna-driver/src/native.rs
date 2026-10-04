@@ -2,12 +2,13 @@
 
 pub(crate) mod ownership;
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+mod stage_input;
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 mod stage_support;
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 use stage_support::{
     NativeStageIdentity, native_stage_error, native_stage_identity, stage_cleanup_warning,
-    staging_write_error,
 };
 
 pub use ownership::{
@@ -46,7 +47,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 use std::{
     ffi::OsString,
-    io::{Read, Write},
+    io::Read,
     process::{ExitStatus, Stdio},
     sync::mpsc::{self, Receiver, RecvTimeoutError, SyncSender, TryRecvError},
     thread,
@@ -1236,28 +1237,6 @@ impl NativeStage {
         Ok(self.capability_directory_path().join(name))
     }
 
-    fn write_input(&self, path: &Path, bytes: &[u8]) -> Result<(), Diagnostic> {
-        use cap_std::fs::OpenOptionsExt as _;
-        use std::os::unix::fs::PermissionsExt;
-
-        self.revalidate()?;
-        if path.parent() != Some(self.directory.as_path()) {
-            return Err(staging_write_error());
-        }
-        let name = path.file_name().ok_or_else(staging_write_error)?;
-        let mut options = cap_std::fs::OpenOptions::new();
-        options.write(true).create_new(true).mode(0o600);
-        let mut file =
-            self.directory_handle.open_with(name, &options).map_err(|_| staging_write_error())?;
-        file.write_all(bytes)
-            .and_then(|()| file.flush())
-            .and_then(|()| file.sync_all())
-            .map_err(|_| staging_write_error())?;
-        file.set_permissions(cap_std::fs::Permissions::from_std(fs::Permissions::from_mode(0o600)))
-            .map_err(|_| staging_write_error())?;
-        self.revalidate()
-    }
-
     fn cleanup(&self) -> Vec<Diagnostic> {
         if self.revalidate().is_err() {
             return vec![stage_cleanup_warning()];
@@ -1790,8 +1769,8 @@ fn run_bounded_process(
         .stderr(Stdio::piped());
     let mut command = CommandWrap::from(native);
     command.wrap(ProcessGroup::leader());
-    let mut child =
-        command.spawn().map_err(|error| process_io_failure!(context, Spawn, Some(&error)))?;
+    let mut child = crate::process_spawn::spawn(|| command.spawn())
+        .map_err(|error| process_io_failure!(context, Spawn, Some(&error)))?;
     let group_id = child.id().cast_signed();
     let operation = (|| {
         let stdout =

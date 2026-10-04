@@ -33,6 +33,7 @@ zryna-frontend = { path = "../zryna-frontend" }
 zryna-ir = { path = "../zryna-ir" }
 zryna-native-mir = { path = "../zryna-native-mir" }
 zryna-package = { path = "../zryna-package" }
+zryna-process = { path = "../zryna-process" }
 zryna-semantics = { path = "../zryna-semantics" }
 zryna-source = { path = "../zryna-source" }
 
@@ -40,6 +41,7 @@ zryna-source = { path = "../zryna-source" }
 zryna-windows-filesystem = { path = "../zryna-windows-filesystem" }
 
 [dev-dependencies]
+zryna-process = { path = "../zryna-process", features = ["test-observation"] }
 wasm-encoder.workspace = true
 wasmparser.workspace = true
 zryna-syntax = { path = "../zryna-syntax" }
@@ -50,3 +52,7 @@ workspace = true
 [[test]]
 name = "native_activation_parity"
 path = "src/native_activation_parity.rs"
+
+[[test]]
+name = "server_lifecycle"
+path = "src/server_lifecycle/harness.rs"

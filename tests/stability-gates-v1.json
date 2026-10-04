@@ -1,0 +1,39 @@
+{
+  "format": "zryna.stability-gates.v1",
+  "scope": "current-support-preparation",
+  "hosts": ["linux-x86_64", "windows-x86_64"],
+  "toolchains": {"node": "v22.22.1", "pnpm": "11.18.0", "rustc": "1.97.1", "cargo": "1.97.1"},
+  "blockers": [
+    "#414 native provider activation and complete both-host parity",
+    "#416 admitted generic Option/Result implementation and conformance",
+    "#417 admitted native C interop and foreign cleanup conformance",
+    "chosen 1.0 scope and completed public M4-M6 support",
+    "every advertised 1.0 contract fixture and reviewed migration rule",
+    "reviewed compile/run wall-time, memory and variance baselines",
+    "both-host complete matrix and independently authenticated hosted evidence",
+    "fuzz/property campaign corpus, seeds, coverage and bounded replay",
+    "current dependency vulnerability audit with reviewed dispositions",
+    "independent reproducible clean builds and source-to-release provenance",
+    "independent threat-model review and authenticated M7 closure report"
+  ],
+  "contracts": [
+    {"id": "language-cli-artifacts", "authority": "tests/m1-conformance-v1.json", "gate": "compatibility-m1-portable", "migration": "preserve current fixed typed observations; future 1.0 migration policy blocked"},
+    {"id": "control-flow-manifest", "authority": "tests/m2-conformance-v1.json", "gate": "compatibility-m2", "migration": "preserve explicit control-flow-v1 and manifest v2; future changes require a separately reviewed version"},
+    {"id": "ownership-manifest", "authority": "tests/m3-conformance-v1.json", "gate": "compatibility-m3", "migration": "preserve explicit data-ownership-v1 and manifest v3; future changes require a separately reviewed version"},
+    {"id": "diagnostics", "authority": "tests/diagnostics-protocol-v2.test.mjs", "gate": "compatibility-contracts", "migration": "preserve versioned diagnostic shapes, codes and spans; future 1.0 stability policy blocked"},
+    {"id": "providers", "authority": "tests/provider-conformance-v4.json", "gate": "compatibility-contracts", "migration": "bootstrap authority remains current; #414 owns default-provider migration"},
+    {"id": "packages", "authority": "spec/package/PACKAGE_RELEASE_V1.md", "gate": "security-contracts", "migration": "contract and trust fixtures are scoped evidence; public selected M5 scope remains blocked"},
+    {"id": "release-inputs", "authority": "tests/distribution-receipt-compatibility.test.mjs", "gate": "compatibility-contracts", "migration": "preserve versioned release receipt identity; later candidate needs its own provenance"}
+  ],
+  "gates": [
+    {"id": "compatibility-contracts", "lane": "compatibility", "hosts": ["linux-x86_64", "windows-x86_64"], "executable": "node", "args": ["--test", "--test-reporter=tap", "tests/diagnostics-protocol-v2.test.mjs", "tests/m2-manifest-contract.test.mjs", "tests/m3-public-docs.test.mjs", "tests/provider-conformance-v4.test.mjs", "tests/distribution-receipt-compatibility.test.mjs"], "proof": "node-tests", "timeoutMs": 600000},
+    {"id": "compatibility-m1-portable", "lane": "compatibility", "hosts": ["linux-x86_64", "windows-x86_64"], "executable": "cargo", "args": ["test", "--locked", "-p", "zryna", "--test", "cli", "m1_javascript_and_webassembly_match_every_portable_fixture", "--", "--exact", "--nocapture"], "proof": "rust-tests", "timeoutMs": 900000},
+    {"id": "compatibility-m1-native", "lane": "compatibility", "hosts": ["linux-x86_64"], "executable": "cargo", "args": ["test", "--locked", "-p", "zryna", "--test", "cli", "m1_linux_three_target_results_and_artifacts_match_every_fixture", "--", "--exact", "--nocapture"], "proof": "rust-tests", "timeoutMs": 900000},
+    {"id": "compatibility-m2", "lane": "compatibility", "hosts": ["linux-x86_64", "windows-x86_64"], "executable": "node", "args": ["scripts/run-m2-conformance.mjs"], "proof": "m2", "timeoutMs": 7200000},
+    {"id": "compatibility-m3", "lane": "compatibility", "hosts": ["linux-x86_64", "windows-x86_64"], "executable": "node", "args": ["scripts/run-m3-conformance.mjs"], "proof": "m3", "timeoutMs": 7200000},
+    {"id": "security-contracts", "lane": "security", "hosts": ["linux-x86_64", "windows-x86_64"], "executable": "node", "args": ["--test", "--test-reporter=tap", "tests/package-release-v1/validation.test.mjs", "tests/package-release-v1/boundaries.test.mjs", "tests/package-source-trust.test.mjs", "tests/wit-capability-contract.test.mjs", "tests/protected-release-build.test.mjs", "tests/release-evidence.test.mjs"], "proof": "node-tests", "timeoutMs": 600000},
+    {"id": "security-authorities", "lane": "security", "hosts": ["linux-x86_64", "windows-x86_64"], "executable": "cargo", "args": ["test", "--locked", "-p", "zryna-source", "-p", "zryna-syntax", "-p", "zryna-frontend", "-p", "zryna-ir", "-p", "zryna-native-mir", "-p", "zryna-driver", "--", "--include-ignored"], "proof": "rust-tests", "timeoutMs": 7200000},
+    {"id": "foundation-m0", "lane": "security", "hosts": ["linux-x86_64", "windows-x86_64"], "executable": "node", "args": ["scripts/run-m0-conformance.mjs"], "proof": "m0", "timeoutMs": 7200000},
+    {"id": "performance-m1-compile-run", "lane": "performance", "hosts": ["linux-x86_64"], "executable": "cargo", "args": ["test", "--locked", "-p", "zryna", "--test", "cli", "m1_javascript_and_webassembly_match_every_portable_fixture", "--", "--exact", "--nocapture"], "proof": "rust-tests", "timeoutMs": 900000, "warmups": 1, "samples": 5, "method": "gnu-time-maxrss-kib-and-monotonic-wall-ms", "thresholds": null}
+  ]
+}

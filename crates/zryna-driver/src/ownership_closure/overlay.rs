@@ -152,7 +152,8 @@ mod tests {
 
     fn frontend() -> WorkerFrontendV4 {
         let output =
-            Command::new("node").args(["-p", "process.execPath"]).output().expect("node path");
+            crate::process_spawn::output(Command::new("node").args(["-p", "process.execPath"]))
+                .expect("node path");
         assert!(output.status.success());
         let node = PathBuf::from(String::from_utf8(output.stdout).expect("node UTF-8").trim());
         WorkerFrontendV4::new(

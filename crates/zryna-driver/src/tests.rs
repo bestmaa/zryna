@@ -74,14 +74,14 @@ fn node_executable() -> PathBuf {
         .expect("Node.js must be installed for the source-to-IR integration suite")
 }
 
-fn run_node_module(module: &Path, script: &str, extra_arguments: &[&Path]) -> Output {
+pub(super) fn run_node_module(module: &Path, script: &str, extra_arguments: &[&Path]) -> Output {
     let mut command = Command::new(node_executable());
     command.arg("--input-type=module").arg("--eval").arg(script).arg(module);
     command.args(extra_arguments);
-    command.output().expect("Node.js integration harness must start")
+    crate::process_spawn::output(&mut command).expect("Node.js integration harness must start")
 }
 
-fn typescript_frontend() -> WorkerFrontend {
+pub(super) fn typescript_frontend() -> WorkerFrontend {
     let adapter_root =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../adapters/typescript-6");
     assert!(
@@ -665,16 +665,18 @@ fn linux_test_harness_observes_native_i32_values() {
         )
         .expect("test-only C harness");
     let executable = output_root.path().join("harness");
-    let linked = Command::new("cc")
-        .arg("-std=c11")
-        .arg("-o")
-        .arg(&executable)
-        .arg(&harness)
-        .arg(result.artifact().path())
-        .output()
-        .expect("test-only C linker must start");
+    let linked = crate::process_spawn::output(
+        Command::new("cc")
+            .arg("-std=c11")
+            .arg("-o")
+            .arg(&executable)
+            .arg(&harness)
+            .arg(result.artifact().path()),
+    )
+    .expect("test-only C linker must start");
     assert!(linked.status.success(), "link stderr: {}", String::from_utf8_lossy(&linked.stderr));
-    let executed = Command::new(&executable).output().expect("test harness must start");
+    let executed = crate::process_spawn::output(&mut Command::new(&executable))
+        .expect("test harness must start");
     assert!(executed.status.success());
     assert_eq!(
         String::from_utf8(executed.stdout).expect("harness UTF-8"),
@@ -728,16 +730,18 @@ fn linux_native_i32_fixture_drives_object_observation() {
     let harness = output_root.path().join("fixture.c");
     fs::write(&harness, harness_source).expect("test-only fixture harness");
     let executable = output_root.path().join("fixture-harness");
-    let linked = Command::new("cc")
-        .arg("-std=c11")
-        .arg("-o")
-        .arg(&executable)
-        .arg(&harness)
-        .arg(result.artifact().path())
-        .output()
-        .expect("test-only C linker must start");
+    let linked = crate::process_spawn::output(
+        Command::new("cc")
+            .arg("-std=c11")
+            .arg("-o")
+            .arg(&executable)
+            .arg(&harness)
+            .arg(result.artifact().path()),
+    )
+    .expect("test-only C linker must start");
     assert!(linked.status.success(), "link stderr: {}", String::from_utf8_lossy(&linked.stderr));
-    let executed = Command::new(&executable).output().expect("fixture harness must start");
+    let executed = crate::process_spawn::output(&mut Command::new(&executable))
+        .expect("fixture harness must start");
     assert!(executed.status.success());
     assert_eq!(
         String::from_utf8(executed.stdout).expect("fixture harness UTF-8"),

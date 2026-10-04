@@ -10,6 +10,7 @@ import './js-wasm-adapter-contract.test.mjs';
 import './docs-playground.test.mjs';
 import './docs-playground-output.test.mjs';
 import './native-c-review-contract.test.mjs';
+import './beta-documentation-contract.test.mjs';
 
 import {
   compilerWorkspaceRoot,

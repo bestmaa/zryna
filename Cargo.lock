@@ -1823,6 +1823,7 @@ dependencies = [
  "serde_json",
  "toml",
  "zryna-diagnostics",
+ "zryna-process",
 ]
 
 [[package]]
@@ -1916,6 +1917,7 @@ dependencies = [
  "zryna-ir",
  "zryna-native-mir",
  "zryna-package",
+ "zryna-process",
  "zryna-semantics",
  "zryna-source",
  "zryna-syntax",
@@ -1933,6 +1935,7 @@ dependencies = [
  "thiserror",
  "windows-spawn",
  "zryna-diagnostics",
+ "zryna-process",
  "zryna-source",
  "zryna-syntax",
 ]
@@ -2011,6 +2014,10 @@ dependencies = [
  "serde_json",
  "zryna-driver",
 ]
+
+[[package]]
+name = "zryna-process"
+version = "0.2.3"
 
 [[package]]
 name = "zryna-semantics"
