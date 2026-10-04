@@ -19,10 +19,16 @@ use crate::{
 };
 
 pub(crate) fn production_frontend() -> WorkerFrontend {
-    let adapter = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../adapters/typescript-6")
-        .canonicalize()
-        .expect("real production adapter directory");
+    WorkerFrontend::new(production_spec())
+}
+
+fn production_spec() -> WorkerSpec {
+    let adapter = node_path(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../adapters/typescript-6")
+            .canonicalize()
+            .expect("real production adapter directory"),
+    );
     let node = ["ZRYNA_TEST_NODE", "NODE"]
         .into_iter()
         .find_map(env::var_os)
@@ -45,15 +51,63 @@ pub(crate) fn production_frontend() -> WorkerFrontend {
         FrontendCapabilities { module_resolution: false, semantic_diagnostics: false },
     )
     .expect("normal exact production expectation");
-    let spec = WorkerSpec::new(
-        node,
+    WorkerSpec::new(
+        node_path(node),
         vec![OsString::from("src/worker.mjs")],
         adapter,
         expected,
         WorkerLimits::default(),
     )
-    .expect("normal production worker configuration");
+    .expect("normal production worker configuration")
+}
+
+// Canonical paths remain the fixture's identity, but Node's Windows invocation uses ordinary
+// drive/UNC paths, matching the existing runtime's node_compatible_path boundary.
+fn node_path(path: PathBuf) -> PathBuf {
+    #[cfg(windows)]
+    {
+        use std::os::windows::ffi::{OsStrExt, OsStringExt};
+        let encoded = path.as_os_str().encode_wide().collect::<Vec<_>>();
+        let prefix = [92_u16, 92, 63, 92];
+        let Some(remainder) = encoded.strip_prefix(&prefix) else {
+            return path;
+        };
+        let ordinary = if let Some(unc) = remainder.strip_prefix(&[85_u16, 78, 67, 92]) {
+            [92_u16, 92].into_iter().chain(unc.iter().copied()).collect()
+        } else {
+            remainder.to_vec()
+        };
+        PathBuf::from(OsString::from_wide(&ordinary))
+    }
+    #[cfg(not(windows))]
+    path
+}
+
+#[cfg(windows)]
+#[test]
+fn production_worker_uses_node_compatible_paths_and_authenticates_real_source() {
+    use std::path::{Component, Prefix};
+    let spec = production_spec();
+    for (canonical, ordinary) in [
+        (r"\\?\C:\node\node.exe", r"C:\node\node.exe"),
+        (r"\\?\UNC\server\share\adapter", r"\\server\share\adapter"),
+    ] {
+        assert_eq!(node_path(PathBuf::from(canonical)), PathBuf::from(ordinary));
+    }
+    for path in [spec.executable(), spec.current_dir()] {
+        assert!(path.is_absolute());
+        assert!(
+            matches!(
+                path.components().next(),
+                Some(Component::Prefix(prefix)) if matches!(prefix.kind(), Prefix::Disk(_) | Prefix::UNC(_, _))
+            ),
+            "Node invocation cannot retain a Windows verbatim namespace: {path:?}"
+        );
+    }
+    let sources = capture("export function status(): i32 { return 201; }");
     WorkerFrontend::new(spec)
+        .analyze_verified(&sources.sources)
+        .expect("real Windows worker handshake, response and source authentication");
 }
 
 fn envelope() -> Envelope {
