@@ -66,3 +66,8 @@ still execute. Receipt admission binds each ID to its exact frozen source/profil
 checks owning-phase dispositions and fixed typed runtime oracles, and requires
 actual native outcomes on supported hosts. Failed runs also retain verified
 before/after revision, cleanliness, input, lock and executable identity checks.
+
+A separate [private CLI smoke](../native-cli-smoke/README.md) now exercises feature-gated native
+source-checkout builds through the real manifests and transactions. Its bounded nine-source
+bundle comparison does not discharge this corpus's exhaustive production-manifest obligation
+or the ordinary installed no-Node acceptance gap.

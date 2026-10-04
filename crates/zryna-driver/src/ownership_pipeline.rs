@@ -3,6 +3,8 @@
 use std::{fs, path::PathBuf};
 
 pub(crate) mod installed;
+#[cfg(feature = "native-provider-internal")]
+pub(crate) mod native_frontend;
 mod preparation;
 
 use zryna_abi::{Invocation, ScalarValue};

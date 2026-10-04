@@ -18,7 +18,7 @@ use zryna_source::{SourceFileInput, SourceMap};
 pub(super) fn finish(
     request: &BuildRequest,
     run: Option<&RunInvocation>,
-    node: &NodeRuntimeCapability,
+    node: Option<&NodeRuntimeCapability>,
     output_root: &ArtifactOutputRoot,
     final_bundle: &Path,
     source_text: &str,
@@ -28,7 +28,15 @@ pub(super) fn finish(
     let command = if run.is_some() { CommandKind::Run } else { CommandKind::Build };
     let mut prepared =
         super::preparation::prepare_selected_guarded(compiled, request.targets, checkpoint)?;
-    node.revalidate().map_err(preparation_failure)?;
+    if let Some(node) = node {
+        node.revalidate().map_err(preparation_failure)?;
+    } else if run.is_some() {
+        return Err(request_error(
+            "ZRYNA-C1010",
+            "run requires a retained Node capability",
+            "use the existing run route",
+        ));
+    }
     let program = compiled.program();
     let verified_invocation = run
         .map(|invocation| {
@@ -139,7 +147,7 @@ pub(crate) fn execute_installed(
     finish(
         &request,
         invocation.as_ref(),
-        admission.execution().node()?,
+        Some(admission.execution().node()?),
         &output_root,
         &final_bundle,
         &source_text,

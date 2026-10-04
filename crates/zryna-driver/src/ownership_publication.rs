@@ -89,7 +89,7 @@ impl PublishedOwnershipBundle {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum PublicationPhase {
+pub(crate) enum PublicationPhase {
     JavaScript,
     WebAssembly,
     Native,
@@ -141,7 +141,7 @@ pub(crate) fn publish_data_ownership_build(
     publish_with_checkpoint(success, &|_| Ok(()))
 }
 
-fn publish_with_checkpoint(
+pub(crate) fn publish_with_checkpoint(
     success: &DataOwnershipCandidateSuccess,
     checkpoint: Checkpoint<'_>,
 ) -> Result<PublishedOwnershipBundle, CommandFailure> {

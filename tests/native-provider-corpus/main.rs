@@ -77,7 +77,7 @@ fn main() {
     m1::run(&mut context);
     m2::run(&mut context);
     m3::run(&mut context);
-    context.blocked("production-manifest-parity", "m1-m3", "production build/run routes select the bootstrap worker internally; no production manifest serializer is duplicated here");
+    context.blocked("production-manifest-parity", "m1-m3", "this corpus has not exercised exhaustive production-manifest parity; defaults select the bootstrap worker, and the separate feature-gated CLI smoke provides only bounded build evidence");
     context.blocked(
         "m2-native-execution",
         "m2",
