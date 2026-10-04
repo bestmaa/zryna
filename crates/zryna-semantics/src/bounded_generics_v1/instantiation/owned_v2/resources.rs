@@ -69,17 +69,24 @@ fn small_source_cannot_replicate_literals_past_aggregate_wire_credit() {
 fn aggregate_claim(source: &str) -> Result<zryna_ir::generic_v1::owned_v2::raw::Program, Failure> {
     use crate::bounded_generics_v1::{
         SemanticInput, body_types::check_body_types, instantiation::layouts::verify_layouts,
-        resolve_declarations, tests::body_fixtures::project,
+        resolve_declarations, tests::body_fixtures::snapshot,
     };
     use zryna_layout::StorageTarget;
     let start = std::time::Instant::now();
     eprintln!("owned-resource: verify complete source");
-    let p = project(&[("main.zry", source)]);
+    let sources = zryna_source::SourceMap::build(vec![zryna_source::SourceFileInput {
+        path: "main.zry".into(),
+        text: source.into(),
+    }])
+    .expect("source");
+    eprintln!("owned-resource: source map {:?}", start.elapsed());
+    let raw = snapshot(&[("main.zry", source)]);
+    eprintln!("owned-resource: raw snapshot {:?}", start.elapsed());
+    let syntax = zryna_syntax::v5::verify_snapshot(raw, &sources).expect("source syntax");
     eprintln!("owned-resource: declarations {:?}", start.elapsed());
-    let entry = p.sources.verify_file_id(0).expect("entry");
-    let d =
-        resolve_declarations(SemanticInput::try_new(&p.syntax, &p.sources, entry).expect("input"))
-            .expect("declarations");
+    let entry = sources.verify_file_id(0).expect("entry");
+    let d = resolve_declarations(SemanticInput::try_new(&syntax, &sources, entry).expect("input"))
+        .expect("declarations");
     eprintln!("owned-resource: original body types {:?}", start.elapsed());
     let b = check_body_types(&d).expect("well-typed bounded source");
     eprintln!("owned-resource: discovery {:?}", start.elapsed());
