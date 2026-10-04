@@ -1,5 +1,6 @@
 //! Genuine bounded source witnesses for materialization ceilings, without unbounded allocation.
 use super::tests::claim;
+use std::fmt::Write;
 use zryna_ir::generic_v1::Failure;
 
 #[test]
@@ -41,7 +42,7 @@ fn small_source_cannot_replicate_literals_past_aggregate_wire_credit() {
     // Keep source-position scans bounded to individual lines while retaining identical literals.
     let mut source = "function specialized<T extends ZrynaValue>(input:i32):i32 {\n".to_owned();
     for index in 0..8 {
-        source.push_str(&format!("const owner{index}:String=\"{literal}\";\n"));
+        writeln!(source, "const owner{index}:String=\"{literal}\";").expect("fixture source");
     }
     source.push_str("return input; }\nexport function root(input:i32):i32 {\n");
     // 64 distinct instances retain exactly 32MiB; instance 65 must stop before its first copy.
@@ -55,7 +56,7 @@ fn small_source_cannot_replicate_literals_past_aggregate_wire_credit() {
             ">".repeat(rhs),
             ">".repeat(lhs),
         );
-        source.push_str(&format!("const v{index}:i32=specialized<{ty}>(input);\n"));
+        writeln!(source, "const v{index}:i32=specialized<{ty}>(input);").expect("fixture source");
     }
     source.push_str("return input; }");
     assert!(source.len() < 800_000);
