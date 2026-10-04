@@ -1,8 +1,7 @@
 //! Generated handle bodies linked to the independently authored C observation fixture.
 
 mod bytes;
-#[path = "../../../../zryna-native-c-ir/tests/capture.rs"]
-mod capture;
+use super::test_capture as capture;
 mod faults;
 mod identity;
 mod owner_faults;

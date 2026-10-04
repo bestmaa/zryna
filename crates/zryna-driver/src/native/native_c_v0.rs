@@ -11,6 +11,9 @@ use zryna_diagnostics::Diagnostic;
 /// Immutable exact linking requirements for the separate private handle artifact.
 pub mod resource_identity;
 
+/// Retained foreign ELF inputs and source-bound audit receipts; no host execution authority.
+pub mod foreign_library;
+
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 use {
     std::{fmt::Write as _, sync::Arc},
@@ -174,3 +177,8 @@ mod tests;
 
 #[cfg(all(test, target_os = "linux", target_arch = "x86_64"))]
 mod resource_tests;
+
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../../../zryna-native-c-ir/tests/capture.rs"]
+mod test_capture;
