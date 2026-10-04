@@ -52,6 +52,8 @@ def tree(path):
 
 
 def main():
+    if not __debug__:
+        raise RuntimeError("smoke verification requires Python assertions; optimization is forbidden")
     parser = argparse.ArgumentParser(description=__doc__)
     for flag in ("root", "feature-cli", "default-cli", "node", "cargo", "rustc", "output"):
         parser.add_argument("--" + flag, type=Path, required=True)
