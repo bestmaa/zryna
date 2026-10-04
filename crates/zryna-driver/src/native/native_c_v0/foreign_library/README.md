@@ -35,6 +35,27 @@ for this closed fixture subset. An independent `-fcf-protection=full` control
 emits GNU property metadata and remains rejected. These fixture arguments do
 not select or authorize a production recipe's compiler or security policy.
 
+The byte proof additionally compiles the original issuer's private runtime in
+a separate translation unit, includes its retained ABI header, and links it
+with the generated object, captured foreign object and independent client.
+Malloc/free observations verify distinct private copies at lengths 0, 3 and
+4096, each allocation-failure point, a mixed handle/byte reverse cleanup prefix,
+and controlled malformed metadata. An actual missing-release C mutant fails
+the physical owner oracle; the pristine implementation then passes again.
+The C library, runtime and client also run with ASan/UBSan. Instrumented objects
+remain rejected by production capture; the generated machine code is not
+instrumented, and these observations do not establish arbitrary C body safety.
+
+`tests/execution/bytes/reference-provenance.json` records the exact existing
+fixture body, normative header/policy and private-runtime template at preserved
+checkpoint `42f8e80`. Local proof logs record the actual compiled object and
+rendered source digests. These are reviewed fixture prerequisites with no
+production approval. Controlled hostile derivatives are identified by their
+actual source digest; they are not approved library bodies. No exact operator-
+approved SQLite or Rust-shim source/policy or authentic #405 host-admission
+capability is available here. The normative stage order requires the audited
+raw boundary and reviewed library-specific ownership policy before those proofs.
+
 ## Full-feature acceptance still open
 
 The normative acceptance owner remains
@@ -48,7 +69,7 @@ evidence; it does not turn those drafts into an integrated complete feature.
 | --- | --- | --- |
 | Source and ABI identity | Genuine retained authority; equal-byte independently recaptured source issuer rejects. Reviewed header and policy bytes compare exactly. | Preserve these authorities when real artifact acquisition is connected. A compatible C prototype does not authenticate body promises. |
 | Foreign object identity/inventory | Immutable actual ET_REL bytes, full strong definition/dependency inventory, raw tables and relocation audit; independent hostile producers and exact limit cases. | Ordered real-library/runtime/sysroot/tool acquisition, authenticated library review and plan binding. A supplied dependency list is no execution permission. |
-| Executable fixture calls | Separate C object scalar and handle calls, allocation-prefix/reverse-release trace, actual linker failure and SIGABRT. Earlier byte/runtime tests remain separate evidence. | Reconcile the complete normative matrix on the final integrated revision; extend separate-object byte/private-runtime and sanitizer evidence. The helper's existing executable audit only checks its limited required-symbol/ELF rules, not a complete linked dependency inventory. |
+| Executable fixture calls | Separate C scalar/handle and byte/private-runtime calls, allocation failures and mixed reverse-release trace, malformed metadata, physical missing-release mutant, actual linker failure and SIGABRT. Independent C library/runtime/client ASan/UBSan observations. | Reconcile the complete normative matrix on the final integrated revision, including remaining byte modes and fault cases. The helper's existing executable audit only checks its limited required-symbol/ELF rules, not a complete linked dependency inventory. |
 | Recipe and host authorization (#405) | No grant introduced. Existing unconditional recipe admission guards remain authoritative. | Actual independent supervisor/OS enforcement proof, approved ordered build inputs, retained tool identities, complete linked-output/runtime dependency audit, create-only publication and cache/provenance binding. Hashes and caller flags cannot replace these. |
 | Real libraries | Tiny reviewed fixture with explicit malloc/free dependency inventory. | Separate SQLite and Rust C-ABI shim proofs, each with exact acquired artifacts, operation policies, cleanup/failure matrix and provenance. |
 | Platforms and release | Linux x86-64 fixture tests; portable structural tests. No CLI/profile activation. | Windows validation runs separately; no Windows native-C or sanitizer result is implied. Public activation, release and deployment require separate decisions. |

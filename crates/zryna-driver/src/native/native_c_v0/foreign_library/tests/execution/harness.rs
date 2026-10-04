@@ -32,7 +32,7 @@ impl Fixture {
             0
         );
     }
-    fn stage(&self) -> NativeStage {
+    pub(super) fn stage(&self) -> NativeStage {
         NativeStage::create(
             &ArtifactOutputRoot::for_workspace(&self.0).expect("independent fixture prerequisite"),
             "foreign-object",
@@ -186,7 +186,7 @@ impl Fixture {
         output.status
     }
 }
-fn compile(stage: &NativeStage, args: &[OsString]) -> native::BoundedProcessOutput {
+pub(super) fn compile(stage: &NativeStage, args: &[OsString]) -> native::BoundedProcessOutput {
     let limits = NativeProcessLimits::default();
     let tools =
         native::discover_linux_native_toolchain(limits).expect("independent fixture prerequisite");

@@ -2,6 +2,7 @@
 
 use super::*;
 use std::{fmt::Write as _, os::unix::process::ExitStatusExt as _};
+mod bytes;
 mod harness;
 use harness::Fixture;
 
