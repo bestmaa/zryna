@@ -59,9 +59,34 @@ fn small_source_cannot_replicate_literals_past_aggregate_wire_credit() {
     source.push_str("return input; }");
     assert!(source.len() < 800_000);
     let Failure::Diagnostics(errors) =
-        claim(&[("main.zry", &source)]).expect_err("replication stops before literal 513")
+        aggregate_claim(&source).expect_err("replication stops before literal 513")
     else {
         panic!("bounded specialization diagnostic")
     };
     assert!(errors[0].message.contains("owned source specialization aggregate ceiling"));
+}
+
+fn aggregate_claim(source: &str) -> Result<zryna_ir::generic_v1::owned_v2::raw::Program, Failure> {
+    use crate::bounded_generics_v1::{
+        SemanticInput, body_types::check_body_types, instantiation::layouts::verify_layouts,
+        resolve_declarations, tests::body_fixtures::project,
+    };
+    use zryna_layout::StorageTarget;
+    let start = std::time::Instant::now();
+    eprintln!("owned-resource: verify complete source");
+    let p = project(&[("main.zry", source)]);
+    eprintln!("owned-resource: declarations {:?}", start.elapsed());
+    let entry = p.sources.verify_file_id(0).expect("entry");
+    let d =
+        resolve_declarations(SemanticInput::try_new(&p.syntax, &p.sources, entry).expect("input"))
+            .expect("declarations");
+    eprintln!("owned-resource: original body types {:?}", start.elapsed());
+    let b = check_body_types(&d).expect("well-typed bounded source");
+    eprintln!("owned-resource: discovery {:?}", start.elapsed());
+    let i = super::discover(&b)?;
+    eprintln!("owned-resource: layout {:?}", start.elapsed());
+    let linear = verify_layouts(i.instances(), StorageTarget::Linear32V1).expect("linear");
+    let linux = verify_layouts(i.instances(), StorageTarget::LinuxX8664V1).expect("linux");
+    eprintln!("owned-resource: materialization {:?}", start.elapsed());
+    super::produce_claim(&i, &linear, &linux)
 }
