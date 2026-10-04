@@ -1,0 +1,10 @@
+export function discard<T extends ZrynaValue>(value:T):i32 { return 7; }
+export function reinitialize<T extends ZrynaValue>(value:T,next:T):T {
+  let item:T=value;
+  const moved:T=item;
+  item=next;
+  return item;
+}
+export function earlyIdentity<T extends ZrynaValue>(value:T):T {
+  { const pending:String="early"; const view:Borrow<String> =borrow(pending); return value; }
+}

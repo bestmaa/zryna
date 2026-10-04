@@ -33,14 +33,18 @@ complete instance graph, original opaque affinity and owner/loan/drop plan. Only
 `VerifiedOwnedProgram` enters the three emitters. See the exact
 [wire and cleanup contract](../spec/ir/GENERIC_OWNED_WIRE_V2.md).
 
-The current source lane admits immutable locals, scalar literals/addition, explicit calls,
+The current source lane admits immutable and mutable whole stored locals, scalar literals/addition, explicit calls,
 String literals/clones, whole-value moves, Option/Result construction and exhaustive match,
-shared/exclusive complete-place loans, borrowed payload matches and nested lexical blocks.
+shared/exclusive complete-place loans, borrowed payload matches, nested lexical blocks and nested
+early returns. Whole reassignment completes its replacement before releasing the old live value;
+a moved binding can be reinitialized. Copy mutable roots and their observations have separate
+SSA identities, so a loan of an immutable observation does not freeze the mutable source place.
+Replacing any currently borrowed root is rejected at its exact assignment target.
 Only scalar signatures may be public exports. Opaque generic parameters remain affine;
 specializing to a Copy type cannot legalize repeated moves or add a Clone capability.
 
 Nominal declaration bodies, other containers, projections/partial initialization, mutable
-state, loops/if CFG and nested early returns remain rejected. Borrowed payloads can pass to
+loan bindings and loops/if CFG remain rejected. Borrowed payloads can pass to
 appropriately typed private callees; further borrowed observation/mutation operations are not
 implemented. These are acceptance gaps, not restrictions added to the accepted full contract.
 
@@ -102,6 +106,17 @@ Wasm 17 fixed observations per fixture, with strict allocation/release traces an
 Hostile wire/plan/operation, final Wasm and ELF mutations fail independently and retain a
 pristine recovery control. Older Copy artifact SHA assertions remain separate compatibility
 oracles. This runner is direct internal evidence, not a registered supported-platform gate.
+
+The separate bounded mutable-state runner is
+`python3 tests/m7-generic-owned-cfg/run.py <evidence-directory>`.
+Its single-module and imported fixtures use the same sealed program in all three emitters.
+Fixed traces cover successful String replacement, replacement failure with the old owner still
+live, moved opaque-local reinitialization, nested Option/Result replacement, self-move, Copy
+observation preservation, distinct borrowed Copy aliases and nested return ending a live loan
+before cleanup. Each fixture executes twelve native successes and five cleanup-before-SIGILL
+failures; JavaScript and Wasm each execute seventeen fixed observations. The old runner and
+its frozen fixtures remain separate. These whole-local operations do not establish conditional
+joins, loops, projection assignment or partial-state support.
 
 Full acceptance still requires nominal/container ownership and partial state, general mutable
 CFG, remaining borrowed operations, canonical multi-error diagnostics, full status/trap/runtime

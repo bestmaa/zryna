@@ -1,0 +1,36 @@
+export function replacement(value:i32):i32 {
+  let item:String="α";
+  const keep:String="残";
+  { item="new"; }
+  return value;
+}
+export function reinitialized(value:i32):i32 {
+  return discard<String>(reinitialize<String>("old","new"));
+}
+export function option(value:i32):i32 {
+  let item:Option<Result<String,String>> =Option.some<Result<String,String>>(Result.ok<String,String>("old"));
+  { item=Option.some<Result<String,String>>(Result.err<String,String>("new")); }
+  return value;
+}
+export function scalar(value:i32):i32 {
+  let item:i32=value;
+  const saved:i32=item;
+  { item=item+1; }
+  return saved;
+}
+export function updated(value:i32):i32 {
+  let item:i32=value;
+  const saved:i32=item;
+  const view:Borrow<i32> =borrow(saved);
+  { item=item+1; }
+  return item;
+}
+export function early(value:i32):i32 {
+  const outer:String="outer";
+  return discard<String>(earlyIdentity<String>("value"));
+}
+export function selfMove(value:i32):i32 {
+  let item:String="self";
+  item=item;
+  return value;
+}

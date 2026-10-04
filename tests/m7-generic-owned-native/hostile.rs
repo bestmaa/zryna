@@ -1,13 +1,14 @@
 pub(super) fn hostile_inventory(
     bytes: &[u8],
     mir: &zryna_native_mir::generic_owned_v2::VerifiedProgram<'_, '_>,
+    scalar_symbol: &[u8],
 ) {
     use zryna_backend_native::generic_owned_v2::validate_object_inventory;
     validate_object_inventory(bytes, mir).expect("pristine exact inventory");
     let mut name = bytes.to_vec();
     let offset = name
-        .windows(b"zryna_v1_e_some".len())
-        .position(|b| b == b"zryna_v1_e_some")
+        .windows(scalar_symbol.len())
+        .position(|b| b == scalar_symbol)
         .expect("scalar symbol");
     name[offset] = b'x';
     let mut executable = bytes.to_vec();

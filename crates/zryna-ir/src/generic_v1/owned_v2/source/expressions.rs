@@ -23,6 +23,14 @@ impl Builder<'_, '_> {
                 let value = self.peek(&name.text)?;
                 if self.affine[value.id as usize] {
                     self.ext(value.ty.clone(), source.span, super::Owned::Move(value.id))
+                } else if self
+                    .locals
+                    .iter()
+                    .rev()
+                    .find(|local| local.name == name.text)
+                    .is_some_and(|local| local.mutable)
+                {
+                    self.emit(value.ty, source.span, raw::Operation::Copy { value: value.id })
                 } else {
                     Ok(value)
                 }
@@ -110,7 +118,7 @@ impl Builder<'_, '_> {
         span: zryna_source::UntrustedSpan,
         depth: usize,
     ) -> Result<Value, Failure> {
-        if self.locals.iter().any(|(local, _)| *local == callee.text) {
+        if self.locals.iter().any(|local| local.name == callee.text) {
             return Err(reject(
                 "source call names a lexical value rather than its shadowed original function",
             ));

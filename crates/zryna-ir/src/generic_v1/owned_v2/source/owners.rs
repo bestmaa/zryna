@@ -110,11 +110,16 @@ impl Builder<'_, '_> {
             .locals
             .iter()
             .rev()
-            .find(|(local, _)| *local == name)
-            .map(|(_, v)| v.clone())
+            .find(|local| local.name == name)
+            .map(|binding| binding.value.clone())
             .ok_or_else(|| ownership("unknown exact local"))?;
         if !self.alive[value.id as usize] {
             return Err(ownership("use of moved or ended original binding"));
+        }
+        if !matches!(value.ty, Closed::Borrow(..))
+            && self.loans.values().any(|(root, exclusive)| *root == value.id && *exclusive)
+        {
+            return Err(ownership("direct read behind an original exclusive loan"));
         }
         if self.loans.get(&value.id).is_some_and(|(_, exclusive)| *exclusive)
             && self.loan_parents.values().any(|parent| *parent == value.id)
@@ -190,10 +195,20 @@ impl Builder<'_, '_> {
         except: Option<u32>,
         span: zryna_source::UntrustedSpan,
     ) -> Result<(), Failure> {
+        self.close_scope_except(from, except.as_slice(), span)
+    }
+    pub(super) fn close_scope_except(
+        &mut self,
+        from: usize,
+        except: &[u32],
+        span: zryna_source::UntrustedSpan,
+    ) -> Result<(), Failure> {
         let end = self.next as usize;
         for id in (from..end).rev() {
             if self.loans.contains_key(&(u32::try_from(id).map_err(|_| Failure::InternalFailure)?))
-                && except != Some(u32::try_from(id).map_err(|_| Failure::InternalFailure)?)
+                && except
+                    .binary_search(&u32::try_from(id).map_err(|_| Failure::InternalFailure)?)
+                    .is_err()
             {
                 self.ext(
                     Closed::Unit,
@@ -205,7 +220,9 @@ impl Builder<'_, '_> {
         for id in (from..end).rev() {
             if self.alive[id]
                 && self.affine[id]
-                && except != Some(u32::try_from(id).map_err(|_| Failure::InternalFailure)?)
+                && except
+                    .binary_search(&u32::try_from(id).map_err(|_| Failure::InternalFailure)?)
+                    .is_err()
             {
                 self.ext(
                     Closed::Unit,

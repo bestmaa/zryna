@@ -19,7 +19,7 @@ pub(super) fn claim(files: &[(&str, &str)]) -> Result<owned_v2::raw::Program, Fa
     let linux = verify_layouts(i.instances(), StorageTarget::LinuxX8664V1).expect("linux");
     produce_claim(&i, &linear, &linux)
 }
-fn with_claim(
+pub(super) fn with_claim(
     files: &[(&str, &str)],
     test: impl FnOnce(
         owned_v2::raw::Program,

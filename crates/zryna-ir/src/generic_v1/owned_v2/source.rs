@@ -26,6 +26,13 @@ struct Value {
     ty: Closed,
 }
 
+#[derive(Clone)]
+struct Binding<'a> {
+    name: &'a str,
+    value: Value,
+    mutable: bool,
+}
+
 struct Builder<'a, 'b> {
     program: &'a raw::Program,
     sources: &'a zryna_source::SourceMap,
@@ -36,7 +43,7 @@ struct Builder<'a, 'b> {
     block: usize,
     next: u32,
     scope_start: usize,
-    locals: Vec<(&'b str, Value)>,
+    locals: Vec<Binding<'b>>,
     result: Closed,
     extensions: Vec<Extension>,
     affine: Vec<bool>,
@@ -233,12 +240,12 @@ impl<'b> Builder<'_, 'b> {
     }
 
     fn bind(&mut self, name: &'b str, value: Value) -> Result<(), Failure> {
-        if self.locals[self.scope_start..].iter().any(|(prior, _)| prior.eq_ignore_ascii_case(name))
+        if self.locals[self.scope_start..].iter().any(|prior| prior.name.eq_ignore_ascii_case(name))
         {
             return Err(reject("source value bindings collide under portable folding"));
         }
         self.locals.try_reserve(1).map_err(|_| Failure::AllocationFailure)?;
-        self.locals.push((name, value));
+        self.locals.push(Binding { name, value, mutable: false });
         Ok(())
     }
 
