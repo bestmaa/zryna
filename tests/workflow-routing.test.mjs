@@ -331,7 +331,7 @@ test('consolidation preserves every prior contract command and pinned action', (
 test('pull-request workflows stay inventoried and every superseded run cancels', () => {
   const names = readdirSync(resolve(root, '.github/workflows')).sort();
   assert.deepEqual(names, [
-    'ci.yml', 'documentation.yml', 'native-provider-activation.yml', 'portable-setup.yml',
+    'ci.yml', 'documentation.yml', 'installed-command-h1.yml', 'native-provider-activation.yml', 'portable-setup.yml',
     'release-production-candidate.yml',
     'release-qualification.yml', 'release.yml',
   ]);
@@ -357,4 +357,20 @@ test('main runs only documentation validation and publication with short retenti
   assert.equal(upload.uses,
     'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02');
   assert.equal(upload.with['retention-days'], 7);
+});
+
+
+test('installed H1 qualification uses the exact candidate, pinned tools and read-only authority', () => {
+  const candidate = workflow('installed-command-h1.yml');
+  assert.deepEqual(candidate.permissions, { contents: 'read' });
+  const job = candidate.jobs.qualify;
+  assert.deepEqual(job.strategy.matrix.os, ['ubuntu-24.04', 'windows-2022']);
+  assert.equal(job.env.CARGO_BUILD_JOBS, 2);
+  const checkout = job.steps.find(step => step.name === 'Checkout exact candidate');
+  assert.equal(checkout.with.ref, '${{ github.event.pull_request.head.sha || github.sha }}');
+  assert.equal(checkout.with['persist-credentials'], false);
+  const qualification = job.steps.find(step => step.name === 'Build, verify, relocate and invoke the installed candidate');
+  assert.equal(qualification.env.CARGO_NET_OFFLINE, true);
+  assert.match(qualification.run, /tests\/installed-command-qualification\/run\.mjs/);
+  assert(!job.steps.some(step => /publish|release create|sudo|runas/i.test(step.run ?? '')));
 });

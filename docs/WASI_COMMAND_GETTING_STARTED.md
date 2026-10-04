@@ -6,11 +6,17 @@ The [H1 contract](WASI_COMMAND_H1_CONTRACT_DRAFT.md) specifies its source, grant
 denial and execution-record boundaries. The [activation proposal](WASI_COMMAND_ACTIVATION_PROPOSAL.md)
 records the prerequisite decisions.
 
-This route runs one source file from a compiler checkout. It uses the pinned Node.js 22.22.1
-executable only for the authenticated protocol-v4 syntax provider, then a fresh pinned Wasmtime
-48.0.1 engine for the independently audited command component. Installed package manifests
-currently declare other profiles; an installed command or `--project-root` cannot select this
-profile. Build the checkout CLI and use its executable for the commands below.
+This route runs one source file, either from a compiler checkout or an independently verified
+complete installation built from this candidate. The installed executable uses only its bundled
+Node.js 22.22.1 and authenticated protocol-v4 provider; both routes execute a fresh pinned
+Wasmtime 48.0.1 engine. Existing published archives do not acquire H1 support retroactively.
+
+Installed H1 selects a real source directory with `--project-root` (default: current directory),
+which must be outside the entire installation. It needs neither a compiler checkout nor Rust,
+pnpm, a separately installed Node.js, or a package registry. It accepts one `.zry` file, not
+frozen dependency-package imports: existing `zryna.package.v1` profile/target compatibility and
+lockfiles remain unchanged and supply no command grants. The following checkout commands
+use a separately pinned Node executable.
 
 ## Pure command and declared error
 
@@ -29,8 +35,31 @@ host callback. `examples/wasi-command/error.zry` demonstrates the declared error
 execution record is committed and the CLI exits with status 5.
 
 Only the exact `run`, `wasi-command`, `command-h1-v1`, `main` combination selects this route.
-`build`, scalar arguments, other exports, mixed targets/profiles and project roots reject.
+`build`, scalar arguments, other exports and mixed targets/profiles reject. Checkout H1 rejects
+`--project-root`; installed H1 rejects `--root` and `--node` runtime/compiler overrides.
 Ordinary profiles reject `--grant-file` rather than silently accepting host authority.
+
+
+## Installed invocation outside a checkout
+
+Use a newly built, independently verified complete candidate installation. Create a separate
+real directory named `command-project`, and copy only the desired `.zry` example into it.
+No repository marker, package manifest or lockfile is required for this one-file H1 route.
+
+```sh
+zryna='/absolute/path/to/installation/bin/zryna'
+"$zryna" run pure.zry --project-root command-project --target wasi-command --profile command-h1-v1 --export main --name installed-pure-1
+"$zryna" run lookup.zry --project-root command-project --target wasi-command --profile command-h1-v1 --export main --grant-file "$PRIVATE_REQUEST" --name installed-lookup-1
+```
+
+On Windows, use `& $zryna` with the absolute `bin\zryna.exe` path and `$PRIVATE_REQUEST`.
+Create the private request using the platform-specific instructions below. Omit `--node` and
+`--root`: neither PATH nor an adjacent project provider can override installed compiler inputs.
+The installed route revalidates retained installation, provider stage, runtime, source and private
+request identities before execution and through atomic commit. Moving the complete installation
+is supported; changing, omitting or adding installation files rejects admission. Existing output
+is never replaced. Installed and checkout H1 share exactly the same source, grant, WIT, resource,
+result and manifest contract. This is candidate qualification, not a package release.
 
 ## One explicit environment value
 

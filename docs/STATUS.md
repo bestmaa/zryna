@@ -343,7 +343,7 @@ remain outside M3.
 ## Deliberately unsupported
 
 The [bounded WASI command implementation candidate](WASI_COMMAND_GETTING_STARTED.md) has a
-separate source-checkout selector, audited component, owner-private one-key input and distinct
+separate checkout/installed candidate selector, audited component, owner-private one-key input and distinct
 execution manifest. It remains under review until its complete Linux/Windows gates and final
 contract acceptance; the supported profiles in this document do not inherit its host authority.
 

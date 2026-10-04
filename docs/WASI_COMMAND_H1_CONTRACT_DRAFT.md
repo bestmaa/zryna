@@ -479,3 +479,13 @@ the WIT contract, source/IR and independent component audits, focused driver/CLI
 manifest inventory/execution-record checks, fixed examples, and required Linux and Windows gates on
 the reviewed revision. #400 stays open and unsupported until those proofs and the required
 repository contract decisions above are accepted.
+
+## Installed candidate invocation
+
+Both checkout and freshly installed candidate H1 execute the same one-file, one-key contract.
+Installed `--project-root` selects a real source/output directory outside the installation;
+`--root` and `--node` overrides reject. The build-bound compiler supplies its authenticated
+bundled provider/runtime and retains installation, source and private-input proofs through commit.
+Existing frozen package compatibility remains unchanged: H1 accepts no dependency imports.
+Linux/Windows qualification requires actual fresh relocated installs and positive/negative
+command runs; no release or public support is implied before full acceptance and final review.

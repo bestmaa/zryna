@@ -5,7 +5,8 @@ use std::{path::PathBuf, process::ExitCode};
 use zryna_diagnostics::Diagnostic;
 use zryna_driver::{
     CommandH1Outcome, CommandH1RunRequest, CommandH1RunReturn, CommandH1Teardown, CommandKind,
-    distribution::InstalledCompiler, run_command_h1_workspace,
+    distribution::{InstalledCommandH1Request, InstalledCompiler},
+    run_command_h1_workspace,
 };
 
 pub(super) fn selected(options: &CompileOptions) -> bool {
@@ -16,8 +17,8 @@ pub(super) fn configuration_error() -> Diagnostic {
     Diagnostic::error(
         "ZRYNA-C4103",
         None,
-        "Command execution requires the exact source-checkout command profile and sole main export.",
-        "Use run ENTRY --target wasi-command --profile command-h1-v1 --export main --node PINNED; omit arguments and project-root.",
+        "Command execution requires the exact command profile and sole main export.",
+        "Use run ENTRY --target wasi-command --profile command-h1-v1 --export main; omit arguments. Installed commands select --project-root and reject --root/--node overrides.",
     )
 }
 
@@ -50,21 +51,59 @@ fn request(options: &RunOptions) -> Result<CommandH1RunRequest, Diagnostic> {
     })
 }
 
+fn installed_request(options: &RunOptions) -> Result<InstalledCommandH1Request, Diagnostic> {
+    let compile = &options.compile;
+    if compile.profile != Some(CliProfile::CommandH1V1)
+        || compile.target != CliTarget::WasiCommand
+        || compile.root.is_some()
+        || compile.node.is_some()
+        || options.export != "main"
+        || !options.arguments.is_empty()
+        || options.grant_file.as_ref().is_some_and(|path| !path.is_absolute())
+    {
+        return Err(configuration_error());
+    }
+    Ok(InstalledCommandH1Request {
+        project_root: absolute_workspace_path(
+            &compile.project_root.clone().unwrap_or_else(|| PathBuf::from(".")),
+        )?,
+        entrypoint: compile.entrypoint.clone(),
+        artifact_stem: compile
+            .name
+            .clone()
+            .unwrap_or_else(|| super::profile::default_stem(&compile.entrypoint)),
+        grant_file: options.grant_file.clone(),
+    })
+}
+
 pub(super) fn run(options: &RunOptions) -> ExitCode {
-    let request = match request(options) {
-        Ok(request) => request,
+    let prepared = if InstalledCompiler::is_distribution_build() {
+        installed_request(options).and_then(|request| {
+            InstalledCompiler::capture_current().map(|installation| {
+                let stem = request.artifact_stem.clone();
+                (stem, installation.run_command_h1(&request))
+            })
+        })
+    } else {
+        request(options).map(|request| {
+            let stem = request.artifact_stem.clone();
+            (stem, run_command_h1_workspace(&request))
+        })
+    };
+    let (stem, result) = match prepared {
+        Ok(prepared) => prepared,
         Err(error) => {
             return super::render_cli_failure(CommandKind::Run, options.compile.json, 2, &[error]);
         }
     };
-    let result = match run_command_h1_workspace(&request) {
+    let result = match result {
         Ok(result) => result,
         Err(error) => return super::render_failure(CommandKind::Run, options.compile.json, &error),
     };
     if options.compile.json {
         let manifest = format!(
             ".zryna/out/{}.wasi-command-run/{}",
-            request.artifact_stem,
+            stem,
             zryna_driver::COMMAND_H1_MANIFEST_NAME,
         );
         let response = serde_json::json!({

@@ -4,8 +4,11 @@
 
 The source-checkout route `run ENTRY --target wasi-command --profile command-h1-v1
 --export main --node PINNED [--grant-file ABSOLUTE_FILE]` executes the separately verified
-command profile. It accepts no scalar arguments, project root, installed package invocation or
-build-only selection. The [command walkthrough](WASI_COMMAND_GETTING_STARTED.md) covers private
+command profile. A complete candidate installation instead accepts
+`run ENTRY --project-root PROJECT --target wasi-command --profile command-h1-v1 --export main
+[--grant-file ABSOLUTE_FILE]`, without compiler-root or Node overrides. It uses its authenticated
+bundled runtime/provider and one project-relative source file, without dependency packages.
+Both routes accept no scalar arguments or build-only selection. The [command walkthrough](WASI_COMMAND_GETTING_STARTED.md) covers private
 input creation, the initial grant table, typed WIT results, limits and create-only bundles;
 the [manifest reference](WASI_COMMAND_MANIFEST_V1.md) specifies its distinct execution record.
 This candidate still requires complete acceptance and final review before public support is
@@ -41,6 +44,7 @@ zryna package resolve <PACKAGE> --source-root <PATH> --mode <frozen|update> [--g
 zryna build <ENTRYPOINT> --target <javascript|webassembly|native|component|all> --node <PATH> [--profile <control-flow-v1|data-ownership-v1|browser-component-v1>] [--root <PATH>] [--name <STEM>] [--json]
 zryna run   <ENTRYPOINT> --target <javascript|webassembly|native|all> --export <NAME> --node <PATH> [--profile control-flow-v1] [--arg=<i32|bool>:<VALUE> ...] [--root <PATH>] [--name <STEM>] [--json]
 zryna run   <ENTRYPOINT> --target wasi-command --profile command-h1-v1 --export main --node <PATH> [--grant-file <ABSOLUTE_PATH>] [--root <PATH>] [--name <STEM>] [--json]
+zryna run   <ENTRYPOINT> --target wasi-command --profile command-h1-v1 --export main [--project-root <PATH>] [--grant-file <ABSOLUTE_PATH>] [--name <STEM>] [--json] # installed candidate
 ```
 
 `architecture check` and `doctor` run the same mandatory fail-closed workspace gate. Every

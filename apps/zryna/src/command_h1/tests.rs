@@ -75,3 +75,29 @@ fn grant_file_is_a_run_only_closed_flag() {
         .is_err()
     );
 }
+
+#[test]
+fn installed_command_selects_only_project_and_explicit_private_input() {
+    let mut options = options();
+    options.compile.node = None;
+    options.compile.project_root = Some(std::env::temp_dir().join("command-project"));
+    let accepted = installed_request(&options).expect("installed command request");
+    assert_eq!(accepted.project_root, std::env::temp_dir().join("command-project"));
+    assert!(accepted.grant_file.is_none());
+    options.grant_file = Some(std::env::temp_dir().join("private-request.json"));
+    assert!(installed_request(&options).is_ok());
+    options.compile.node = Some(std::env::current_exe().expect("runtime override"));
+    assert!(installed_request(&options).is_err());
+    options.compile.node = None;
+    options.compile.root = Some(std::env::temp_dir());
+    assert!(installed_request(&options).is_err());
+    options.compile.root = None;
+    options.arguments.push(zryna_abi::ScalarValue::I32(1));
+    assert!(installed_request(&options).is_err());
+    options.arguments.clear();
+    options.export = "other".into();
+    assert!(installed_request(&options).is_err());
+    options.export = "main".into();
+    options.grant_file = Some(PathBuf::from("relative.json"));
+    assert!(installed_request(&options).is_err());
+}

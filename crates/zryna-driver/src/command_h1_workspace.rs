@@ -123,30 +123,39 @@ pub fn run_command_h1_workspace(
     .map_err(source_failure)?;
     session.revalidate_all().map_err(|error| failure(CommandFailureKind::Source, error))?;
     node.revalidate().map_err(|error| failure(CommandFailureKind::Preparation, error))?;
+    publish_command_h1(&output, &request.artifact_stem, prepared, &mut || {
+        session.revalidate_all().map_err(|error| failure(CommandFailureKind::Source, error))?;
+        node.revalidate().map_err(|error| failure(CommandFailureKind::Preparation, error))
+    })
+}
+
+pub(crate) fn publish_command_h1(
+    output: &ArtifactOutputRoot,
+    stem: &str,
+    prepared: crate::PreparedCommandH1,
+    revalidate: &mut dyn FnMut() -> Result<(), CommandFailure>,
+) -> Result<PublishedCommandH1Bundle, CommandFailure> {
+    revalidate()?;
     let diagnostics = prepared.diagnostics().to_vec();
     let policy = prepared.approved_policy();
-    let mut transaction = Transaction::create(&output)?;
-    let bundle = output.path().join(format!("{}.wasi-command-run", request.artifact_stem));
+    let mut transaction = Transaction::create(output)?;
+    let bundle = output.path().join(format!("{}.wasi-command-run", stem));
     let operation: Result<PublishedCommandH1Bundle, CommandFailure> = (|| {
-        transaction
-            .write_command_h1_artifact(&request.artifact_stem, prepared.artifact().bytes())?;
+        transaction.write_command_h1_artifact(stem, prepared.artifact().bytes())?;
         let executed = prepared.execute(&policy).map_err(|diagnostics| CommandFailure {
             kind: CommandFailureKind::Preparation,
             diagnostics,
         })?;
-        session.revalidate_all().map_err(|error| failure(CommandFailureKind::Source, error))?;
-        node.revalidate().map_err(|error| failure(CommandFailureKind::Preparation, error))?;
+        revalidate()?;
         let manifest = executed
-            .manifest_bytes(&request.artifact_stem)
+            .manifest_bytes(stem)
             .map_err(|error| failure(CommandFailureKind::Preparation, error))?;
         transaction.write_manifest(crate::COMMAND_H1_MANIFEST_NAME, &manifest)?;
-        session.revalidate_all().map_err(|error| failure(CommandFailureKind::Source, error))?;
-        transaction.commit(&output, &bundle)?;
+        revalidate()?;
+        transaction.commit(output, &bundle)?;
         let result = PublishedCommandH1Bundle {
             manifest_path: bundle.join(crate::COMMAND_H1_MANIFEST_NAME),
-            component_path: bundle
-                .join("wasi-command")
-                .join(format!("{}.wasm", request.artifact_stem)),
+            component_path: bundle.join("wasi-command").join(format!("{}.wasm", stem)),
             path: bundle,
             record: executed.record().clone(),
             diagnostics,
@@ -158,7 +167,7 @@ pub fn run_command_h1_workspace(
     match operation {
         Ok(bundle) => Ok(bundle),
         Err(mut error) => {
-            if let Err(cleanup) = transaction.cleanup(&output) {
+            if let Err(cleanup) = transaction.cleanup(output) {
                 error.kind = CommandFailureKind::Cleanup;
                 error.diagnostics.extend(cleanup.diagnostics);
             }
@@ -180,7 +189,7 @@ fn invalid_request() -> Diagnostic {
     )
 }
 
-fn source_failure(error: SourceToIrError) -> CommandFailure {
+pub(crate) fn source_failure(error: SourceToIrError) -> CommandFailure {
     let diagnostics = match error {
         SourceToIrError::Frontend(error) if error.diagnostics().is_empty() => {
             vec![Diagnostic::error(
