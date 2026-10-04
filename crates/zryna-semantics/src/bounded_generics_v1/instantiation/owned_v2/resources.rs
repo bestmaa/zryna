@@ -38,11 +38,12 @@ fn executable_literal_ceiling_is_checked_before_copying_and_unused_templates_kee
 #[test]
 fn small_source_cannot_replicate_literals_past_aggregate_wire_credit() {
     let literal = "x".repeat(65_536);
-    let mut source = "function specialized<T extends ZrynaValue>(input:i32):i32 {".to_owned();
+    // Keep source-position scans bounded to individual lines while retaining identical literals.
+    let mut source = "function specialized<T extends ZrynaValue>(input:i32):i32 {\n".to_owned();
     for index in 0..8 {
-        source.push_str(&format!("const owner{index}:String=\"{literal}\";"));
+        source.push_str(&format!("const owner{index}:String=\"{literal}\";\n"));
     }
-    source.push_str("return input; } export function root(input:i32):i32 {");
+    source.push_str("return input; }\nexport function root(input:i32):i32 {\n");
     // 64 distinct instances retain exactly 32MiB; instance 65 must stop before its first copy.
     for index in 0..65 {
         let lhs = index / 9;
@@ -54,7 +55,7 @@ fn small_source_cannot_replicate_literals_past_aggregate_wire_credit() {
             ">".repeat(rhs),
             ">".repeat(lhs),
         );
-        source.push_str(&format!("const v{index}:i32=specialized<{ty}>(input);"));
+        source.push_str(&format!("const v{index}:i32=specialized<{ty}>(input);\n"));
     }
     source.push_str("return input; }");
     assert!(source.len() < 800_000);
