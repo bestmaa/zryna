@@ -10,20 +10,22 @@ CARGO_NET_OFFLINE=true node tests/installed-command-qualification/run.mjs /absol
 
 The harness actually executes the architecture command, hashes real tool/source inputs,
 checks pinned Node/npm/Rust material bytes and the exact candidate Cargo.lock/runtime closure,
-then compiles a build-bound CLI and verifies an archive content round-trip. The unchanged
-production archive verifier rejects this newer Cargo.lock against the immutable v0.2.3 recipe;
-that exact blocker is recorded, and its gate remains intact. It extracts and relocates that complete candidate,
+then compiles a build-bound CLI through normal payload preparation and verifies its archive
+with the unchanged production content verifier. The H1 candidate binding pins all four source
+inputs, the existing recipe digest and unchanged Rust material record. It is selected only in
+main-candidate context; all tagged and predecessor release lock pins remain intact.
+It extracts and relocates that complete candidate,
 then executes positive/negative H1 cases from an unrelated directory with empty PATH and no
 inherited compiler/runtime overrides. Its one-file project contains no repository marker,
 package manifest or lockfile. It checks typed outcomes, grant counts, component/manifest hashes,
 private value omission, override and dependency refusal, unchanged existing output and
 installation/provider/runtime tamper rejection followed by recovery.
 
-This is a optimized **test-only review candidate**, not a release build or signed
+This is an optimized **content-verified review candidate**, not an approved release or signed
 archive. It records the actual observed branch/head/tree separately from the installation
 wire's intended-main compatibility reference. It asserts no protected-main membership,
 release recipe execution, reproduction, signature authentication or publication authority.
-The fixture is never admitted by production assembly or the release archive verifier.
+Archive content verification establishes neither production assembly nor release admission.
 No protected workflow context or successful gate receipt is fabricated or submitted.
 Production admission remains forbidden. Linux foreign-owner eligibility and local Windows
 validation remain separate; this harness cannot turn an unavailable owner fixture into proof.

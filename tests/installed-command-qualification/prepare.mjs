@@ -1,11 +1,11 @@
-// Test-only candidate assembly. No signing, protected-main authority, release or publication.
+// Candidate content qualification. No signing, protected-main authority, release or publication.
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync, chmodSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 import { bytes, sha256 } from '../../scripts/distribution/canonical.mjs';
-import { fixturePayload } from './payload.mjs';
-import { rustMaterials } from '../../scripts/distribution/rust-materials.mjs';
+import { preparePayload } from '../../scripts/distribution/payload.mjs';
+import { checkQualificationRustClosure, rustMaterials } from '../../scripts/distribution/rust-materials.mjs';
 import { NODE_TARGETS } from '../../scripts/distribution/materials.mjs';
 import { inventoryBytes, checksumBytes, targetPaths } from '../../scripts/distribution/inventory.mjs';
 import { verifyCompiledIdentity } from '../../scripts/distribution/binary-identity.mjs';
@@ -81,6 +81,7 @@ export async function prepare(source, output) {
     if (actual.length !== expected[0] || sha256(actual) !== expected[1]) throw new Error('Node pin differs');
   }
   const metadata = JSON.parse(run(cargo, ['metadata', '--format-version=1', '--locked', '--offline', '--filter-platform', target], source, buildEnv));
+  const runtimeClosureAudit = checkQualificationRustClosure({ cwd: source });
   for (const record of rustMaterials(target)) {
     const pkg = metadata.packages.find(pkg => pkg.name === record.name && pkg.version === record.version);
     if (!pkg) throw new Error(`Missing pinned Rust material ${record.name}-${record.version}`);
@@ -107,7 +108,7 @@ export async function prepare(source, output) {
     recipe: { format: 'zryna.distribution-recipe.v1',
       sha256: sha256(readFileSync(join(source, 'scripts/distribution/release-recipe-v1.json'))) } };
   assertCurrent();
-  const prepared = fixturePayload(identity, files, receipt, metadata);
+  const prepared = preparePayload(identity, files, receipt, { productionCandidate: true });
   const digest = sha256(prepared.distribution);
   const env = { ...buildEnv, ZRYNA_DISTRIBUTION_SHA256: digest };
   run(cargo, ['build', '--release', '--locked', '-p', 'zryna', '--bin', 'zryna'], source, env);
@@ -130,16 +131,9 @@ export async function prepare(source, output) {
   const name = `zryna-0.2.3-${target}`;
   const archive = process.platform === 'win32' ? encodeZip(name, payload) : await encodeTar(name, payload, epoch);
   const expected = { ...identity, filename: `${name}.${paths.extension}`, size: archive.length, sha256: sha256(archive) };
-  let releaseVerificationBlocker;
-  try {
-    await verifyArchive(archive, expected, { productionCandidate: true });
-    throw new Error('Candidate must not be mistaken for the immutable release recipe');
-  } catch (error) {
-    if (error.message !== 'D422-ADMISSION: Rust material lockfile identity') throw error;
-    releaseVerificationBlocker = error.message;
-  }
-  // Content round-trip is fixture evidence only. Production verifyArchive rejected above;
-  // neither its gate nor its accepted Rust recipe is altered or used to admit this fixture.
+  const verified = await verifyArchive(archive, expected, { productionCandidate: true });
+  if (verified.archiveSha256 !== expected.sha256) throw new Error('Verified candidate identity differs');
+  // The normal content verifier succeeds. It does not establish protected-main or release authority.
   const decoded = process.platform === 'win32' ? decodeZip(archive, name, [paths.cli, paths.node])
     : await decodeTar(archive, name, epoch);
   if (decoded.length !== payload.length || decoded.some((file, index) => file.path !== payload[index].path
@@ -158,10 +152,14 @@ export async function prepare(source, output) {
       if ((statSync(path).mode & 0o7777) !== file.mode) throw new Error('Fixture archive mode differs');
     }
   }
-  const proof = { status: 'test-only-review-candidate', productionAdmission: 'forbidden',
+  const proof = { status: 'content-verified-review-candidate', productionAdmission: 'forbidden',
     observedSource: { head, tree, branch }, intendedSourceRef: identity.source.ref,
-    releaseVerificationBlocker, qualificationLockSha256: prepared.qualificationLockSha256,
-    runtimeClosure: prepared.runtimeClosure, archiveContentRoundTripVerified: true,
+    productionArchiveContentVerified: true,
+    qualificationLockSha256: sha256(readFileSync(join(source, 'Cargo.lock'))),
+    rustMaterialBindingSha256: sha256(readFileSync(join(source, 'scripts/distribution/command-h1-rust-binding-v1.json'))),
+    runtimeClosure: rustMaterials(target).map(record => `${record.name}-${record.version}`),
+    runtimeClosureAudit,
+    archiveContentRoundTripVerified: true,
     archive: expected, cliSha256: sha256(cli), distributionSha256: digest,
     recipeApplied: false, buildProfile: 'release', buildCommand: [cargo, 'build', '--release', '--locked', '-p', 'zryna', '--bin', 'zryna'],
     directRustTools: { cargo, rustc, rustdoc: buildEnv.RUSTDOC }, sourceCleanBeforeAndAfterBuild: true,
