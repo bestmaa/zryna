@@ -8,6 +8,64 @@ use std::fs;
 use support::{Case, Input, guard, input_path, read_json};
 
 #[test]
+fn actual_cli_unused_container_cannot_consume_the_lookup_result() {
+    let _guard = guard();
+    let input = Input::new("MODE", Some("on"));
+    let outputs = ["vector", "shared", "vector-push"].map(|container| {
+        let case = Case::new();
+        let source =
+            format!("tests/wasi-command-source-fixtures/unused-environment-{container}.zry");
+        let output = case.run(&source, Some(&input), &[]);
+        println!(
+            "container={container} status={:?} bundle={}",
+            output.status.code(),
+            case.bundle.exists()
+        );
+        (container, output, case)
+    });
+    for (container, output, case) in outputs {
+        assert_eq!(
+            output.status.code(),
+            Some(3),
+            "ignored {container} must not consume outcome: {}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+        assert!(!case.bundle.exists(), "rejected {container} has no final bundle");
+        assert!(
+            String::from_utf8_lossy(&output.stdout).contains("ZRYNA-I4100"),
+            "command consumption rejection: {}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+    }
+}
+
+#[test]
+fn actual_cli_consumed_outcome_can_produce_container_values() {
+    let _guard = guard();
+    for container in ["vector", "shared"] {
+        for value in [Some("on"), None] {
+            let case = Case::new();
+            let input = Input::new("MODE", value);
+            let source =
+                format!("tests/wasi-command-source-fixtures/consumed-environment-{container}.zry");
+            let output = case.run(&source, Some(&input), &[]);
+            assert_eq!(
+                output.status.code(),
+                Some(if value.is_some() { 0 } else { 5 }),
+                "{container}: {}",
+                String::from_utf8_lossy(&output.stdout)
+            );
+            let manifest = read_json(&case.manifest());
+            assert_eq!(
+                manifest["execution"]["runReturn"],
+                if value.is_some() { "ok" } else { "err" }
+            );
+            assert_eq!(manifest["teardown"], "confirmed");
+        }
+    }
+}
+
+#[test]
 fn actual_cli_unused_helper_match_cannot_consume_the_lookup_result() {
     let _guard = guard();
     let case = Case::new();

@@ -3,7 +3,7 @@
 use super::{error, outcome_shape, raw};
 use crate::data_ownership_v1::{
     PlaceIdentity, VerifiedDropAction, VerifiedInstructionKind, VerifiedModule, VerifiedPlace,
-    VerifiedProgram, VerifiedTerminatorKind,
+    VerifiedPlaceKind, VerifiedProgram, VerifiedTerminatorKind, VerifiedValueDefinition,
 };
 use zryna_diagnostics::Diagnostic;
 use zryna_syntax::command_h1_v1::CommandSyntax;
@@ -29,8 +29,40 @@ pub(super) fn verify(
         if outcomes.is_empty() {
             continue;
         }
+        let parameters = function.parameters().map(VerifiedValueDefinition::id).collect::<Vec<_>>();
         for block in function.blocks() {
             for instruction in block.instructions() {
+                if matches!(
+                    instruction.kind(),
+                    VerifiedInstructionKind::VecConstruct
+                        | VerifiedInstructionKind::VecPush
+                        | VerifiedInstructionKind::SharedConstruct
+                ) {
+                    let transferred = function
+                        .places()
+                        .filter(|place| {
+                            let value = match place.kind() {
+                                VerifiedPlaceKind::Temporary(value) => Some(value),
+                                VerifiedPlaceKind::Parameter(index) => {
+                                    parameters.get(index as usize).copied()
+                                }
+                                _ => None,
+                            };
+                            value.is_some_and(|value| {
+                                instruction.value_operands().any(|operand| operand == value)
+                            })
+                        })
+                        .map(VerifiedPlace::id)
+                        .collect::<Vec<_>>();
+                    // This sealed pre-allocation snapshot still names the transferred owners.
+                    // Once enclosed, their heap payloads have no static outcome places to match.
+                    check(
+                        instruction
+                            .allocation_failure_drop_actions()
+                            .filter(|action| transferred.contains(&action.root())),
+                        &outcomes,
+                    )?;
+                }
                 if matches!(
                     instruction.kind(),
                     VerifiedInstructionKind::DropPlace
