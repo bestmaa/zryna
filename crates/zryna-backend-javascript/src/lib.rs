@@ -1,7 +1,6 @@
 //! Direct JavaScript emission from verified Zryna IR.
 #![forbid(unsafe_code)]
 use std::fmt::Write;
-
 use zryna_diagnostics::Diagnostic;
 use zryna_ir::control_flow_v1::{
     FunctionIdentity, ValueIdentity, VerifiedFunction as VerifiedControlFlowFunction,
@@ -14,6 +13,7 @@ pub use data_ownership_v1::emit_data_ownership;
 mod prelude;
 use prelude::{JAVASCRIPT_PRELUDE, MAX_CONTROL_FLOW_JAVASCRIPT_BYTES};
 pub mod generic_copy_v1;
+pub mod generic_owned_v2;
 
 /// JavaScript artifacts produced by one compilation.
 #[derive(Clone, Debug, Eq, PartialEq)]

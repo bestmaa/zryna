@@ -57,7 +57,7 @@ pub(super) fn check(
     super::calls::check(program.declarations.len(), &calls)
 }
 
-fn operation(
+pub(super) fn operation(
     program: &raw::Program,
     layouts: &[TypeView<'_>],
     generic_count: usize,
@@ -121,7 +121,7 @@ fn operation(
     })
 }
 
-fn terminator(
+pub(super) fn terminator(
     layouts: &[TypeView<'_>],
     function: &raw::Function,
     term: &raw::Terminator,

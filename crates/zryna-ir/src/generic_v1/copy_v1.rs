@@ -16,6 +16,8 @@ mod producer;
 #[cfg(test)]
 mod tests;
 mod type_demand;
+pub(super) use producer::signatures;
+pub(super) use type_demand::check as check_type_demand;
 
 pub use producer::produce_claim;
 
@@ -137,7 +139,7 @@ pub fn verify<'a>(
     Ok(VerifiedCopyProgram { program, brand, linear, linux, runtime, abi, exports, entry })
 }
 
-fn entry_closure(originals: &Originals<'_>, entry: u32) -> Result<(), Failure> {
+pub(super) fn entry_closure(originals: &Originals<'_>, entry: u32) -> Result<(), Failure> {
     let mut reached = reserve(originals.units.len())?;
     reached.resize(originals.units.len(), false);
     let mut pending = reserve(originals.units.len())?;
@@ -206,7 +208,7 @@ fn copy_ownership(program: &raw::Program, layouts: &VerifiedLayouts) -> Result<(
     Ok(())
 }
 
-fn scalar_abi(
+pub(super) fn scalar_abi(
     program: &raw::Program,
     entry: u32,
 ) -> Result<(zryna_abi::VerifiedScalarAbiModule, Vec<usize>), Failure> {

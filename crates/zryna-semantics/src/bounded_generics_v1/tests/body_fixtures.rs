@@ -449,7 +449,14 @@ pub(in crate::bounded_generics_v1) fn project(files: &[(&str, &str)]) -> Project
     .expect("original fixture invariant");
     // Consume one unit's temporary JSON before constructing the next. The large owner fixture
     // must retain its exact source counts without keeping a second whole-project syntax tree.
-    let raw = RawProjectSyntaxSnapshot {
+    let raw = snapshot(&files);
+    let syntax =
+        verify_snapshot(raw, &sources).expect("independent complete original v5 verification");
+    Project { sources, syntax }
+}
+
+pub(in crate::bounded_generics_v1) fn snapshot(files: &[(&str, &str)]) -> RawProjectSyntaxSnapshot {
+    RawProjectSyntaxSnapshot {
         schema_version: 5,
         diagnostics: vec![],
         files: files
@@ -462,8 +469,5 @@ pub(in crate::bounded_generics_v1) fn project(files: &[(&str, &str)]) -> Project
                 .expect("original fixture invariant")
             })
             .collect(),
-    };
-    let syntax =
-        verify_snapshot(raw, &sources).expect("independent complete original v5 verification");
-    Project { sources, syntax }
+    }
 }

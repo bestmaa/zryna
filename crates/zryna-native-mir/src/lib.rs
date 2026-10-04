@@ -1,6 +1,5 @@
 //! Verified native machine-independent representation.
 #![forbid(unsafe_code)]
-
 use std::collections::BTreeMap;
 
 use zryna_abi::{VerifiedScalarAbiModule, VerifiedScalarExport};
@@ -11,6 +10,7 @@ use zryna_ir::{ExprKind, Type, UniversalProfile, VerifiedFunction, VerifiedProgr
 pub mod control_flow_v1;
 pub mod data_ownership_v1;
 pub mod generic_copy_v1;
+pub mod generic_owned_v2;
 /// Maximum functions accepted in one native MIR module.
 pub const MAX_MIR_FUNCTIONS: usize = 16_384;
 /// Maximum parameters accepted in one native MIR function.

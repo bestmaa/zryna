@@ -3,7 +3,10 @@
 use super::{Failure, VerifiedLayouts, raw, reject, reserve};
 use crate::generic_v1::keys;
 
-pub(super) fn check(program: &raw::Program, layouts: &VerifiedLayouts) -> Result<(), Failure> {
+pub(in crate::generic_v1) fn check(
+    program: &raw::Program,
+    layouts: &VerifiedLayouts,
+) -> Result<(), Failure> {
     let mut types = reserve(layouts.types().len())?;
     types.extend(layouts.types());
     let mut reached = reserve(types.len())?;

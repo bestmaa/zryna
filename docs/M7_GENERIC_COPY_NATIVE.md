@@ -85,3 +85,8 @@ Ownership runtime allocation/clone/fault cleanup, supported-platform conformance
 driver/profile activation and #416 completion remain unfinished. Further existing shared native
 MIR/runtime interfaces need named coordination with #417 before editing; this slice changes only
 new modules and their registrations and imports no #417 implementation.
+
+The additive [owned v2 continuation](M7_GENERIC_OWNED_EXECUTION.md) now proves whole String
+ownership, Option/Result payload transfers, lexical loans and fault cleanup in a separate
+source-bound seal. It leaves this zero-loan/zero-drop Copy authority and its bytes unchanged;
+the owned document lists the remaining full-acceptance gaps.

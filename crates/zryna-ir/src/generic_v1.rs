@@ -15,6 +15,7 @@ pub mod copy_v1;
 mod inventory;
 pub mod keys;
 mod loops;
+pub mod owned_v2;
 pub mod raw;
 mod source;
 mod source_body;

@@ -1,9 +1,9 @@
-//! Complete source replay for the first executable Copy-only successor lane.
+//! Complete original affine source replay, independent of the raw cleanup plan.
 //!
 //! Unsupported source operations fail closed, including in unused original templates.
 //! The symbolic pass retains opaque parameter keys; a closed i32 instance cannot legalize T + T.
 
-use super::{
+use crate::generic_v1::{
     Failure, keys, raw, reject, reserve,
     source::Originals,
     source_types::{Closed, Resolver, type_id},
@@ -12,7 +12,11 @@ use zryna_syntax::{v4::RawStatementKind, v5::RawFunctionSyntax};
 
 mod enums;
 mod expressions;
-mod opaque_owners;
+mod normalize;
+mod owners;
+mod statements;
+use super::raw::{Extension, Operation as Owned};
+use std::collections::BTreeMap;
 
 #[derive(Clone)]
 struct Value {
@@ -22,6 +26,7 @@ struct Value {
 
 struct Builder<'a, 'b> {
     program: &'a raw::Program,
+    sources: &'a zryna_source::SourceMap,
     resolver: Resolver<'a, 'b>,
     original: &'b RawFunctionSyntax,
     symbolic: bool,
@@ -31,14 +36,55 @@ struct Builder<'a, 'b> {
     scope_start: usize,
     locals: Vec<(&'b str, Value)>,
     result: Closed,
+    extensions: Vec<Extension>,
+    affine: Vec<bool>,
+    alive: Vec<bool>,
+    loans: BTreeMap<u32, (u32, bool)>,
+    loan_parents: BTreeMap<u32, u32>,
 }
 
-pub(super) fn check(program: &raw::Program, originals: &Originals<'_>) -> Result<(), Failure> {
+pub(super) fn check(
+    claim: &super::raw::Program,
+    originals: &Originals<'_>,
+    sources: &zryna_source::SourceMap,
+) -> Result<(), Failure> {
+    let program = &claim.graph;
+    if claim.extensions.len() != program.functions.len() {
+        return Err(reject("incomplete owned extensions"));
+    }
     if originals.units.iter().any(|unit| !unit.data_declarations.is_empty()) {
         return Err(reject(
             "executable Copy lane does not yet prove original nominal member obligations",
         ));
     }
+    check_originals(program, originals, sources)?;
+    for (function_index, function) in program.functions.iter().enumerate() {
+        let domain = if function.key[0] == 0x40 {
+            keys::Domain::FunctionInstance
+        } else {
+            keys::Domain::SourceRoot
+        };
+        let key = keys::decode(&function.key, domain)?;
+        let (module, index) = key.declaration().ok_or(Failure::InternalFailure)?;
+        let original = &originals.units[module as usize].functions[index as usize];
+        let mut arguments = reserve(key.arguments().len())?;
+        arguments.extend(key.arguments());
+        let (blocks, extensions) =
+            build(program, originals, sources, module, original, arguments, false)?;
+        if function.blocks != blocks || claim.extensions[function_index] != extensions {
+            return Err(reject(
+                "claimed body differs from complete source operation/order/binding replay",
+            ));
+        }
+    }
+    crate::generic_v1::source_body::demand(program)
+}
+
+pub(super) fn check_originals(
+    program: &raw::Program,
+    originals: &Originals<'_>,
+    sources: &zryna_source::SourceMap,
+) -> Result<(), Failure> {
     // Every original is checked before checking instances, including unused templates.
     for unit in originals.units {
         for original in &unit.functions {
@@ -52,34 +98,17 @@ pub(super) fn check(program: &raw::Program, originals: &Originals<'_>) -> Result
             }
             let mut arguments = reserve(arity)?;
             arguments.extend(parameters.iter().map(Vec::as_slice));
-            build(program, originals, unit.id, original, arguments, true)?;
+            build(program, originals, sources, unit.id, original, arguments, true)?;
         }
     }
-    for function in &program.functions {
-        let domain = if function.key[0] == 0x40 {
-            keys::Domain::FunctionInstance
-        } else {
-            keys::Domain::SourceRoot
-        };
-        let key = keys::decode(&function.key, domain)?;
-        let (module, index) = key.declaration().ok_or(Failure::InternalFailure)?;
-        let original = &originals.units[module as usize].functions[index as usize];
-        let mut arguments = reserve(key.arguments().len())?;
-        arguments.extend(key.arguments());
-        let blocks = build(program, originals, module, original, arguments, false)?;
-        if function.blocks != blocks {
-            return Err(reject(
-                "claimed body differs from complete source operation/order/binding replay",
-            ));
-        }
-    }
-    demand(program)
+    Ok(())
 }
 
 pub(super) fn produce(
     program: &mut raw::Program,
     originals: &Originals<'_>,
-) -> Result<(), Failure> {
+    sources: &zryna_source::SourceMap,
+) -> Result<Vec<Vec<Extension>>, Failure> {
     let mut all = reserve(program.functions.len())?;
     for function in &program.functions {
         let domain = if function.key[0] == 0x40 {
@@ -92,27 +121,31 @@ pub(super) fn produce(
         let original = &originals.units[module as usize].functions[index as usize];
         let mut arguments = reserve(key.arguments().len())?;
         arguments.extend(key.arguments());
-        all.push(build(program, originals, module, original, arguments, false)?);
+        all.push(build(program, originals, sources, module, original, arguments, false)?);
     }
-    for (function, blocks) in program.functions.iter_mut().zip(all) {
+    let mut extensions = reserve(all.len())?;
+    for (function, (blocks, ext)) in program.functions.iter_mut().zip(all) {
         function.blocks = blocks;
+        extensions.push(ext);
     }
-    check(program, originals)
+    Ok(extensions)
 }
 
 fn build<'a, 'b>(
     program: &'a raw::Program,
     originals: &'a Originals<'b>,
+    sources: &'a zryna_source::SourceMap,
     module: u32,
     original: &'b RawFunctionSyntax,
     arguments: Vec<&'a [u8]>,
     symbolic: bool,
-) -> Result<Vec<raw::Block>, Failure> {
+) -> Result<(Vec<raw::Block>, Vec<Extension>), Failure> {
     let resolver =
         Resolver { originals, module, parameters: original.type_parameters.as_ref(), arguments };
     let result = resolver.resolve_symbolic(original.result_type)?;
     let mut builder = Builder {
         program,
+        sources,
         resolver,
         original,
         symbolic,
@@ -122,11 +155,16 @@ fn build<'a, 'b>(
         locals: reserve(original.parameters.len())?,
         scope_start: 0,
         result,
+        extensions: Vec::new(),
+        affine: Vec::new(),
+        alive: Vec::new(),
+        loans: BTreeMap::new(),
+        loan_parents: BTreeMap::new(),
     };
     builder.new_block(original.body.span)?;
     for parameter in &original.parameters {
         let ty = builder.resolve(parameter.type_syntax)?;
-        if matches!(ty, Closed::Unit | Closed::Borrow(..)) {
+        if matches!(ty, Closed::Unit) {
             return Err(reject("Copy executable parameters cannot carry unit or loans"));
         }
         let value = builder.value(ty)?;
@@ -135,10 +173,30 @@ fn build<'a, 'b>(
         builder.bind(&parameter.name.text, value)?;
     }
     builder.source_block(original.body.root_block, 0)?;
-    Ok(builder.blocks)
+    normalize::run(&mut builder.blocks, &mut builder.extensions)?;
+    Ok((builder.blocks, builder.extensions))
 }
 
 impl<'b> Builder<'_, 'b> {
+    fn locate(&self, failure: Failure, at: zryna_source::UntrustedSpan) -> Failure {
+        let Failure::Diagnostics(mut errors) = failure else {
+            return failure;
+        };
+        for error in &mut errors {
+            if error.code == "ZRYNA-M7007"
+                && error.primary_span().is_none()
+                && let Ok(span) = self.sources.verify_span(at)
+            {
+                *error = zryna_diagnostics::Diagnostic::error_at(
+                    &error.code,
+                    span,
+                    &error.message,
+                    &error.guidance,
+                );
+            }
+        }
+        Failure::Diagnostics(errors)
+    }
     fn resolve(&self, occurrence: u32) -> Result<Closed, Failure> {
         if self.symbolic {
             self.resolver.resolve_symbolic(occurrence)
@@ -148,9 +206,6 @@ impl<'b> Builder<'_, 'b> {
     }
 
     fn bind(&mut self, name: &'b str, value: Value) -> Result<(), Failure> {
-        if self.symbolic {
-            opaque_owners::check_binding(self.original, name, &value.ty)?;
-        }
         if self.locals[self.scope_start..].iter().any(|(prior, _)| prior.eq_ignore_ascii_case(name))
         {
             return Err(reject("source value bindings collide under portable folding"));
@@ -162,10 +217,16 @@ impl<'b> Builder<'_, 'b> {
 
     fn value(&mut self, ty: Closed) -> Result<Value, Failure> {
         if self.next as usize >= crate::data_ownership_v1::MAX_VALUES_PER_FUNCTION {
-            return Err(super::budget("source replay exceeds inherited value ceiling"));
+            return Err(crate::generic_v1::budget("source replay exceeds inherited value ceiling"));
         }
         let id = self.next;
         self.next = self.next.checked_add(1).ok_or(Failure::InternalFailure)?;
+        let affine = owners::affine(&ty)?;
+        self.affine.push(affine);
+        self.alive.push(true);
+        if let Closed::Borrow(_, exclusive) = &ty {
+            self.loans.insert(id, (id, *exclusive));
+        }
         Ok(Value { id, ty })
     }
 
@@ -182,7 +243,7 @@ impl<'b> Builder<'_, 'b> {
 
     fn new_block(&mut self, span: zryna_source::UntrustedSpan) -> Result<usize, Failure> {
         if self.blocks.len() >= crate::data_ownership_v1::MAX_BLOCKS_PER_FUNCTION {
-            return Err(super::budget("source replay exceeds inherited block ceiling"));
+            return Err(crate::generic_v1::budget("source replay exceeds inherited block ceiling"));
         }
         self.blocks.try_reserve(1).map_err(|_| Failure::AllocationFailure)?;
         let index = self.blocks.len();
@@ -202,6 +263,7 @@ impl<'b> Builder<'_, 'b> {
         span: zryna_source::UntrustedSpan,
         operation: raw::Operation,
     ) -> Result<Value, Failure> {
+        owners::core(self, &operation)?;
         let value = self.value(ty)?;
         let result = self.definition(&value)?;
         let instructions = &mut self.blocks[self.block].instructions;
@@ -209,97 +271,4 @@ impl<'b> Builder<'_, 'b> {
         instructions.push(raw::Instruction { result, span, operation });
         Ok(value)
     }
-
-    fn source_block(&mut self, index: u32, depth: usize) -> Result<(), Failure> {
-        if depth > 128 {
-            return Err(super::budget("source replay nesting exceeds 128"));
-        }
-        let source = &self.original.body.blocks[index as usize];
-        let mut returned = false;
-        for id in &source.statements {
-            if returned {
-                return Err(reject("Copy executable lane does not admit statements after return"));
-            }
-            let statement = &self.original.body.statements[*id as usize];
-            match &statement.kind {
-                RawStatementKind::LocalDeclaration {
-                    name,
-                    type_syntax,
-                    initializer,
-                    mutable,
-                    ..
-                } => {
-                    if *mutable {
-                        return Err(reject(
-                            "mutable source state requires successor ownership/CFG replay",
-                        ));
-                    }
-                    let value = self.expression(*initializer, depth + 1)?;
-                    if value.ty != self.resolve(*type_syntax)? {
-                        return Err(reject(
-                            "source initializer differs from its declared symbolic type",
-                        ));
-                    }
-                    self.bind(&name.text, value)?;
-                }
-                RawStatementKind::Return { value, .. } => {
-                    let value = self.expression(*value, depth + 1)?;
-                    if value.ty != self.result {
-                        return Err(reject("source return differs from original symbolic result"));
-                    }
-                    self.blocks[self.block].span = statement.span;
-                    self.blocks[self.block].terminator = raw::Terminator::Return(value.id);
-                    returned = true;
-                }
-                RawStatementKind::ExpressionStatement { expression, .. } => {
-                    self.expression(*expression, depth + 1)?;
-                }
-                _ => {
-                    return Err(reject(
-                        "source statement requires a successor lane beyond immutable Copy replay",
-                    ));
-                }
-            }
-        }
-        if !returned {
-            if self.result != Closed::Unit {
-                return Err(reject("source function lacks an exact return"));
-            }
-            let value = self.emit(Closed::Unit, source.span, raw::Operation::Unit)?;
-            self.blocks[self.block].span = source.span;
-            self.blocks[self.block].terminator = raw::Terminator::Return(value.id);
-        }
-        Ok(())
-    }
-}
-
-pub(super) fn demand(program: &raw::Program) -> Result<(), Failure> {
-    let mut reached = reserve(program.functions.len())?;
-    reached.resize(program.functions.len(), false);
-    let mut pending = reserve(program.functions.len())?;
-    for (index, function) in program.functions.iter().enumerate() {
-        if function.key[0] == 0x41 {
-            reached[index] = true;
-            pending.push(index);
-        }
-    }
-    while let Some(index) = pending.pop() {
-        for instruction in
-            program.functions[index].blocks.iter().flat_map(|block| &block.instructions)
-        {
-            if let raw::Operation::ClosedGenericCall { instance, .. } = instruction.operation {
-                let target = instance as usize;
-                let seen =
-                    reached.get_mut(target).ok_or_else(|| reject("demanded instance is absent"))?;
-                if !*seen {
-                    *seen = true;
-                    pending.push(target);
-                }
-            }
-        }
-    }
-    if reached.iter().any(|seen| !seen) {
-        return Err(reject("generic inventory contains an undemanded instance"));
-    }
-    Ok(())
 }

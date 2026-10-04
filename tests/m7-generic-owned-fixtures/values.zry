@@ -1,0 +1,6 @@
+export function identity<T extends ZrynaValue>(value:T):T { return value; }
+export function keep<T extends ZrynaValue>(value:Option<T>):Option<T> { return value; }
+export function make<T extends ZrynaValue>(value:T):T { const pending:String="callee"; return value; }
+export function discard<T extends ZrynaValue>(value:T):i32 { return 7; }
+export function inspect<T extends ZrynaValue>(value:Borrow<T>):i32 { return 7; }
+export function inspectMut<T extends ZrynaValue>(value:BorrowMut<T>):i32 { return 7; }
