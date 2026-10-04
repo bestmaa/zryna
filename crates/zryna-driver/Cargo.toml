@@ -56,3 +56,7 @@ path = "src/native_activation_parity.rs"
 [[test]]
 name = "server_lifecycle"
 path = "src/server_lifecycle/harness.rs"
+
+[[test]]
+name = "server_runtime"
+path = "src/server_runtime/harness.rs"
