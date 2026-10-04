@@ -97,11 +97,30 @@ pub(super) fn accept(
     bytes: &[u8],
     dependencies: &[&str],
 ) -> CapturedForeignLibrary {
-    capture_foreign_library(
+    let captured = capture_foreign_library(
         requirements,
         &material_input(requirements, bytes, &sha(bytes), dependencies),
-    )
-    .expect("independent accepted ELF")
+    );
+    match captured {
+        Ok(captured) => captured,
+        Err(error) => {
+            use object::{Object as _, ObjectSection as _, ObjectSymbol as _};
+            let file = object::File::parse(bytes).expect("independent fixture ELF");
+            let sections = file
+                .sections()
+                .take(16)
+                .map(|s| (s.name(), s.size(), s.flags()))
+                .collect::<Vec<_>>();
+            let symbols = file
+                .symbols()
+                .take(24)
+                .map(|s| (s.name(), s.kind(), s.flags()))
+                .collect::<Vec<_>>();
+            panic!(
+                "independent accepted ELF: {error:?}; sections={sections:?}; symbols={symbols:?}"
+            );
+        }
+    }
 }
 pub(super) fn reject(requirements: &HandleLinkRequirements, bytes: &[u8], dependencies: &[&str]) {
     assert!(

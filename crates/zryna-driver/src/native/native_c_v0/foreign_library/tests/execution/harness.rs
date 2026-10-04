@@ -40,6 +40,9 @@ impl Fixture {
         .expect("independent fixture prerequisite")
     }
     pub(super) fn compile(&self, source: &str) -> Vec<u8> {
+        self.compile_variant(source, &[])
+    }
+    pub(super) fn compile_variant(&self, source: &str, extra: &[&str]) -> Vec<u8> {
         let stage = self.stage();
         stage
             .write_input(&stage.harness, source.as_bytes())
@@ -55,6 +58,7 @@ impl Fixture {
             "-fno-ident",
             "-fno-pie",
             "-fno-pic",
+            "-fcf-protection=none",
             "-fno-unwind-tables",
             "-fno-asynchronous-unwind-tables",
             "-Wall",
@@ -62,12 +66,16 @@ impl Fixture {
             "-Werror",
             "-pedantic",
             "-c",
-            "-o",
         ]
         .into_iter()
         .map(Into::into)
         .collect();
-        args.extend([object.as_os_str().to_owned(), harness.as_os_str().to_owned()]);
+        args.extend(extra.iter().map(OsString::from));
+        args.extend([
+            OsString::from("-o"),
+            object.as_os_str().to_owned(),
+            harness.as_os_str().to_owned(),
+        ]);
         let output = compile(&stage, &args);
         assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
         assert!(output.stdout.is_empty() && output.stderr.is_empty());

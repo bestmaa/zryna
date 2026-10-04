@@ -12,6 +12,22 @@ fn library_source() -> String {
         include_str!("library.c")
     )
 }
+
+#[test]
+fn independently_instrumented_compiler_object_rejects_then_explicit_profile_recovers() {
+    use object::{Object as _, ObjectSection as _};
+    let fixture = Fixture::new();
+    let requirements = linked_requirements(&capture::reference(), "imported");
+    let instrumented = fixture.compile_variant(&library_source(), &["-fcf-protection=full"]);
+    let file = object::File::parse(instrumented.as_slice()).expect("independent compiler ELF");
+    assert!(file.sections().any(|section| section.name().ok() == Some(".note.gnu.property")));
+    reject(&requirements, &instrumented, &["free", "malloc"]);
+    fixture.empty();
+    let explicit = fixture.compile(&library_source());
+    let file = object::File::parse(explicit.as_slice()).expect("explicit compiler ELF");
+    assert!(!file.sections().any(|section| section.name().ok() == Some(".note.gnu.property")));
+    accept(&requirements, &explicit, &["free", "malloc"]);
+}
 fn entry(requirements: &HandleLinkRequirements, name: &str) -> String {
     requirements
         .object()

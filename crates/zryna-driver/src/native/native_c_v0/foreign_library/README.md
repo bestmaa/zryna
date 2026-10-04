@@ -30,6 +30,10 @@ substitution rejection, and cleanup/retry after an actual unresolved-symbol
 link failure. A structurally accepted fixture that calls `abort()` produces
 SIGABRT: structural capture cannot establish the safety of a C body or promise
 recoverable status, in-process containment or cleanup after a crash.
+The test-only foreign object recipe explicitly selects `-fcf-protection=none`
+for this closed fixture subset. An independent `-fcf-protection=full` control
+emits GNU property metadata and remains rejected. These fixture arguments do
+not select or authorize a production recipe's compiler or security policy.
 
 ## Full-feature acceptance still open
 
