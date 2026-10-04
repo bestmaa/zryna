@@ -19,7 +19,7 @@ package manifest or lockfile. It checks typed outcomes, grant counts, component/
 private value omission, override and dependency refusal, unchanged existing output and
 installation/provider/runtime tamper rejection followed by recovery.
 
-This is a development-profile **test-only review candidate**, not a release build or signed
+This is a optimized **test-only review candidate**, not a release build or signed
 archive. It records the actual observed branch/head/tree separately from the installation
 wire's intended-main compatibility reference. It asserts no protected-main membership,
 release recipe execution, reproduction, signature authentication or publication authority.

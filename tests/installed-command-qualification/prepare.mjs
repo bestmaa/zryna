@@ -110,10 +110,10 @@ export async function prepare(source, output) {
   const prepared = fixturePayload(identity, files, receipt, metadata);
   const digest = sha256(prepared.distribution);
   const env = { ...buildEnv, ZRYNA_DISTRIBUTION_SHA256: digest };
-  run(cargo, ['build', '--locked', '-p', 'zryna', '--bin', 'zryna'], source, env);
+  run(cargo, ['build', '--release', '--locked', '-p', 'zryna', '--bin', 'zryna'], source, env);
   assertCurrent();
   const buildRoot = process.env.CARGO_TARGET_DIR || join(source, 'target');
-  const cli = readFileSync(join(buildRoot, 'debug', process.platform === 'win32' ? 'zryna.exe' : 'zryna'));
+  const cli = readFileSync(join(buildRoot, 'release', process.platform === 'win32' ? 'zryna.exe' : 'zryna'));
   verifyCompiledIdentity(cli, digest, target);
   const payload = [...prepared.payload, { path: paths.cli, mode: 0o755, data: cli },
     { path: 'metadata/distribution.json', mode: 0o644, data: prepared.distribution }].sort((a, b) => a.path < b.path ? -1 : 1);
@@ -163,7 +163,7 @@ export async function prepare(source, output) {
     releaseVerificationBlocker, qualificationLockSha256: prepared.qualificationLockSha256,
     runtimeClosure: prepared.runtimeClosure, archiveContentRoundTripVerified: true,
     archive: expected, cliSha256: sha256(cli), distributionSha256: digest,
-    recipeApplied: false, buildProfile: 'dev', buildCommand: [cargo, 'build', '--locked', '-p', 'zryna', '--bin', 'zryna'],
+    recipeApplied: false, buildProfile: 'release', buildCommand: [cargo, 'build', '--release', '--locked', '-p', 'zryna', '--bin', 'zryna'],
     directRustTools: { cargo, rustc, rustdoc: buildEnv.RUSTDOC }, sourceCleanBeforeAndAfterBuild: true,
     signatureAuthentication: 'not-performed' };
   writeFileSync(join(output, 'candidate.json'), `${JSON.stringify(proof, null, 2)}\n`, { flag: 'wx' });
