@@ -36,9 +36,10 @@ export async function prepare(source, output) {
   const tool = name => run('rustup', ['which', '--toolchain', '1.97.1', name], source);
   const cargo = tool('cargo');
   const rustc = tool('rustc');
+  const buildEnv = { ...process.env, RUSTC: rustc, RUSTDOC: tool('rustdoc'), RUSTUP_TOOLCHAIN: '1.97.1' };
   // This command really runs. No protected build/gate receipt is fabricated or submitted.
   const command = ['cargo', 'run', '--locked', '-p', 'zryna', '--', 'architecture', 'check', '--json'];
-  const report = JSON.parse(run(cargo, command.slice(1), source));
+  const report = JSON.parse(run(cargo, command.slice(1), source, buildEnv));
   const receipt = bytes({ format: 'zryna.source-build-receipt.v1',
     source: { repository: 'https://github.com/zryna/zryna', commit: head, tree }, command,
     toolchain: { channel: '1.97.1', cargoVersion: run(cargo, ['--version'], source),
@@ -75,7 +76,7 @@ export async function prepare(source, output) {
     const actual = files.find(file => file.path === path).data;
     if (actual.length !== expected[0] || sha256(actual) !== expected[1]) throw new Error('Node pin differs');
   }
-  const metadata = JSON.parse(run(cargo, ['metadata', '--format-version=1', '--locked', '--offline'], source));
+  const metadata = JSON.parse(run(cargo, ['metadata', '--format-version=1', '--locked', '--offline'], source, buildEnv));
   for (const record of rustMaterials(target)) {
     const pkg = metadata.packages.find(pkg => pkg.name === record.name && pkg.version === record.version);
     if (!pkg) throw new Error(`Missing pinned Rust material ${record.name}-${record.version}`);
@@ -103,7 +104,7 @@ export async function prepare(source, output) {
       sha256: sha256(readFileSync(join(source, 'scripts/distribution/release-recipe-v1.json'))) } };
   const prepared = preparePayload(identity, files, receipt, { productionCandidate: true });
   const digest = sha256(prepared.distribution);
-  const env = { ...process.env, ZRYNA_DISTRIBUTION_SHA256: digest };
+  const env = { ...buildEnv, ZRYNA_DISTRIBUTION_SHA256: digest };
   run(cargo, ['build', '--locked', '-p', 'zryna', '--bin', 'zryna'], source, env);
   const buildRoot = process.env.CARGO_TARGET_DIR || join(source, 'target');
   const cli = readFileSync(join(buildRoot, 'debug', process.platform === 'win32' ? 'zryna.exe' : 'zryna'));
