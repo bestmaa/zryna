@@ -38,12 +38,15 @@ fn executable_literal_ceiling_is_checked_before_copying_and_unused_templates_kee
 #[test]
 fn small_source_cannot_replicate_literals_past_aggregate_wire_credit() {
     let literal = "x".repeat(65_536);
-    let mut source = format!(
-        "function specialized<T extends ZrynaValue>(input:i32):i32 {{ const owner:String=\"{literal}\"; return input; }} export function root(input:i32):i32 {{"
-    );
-    for index in 0..513 {
-        let lhs = index / 23;
-        let rhs = index % 23;
+    let mut source = "function specialized<T extends ZrynaValue>(input:i32):i32 {".to_owned();
+    for index in 0..8 {
+        source.push_str(&format!("const owner{index}:String=\"{literal}\";"));
+    }
+    source.push_str("return input; } export function root(input:i32):i32 {");
+    // 64 distinct instances retain exactly 32MiB; instance 65 must stop before its first copy.
+    for index in 0..65 {
+        let lhs = index / 9;
+        let rhs = index % 9;
         let ty = format!(
             "{}Result<i32,{}bool{}>{}",
             "Option<".repeat(lhs),
@@ -54,7 +57,7 @@ fn small_source_cannot_replicate_literals_past_aggregate_wire_credit() {
         source.push_str(&format!("const v{index}:i32=specialized<{ty}>(input);"));
     }
     source.push_str("return input; }");
-    assert!(source.len() < 300_000);
+    assert!(source.len() < 800_000);
     let Failure::Diagnostics(errors) =
         claim(&[("main.zry", &source)]).expect_err("replication stops before literal 513")
     else {

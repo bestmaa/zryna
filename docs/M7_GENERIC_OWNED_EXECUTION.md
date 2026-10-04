@@ -120,5 +120,5 @@ Source production and independent source replay charge aggregate value, block, c
 operand and literal credit before allocating each operation. Closed String literals are limited
 to 64KiB each and their combined bytes to the 32MiB wire lower bound; encoding still checks the
 complete message overhead. Opaque original checking retains no literal bytes. A genuine source
-under 300KiB demanding 513 distinct instances of one 64KiB literal is rejected before copying the
-first excess instance, rather than materializing every body before checking aggregate budgets.
+under 800KiB demanding 65 distinct instances of eight 64KiB literals is rejected before copying
+literal 513, rather than materializing every body before checking aggregate budgets.
