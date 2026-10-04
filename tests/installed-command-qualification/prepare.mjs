@@ -1,6 +1,6 @@
 // Test-only candidate assembly. No signing, protected-main authority, release or publication.
 import { spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, chmodSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 import { bytes, sha256 } from '../../scripts/distribution/canonical.mjs';
@@ -149,6 +149,15 @@ export async function prepare(source, output) {
   writeFileSync(join(output, expected.filename), archive, { flag: 'wx' });
   const installation = join(output, 'fresh-install');
   extractVerifiedProductionFiles(installation, decoded);
+  // Preserve ordinary archive file modes despite the test process's restrictive umask.
+  // The fixture root stays private; this changes only newly extracted, owned fixture files.
+  if (process.platform !== 'win32') {
+    for (const file of decoded) {
+      const path = join(installation, file.path);
+      chmodSync(path, file.mode);
+      if ((statSync(path).mode & 0o7777) !== file.mode) throw new Error('Fixture archive mode differs');
+    }
+  }
   const proof = { status: 'test-only-review-candidate', productionAdmission: 'forbidden',
     observedSource: { head, tree, branch }, intendedSourceRef: identity.source.ref,
     releaseVerificationBlocker, qualificationLockSha256: prepared.qualificationLockSha256,
