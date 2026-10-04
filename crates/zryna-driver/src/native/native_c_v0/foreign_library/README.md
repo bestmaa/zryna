@@ -60,10 +60,13 @@ raw boundary and reviewed library-specific ownership policy before those proofs.
 
 The normative acceptance owner remains
 [`NATIVE_C_INTEROP_V0_ACCEPTANCE.md`](../../../../../../spec/abi/NATIVE_C_INTEROP_V0_ACCEPTANCE.md).
-The preserved #515/#520/#521/#524/#525/#527 draft stack carries source,
+Draft #534 is the cumulative review route toward main for the source,
 typed-flow/IR/MIR, scalar, handle, byte-copy, private runtime and shared process
-work. This boundary adds acquired-object structure and separate-object fixture
-evidence; it does not turn those drafts into an integrated complete feature.
+work, plus this retained-object boundary and separate-object fixture evidence.
+Its #515/#520/#521/#524/#525/#527/#533 predecessor commits, branches and evidence
+remain preserved; those snapshots contain no unique commits outside this route.
+This consolidates review without declaring the complete feature accepted or
+granting recipe execution, host permission or public activation.
 
 | Acceptance boundary | Current evidence | Remaining work |
 | --- | --- | --- |
