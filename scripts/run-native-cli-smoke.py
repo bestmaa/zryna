@@ -62,8 +62,12 @@ def main():
         parser.error("output must be a new external evidence directory")
     if git(root, "status", "--porcelain"):
         parser.error("proof requires a clean committed source checkout")
-    binaries = {name: getattr(args, name).resolve(strict=True) for name in
+    # Preserve executable names: rustup's cargo/rustc shims dispatch using argv[0].
+    binaries = {name: getattr(args, name).absolute() for name in
                 ("feature_cli", "default_cli", "node", "cargo", "rustc")}
+    for path in binaries.values():
+        if not path.is_file():
+            parser.error("tool path must name an existing executable file")
     identity = {name: {"path": str(path), "sha256": digest(path)} for name, path in binaries.items()}
     head = git(root, "rev-parse", "HEAD")
     before = inventory(root)
