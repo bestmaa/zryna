@@ -135,6 +135,13 @@ magic and physical storage records; it accepts compiler-private owned String/Vec
 an owned result only after the current terminal edge's exact reverse cleanup succeeds. Structural
 input checks do not establish backing-memory provenance for arbitrary C callers.
 
+Rejected byte entries and invalid or unselected dispatcher ordinals share terminal framing.
+Only after nonnull, eight-byte-aligned context/outcome pointers and exact byte-context magic
+validate does rejection clear owned-result fields and report live, reserved and private unresolved
+obligations. It preserves caller inputs and context, makes no foreign call and guesses no cleanup.
+Byte inputs/outcomes require eight-byte alignment; handle-only inputs/outcomes retain four-byte
+alignment. Invalid context channels do not authorize access to byte extensions.
+
 Generated bodies execute the sealed preparation order: complete UTF-8 validation for String
 loans, bounded Vec length and 0..255 element checks before packed allocation, canonical empty
 loans, signed count checks and loan bounds before C entry. Foreign byte owners register in the

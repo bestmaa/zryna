@@ -13,7 +13,8 @@ pub(super) fn enter(builder: &mut FunctionBuilder<'_>, arguments: &[Value], magi
     let bad_output = builder.create_block();
     let valid_output = builder.ins().icmp_imm_s(IntCC::NotEqual, *outcome, 0);
     require(builder, valid_output, bad_output);
-    let alignment = builder.ins().band_imm_u(*outcome, 3);
+    let channel_alignment = if magic_value == super::super::storage::MAGIC { 7 } else { 3 };
+    let alignment = builder.ins().band_imm_u(*outcome, channel_alignment);
     let aligned = builder.ins().icmp_imm_s(IntCC::Equal, alignment, 0);
     require(builder, aligned, bad_output);
     let zero = builder.ins().iconst(types::I32, 0);
@@ -24,7 +25,7 @@ pub(super) fn enter(builder: &mut FunctionBuilder<'_>, arguments: &[Value], magi
     builder.ins().store(MemFlagsData::new(), tag, *outcome, 0);
     let no_operation = builder.ins().iconst(types::I32, -1);
     builder.ins().store(MemFlagsData::new(), no_operation, *outcome, 4);
-    for (pointer, alignment) in [(*context, 7), (*inputs, 3)] {
+    for (pointer, alignment) in [(*context, 7), (*inputs, channel_alignment)] {
         let nonnull = builder.ins().icmp_imm_s(IntCC::NotEqual, pointer, 0);
         require(builder, nonnull, bad);
         let low = builder.ins().band_imm_u(pointer, alignment);

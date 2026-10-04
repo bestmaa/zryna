@@ -128,7 +128,7 @@ pub(super) fn object(
         object.define_function(id, &mut context).map_err(codegen_error)?;
         functions.insert(ordinal, id);
     }
-    dispatcher(program, &functions, &helpers, &mut object, &mut frontend)?;
+    dispatcher(program, &functions, &helpers, byte_channel, &mut object, &mut frontend)?;
     object.finish().emit().map_err(codegen_error)
 }
 
@@ -136,6 +136,7 @@ fn dispatcher(
     program: &VerifiedMirProgram,
     functions: &BTreeMap<usize, FuncId>,
     helpers: &BTreeMap<&'static str, FuncId>,
+    byte_channel: bool,
     object: &mut ObjectModule,
     frontend: &mut FunctionBuilderContext,
 ) -> Result<(), Diagnostic> {
@@ -180,6 +181,7 @@ fn dispatcher(
     // An unsupported complete-program ordinal never enters any source body or foreign call.
     let rejected_arity = builder.ins().iconst(types::I32, -1);
     builder.ins().call(enter, &[*context_pointer, *inputs, *outcome, rejected_arity]);
+    storage::rejected(&mut builder, *context_pointer, *outcome, byte_channel);
     let tag = builder.ins().iconst(types::I32, 3);
     builder.ins().return_(&[tag]);
     builder.seal_all_blocks();

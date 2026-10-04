@@ -2,6 +2,7 @@
 
 use super::super::{super::invariant_error, state::State};
 use cranelift_codegen::ir::{InstBuilder, MemFlagsData, Value, condcodes::IntCC, types};
+use cranelift_frontend::FunctionBuilder;
 use zryna_diagnostics::Diagnostic;
 use zryna_native_mir::native_c_v0::contract::{PrivateOrigin, PrivateOwner, ValueType};
 use zryna_ownership_runtime_abi::LogicalOperation;
@@ -160,36 +161,48 @@ pub(in crate::native_c_v0::resources) fn unresolved(
     state.builder.ins().store(MemFlagsData::new(), count, state.outcome, 20);
 }
 
-pub(in crate::native_c_v0::resources) fn rejected(state: &mut State<'_, '_>) {
-    if !state.environment.byte_channel {
+pub(in crate::native_c_v0::resources) fn rejected(
+    builder: &mut FunctionBuilder<'_>,
+    context: Value,
+    outcome: Value,
+    byte_channel: bool,
+) {
+    if !byte_channel {
         return;
     }
-    let done = state.builder.create_block();
-    let valid = state.builder.create_block();
-    let context = state.builder.ins().icmp_imm_s(IntCC::NotEqual, state.context, 0);
-    let outcome = state.builder.ins().icmp_imm_s(IntCC::NotEqual, state.outcome, 0);
-    let present = state.builder.ins().band(context, outcome);
-    state.builder.ins().brif(present, valid, &[], done, &[]);
-    state.builder.switch_to_block(valid);
-    let context_low = state.builder.ins().band_imm_u(state.context, 7);
-    let outcome_low = state.builder.ins().band_imm_u(state.outcome, 7);
-    let low = state.builder.ins().bor(context_low, outcome_low);
-    let aligned = state.builder.ins().icmp_imm_s(IntCC::Equal, low, 0);
-    let valid = state.builder.create_block();
-    state.builder.ins().brif(aligned, valid, &[], done, &[]);
-    state.builder.switch_to_block(valid);
-    let magic = state.builder.ins().load(types::I64, MemFlagsData::new(), state.context, 0);
-    let expected = state.builder.ins().iconst(types::I64, super::MAGIC);
-    let exact = state.builder.ins().icmp(IntCC::Equal, magic, expected);
-    let valid = state.builder.create_block();
-    state.builder.ins().brif(exact, valid, &[], done, &[]);
-    state.builder.switch_to_block(valid);
-    let prior = state.builder.ins().load(types::I32, MemFlagsData::new(), state.context, 1560);
-    unresolved(state, prior);
-    let null = state.builder.ins().iconst(types::I64, 0);
+    let done = builder.create_block();
+    let valid = builder.create_block();
+    let context_present = builder.ins().icmp_imm_s(IntCC::NotEqual, context, 0);
+    let outcome_present = builder.ins().icmp_imm_s(IntCC::NotEqual, outcome, 0);
+    let present = builder.ins().band(context_present, outcome_present);
+    builder.ins().brif(present, valid, &[], done, &[]);
+    builder.switch_to_block(valid);
+    let context_low = builder.ins().band_imm_u(context, 7);
+    let outcome_low = builder.ins().band_imm_u(outcome, 7);
+    let low = builder.ins().bor(context_low, outcome_low);
+    let aligned = builder.ins().icmp_imm_s(IntCC::Equal, low, 0);
+    let valid = builder.create_block();
+    builder.ins().brif(aligned, valid, &[], done, &[]);
+    builder.switch_to_block(valid);
+    let magic = builder.ins().load(types::I64, MemFlagsData::new(), context, 0);
+    let expected = builder.ins().iconst(types::I64, super::MAGIC);
+    let exact = builder.ins().icmp(IntCC::Equal, magic, expected);
+    let valid = builder.create_block();
+    builder.ins().brif(exact, valid, &[], done, &[]);
+    builder.switch_to_block(valid);
+    // Admission may have stopped at the input channel. Read the original obligations only
+    // after this byte context and outcome satisfy their distinct physical channel checks.
+    let live = builder.ins().load(types::I32, MemFlagsData::new(), context, 12);
+    let reserved = builder.ins().load(types::I32, MemFlagsData::new(), context, 16);
+    let private = builder.ins().load(types::I32, MemFlagsData::new(), context, 1560);
+    let foreign = builder.ins().iadd(live, reserved);
+    let count = builder.ins().iadd(foreign, private);
+    builder.ins().store(MemFlagsData::new(), count, outcome, 20);
+    builder.ins().store(MemFlagsData::new(), reserved, outcome, 24);
+    let null = builder.ins().iconst(types::I64, 0);
     for offset in [32, 40, 48] {
-        state.builder.ins().store(MemFlagsData::new(), null, state.outcome, offset);
+        builder.ins().store(MemFlagsData::new(), null, outcome, offset);
     }
-    state.builder.ins().jump(done, &[]);
-    state.builder.switch_to_block(done);
+    builder.ins().jump(done, &[]);
+    builder.switch_to_block(done);
 }

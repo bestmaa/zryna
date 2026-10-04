@@ -5,6 +5,7 @@ mod bounds;
 mod failures;
 mod freshness;
 mod malformed;
+mod rejection;
 mod transfers;
 
 #[test]

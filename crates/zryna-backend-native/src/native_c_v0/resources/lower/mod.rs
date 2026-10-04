@@ -31,7 +31,12 @@ pub(super) fn build(
     let bad = state.builder.create_block();
     state.builder.ins().brif(valid, good, &[], bad, &[]);
     state.builder.switch_to_block(bad);
-    super::storage::rejected(&mut state);
+    super::storage::rejected(
+        &mut state.builder,
+        state.context,
+        state.outcome,
+        state.environment.byte_channel,
+    );
     let tag = state.builder.ins().iconst(types::I32, 3);
     state.builder.ins().return_(&[tag]);
     state.builder.switch_to_block(good);
