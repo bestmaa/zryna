@@ -57,8 +57,8 @@ def main():
         parser.add_argument("--" + flag, type=Path, required=True)
     args = parser.parse_args()
     root = args.root.resolve(strict=True)
-    output = args.output.absolute()
-    if output.exists() or output.is_relative_to(root):
+    output = args.output.resolve()
+    if args.output.is_symlink() or output.exists() or output.is_relative_to(root):
         parser.error("output must be a new external evidence directory")
     if git(root, "status", "--porcelain"):
         parser.error("proof requires a clean committed source checkout")
@@ -152,7 +152,7 @@ def main():
         native = execute(label + "-native", command(binaries["feature_cli"], source, stem, profile)
                          + ["--native-frontend"])
         assert native.returncode == 0, "private native build failed: " + native.stderr.decode(errors="replace")
-        assert json.loads(native.stdout) == baseline_json, "complete CLI success JSON differs"
+        assert native.stdout == baseline.stdout, "complete CLI success JSON bytes differ"
         actual = tree(destination)
         assert actual == frozen, "artifact or manifest bytes differ"
         manifest = destination / f"zryna-manifest-v{version}.json"
