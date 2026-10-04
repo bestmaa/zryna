@@ -31,11 +31,12 @@ impl Builder<'_, '_> {
                 let text = spelling
                     .get(1..spelling.len() - 1)
                     .ok_or_else(|| reject("invalid string spelling"))?;
-                self.ext(
-                    Closed::Stored(vec![2]),
-                    source.span,
-                    super::Owned::StringLiteral(text.as_bytes().to_vec()),
-                )
+                // Symbolic checking proves ownership without retaining executable bytes.
+                let bytes = if self.symbolic { &[][..] } else { text.as_bytes() };
+                self.budget.literal(bytes.len())?;
+                let mut literal = reserve(bytes.len())?;
+                literal.extend_from_slice(bytes);
+                self.ext(Closed::Stored(vec![2]), source.span, super::Owned::StringLiteral(literal))
             }
             Expr::Borrow { value, .. } | Expr::BorrowMut { value, .. } => {
                 let value = self.reference_operand(*value)?;

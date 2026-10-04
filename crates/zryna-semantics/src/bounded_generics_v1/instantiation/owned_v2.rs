@@ -3,6 +3,8 @@ use super::{BodyTypeContext, InstanceContext};
 #[cfg(test)]
 mod negative;
 #[cfg(test)]
+mod resources;
+#[cfg(test)]
 mod tests;
 /// Complete discovery issued only after original ownership checking, before closed layout work.
 /// ```compile_fail

@@ -14,8 +14,10 @@ mod enums;
 mod expressions;
 mod normalize;
 mod owners;
+mod resources;
 mod statements;
 use super::raw::{Extension, Operation as Owned};
+use resources::Budget;
 use std::collections::BTreeMap;
 
 #[derive(Clone)]
@@ -41,6 +43,7 @@ struct Builder<'a, 'b> {
     alive: Vec<bool>,
     loans: BTreeMap<u32, (u32, bool)>,
     loan_parents: BTreeMap<u32, u32>,
+    budget: Budget,
 }
 
 pub(super) fn check(
@@ -58,6 +61,7 @@ pub(super) fn check(
         ));
     }
     check_originals(program, originals, sources)?;
+    let mut budget = Budget::default();
     for (function_index, function) in program.functions.iter().enumerate() {
         let domain = if function.key[0] == 0x40 {
             keys::Domain::FunctionInstance
@@ -70,7 +74,7 @@ pub(super) fn check(
         let mut arguments = reserve(key.arguments().len())?;
         arguments.extend(key.arguments());
         let (blocks, extensions) =
-            build(program, originals, sources, module, original, arguments, false)?;
+            build(program, originals, sources, module, original, arguments, false, &mut budget)?;
         if function.blocks != blocks || claim.extensions[function_index] != extensions {
             return Err(reject(
                 "claimed body differs from complete source operation/order/binding replay",
@@ -98,7 +102,16 @@ pub(super) fn check_originals(
             }
             let mut arguments = reserve(arity)?;
             arguments.extend(parameters.iter().map(Vec::as_slice));
-            build(program, originals, sources, unit.id, original, arguments, true)?;
+            build(
+                program,
+                originals,
+                sources,
+                unit.id,
+                original,
+                arguments,
+                true,
+                &mut Budget::default(),
+            )?;
         }
     }
     Ok(())
@@ -110,6 +123,7 @@ pub(super) fn produce(
     sources: &zryna_source::SourceMap,
 ) -> Result<Vec<Vec<Extension>>, Failure> {
     let mut all = reserve(program.functions.len())?;
+    let mut budget = Budget::default();
     for function in &program.functions {
         let domain = if function.key[0] == 0x40 {
             keys::Domain::FunctionInstance
@@ -121,7 +135,16 @@ pub(super) fn produce(
         let original = &originals.units[module as usize].functions[index as usize];
         let mut arguments = reserve(key.arguments().len())?;
         arguments.extend(key.arguments());
-        all.push(build(program, originals, sources, module, original, arguments, false)?);
+        all.push(build(
+            program,
+            originals,
+            sources,
+            module,
+            original,
+            arguments,
+            false,
+            &mut budget,
+        )?);
     }
     let mut extensions = reserve(all.len())?;
     for (function, (blocks, ext)) in program.functions.iter_mut().zip(all) {
@@ -131,6 +154,7 @@ pub(super) fn produce(
     Ok(extensions)
 }
 
+#[allow(clippy::too_many_arguments)] // Exact source inputs and separate aggregate allocation credit.
 fn build<'a, 'b>(
     program: &'a raw::Program,
     originals: &'a Originals<'b>,
@@ -139,6 +163,7 @@ fn build<'a, 'b>(
     original: &'b RawFunctionSyntax,
     arguments: Vec<&'a [u8]>,
     symbolic: bool,
+    budget: &mut Budget,
 ) -> Result<(Vec<raw::Block>, Vec<Extension>), Failure> {
     let resolver =
         Resolver { originals, module, parameters: original.type_parameters.as_ref(), arguments };
@@ -160,6 +185,7 @@ fn build<'a, 'b>(
         alive: Vec::new(),
         loans: BTreeMap::new(),
         loan_parents: BTreeMap::new(),
+        budget: *budget,
     };
     builder.new_block(original.body.span)?;
     for parameter in &original.parameters {
@@ -174,6 +200,7 @@ fn build<'a, 'b>(
     }
     builder.source_block(original.body.root_block, 0)?;
     normalize::run(&mut builder.blocks, &mut builder.extensions)?;
+    *budget = builder.budget;
     Ok((builder.blocks, builder.extensions))
 }
 
@@ -221,6 +248,7 @@ impl<'b> Builder<'_, 'b> {
             return Err(crate::generic_v1::budget("source replay exceeds inherited value ceiling"));
         }
         let id = self.next;
+        self.budget.value()?;
         self.next = self.next.checked_add(1).ok_or(Failure::InternalFailure)?;
         let affine = owners::affine(&ty)?;
         self.affine.push(affine);
@@ -246,6 +274,7 @@ impl<'b> Builder<'_, 'b> {
         if self.blocks.len() >= crate::data_ownership_v1::MAX_BLOCKS_PER_FUNCTION {
             return Err(crate::generic_v1::budget("source replay exceeds inherited block ceiling"));
         }
+        self.budget.block()?;
         self.blocks.try_reserve(1).map_err(|_| Failure::AllocationFailure)?;
         let index = self.blocks.len();
         self.blocks.push(raw::Block {
@@ -265,6 +294,7 @@ impl<'b> Builder<'_, 'b> {
         operation: raw::Operation,
     ) -> Result<Value, Failure> {
         owners::core(self, &operation)?;
+        self.budget.operation(&operation)?;
         let value = self.value(ty)?;
         let result = self.definition(&value)?;
         let instructions = &mut self.blocks[self.block].instructions;
