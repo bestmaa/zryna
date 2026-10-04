@@ -4,13 +4,13 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 import { bytes, sha256 } from '../../scripts/distribution/canonical.mjs';
-import { preparePayload } from '../../scripts/distribution/payload.mjs';
+import { fixturePayload } from './payload.mjs';
 import { rustMaterials } from '../../scripts/distribution/rust-materials.mjs';
 import { NODE_TARGETS } from '../../scripts/distribution/materials.mjs';
 import { inventoryBytes, checksumBytes, targetPaths } from '../../scripts/distribution/inventory.mjs';
 import { verifyCompiledIdentity } from '../../scripts/distribution/binary-identity.mjs';
-import { encodeTar } from '../../scripts/distribution/archive-tar.mjs';
-import { encodeZip } from '../../scripts/distribution/archive-zip.mjs';
+import { decodeTar, encodeTar } from '../../scripts/distribution/archive-tar.mjs';
+import { decodeZip, encodeZip } from '../../scripts/distribution/archive-zip.mjs';
 import { verifyArchive } from '../../scripts/distribution/verify.mjs';
 import { extractVerifiedProductionFiles } from '../../scripts/distribution-release/run-installed-acceptance.mjs';
 
@@ -80,7 +80,7 @@ export async function prepare(source, output) {
     const actual = files.find(file => file.path === path).data;
     if (actual.length !== expected[0] || sha256(actual) !== expected[1]) throw new Error('Node pin differs');
   }
-  const metadata = JSON.parse(run(cargo, ['metadata', '--format-version=1', '--locked', '--offline'], source, buildEnv));
+  const metadata = JSON.parse(run(cargo, ['metadata', '--format-version=1', '--locked', '--offline', '--filter-platform', target], source, buildEnv));
   for (const record of rustMaterials(target)) {
     const pkg = metadata.packages.find(pkg => pkg.name === record.name && pkg.version === record.version);
     if (!pkg) throw new Error(`Missing pinned Rust material ${record.name}-${record.version}`);
@@ -107,7 +107,7 @@ export async function prepare(source, output) {
     recipe: { format: 'zryna.distribution-recipe.v1',
       sha256: sha256(readFileSync(join(source, 'scripts/distribution/release-recipe-v1.json'))) } };
   assertCurrent();
-  const prepared = preparePayload(identity, files, receipt, { productionCandidate: true });
+  const prepared = fixturePayload(identity, files, receipt, metadata);
   const digest = sha256(prepared.distribution);
   const env = { ...buildEnv, ZRYNA_DISTRIBUTION_SHA256: digest };
   run(cargo, ['build', '--locked', '-p', 'zryna', '--bin', 'zryna'], source, env);
@@ -130,12 +130,29 @@ export async function prepare(source, output) {
   const name = `zryna-0.2.3-${target}`;
   const archive = process.platform === 'win32' ? encodeZip(name, payload) : await encodeTar(name, payload, epoch);
   const expected = { ...identity, filename: `${name}.${paths.extension}`, size: archive.length, sha256: sha256(archive) };
-  const verified = await verifyArchive(archive, expected, { productionCandidate: true });
+  let releaseVerificationBlocker;
+  try {
+    await verifyArchive(archive, expected, { productionCandidate: true });
+    throw new Error('Candidate must not be mistaken for the immutable release recipe');
+  } catch (error) {
+    if (error.message !== 'D422-ADMISSION: Rust material lockfile identity') throw error;
+    releaseVerificationBlocker = error.message;
+  }
+  // Content round-trip is fixture evidence only. Production verifyArchive rejected above;
+  // neither its gate nor its accepted Rust recipe is altered or used to admit this fixture.
+  const decoded = process.platform === 'win32' ? decodeZip(archive, name, [paths.cli, paths.node])
+    : await decodeTar(archive, name, epoch);
+  if (decoded.length !== payload.length || decoded.some((file, index) => file.path !== payload[index].path
+      || file.mode !== payload[index].mode || !file.data.equals(payload[index].data))) {
+    throw new Error('Fixture archive round-trip differs');
+  }
   writeFileSync(join(output, expected.filename), archive, { flag: 'wx' });
   const installation = join(output, 'fresh-install');
-  extractVerifiedProductionFiles(installation, verified.files);
+  extractVerifiedProductionFiles(installation, decoded);
   const proof = { status: 'test-only-review-candidate', productionAdmission: 'forbidden',
     observedSource: { head, tree, branch }, intendedSourceRef: identity.source.ref,
+    releaseVerificationBlocker, qualificationLockSha256: prepared.qualificationLockSha256,
+    runtimeClosure: prepared.runtimeClosure, archiveContentRoundTripVerified: true,
     archive: expected, cliSha256: sha256(cli), distributionSha256: digest,
     recipeApplied: false, buildProfile: 'dev', buildCommand: [cargo, 'build', '--locked', '-p', 'zryna', '--bin', 'zryna'],
     directRustTools: { cargo, rustc, rustdoc: buildEnv.RUSTDOC }, sourceCleanBeforeAndAfterBuild: true,
