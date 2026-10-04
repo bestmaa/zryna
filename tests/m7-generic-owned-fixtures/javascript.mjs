@@ -34,10 +34,10 @@ globalThis[Symbol.for('zryna.generic.ownership.runtime.v1')] = Object.freeze({
   },
 });
 const module = await import(pathToFileURL(process.argv[2]).href);
-assert.deepEqual(Object.keys(module).sort(), ['clones', 'err', 'exclusive', 'lexical', 'none', 'ok', 'some']);
+assert.deepEqual(Object.keys(module).sort(), ['clones', 'err', 'exclusive', 'lexical', 'nested', 'nestednone', 'none', 'ok', 'some']);
 const oracles = {
   some: ['callee', 'α', '残'], none: ['none'], ok: ['ok'], err: ['err'],
-  exclusive: ['exclusive'], clones: ['clone', 'clone'], lexical: ['scope'],
+  exclusive: ['exclusive'], clones: ['clone', 'clone'], lexical: ['scope'], nested: ['deep', 'after'], nestednone: [],
 };
 let observations = 0;
 function reset(fail = 0) { assert.equal(live.size, 0); allocation = 0; fault = fail; released = []; allocated = []; }

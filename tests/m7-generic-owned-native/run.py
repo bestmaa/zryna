@@ -44,6 +44,7 @@ oracles={
  'none':['alloc:1:none','drop:1:none'], 'ok':['alloc:1:ok','drop:1:ok'], 'err':['alloc:1:err','drop:1:err'],
  'exclusive':['alloc:1:exclusive','drop:1:exclusive'],
  'clones':['alloc:1:clone','alloc:2:clone','drop:2:clone','drop:1:clone'], 'lexical':['alloc:1:scope','drop:1:scope'],
+ 'nested':['alloc:1:after','alloc:2:deep','drop:2:deep','drop:1:after'],'nestednone':[],
 }
 expected=[]
 for name,events in oracles.items(): expected+=['call:'+name]+events
@@ -61,8 +62,8 @@ for name in ['false','true']:
  for target,suffix in [('javascript','mjs'),('webassembly','wasm')]:
   proof=subprocess.run(['node',str(repository/'tests/m7-generic-owned-fixtures'/(target+'.mjs')),str(output/(name+'.'+suffix))],text=True,capture_output=True,check=True,timeout=10)
   portable.append(json.loads(proof.stdout));print(proof.stdout.strip())
- records.append({'fixture':name,'exit_code':result.returncode,'fixed_successes':11,'controlled_failure_sigill':4,'malloc_free_utf8_events':result.stdout.splitlines(),'compiler_command':command,'portable':portable})
- print('Native owned '+name+': 11 fixed successes / 4 cleanup-before-SIGILL failures / PASS')
+ records.append({'fixture':name,'exit_code':result.returncode,'fixed_successes':13,'controlled_failure_sigill':4,'malloc_free_utf8_events':result.stdout.splitlines(),'compiler_command':command,'portable':portable})
+ print('Native owned '+name+': 13 fixed successes / 4 cleanup-before-SIGILL failures / PASS')
 artifacts=[]
 for name in ['false','true']:
  for suffix in ['mjs','wasm','zir','o','-native']:

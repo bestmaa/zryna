@@ -15,6 +15,8 @@ extern int32_t zryna_v1_e_err(int32_t);
 extern int32_t zryna_v1_e_exclusive(int32_t);
 extern int32_t zryna_v1_e_clones(int32_t);
 extern int32_t zryna_v1_e_lexical(int32_t);
+extern int32_t zryna_v1_e_nested(int32_t);
+extern int32_t zryna_v1_e_nestednone(int32_t);
 typedef struct { uintptr_t pointer; uint64_t length; int live; } allocation_record;
 static allocation_record records[16];
 static size_t count, calls, fail_at, live;
@@ -50,6 +52,7 @@ int main(void) {
     const struct rlimit no_core={0,0};assert(setrlimit(RLIMIT_CORE,&no_core)==0);assert(setvbuf(stdout,NULL,_IONBF,0)==0);
     positive("some",zryna_v1_e_some);positive("none",zryna_v1_e_none);positive("ok",zryna_v1_e_ok);positive("err",zryna_v1_e_err);
     positive("exclusive",zryna_v1_e_exclusive);positive("clones",zryna_v1_e_clones);positive("lexical",zryna_v1_e_lexical);
+    positive("nested",zryna_v1_e_nested);positive("nestednone",zryna_v1_e_nestednone);
     for(size_t i=1;i<=3;i++){failure("some",zryna_v1_e_some,i);positive("some",zryna_v1_e_some);}
     failure("clones",zryna_v1_e_clones,2);positive("clones",zryna_v1_e_clones);return 0;
 }

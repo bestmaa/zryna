@@ -83,7 +83,7 @@ fn genuine_owned_program_seals_shared_exclusive_payload_loans_and_complete_clean
                 &runtime,
             )
             .expect("owned seal");
-            assert_eq!(verified.scalar_abi().exports().len(), 7);
+            assert_eq!(verified.scalar_abi().exports().len(), 9);
             assert!(
                 claim
                     .plans
@@ -134,7 +134,7 @@ fn genuine_owned_program_seals_shared_exclusive_payload_loans_and_complete_clean
                 &runtime,
             )
             .expect("pristine replay after every raw attack");
-            assert_eq!(verified.scalar_abi().exports().len(), 7);
+            assert_eq!(verified.scalar_abi().exports().len(), 9);
         });
     }
 }

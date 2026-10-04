@@ -33,3 +33,14 @@ export function lexical(value:i32):i32 {
   { const view:Borrow<String> =borrow(original); const seen:i32=inspect<String>(view); }
   return discard<String>(original);
 }
+export function nested(value:i32):i32 {
+  const extra:String="after";
+  const inner:Result<String,String> =Result.err<String,String>("deep");
+  const item:Option<Result<String,String>> =Option.some<Result<String,String>>(inner);
+  const seen:i32=match(borrowMut(item), {"Option.none":()=>0,"Option.some":(payload)=>match(payload, {"Result.ok":(child)=>inspectMut<String>(child),"Result.err":(child)=>inspectMut<String>(child)})});
+  return 7;
+}
+export function nestednone(value:i32):i32 {
+  const item:Result<String,Option<String>> =Result.err<String,Option<String>>(Option.none<String>());
+  return 7;
+}

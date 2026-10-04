@@ -48,3 +48,40 @@ fn one_call_cannot_duplicate_an_exclusive_payload_alias() {
     let span = errors[0].primary_span().expect("source alias call");
     assert_eq!(&source[span.start() as usize..span.end() as usize], "see(view,view)");
 }
+#[test]
+fn unsupported_whole_container_types_fail_before_discovery_and_layout() {
+    for ty in ["Vec<i32>", "Borrow<Vec<i32>>", "Option<Vec<i32>>", "Result<i32,Vec<String>>"] {
+        let source = format!(
+            "function unused(value:{ty}):i32 {{ return 7; }} export function root(input:i32):i32 {{ return input; }}"
+        );
+        let Failure::Diagnostics(errors) =
+            claim(&[("main.zry", &source)]).expect_err("unsupported container original")
+        else {
+            panic!("source admission diagnostic before discovery/layout")
+        };
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].code, "ZRYNA-M3008");
+        assert!(errors[0].message.contains("containers need a successor ownership proof"));
+    }
+}
+#[test]
+fn original_loan_returns_fail_at_the_exact_escaping_expression_before_layout() {
+    for signature in [
+        "function escape(value:Borrow<String>):Borrow<String>",
+        "function escape(value:BorrowMut<String>):BorrowMut<String>",
+        "function escape<T extends ZrynaValue>(value:Borrow<T>):Borrow<T>",
+    ] {
+        let source = format!(
+            "{signature} {{ return value; }} export function root(input:i32):i32 {{ return input; }}"
+        );
+        let Failure::Diagnostics(errors) =
+            claim(&[("main.zry", &source)]).expect_err("unused original cannot return a loan")
+        else {
+            panic!("source ownership diagnostic before layout")
+        };
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].code, "ZRYNA-M7007");
+        let span = errors[0].primary_span().expect("exact escaping operation span");
+        assert_eq!(&source[span.start() as usize..span.end() as usize], "value");
+    }
+}

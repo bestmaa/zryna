@@ -216,6 +216,7 @@ impl<'b> Builder<'_, 'b> {
     }
 
     fn value(&mut self, ty: Closed) -> Result<Value, Failure> {
+        owners::admitted(&ty)?;
         if self.next as usize >= crate::data_ownership_v1::MAX_VALUES_PER_FUNCTION {
             return Err(crate::generic_v1::budget("source replay exceeds inherited value ceiling"));
         }

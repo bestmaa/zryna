@@ -91,14 +91,14 @@ Run with pinned tools, an isolated target and at most two jobs/test threads:
 `python3 tests/m7-generic-owned-native/run.py <evidence-directory>`.
 The Linux-only runner emits JavaScript, Wasm and ELF from the same verified program for each
 single-module and imported fixture. Independent fixed oracles cover both Option variants,
-both Result variants, active payload transfers, Unicode bytes, shared/exclusive payload loans,
+both Result variants, active payload transfers, Unicode bytes, shared/exclusive payload loans including nested borrowed matches,
 distinct cloned owners and lexical loan ending before consumption.
 
 The native C runtime actually allocates, copies UTF-8, zeros and frees memory. Strict identity
-records reject double frees and leaks. Each fixture has eleven successful calls and four
+records reject double frees and leaks. Each fixture has thirteen successful calls and four
 isolated controlled failures: allocation sites 1/2/3 and clone failure. Child output proves
-exact cleanup before SIGILL; the parent confirms the next valid call. JavaScript has 22 and
-Wasm 15 fixed observations per fixture, with strict allocation/release traces and retry checks.
+exact cleanup before SIGILL; the parent confirms the next valid call. JavaScript has 24 and
+Wasm 17 fixed observations per fixture, with strict allocation/release traces and retry checks.
 Hostile wire/plan/operation, final Wasm and ELF mutations fail independently and retain a
 pristine recovery control. Older Copy artifact SHA assertions remain separate compatibility
 oracles. This runner is direct internal evidence, not a registered supported-platform gate.
@@ -109,3 +109,9 @@ qualification, provider parity, and supported-platform execution. This revision'
 validation occurs separately; older hosted Windows receipts do not qualify it. Driver/profile
 activation remains a distinct future decision. Keep historical plain-cloud N4009 cleanup
 failures separate from scoped init-style gates and record each exact tested revision.
+
+The original ownership boundary rejects unsupported container signatures, including unused
+functions and nested Option/Result containers, before closed discovery or layout. Independent
+IR typing also rejects any retained type outside the admitted scalar/String/Option/Result lane.
+Nested owned Option/Result fixtures check recursive selected-payload cleanup, nested exclusive
+payload loans and an allocation-free inactive payload; they do not qualify other containers.

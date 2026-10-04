@@ -28,8 +28,8 @@ const runtime = {
 };
 const { instance }=await WebAssembly.instantiate(await readFile(process.argv[2]),{'zryna.generic.ownership.runtime.v1':runtime});
 const module=instance.exports;
-assert.deepEqual(Object.keys(module).sort(),['clones','err','exclusive','lexical','none','ok','some']);
-const oracles={some:['callee','α','残'],none:['none'],ok:['ok'],err:['err'],exclusive:['exclusive'],clones:['clone','clone'],lexical:['scope']};
+assert.deepEqual(Object.keys(module).sort(),['clones','err','exclusive','lexical','nested','nestednone','none','ok','some']);
+const oracles={some:['callee','α','残'],none:['none'],ok:['ok'],err:['err'],exclusive:['exclusive'],clones:['clone','clone'],lexical:['scope'],nested:['deep','after'],nestednone:[]};
 let observations=0;
 function reset(fail=0){assert.equal(live.size,0);allocation=0;fault=fail;released=[];allocated=[];}
 function check(expected){

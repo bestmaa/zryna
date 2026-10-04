@@ -38,7 +38,14 @@ impl Builder<'_, '_> {
                             "nested early return needs explicit successor CFG replay",
                         ));
                     }
+                    let at = self.original.body.expressions[*value as usize].span;
                     let value = self.expression(*value, depth + 1)?;
+                    if matches!(value.ty, Closed::Borrow(..)) {
+                        return Err(self.locate(
+                            super::owners::ownership("loan cannot escape function result"),
+                            at,
+                        ));
+                    }
                     if value.ty != self.result {
                         return Err(reject("source return differs from original symbolic result"));
                     }

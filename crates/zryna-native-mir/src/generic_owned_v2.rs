@@ -6,7 +6,7 @@ use zryna_layout::{StorageTarget, TypeCategory, generic_v1::TypeView};
 
 mod plan;
 
-/// Maximum private i32 lanes of one represented type, independent of source admission.
+/// Maximum private i64 lanes of one represented type, independent of source admission.
 pub const MAX_TYPE_LANES: u32 = 256;
 /// Maximum flattened private parameters including the result pointer.
 pub const MAX_PARAMETERS: u32 = 256;
@@ -44,12 +44,12 @@ impl FunctionPlan {
     pub fn symbol(&self) -> &str {
         &self.symbol
     }
-    /// Flattened i32 parameters; the private result pointer is additional.
+    /// Flattened i64 parameters; the private result pointer is additional.
     #[must_use]
     pub const fn parameters(&self) -> u32 {
         self.parameters
     }
-    /// Full initialized i32 result width transported through caller-owned stack storage.
+    /// Full initialized i64 result width transported through caller-owned stack storage.
     #[must_use]
     pub const fn result(&self) -> u32 {
         self.result
@@ -77,10 +77,10 @@ impl<'p, 'a> VerifiedProgram<'p, 'a> {
     pub fn functions(&self) -> &[FunctionPlan] {
         &self.functions
     }
-    /// Width of a represented stored type or unit; loans remain rejected.
+    /// Width of a stored type, unit or private loan's exact referent representation.
     ///
     /// # Errors
-    /// Rejects foreign/unused raw type indices or unsupported loan claims.
+    /// Rejects foreign/unused raw type indices or unsupported referent claims.
     pub fn width(&self, ty: raw::Type) -> Result<u32, Diagnostic> {
         match ty {
             raw::Type::Unit => Ok(0),

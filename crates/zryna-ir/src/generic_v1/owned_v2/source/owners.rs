@@ -14,6 +14,44 @@ pub(super) fn affine(ty: &Closed) -> Result<bool, Failure> {
         _ => Ok(false),
     }
 }
+pub(super) fn admitted(ty: &Closed) -> Result<(), Failure> {
+    match ty {
+        Closed::Stored(key) | Closed::Borrow(key, _) => admitted_key(key, 0),
+        Closed::Unit => Ok(()),
+    }
+}
+fn admitted_key(key: &[u8], depth: usize) -> Result<(), Failure> {
+    if depth > 128 {
+        return Err(crate::generic_v1::budget("owned source type traversal exceeds 128"));
+    }
+    let count = match key.first() {
+        Some(0 | 1 | 2 | 0x30 | 0x31) if key.len() == 1 => return Ok(()),
+        Some(0x14) => 1,
+        Some(0x15) => 2,
+        _ => {
+            return Err(crate::generic_v1::reject(
+                "owned source lane requires scalar/String/Option/Result; containers need a successor ownership proof",
+            ));
+        }
+    };
+    let mut cursor = 5usize;
+    for _ in 0..count {
+        let n = u32::from_le_bytes(
+            key.get(cursor..cursor + 4)
+                .ok_or(Failure::InternalFailure)?
+                .try_into()
+                .map_err(|_| Failure::InternalFailure)?,
+        ) as usize;
+        cursor += 4;
+        let end = cursor.checked_add(n).ok_or(Failure::InternalFailure)?;
+        admitted_key(key.get(cursor..end).ok_or(Failure::InternalFailure)?, depth + 1)?;
+        cursor = end;
+    }
+    if cursor != key.len() {
+        return Err(Failure::InternalFailure);
+    }
+    Ok(())
+}
 fn key_affine(key: &[u8], depth: usize) -> Result<bool, Failure> {
     if depth > 128 {
         return Err(crate::generic_v1::budget("opaque ownership depth exceeded"));
