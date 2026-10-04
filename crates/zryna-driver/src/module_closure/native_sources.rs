@@ -24,6 +24,8 @@ use crate::{
 };
 
 mod graph;
+#[cfg(feature = "native-provider-internal")]
+mod v3_diagnostics;
 mod verification;
 pub use verification::{NativeModuleSnapshot, NativeOwnershipSnapshot, NativeSyntaxSnapshot};
 #[cfg(test)]
@@ -36,6 +38,13 @@ enum SourceOwner<'root> {
         sources: AuthenticatedPackageSources,
         lock_sha256: String,
     },
+}
+
+#[derive(Clone, Copy)]
+enum DiagnosticProfile {
+    Native,
+    #[cfg(feature = "native-provider-internal")]
+    M2,
 }
 
 impl SourceOwner<'_> {
@@ -91,6 +100,7 @@ impl SourceOwner<'_> {
 /// public provider and has no semantic or target authority until versioned verification succeeds.
 pub struct NativeSourceSnapshot<'root> {
     owner: SourceOwner<'root>,
+    diagnostic_profile: DiagnosticProfile,
     entrypoint: NormalizedSourcePath,
     sources: SourceMap,
     source_identity: SourceMapIdentity,
@@ -155,7 +165,16 @@ pub fn capture_native_workspace_sources(
     entrypoint: NormalizedSourcePath,
 ) -> Result<NativeSourceSnapshot<'_>, ModuleClosureError> {
     let owner = SourceOwner::Workspace(RefCell::new(root.begin_discovery().map_err(rejected)?));
-    capture_sources(owner, entrypoint)
+    capture_sources(owner, entrypoint, DiagnosticProfile::Native)
+}
+
+#[cfg(feature = "native-provider-internal")]
+pub(crate) fn capture_v3_workspace_sources(
+    root: &WorkspaceSourceRoot,
+    entrypoint: NormalizedSourcePath,
+) -> Result<NativeSourceSnapshot<'_>, ModuleClosureError> {
+    let owner = SourceOwner::Workspace(RefCell::new(root.begin_discovery().map_err(rejected)?));
+    capture_sources(owner, entrypoint, DiagnosticProfile::M2)
 }
 
 /// Captures internal relative imports within one exact instance of an already admitted graph.
@@ -189,12 +208,13 @@ pub fn capture_native_package_sources(
         sources,
         lock_sha256: resolved.graph().lock_sha256().to_owned(),
     };
-    capture_sources(owner, entrypoint)
+    capture_sources(owner, entrypoint, DiagnosticProfile::Native)
 }
 
 fn capture_sources(
     owner: SourceOwner<'_>,
     entrypoint: NormalizedSourcePath,
+    diagnostic_profile: DiagnosticProfile,
 ) -> Result<NativeSourceSnapshot<'_>, ModuleClosureError> {
     let started = Instant::now();
     if !super::has_exact_zry_extension(entrypoint.as_str()) {
@@ -220,7 +240,7 @@ fn capture_sources(
             text: stable.text.clone(),
         }])
         .map_err(|_| invariant_rejection())?;
-        let imports = graph::discover(&batch)?;
+        let imports = graph::discover(&batch, diagnostic_profile)?;
         found.insert(path.clone(), stable);
         for import in &imports[0].imports {
             let target = resolve_explicit_zry_import(&path, &import.specifier.text)
@@ -257,12 +277,13 @@ fn capture_sources(
             })
         })
         .collect::<Result<Vec<_>, ModuleClosureError>>()?;
-    let edges = graph::candidate_edges(&sources)?;
+    let edges = graph::candidate_edges(&sources, diagnostic_profile)?;
     let graph_v3 = graph_identity(&entrypoint, &modules, &edges)?;
     let graph_v4 = crate::ownership_closure::native_graph_identity(&entrypoint, &modules, &edges)?;
     let source_identity = sources.identity();
     let snapshot = NativeSourceSnapshot {
         owner,
+        diagnostic_profile,
         entrypoint,
         sources,
         source_identity,

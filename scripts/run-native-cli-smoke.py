@@ -24,6 +24,9 @@ NEGATIVE = (
     ("m1-negative", "tests/m1-fixtures/invalid-any.zry", None, "ZRYNA-M1004"),
     ("m1-bool", "tests/m1-fixtures/bool-gated.zry", None, "ZRYNA-I1006"),
     ("m3-moved", "tests/m3-fixtures/conformance/moved.zry", "data-ownership-v1", "ZRYNA-M3011"),
+    ("m2-bare-import", "tests/m2-fixtures/invalid/bare-import/main.zry", "control-flow-v1", "ZRYNA-F1103"),
+    ("m2-cycle-main", "tests/m2-fixtures/invalid/import-cycle/main.zry", "control-flow-v1", "ZRYNA-D3007"),
+    ("m2-cycle-dep", "tests/m2-fixtures/invalid/import-cycle/dep.zry", "control-flow-v1", "ZRYNA-D3007"),
 )
 
 

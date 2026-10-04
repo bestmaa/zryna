@@ -74,6 +74,8 @@ def manifest(package, version, lock):
     for name in PATH_DEPENDENCIES:
         lines.extend([f"[dependencies.{name}]",
                       f"path = {json.dumps(str(ROOT / 'crates' / name))}"])
+        if name == "zryna-driver":
+            lines.append('features = ["native-provider-internal"]')
     for name in ("serde", "serde_json", "sha2"):
         pins = [item["version"] for item in lock["package"] if item["name"] == name]
         if len(pins) != 1:

@@ -6,7 +6,7 @@ use super::{
     module_closure_failure, request_error, scalar, validate_architecture, validate_request,
 };
 use crate::native_frontend::NativeBuildRequest;
-use crate::{NativeSourceSnapshot, WorkspaceSourceRoot, capture_native_workspace_sources};
+use crate::{NativeSourceSnapshot, WorkspaceSourceRoot};
 use std::{cell::RefCell, path::PathBuf};
 use zryna_diagnostics::Diagnostic;
 use zryna_source::{NormalizedSourcePath, SourceFileInput, SourceMap};
@@ -29,7 +29,8 @@ fn capture<'root>(
     let path = NormalizedSourcePath::new(entry.to_owned()).map_err(|error| {
         failure(CommandFailureKind::Request, Diagnostic::from_source_error(&error))
     })?;
-    capture_native_workspace_sources(root, path).map_err(|error| module_closure_failure(&error))
+    crate::native_frontend::capture_control_flow_sources(root, path)
+        .map_err(|error| module_closure_failure(&error))
 }
 
 fn output(request: &BuildRequest) -> Result<(ArtifactOutputRoot, PathBuf), CommandFailure> {

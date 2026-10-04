@@ -4,6 +4,17 @@
 use crate::{CommandFailure, CommandSuccess, PublishedOwnershipBundle, TargetSelection};
 use std::path::PathBuf;
 
+/// Captures the private M2 provider's retained sources with canonical M2 rejection diagnostics.
+/// The existing native parser and mandatory v3 verifier remain separate authorities.
+/// # Errors
+/// Rejects unsafe or stale sources, malformed imports, cycles and all existing resource limits.
+pub fn capture_control_flow_sources(
+    root: &crate::WorkspaceSourceRoot,
+    entrypoint: zryna_source::NormalizedSourcePath,
+) -> Result<crate::NativeSourceSnapshot<'_>, crate::ModuleClosureError> {
+    crate::module_closure::native_sources::capture_v3_workspace_sources(root, entrypoint)
+}
+
 /// The three existing source profiles admitted by the private build route.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum NativeBuildProfile {

@@ -7,7 +7,7 @@ use zryna_diagnostics::Diagnostic;
 use zryna_frontend::{native_lexer, native_parser};
 use zryna_source::{SourceMap, resolve_explicit_zry_import};
 
-use super::{ModuleClosureError, NativeSourceSnapshot};
+use super::{DiagnosticProfile, ModuleClosureError, NativeSourceSnapshot};
 use crate::module_closure::{
     MAX_MODULE_IMPORT_DECLARATIONS, MAX_MODULE_IMPORT_EDGES, ModuleEdge,
     account_edge_manifest_bytes, budget_rejection, checked_add, edge_key, graph_identity,
@@ -25,19 +25,26 @@ pub(super) fn failure(code: &'static str, message: &'static str) -> ModuleClosur
 
 pub(super) fn discover(
     sources: &SourceMap,
+    profile: DiagnosticProfile,
 ) -> Result<Vec<native_parser::v3::RawModuleImports>, ModuleClosureError> {
     let lexed = native_lexer::lex(sources)
         .map_err(|error| ModuleClosureError::Rejected(vec![error.diagnostic().clone()]))?;
-    native_parser::v3::discover_import_candidates(sources, &lexed)
-        .map_err(|error| ModuleClosureError::Rejected(vec![error.diagnostic().clone()]))
+    native_parser::v3::discover_import_candidates(sources, &lexed).map_err(|error| match profile {
+        DiagnosticProfile::Native => ModuleClosureError::Rejected(vec![error.diagnostic().clone()]),
+        #[cfg(feature = "native-provider-internal")]
+        DiagnosticProfile::M2 => super::v3_diagnostics::discovery_error(sources, &lexed, &error),
+    })
 }
 
-pub(super) fn candidate_edges(sources: &SourceMap) -> Result<Vec<ModuleEdge>, ModuleClosureError> {
+pub(super) fn candidate_edges(
+    sources: &SourceMap,
+    profile: DiagnosticProfile,
+) -> Result<Vec<ModuleEdge>, ModuleClosureError> {
     let mut edges = Vec::new();
     let mut identities = HashSet::new();
     let mut imports_seen = 0;
     let mut manifest_bytes = 0;
-    for file in discover(sources)? {
+    for file in discover(sources, profile)? {
         let importer = sources
             .verify_file_id(file.id)
             .ok()
@@ -118,14 +125,20 @@ pub(super) fn authenticate(snapshot: &NativeSourceSnapshot<'_>) -> Result<(), Mo
             ));
         }
     }
-    let edges = candidate_edges(&snapshot.sources)?;
+    let edges = candidate_edges(&snapshot.sources, snapshot.diagnostic_profile)?;
     if edges != snapshot.edges {
         return Err(failure(
             "ZRYNA-D3102",
             "native import edges differ from their original source",
         ));
     }
-    crate::ownership_closure::validate_native_graph(&snapshot.modules, &edges)?;
+    match snapshot.diagnostic_profile {
+        DiagnosticProfile::Native => {
+            crate::ownership_closure::validate_native_graph(&snapshot.modules, &edges)?;
+        }
+        #[cfg(feature = "native-provider-internal")]
+        DiagnosticProfile::M2 => super::v3_diagnostics::reject_cycles(&snapshot.modules, &edges)?,
+    }
     if graph_identity(&snapshot.entrypoint, &snapshot.modules, &edges)? != snapshot.graph_v3
         || crate::ownership_closure::native_graph_identity(
             &snapshot.entrypoint,

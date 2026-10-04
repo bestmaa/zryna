@@ -42,7 +42,7 @@ host execution remains explicitly blocked. None of those gaps is a passing
 case.
 
 Ordinary installation and CLI use without Node or pnpm remain open #414
-requirements. The current CLI prepares the TypeScript worker unconditionally;
+requirements. Default CLI builds prepare the TypeScript worker;
 installed compiler admission authenticates its bundled Node/provider inventory.
 A copied harness executable, direct backend execution or removal of `--node`
 alone does not prove an ordinary installed compiler. Completing that requirement
@@ -51,14 +51,17 @@ with existing identities, runtime capabilities and verifier boundaries intact.
 Public activation also requires full Linux/Windows parity, applicable M0–M4
 and resource gates, and reproducible installation evidence.
 
-The initial comparison on the pinned main API exposes five M2 source-route
+The initial comparison on the pinned main API exposed five M2 source-route
 failures: two bare-import cases and three import-cycle cases. Bootstrap rejects
 bare imports with global `ZRYNA-F1103`; native source capture returns source-spanned
 `ZRYNA-F2002` for the unsupported named import. Bootstrap cycles report
 `ZRYNA-D3007`, while native capture applies ownership-graph validation before v3
-selection and reports `ZRYNA-D3301`. These failures are deliberately retained;
-the runner exits nonzero and cannot admit them as parity or activate the provider.
-Fixing that profile-specific admission behavior requires source-owner coordination.
+selection and reports `ZRYNA-D3301`. Those failed receipts remain preserved.
+The coordinated private M2 capture now selects the canonical rejection presentation
+from bound tokens and the authenticated graph before capture completes. This harness
+uses that feature-gated route for M2; M3 and generic source capture keep their existing
+behavior. Expected diagnostics and frozen fixtures remain unchanged. The runner still
+exits nonzero for any divergence and cannot activate the provider.
 
 Linux x86-64 accounts for 220 obligations. Other hosts add 20 linked
 `native-platform:*` blocked obligations, producing 240 records; portable comparisons

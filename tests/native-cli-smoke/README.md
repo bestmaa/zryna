@@ -11,7 +11,8 @@ preparation, artifact staging and atomic publication. M1 keeps one entry source.
 reviewed sealed v3 closure. M3 retains its reviewed v4 snapshot, then re-parses and re-seals an
 owned closure against the same immutable source-map identity and graph records so existing
 ownership preparation/publication can consume it without modifying the reviewed source API.
-There is no fallback, raw IR authority, copied source session or diagnostic normalization.
+There is no fallback, raw IR authority or copied source session. Private M2 capture selects the
+canonical M2 bare-import and cycle rejection presentation over bound tokens and its retained graph.
 The existing manifests v1/v2/v3, artifact bytes, source hashes and create-only transactions remain
 in use. Architecture validation still requires the pinned Cargo toolchain.
 
@@ -44,7 +45,7 @@ registry SHA-256 values and rechecks every generated source before and after the
 For each source, the default bootstrap and opt-in native CLI must emit byte-identical complete
 bundles, including the manifest, and identical complete success JSON. A repeated native build must
 reject replacement without changing any published byte. Evidence retains both complete bundles
-and every stdout/stderr. Three negative sources must reject with their frozen code and publish no
+and every stdout/stderr. Six negative entrypoints must reject with their frozen code and publish no
 final bundle. Additional controls check the feature-disabled binary, ordinary Node requirement,
 project/component rejection and retained Cargo requirement. The receipt binds the exact Git head,
 tree, tracked source digests and binary digests before/after; any proof failure makes the runner
@@ -52,8 +53,9 @@ exit nonzero. Existing output paths are never removed or replaced. Generated bun
 new evidence paths after their exact hashes are recorded and recovered.
 
 This is a bounded CLI smoke. Exhaustive downstream evidence is the independent
-[`native-provider-corpus`](../native-provider-corpus/README.md) harness. Its current five genuine
-source-admission parity failures remain failed, and its fault-injection, ordinary installed
+[`native-provider-corpus`](../native-provider-corpus/README.md) harness. The five M2 admission
+failures from the earlier baseline are retained in historical evidence and covered by private
+M2 diagnostic selection and three added CLI entrypoints. Fault-injection, ordinary installed
 no-Node proof and public-activation gaps remain open. There is no acceptance waiver or new skip.
 
 New private unsupported component selection uses `ZRYNA-C1013` (request rejection, status 2).

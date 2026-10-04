@@ -50,7 +50,8 @@ pub fn m2(
     check: impl FnOnce(&SourceMap) -> Value,
 ) -> Value {
     let root = WorkspaceSourceRoot::capture(workspace).expect("no-follow workspace capability");
-    let captured = capture_native_workspace_sources(&root, corpus::path(entry));
+    let captured =
+        zryna_driver::native_frontend::capture_control_flow_sources(&root, corpus::path(entry));
     let worker = zryna_driver::discover_module_closure(
         &root,
         corpus::path(entry),
