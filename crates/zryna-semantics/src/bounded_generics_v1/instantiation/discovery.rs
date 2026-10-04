@@ -120,7 +120,9 @@ fn process_function(
         if let Some(view) = builder.bodies.expression_type(owner, index) {
             types::close(builder, view, environment, &key, None, Some(expression.span))?;
         }
-        if let RawExpressionKind::Call { callee, type_arguments, .. } = &expression.kind {
+        if let RawExpressionKind::Call { callee, type_arguments, .. } = &expression.kind
+            && builder.bodies.intrinsic_call(owner, index).is_none()
+        {
             let target =
                 builder.target(owner, &callee.text).ok_or(InstantiationFailure::InternalFailure)?;
             let mut arguments = [None; 2];

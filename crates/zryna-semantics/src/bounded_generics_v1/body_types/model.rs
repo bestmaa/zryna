@@ -1,4 +1,5 @@
 use super::super::{DeclarationIdentity, TypeParameterIdentity};
+use super::IntrinsicCall;
 
 /// Origins are indices into the retained, authenticated source arenas. They are not type IDs
 /// for a closed program. In particular, an arm origin is not a loan or region identity.
@@ -85,6 +86,7 @@ pub(super) struct ResultRecord {
     pub(super) arm_start: usize,
     pub(super) match_valid: bool,
     pub(super) match_generic: bool,
+    pub(super) intrinsic_call: Option<IntrinsicCall>,
 }
 
 #[derive(Clone, Copy, Debug)]

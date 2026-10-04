@@ -5,6 +5,55 @@ use zryna_source::NormalizedSourcePath;
 
 type Inventory = (Vec<Vec<u8>>, Vec<Vec<u8>>, usize);
 
+#[test]
+fn concat_intrinsic_closes_string_without_an_original_function() {
+    let (types, functions, edges) =
+        check(&[("main.zry", "function join():String {return concat(\"left\",\"right\");}")])
+            .expect("authenticated intrinsic in an ordinary body");
+    assert_eq!(types, [vec![0], vec![1], vec![2]]);
+    assert!(functions.is_empty());
+    assert_eq!(edges, 0);
+}
+
+#[test]
+fn concat_intrinsic_closes_in_a_demanded_generic_body() {
+    let (types, functions, edges) = check(&[(
+        "main.zry",
+        "function join<T extends ZrynaValue>(value:T):String {return concat(\"left\",\"right\");} function read():String {return join<i32>(7);}",
+    )])
+    .expect("closed generic body retains its intrinsic");
+    assert_eq!(types, [vec![0], vec![1], vec![2]]);
+    assert_eq!(functions.len(), 1);
+    assert_eq!(edges, 1);
+}
+
+#[test]
+fn concat_declaration_collision_remains_a_declaration_rejection() {
+    let input = project(&[(
+        "main.zry",
+        "function join<T extends ZrynaValue>(value:T):String {return concat(\"left\",\"right\");} function concat(left:String,right:String):String {return join<i32>(7);}",
+    )]);
+    let entry = input.sources.verify_file_id(0).expect("entry");
+    let errors = resolve_declarations(
+        SemanticInput::try_new(&input.syntax, &input.sources, entry).expect("original input"),
+    )
+    .expect_err("preserve the original concat name collision rule");
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].code(), "ZRYNA-M3002");
+}
+
+#[test]
+fn concat_import_alias_cannot_invent_a_generic_function_demand() {
+    let (types, functions, edges) = check(&[
+        ("main.zry", "import { relay as concat } from \"./values.zry\"; function join():String {return concat(\"left\",\"right\");}"),
+        ("values.zry", "export function relay<T extends ZrynaValue>(value:T):T {return value;}"),
+    ])
+    .expect("intrinsic precedence over an original import alias");
+    assert_eq!(types, [vec![0], vec![1], vec![2]]);
+    assert!(functions.is_empty());
+    assert_eq!(edges, 0);
+}
+
 pub(super) fn check(files: &[(&str, &str)]) -> Result<Inventory, InstantiationFailure> {
     let input = project(files);
     let entry = input

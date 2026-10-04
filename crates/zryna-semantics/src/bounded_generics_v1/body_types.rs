@@ -33,6 +33,10 @@ mod tests;
 mod type_resolution;
 mod value_names;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) enum IntrinsicCall {
+    Concat,
+}
 pub use resources::StorageReport;
 
 /// A source rejection and an infrastructure failure have different meanings.
@@ -71,6 +75,15 @@ pub struct BodyTypeContext<'c, 's> {
 }
 
 impl<'c, 's> BodyTypeContext<'c, 's> {
+    /// Retains the body's resolved intrinsic classification, including import-alias precedence.
+    pub(super) fn intrinsic_call(
+        &self,
+        owner: DeclarationIdentity,
+        expression: u32,
+    ) -> Option<IntrinsicCall> {
+        self.function_records(owner)?.expressions.get(expression as usize)?.intrinsic_call
+    }
+
     pub(super) fn source_owners(
         &self,
         module: u32,

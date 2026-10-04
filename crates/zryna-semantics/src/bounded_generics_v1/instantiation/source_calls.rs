@@ -8,6 +8,28 @@ use zryna_syntax::v5::RawExpressionKind;
 
 type Edges = Vec<Vec<(usize, UntrustedSpan)>>;
 
+#[test]
+fn concat_import_alias_creates_no_original_source_call_edge() {
+    use crate::bounded_generics_v1::{SemanticInput, body_types, resolve_declarations};
+    let input = crate::bounded_generics_v1::tests::body_fixtures::project(&[
+        (
+            "main.zry",
+            "import { relay as concat } from \"./values.zry\"; function join():String {return concat(\"left\",\"right\");}",
+        ),
+        ("values.zry", "export function relay<T extends ZrynaValue>(value:T):T {return value;}"),
+    ]);
+    let entry = input.sources.verify_file_id(0).expect("entry");
+    let declarations = resolve_declarations(
+        SemanticInput::try_new(&input.syntax, &input.sources, entry).expect("input"),
+    )
+    .expect("alias is admitted");
+    let bodies = body_types::check_body_types(&declarations).expect("intrinsic body typing");
+    let builder = Builder::new(&bodies).expect("inventory storage");
+    let (owners, edges) = graph(&builder).expect("original source graph");
+    assert!(builder.target(owners[0], "concat").is_some(), "alias would resolve by name");
+    assert!(edges.iter().all(Vec::is_empty), "intrinsic must not be a source-call edge");
+}
+
 pub(super) fn check(builder: &Builder<'_, '_, '_>) -> Result<(), InstantiationFailure> {
     let (owners, edges) = graph(builder)?;
     let mut states = reserve(owners.len())?;
@@ -75,8 +97,11 @@ fn graph(
     for (index, owner) in owners.iter().enumerate() {
         let function = &declarations.syntax().files()[owner.module().index() as usize].functions
             [owner.source_index() as usize];
-        for expression in &function.body.expressions {
+        for (expression_id, expression) in function.body.expressions.iter().enumerate() {
+            let expression_id =
+                u32::try_from(expression_id).map_err(|_| InstantiationFailure::InternalFailure)?;
             if let RawExpressionKind::Call { callee, .. } = &expression.kind
+                && builder.bodies.intrinsic_call(*owner, expression_id).is_none()
                 && let Some(target) = builder.target(*owner, &callee.text)
                 && target.kind() == DeclarationKind::Function
             {

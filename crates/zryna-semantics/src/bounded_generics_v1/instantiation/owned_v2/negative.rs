@@ -1,6 +1,18 @@
 //! Genuine independent source negatives: owning phase, exact byte range, no partial seal.
 use super::tests::claim;
 use zryna_ir::generic_v1::Failure;
+
+#[test]
+fn concat_intrinsic_remains_excluded_from_owned_execution() {
+    let failure = claim(&[(
+        "main.zry",
+        "export function root(input:i32):String {return concat(\"left\",\"right\");}",
+    )])
+    .expect_err("metadata concat admission cannot issue an owned execution context");
+    let Failure::Diagnostics(errors) = failure else { panic!("owning admission diagnostic") };
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].code, "ZRYNA-M3008");
+}
 #[test]
 fn opaque_copy_specialization_never_legalizes_repeated_original_move() {
     for source in [

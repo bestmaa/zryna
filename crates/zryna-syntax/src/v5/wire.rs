@@ -12,7 +12,7 @@ pub(super) fn identifier(text: &str) -> bool {
         && !matches!(text, "__proto__" | "prototype" | "constructor")
 }
 
-fn decimal(text: &str, signed: bool, limit: usize) -> bool {
+pub(super) fn decimal(text: &str, signed: bool, limit: usize) -> bool {
     let digits = if signed { text.strip_prefix('-').unwrap_or(text) } else { text };
     !text.is_empty()
         && text.len() <= limit

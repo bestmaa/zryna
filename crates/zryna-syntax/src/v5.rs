@@ -39,6 +39,9 @@ mod verification_tests;
 #[cfg(test)]
 mod keyword_tests;
 
+#[cfg(test)]
+mod array_length_tests;
+
 pub use applications::{RawTypeArgumentList, RawTypeParameter, RawTypeParameterList};
 pub use ast::*;
 pub use decode::decode_snapshot;

@@ -102,7 +102,7 @@ pub(super) fn check(
             scalars::operation(checker, owner, &expression.kind, *operator_span, *lhs, Some(*rhs))?
         }
         RawExpressionKind::Call { callee, type_arguments, arguments, .. } => {
-            calls::check(checker, owner, callee, type_arguments.as_ref(), arguments, scope)?
+            calls::check(checker, owner, index, callee, type_arguments.as_ref(), arguments, scope)?
         }
         RawExpressionKind::StructConstruction { type_name, type_arguments, fields, .. } => {
             constructions::structure(

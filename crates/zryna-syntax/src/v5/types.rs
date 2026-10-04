@@ -118,7 +118,10 @@ pub(super) fn validate(sources: &SourceMap, unit: &RawSourceUnit) -> Result<(), 
                 child(&mut cursor, *element)?;
                 cursor.token(*comma_span, ",")?;
                 cursor.token(*length_span, length_spelling)?;
-                if length_spelling.parse::<u32>().ok() != Some(*length) || *length > 1_048_576 {
+                if !super::wire::decimal(length_spelling, false, 10)
+                    || length_spelling.parse::<u32>().ok() != Some(*length)
+                    || *length > 1_048_576
+                {
                     return Err(DeclarationError::malformed(Some(cursor.bound(*length_span)?)));
                 }
                 cursor.token(*greater_than_span, ">")?;

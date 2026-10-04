@@ -5,13 +5,14 @@ use super::super::{DeclarationIdentity, DeclarationKind};
 use super::model::{Kind, Scalar, Ty};
 use super::value_names::Scope;
 use super::{
-    BodyTypeFailure, Checker, arguments, constraints, resources, substitution, type_resolution,
-    value_names,
+    BodyTypeFailure, Checker, IntrinsicCall, arguments, constraints, resources, substitution,
+    type_resolution, value_names,
 };
 
 pub(super) fn check(
     checker: &mut Checker<'_, '_>,
     owner: DeclarationIdentity,
+    expression: u32,
     callee: &RawIdentifierSyntax,
     type_arguments: Option<&RawTypeArgumentList>,
     values: &[u32],
@@ -54,6 +55,8 @@ pub(super) fn check(
                 "concat argument",
             )?;
         }
+        checker.tables.function_mut(owner).expressions[expression as usize].intrinsic_call =
+            Some(IntrinsicCall::Concat);
         return Ok(Some(Ty::scalar(Scalar::String)));
     }
     let Some(target) = type_resolution::declaration(checker.context, owner.module(), &callee.text)

@@ -17,6 +17,13 @@ and ordered arguments; import aliases and diamond paths converge on the original
 Standard family payloads have their own dependency edges. No private symbol or executable ID
 is assigned here. The exact original source/body context remains borrowed by the inventory.
 
+Call discovery and the original source-call graph retain the symbolic body checker's intrinsic
+classification. Authenticated `concat(String, String)` closes its String result without a
+function target or source-call edge, even when an import alias has the same name. This metadata
+admission does not enable concat in the private owned execution lane. Direct raw v5 syntax DTOs
+enforce the wire's canonical unsigned decimal FixedArray lengths, including zero and the
+1,048,576 limit; source-exact `+1` and `01` spellings remain malformed syntax.
+
 Original nominal value predicates use an explicit reverse-dependency worklist. They reject
 stored borrow/unit/function members transitively without expanding closed nominal bodies.
 Explicit supplied arguments are checked before declaration expansion. Discovery uses explicit
