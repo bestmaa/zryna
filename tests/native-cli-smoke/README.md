@@ -37,7 +37,10 @@ private source-checkout build behavior; it does **not** prove a clean ordinary i
 compile without Node, pnpm or Cargo. A separate control removes Cargo and requires the unchanged
 architecture failure `ZRYNA-A1101`.
 
-Nine real positive builds cover M1, the full registered M2 closure and seven M3 ownership sources.
+Nine real positive builds cover M1, the full registered M2 closure and seven M3 ownership sources, including three imported closures.
+For those closures, the runner copies the registered wrapper and dependency bytes into new
+task-owned `.zryna/cache` fixture directories as `main.zry` and `math.zry`; it binds original
+registry SHA-256 values and rechecks every generated source before and after the proof.
 For each source, the default bootstrap and opt-in native CLI must emit byte-identical complete
 bundles, including the manifest, and identical complete success JSON. A repeated native build must
 reject replacement without changing any published byte. Evidence retains both complete bundles

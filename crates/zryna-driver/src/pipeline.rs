@@ -46,6 +46,8 @@ use artifacts::write_prepared_artifacts;
 pub(crate) use control_flow::execute_installed as execute_installed_control_flow;
 use preparation::{PreparedArtifacts, analyze, configured_frontend};
 pub(crate) use project::{build_project_request, run_project_request};
+#[cfg(test)]
+use request::ValidatedRequest;
 use request::{validate_architecture, validate_real_directory, validate_request};
 pub(crate) use scalar::execute_installed as execute_installed_scalar;
 

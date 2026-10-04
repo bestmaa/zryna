@@ -81,6 +81,39 @@ def main():
             env.pop(key)
     assert all(shutil.which(name, path=env["PATH"]) is None for name in ("node", "pnpm", "npm"))
     records = []
+    generated_inputs = {}
+    fixture_base = root / ".zryna/cache" / ("native-cli-smoke-" + hashlib.sha256(str(output).encode()).hexdigest()[:16])
+
+    def fixture_entry(label, source):
+        # These frozen dependency bodies are admitted only through their registered import context.
+        contexts = {"m3-string": "string", "m3-owned-aggregate": "owned-aggregate", "m3-owned-vec": "owned-vec"}
+        if label not in contexts:
+            return source
+        registry = json.loads((root / "tests/m3-conformance-v1.json").read_text())
+        fixtures = {fixture["id"]: fixture for fixture in registry["fixtures"]}
+        entry = fixtures[contexts[label]]
+        body = fixtures[entry["dependency"]]
+        assert body["path"] == source
+        # Refuse links and pre-existing case paths before creating task-owned source fixtures.
+        for directory in (root / ".zryna", root / ".zryna/cache"):
+            if directory.exists() or directory.is_symlink():
+                assert directory.is_dir() and not directory.is_symlink(), "fixture parent is not a real directory"
+            else:
+                directory.mkdir()
+        directory = fixture_base / label
+        if not fixture_base.exists():
+            fixture_base.mkdir()
+        assert not fixture_base.is_symlink(), "fixture root is linked"
+        directory.mkdir(exist_ok=False)
+        for name, fixture in (("main.zry", entry), ("math.zry", body)):
+            original = root / fixture["path"]
+            assert digest(original) == fixture["sha256"] == before[fixture["path"]]
+            destination = directory / name
+            destination.write_bytes(original.read_bytes())
+            assert digest(destination) == fixture["sha256"]
+            generated_inputs[destination.relative_to(root).as_posix()] = {
+                "original": fixture["path"], "sha256": fixture["sha256"]}
+        return (directory / "main.zry").relative_to(root).as_posix()
 
     def execute(label, command, process_env=env):
         process = subprocess.run(command, cwd=root, env=process_env, capture_output=True, timeout=120)
@@ -103,6 +136,7 @@ def main():
         return result
 
     def positive(label, source, profile, version):
+        source = fixture_entry(label, source)
         stem = "private-smoke-" + label
         destination = root / ".zryna/out" / (stem + ".build")
         assert not destination.exists(), "refuse a pre-existing output"
@@ -187,13 +221,14 @@ def main():
         return {"exit": process.returncode, "architecture_gate_retained": True}
     case("source-checkout-still-needs-cargo", no_cargo)
     stable = head == git(root, "rev-parse", "HEAD") and before == inventory(root)
+    stable &= all(digest(root / name) == value["sha256"] for name, value in generated_inputs.items())
     stable &= not git(root, "status", "--porcelain")
     stable &= all(digest(binaries[name]) == value["sha256"] for name, value in identity.items())
     records.append({"id": "source-and-binary-identity", "status": "passed" if stable else "failed"})
     blocked = ["ordinary installed CLI without Node/pnpm/Cargo", "public activation", "native run selection",
                "cross-platform installed distribution proof"]
     receipt = {"version": 1, "head": head, "tree": git(root, "rev-parse", "HEAD^{tree}"),
-               "inputs": before, "binaries": identity, "path": str(empty), "records": records,
+               "inputs": before, "generated_inputs": generated_inputs, "binaries": identity, "path": str(empty), "records": records,
                "counts": {status: sum(record["status"] == status for record in records)
                           for status in ("passed", "failed", "ignored")},
                "blocked_acceptance": blocked, "public_activation": False}
