@@ -34,13 +34,25 @@ export function createController({ host, witSha256, authority, templateBytes, Wo
     let expired;
     try { expired = await host.finish(job.token, job.abort.signal.aborted); }
     catch { poisoned = true; fail('HOST-TEARDOWN'); }
-    finally { if (active === job) active = null; }
     if (expired === true) fail('EVALUATION-DEADLINE');
+  }
+
+  async function complete(job, task, publish = value => value) {
+    try {
+      let result;
+      try { result = await task(); }
+      finally { await finish(job); }
+      // Keep admission owned until cleanup and invalidation have both been checked.
+      if (job.abort.signal.aborted) throw new Error(job.reason ?? 'PLAYGROUND-CANCELLED');
+      current(job);
+      return publish(result);
+    } finally { if (active === job) active = null; }
   }
 
   function cancel() {
     const job = active;
     if (!job) return false;
+    compiled = null;
     job.reason = 'PLAYGROUND-CANCELLED';
     job.abort.abort();
     job.worker?.terminate();
@@ -79,7 +91,7 @@ export function createController({ host, witSha256, authority, templateBytes, Wo
       job.timer = schedule(() => {
         job.reason = 'PLAYGROUND-COMPILER-DEADLINE'; job.abort.abort();
       }, limits.compileMs);
-      try {
+      return complete(job, async () => {
         const response = await interrupted(job, host.compile({ version: 1, revision: job.revision,
           source: job.source }, job.abort.signal));
         job.token = response.token;
@@ -89,12 +101,12 @@ export function createController({ host, witSha256, authority, templateBytes, Wo
         verifyReceipt(response.receipt, result.metadata, authority);
         if (await sha256(response.bytes) !== response.receipt.frameSha256) fail('COMPILER-AUTHORITY');
         current(job);
-        if (result.metadata.status === 'compiled') {
-          compiled = { bytes: response.bytes.slice(), expected, metadata: result.metadata,
-            receipt: response.receipt };
-        }
+        return { result, output: { bytes: response.bytes.slice(), expected, metadata: result.metadata,
+          receipt: response.receipt } };
+      }, ({ result, output }) => {
+        if (result.metadata.status === 'compiled') compiled = output;
         return result.metadata;
-      } finally { await finish(job); }
+      });
     },
     async evaluate(logical, args) {
       if (!compiled || compiled.expected.revision !== revision) fail('COMPILE-FIRST');
@@ -109,7 +121,7 @@ export function createController({ host, witSha256, authority, templateBytes, Wo
         job.abort.abort(); job.worker?.terminate();
         job.reject?.(new Error(job.reason));
       }, limits.evaluateMs);
-      try {
+      return complete(job, async () => {
         // The independent host watchdog must be armed before creating a worker.
         job.token = await interrupted(job, host.beginEvaluation({ revision: job.revision,
           sourceSha256: output.metadata.sourceSha256,
@@ -144,7 +156,7 @@ export function createController({ host, witSha256, authority, templateBytes, Wo
               authority, templateBytes: templateBytes.slice() });
           } catch (error) { reject(error); }
         });
-      } finally { await finish(job); }
+      });
     },
   });
 }
