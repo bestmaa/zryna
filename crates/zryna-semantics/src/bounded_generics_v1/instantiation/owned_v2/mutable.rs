@@ -137,12 +137,12 @@ fn opaque_mutable_reinitialization_never_legalizes_a_second_original_move() {
 }
 
 #[test]
-fn loop_state_still_requires_a_separate_successor_proof() {
-    let source = "function unused(input:i32):i32 { while(false) { const item:String=\"unused\"; } return input; } export function root(input:i32):i32 { return input; }";
+fn owner_loop_header_replacement_still_requires_a_separate_successor_proof() {
+    let source = "function unused(input:i32):i32 { let item:String=\"original\"; while(false) { item=\"replacement\"; } return input; } export function root(input:i32):i32 { return input; }";
     let Failure::Diagnostics(errors) =
-        claim(&[("main.zry", source)]).expect_err("loop not admitted by structured branch proof")
+        claim(&[("main.zry", source)]).expect_err("owner phi remains excluded, even unused")
     else {
         panic!("source diagnostic")
     };
-    assert_eq!(errors[0].code, "ZRYNA-M3008");
+    assert_eq!(errors[0].code, "ZRYNA-M7007");
 }

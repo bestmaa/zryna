@@ -44,7 +44,7 @@ Only scalar signatures may be public exports. Opaque generic parameters remain a
 specializing to a Copy type cannot legalize repeated moves or add a Clone capability.
 
 Nominal declaration bodies, other containers, projections/partial initialization, mutable
-loan bindings, loops and branch-dependent replacement/phi state remain rejected. Borrowed payloads can pass to
+loan bindings and branch-dependent replacement/phi state remain rejected. Borrowed payloads can pass to
 appropriately typed private callees; further borrowed observation/mutation operations are not
 implemented. These are acceptance gaps, not restrictions added to the accepted full contract.
 
@@ -73,11 +73,17 @@ and unknown-target graphs reject. Header retention and topology inventories cont
 existing aggregate owner-plan credit before allocation; inherited typed CFG and loop-nesting
 checks remain mandatory.
 
-This is an internal verifier prerequisite, not source loop admission or executed loop evidence.
-The source checker still rejects every `while`, including unused originals. A following source
-slice must independently replay condition evaluation, lexical cleanup, early returns and exact
-loop-carried binding identities, including header parameters for mutable Copy values. Existing
-wire, layout, runtime, backend and public-profile contracts are unchanged.
+The bounded source `while` successor now builds a repeated condition header and carries mutable
+bool/i32 bindings through existing block parameters and exact edge operands. Condition expressions
+may contain their own match CFG; evaluation and temporary cleanup execute on every visit, including
+the final false visit. Conditions must preserve incoming owner and loan state. Continuing bodies
+close lexical locals and loans before restoring exact incoming availability, owner identities and
+loan parents. Only scalar Copy binding identities may change. Direct returns need no backedge;
+the false path retains header values for post-loop continuation. Nested/repeated loops and lexical
+shadowing use the same replay. Opaque originals are checked before substitution, including unused
+functions; Copy specialization cannot hide an owner move. Borrowed mutable scalar roots, owner or
+aggregate header replacement, branch-dependent replacement, break/continue and unstructured CFG
+remain excluded. Existing wire, layout, runtime, backend and public-profile contracts are unchanged.
 
 ## Target execution
 
@@ -147,7 +153,7 @@ observation preservation, distinct borrowed Copy aliases and nested return endin
 before cleanup. Each fixture executes twelve native successes and five cleanup-before-SIGILL
 failures; JavaScript and Wasm each execute seventeen fixed observations. The old runner and
 its frozen fixtures remain separate. These whole-local operations do not establish conditional
-joins, loops, projection assignment or partial-state support.
+joins, projection assignment or partial-state support. Loop evidence is separate below.
 
 The separate bounded branch runner is
 `python3 tests/m7-generic-owned-branches/run.py <evidence-directory>`.
@@ -166,8 +172,24 @@ source checks the exact/first-extra branch boundary; synthetic credit tests reta
 overflow, failed-state preservation and recovery. These are internal execution proofs, not
 supported-platform, provider-parity or public profile admission.
 
+The separate bounded loop runner is
+`python3 tests/m7-generic-owned-while/run.py <evidence-directory>`.
+Frozen independently read single-module and imported DTOs enter the same seal and all three
+unchanged emitters. Fixed allocation identities, UTF8 bytes, release order and scalar results
+prove zero/two iterations, repeated/final-false condition calls, a matched condition, nested and
+sequential loops, bool/i32 header transfers, Option/Result lexical cleanup, stable incoming loans,
+opaque generic ownership and asymmetric early returns. Each module form executes 32 native
+successes and 24 allocation failures with cleanup before SIGILL; JavaScript and Wasm each execute
+56 observations, including pristine retries. Independent backedge arity/value/type/target,
+condition-edge, EndLoan and failure-plan mutations reject. Source witnesses retain hostile keyword,
+newline and Unicode authentication. The existing 1,048,576 state-unit ceiling charges full retained
+snapshots/type keys and scalar parameter/index/operand inventories before allocation. Genuine
+source proves 435/436 loops under complete state credit and 256/257 scalar header places, then recovery.
+These are private Linux execution proofs; they do not establish Windows generic execution or
+full supported-platform/runtime qualification.
+
 Full acceptance still requires nominal/container ownership and partial state, branch-dependent
-replacement/phi state and loops, remaining borrowed operations, canonical multi-error diagnostics, full status/trap/runtime
+replacement/phi state and further loop-carried owner/aggregate state, remaining borrowed operations, canonical multi-error diagnostics, full status/trap/runtime
 qualification, provider parity, and supported-platform execution. This revision's Windows
 validation occurs separately; older hosted Windows receipts do not qualify it. Driver/profile
 activation remains a distinct future decision. Keep historical plain-cloud N4009 cleanup

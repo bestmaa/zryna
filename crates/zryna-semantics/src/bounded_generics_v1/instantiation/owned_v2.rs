@@ -3,6 +3,8 @@ use super::{BodyTypeContext, InstanceContext};
 #[cfg(test)]
 mod branches;
 #[cfg(test)]
+mod loops;
+#[cfg(test)]
 mod mutable;
 #[cfg(test)]
 mod negative;

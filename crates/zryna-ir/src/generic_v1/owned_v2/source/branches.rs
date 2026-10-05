@@ -95,7 +95,7 @@ impl Builder<'_, '_> {
         Ok(false)
     }
 
-    fn charge_branch_state(&mut self) -> Result<(), Failure> {
+    pub(super) fn charge_branch_state(&mut self) -> Result<(), Failure> {
         // Charge complete snapshots/restores, including Copy availability and lexical places,
         // before allocating. The same credit persists across every closed specialization.
         let units =

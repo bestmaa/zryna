@@ -82,7 +82,10 @@ impl Builder<'_, '_> {
                         depth + 1,
                     )?;
                 }
-                _ => {
+                RawStatementKind::While { condition, body_block, .. } => {
+                    self.source_loop(*condition, *body_block, statement.span, depth + 1)?;
+                }
+                RawStatementKind::WeakUpgrade { .. } => {
                     return Err(reject(
                         "source statement requires a successor lane beyond immutable Copy replay",
                     ));

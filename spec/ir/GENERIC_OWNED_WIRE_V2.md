@@ -59,16 +59,28 @@ identical incoming state. Joined owner state must match exactly.
 Structured source branches use existing bool Branch and empty Jump edges. No wire opcode or
 type carrier changes. Continuing arms close their lexical locals; incoming binding identities
 and complete availability/loan states must agree without implicit repair. Both returning arms
-return directly, with no join parameter or unreachable join. Branch-dependent replacements,
-loops and loan-carrying edge arguments remain outside this source slice.
+return directly, with no join parameter or unreachable join. Branch-dependent replacements
+and loan-carrying edge arguments remain outside this source slice.
 
 The independent internal plan replay supports reducible natural-loop topology as a prerequisite.
 Only a target that independently dominates its predecessor is treated as a backedge. The
 forward schedule must remain complete after removing those edges; its original header snapshot
 is retained and every backedge must restore exact owners, loans and cleanup order. No fixed-point
 repair or repeated replay is used. Ordinary loan-carrying edges remain rejected. This planner
-capability alone cannot issue an owned seal: complete source replay still rejects all loops.
+capability alone cannot issue an owned seal: complete source replay remains mandatory.
 Typed CFG dominance, edge arity and inherited nesting limits remain separate mandatory checks.
+
+Bounded source while replay uses existing Jump, bool Branch and scalar block parameters. Only
+mutable bool/i32 places receive header parameters (at most 256); parameter/index/key and both edge
+operand inventories are charged before allocation. Complete retained state uses the existing
+aggregate source state credit, including binding key bytes and Copy availability. Conditions
+execute at the repeated header, retain any internal match CFG, close temporaries and preserve
+incoming owner/loan state. Continuing bodies close lexical locals and restore exact incoming
+availability, noncarried binding identities, loans and loan parents. Scalar Copy binding IDs alone
+may change. Terminal body paths return directly; the false path restores header scalar values and
+incoming opaque state for continuation. Original symbolic checking applies even to unused
+templates, before closed Copy substitution. Owner/aggregate header replacement, borrowed mutable
+scalar roots, branch-dependent repair, break/continue and unstructured CFG remain rejected.
 
 Steps occur before a fallible instruction or at successful return. `position` equals the
 instruction index, or the instruction count for return. A failure step ends current loans and
