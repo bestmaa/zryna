@@ -1,0 +1,4 @@
+export function discard<T extends ZrynaValue>(value:T):i32 { return 7; }
+export function select<T extends ZrynaValue>(flag:bool,value:T,next:T):T {
+  if(flag) { return value; } else { return next; }
+}

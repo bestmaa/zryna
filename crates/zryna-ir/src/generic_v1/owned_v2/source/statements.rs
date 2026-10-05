@@ -73,6 +73,15 @@ impl Builder<'_, '_> {
                 RawStatementKind::Block { block } => {
                     returned = self.scoped_block(*block, statement.span, depth + 1)?;
                 }
+                RawStatementKind::If { condition, then_block, else_clause, .. } => {
+                    returned = self.branch(
+                        *condition,
+                        *then_block,
+                        else_clause.as_ref().map(|clause| clause.block),
+                        statement.span,
+                        depth + 1,
+                    )?;
+                }
                 _ => {
                     return Err(reject(
                         "source statement requires a successor lane beyond immutable Copy replay",
@@ -91,7 +100,7 @@ impl Builder<'_, '_> {
         Ok(returned)
     }
 
-    fn scoped_block(
+    pub(super) fn scoped_block(
         &mut self,
         block: u32,
         span: zryna_source::UntrustedSpan,

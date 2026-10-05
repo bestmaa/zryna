@@ -224,7 +224,10 @@ pub(super) fn derive(
     Ok(plans)
 }
 #[cfg(test)]
-mod tests {
+#[path = "plan/tests.rs"]
+mod tests;
+#[cfg(test)]
+mod credit_tests {
     #[test]
     fn complete_owner_state_and_cleanup_credits_reject_first_extra_and_overflow() {
         let mut credits = 0;

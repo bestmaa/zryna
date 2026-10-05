@@ -10,6 +10,7 @@ use crate::generic_v1::{
 };
 use zryna_syntax::{v4::RawStatementKind, v5::RawFunctionSyntax};
 
+mod branches;
 mod enums;
 mod expressions;
 mod normalize;

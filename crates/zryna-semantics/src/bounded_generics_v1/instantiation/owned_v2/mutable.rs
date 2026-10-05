@@ -137,19 +137,12 @@ fn opaque_mutable_reinitialization_never_legalizes_a_second_original_move() {
 }
 
 #[test]
-fn conditional_and_loop_state_still_require_a_separate_successor_proof() {
-    for body in [
-        "if(true) { return input; } else { return input; }",
-        "while(false) { const item:String=\"unused\"; } return input;",
-    ] {
-        let source = format!(
-            "function unused(input:i32):i32 {{ {body} }} export function root(input:i32):i32 {{ return input; }}"
-        );
-        let Failure::Diagnostics(errors) =
-            claim(&[("main.zry", &source)]).expect_err("not admitted by whole-local proof")
-        else {
-            panic!("source diagnostic")
-        };
-        assert_eq!(errors[0].code, "ZRYNA-M3008");
-    }
+fn loop_state_still_requires_a_separate_successor_proof() {
+    let source = "function unused(input:i32):i32 { while(false) { const item:String=\"unused\"; } return input; } export function root(input:i32):i32 { return input; }";
+    let Failure::Diagnostics(errors) =
+        claim(&[("main.zry", source)]).expect_err("loop not admitted by structured branch proof")
+    else {
+        panic!("source diagnostic")
+    };
+    assert_eq!(errors[0].code, "ZRYNA-M3008");
 }

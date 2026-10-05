@@ -1,6 +1,8 @@
 //! Raw owned successor production after original body typing and complete discovery.
 use super::{BodyTypeContext, InstanceContext};
 #[cfg(test)]
+mod branches;
+#[cfg(test)]
 mod mutable;
 #[cfg(test)]
 mod negative;

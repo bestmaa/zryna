@@ -9,8 +9,12 @@ pub(super) struct Budget {
     calls: usize,
     operands: usize,
     literals: usize,
+    branch_states: usize,
 }
 impl Budget {
+    pub(super) fn branch_state(&mut self, units: usize) -> Result<(), Failure> {
+        add(&mut self.branch_states, units, super::super::plan::MAX_OWNER_UNITS)
+    }
     pub(super) fn value(&mut self) -> Result<(), Failure> {
         add(&mut self.values, 1, limits::MAX_VALUES_PER_PROGRAM)
     }
@@ -48,6 +52,18 @@ fn add(total: &mut usize, extra: usize, ceiling: usize) -> Result<(), Failure> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn branch_state_copy_credits_reject_first_extra_and_overflow_without_mutation() {
+        let mut credit = Budget::default();
+        credit.branch_state(super::super::super::plan::MAX_OWNER_UNITS).expect("exact");
+        let prior = credit.branch_states;
+        assert!(credit.branch_state(1).is_err());
+        assert_eq!(credit.branch_states, prior);
+        credit.branch_states = usize::MAX;
+        assert!(credit.branch_state(1).is_err());
+        assert_eq!(credit.branch_states, usize::MAX);
+    }
 
     #[test]
     fn repeated_closed_bodies_stop_before_copying_the_first_excess_literal() {

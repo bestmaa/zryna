@@ -53,7 +53,14 @@ Opaque `T` is affine even when specialized to i32. Whole moves consume a live ow
 Construction transfers the selected payload; by-value match consumes the enum and transfers
 only its active payload. Shared loans exclude consumption and exclusive loans. Exclusive
 parents freeze while payload subloans exist. Arm subloans end before their parent or join.
-Loans cannot return or cross ordinary CFG edges. Joined owner state must match exactly.
+Loans cannot return or be transferred as ordinary CFG edge arguments. Retained loans require
+identical incoming state. Joined owner state must match exactly.
+
+Structured source branches use existing bool Branch and empty Jump edges. No wire opcode or
+type carrier changes. Continuing arms close their lexical locals; incoming binding identities
+and complete availability/loan states must agree without implicit repair. Both returning arms
+return directly, with no join parameter or unreachable join. Branch-dependent replacements,
+loops and loan-carrying edge arguments remain outside this source slice.
 
 Steps occur before a fallible instruction or at successful return. `position` equals the
 instruction index, or the instruction count for return. A failure step ends current loans and
@@ -78,6 +85,7 @@ retains its own inherited ceiling. No combined larger single-budget claim is mad
 | End-loan or cleanup IDs per step | 16,384 |
 | UTF-8 bytes in one String literal | 65,536 |
 | Aggregate planner state-copy/cleanup credits | 1,048,576 |
+| Source branch snapshot/restore credits, per original / complete closed production | 1,048,576 |
 
 Inherited graph, source, layout and instantiation ceilings apply independently. Checked
 overflow and the first extra member fail atomically; allocation failure remains an

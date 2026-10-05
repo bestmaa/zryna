@@ -44,9 +44,22 @@ Only scalar signatures may be public exports. Opaque generic parameters remain a
 specializing to a Copy type cannot legalize repeated moves or add a Clone capability.
 
 Nominal declaration bodies, other containers, projections/partial initialization, mutable
-loan bindings and loops/if CFG remain rejected. Borrowed payloads can pass to
+loan bindings, loops and branch-dependent replacement/phi state remain rejected. Borrowed payloads can pass to
 appropriately typed private callees; further borrowed observation/mutation operations are not
 implemented. These are acceptance gaps, not restrictions added to the accepted full contract.
+
+Structured `if` now admits explicit or omitted `else`, nested/repeated branches, lexical
+shadowing, branch-local cleanup and direct early returns. The condition is evaluated once and
+must have exact original bool type. Both returning arms have direct Return terminators and no
+join block. Each fallthrough arm closes its local scope before an empty edge to a no-phi join;
+incoming place identities and complete availability/loan/parent states must agree exactly.
+Moving an opaque owner on only one continuing path rejects before specialization, including
+in unused templates. Moving it on both paths leaves it unavailable after the join. Retained
+loans may remain identical across empty edges; no loan is transferred as an edge argument.
+Branch-dependent assignment to an incoming binding still requires a separate phi proof and
+rejects even when both replacements have the same type. No implicit drop or owner repair is
+inserted to reconcile unequal incoming states. A returning path does not constrain the state
+of the remaining continuing path.
 
 ## Target execution
 
@@ -118,8 +131,25 @@ failures; JavaScript and Wasm each execute seventeen fixed observations. The old
 its frozen fixtures remain separate. These whole-local operations do not establish conditional
 joins, loops, projection assignment or partial-state support.
 
-Full acceptance still requires nominal/container ownership and partial state, general mutable
-CFG, remaining borrowed operations, canonical multi-error diagnostics, full status/trap/runtime
+The separate bounded branch runner is
+`python3 tests/m7-generic-owned-branches/run.py <evidence-directory>`.
+Its independently read, frozen single-module and imported DTOs enter the same owned seal and
+all three emitters. Fixed oracles cover both selected generic returns, nested Option/Result
+branch-local cleanup, lexical shadowing, repeated/omitted else, retained shared loans,
+asymmetric early return, and consumption on both continuing arms. Each module form checks
+fourteen native successes and eight cleanup-before-SIGILL failures; JavaScript and Wasm each
+check twenty-two observations, including failure and pristine retry. Independent raw branch,
+edge, condition, scope-drop and failure-plan mutations reject; a separate hand-authored plan
+test rejects unequal owner states in both successor orders without source-producer assistance.
+Source replay charges complete branch snapshots, including copied binding type-key bytes,
+before allocation, capped at the existing
+1,048,576-unit owner-plan ceiling per original and across all closed specializations. Genuine
+source checks the exact/first-extra branch boundary; synthetic credit tests retain checked
+overflow, failed-state preservation and recovery. These are internal execution proofs, not
+supported-platform, provider-parity or public profile admission.
+
+Full acceptance still requires nominal/container ownership and partial state, branch-dependent
+replacement/phi state and loops, remaining borrowed operations, canonical multi-error diagnostics, full status/trap/runtime
 qualification, provider parity, and supported-platform execution. This revision's Windows
 validation occurs separately; older hosted Windows receipts do not qualify it. Driver/profile
 activation remains a distinct future decision. Keep historical plain-cloud N4009 cleanup
