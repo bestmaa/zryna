@@ -148,3 +148,68 @@ test('independent host expiry invalidates a queued observation without poisoning
   f.host.finish = async () => false;
   assert.equal((await f.controller.compile()).status, 'compiled');
 });
+
+for (const operation of ['compile', 'evaluate']) {
+  for (const action of ['cancel', 'edit']) {
+    test(`${action} during ${operation} teardown rejects success and invalidates compiled reuse`, async () => {
+      const f = fixture();
+      if (operation === 'evaluate') await f.controller.compile();
+      const entered = deferred(); const teardown = deferred();
+      const calls = [];
+      f.host.finish = (token, cancelled) => {
+        calls.push({ token, cancelled }); entered.resolve(); return teardown.promise;
+      };
+      const pending = operation === 'compile' ? f.controller.compile() : f.controller.evaluate('main', []);
+      let settled = false;
+      const outcome = pending.then(value => { settled = true; return { value }; },
+        error => { settled = true; return { error }; });
+      if (operation === 'evaluate') {
+        await new Promise(resolve => setImmediate(resolve));
+        const worker = f.workers.at(-1);
+        worker.request.componentSha256 = await sha256(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]));
+        worker.reply();
+      }
+      await entered.promise;
+      assert.equal(f.controller.busy, true);
+      assert.equal(settled, false);
+      if (action === 'cancel') assert.equal(f.controller.cancel(), true);
+      else assert.equal(f.controller.edit(source + '\n'), 3);
+      await assert.rejects(f.controller.compile(), /BUSY/);
+      assert.equal(f.controller.busy, true);
+      assert.equal(settled, false);
+      assert.equal(f.timers.size, 0);
+      assert(f.workers.every(worker => worker.terminated));
+      teardown.resolve(false);
+      const result = await outcome;
+      assert.equal(f.controller.busy, false);
+      assert.equal(f.controller.cancel(), false);
+      assert.deepEqual(calls, [{ token: `${operation === 'compile' ? 'compile' : 'evaluation'}-token`,
+        cancelled: false }]);
+      // A reuse attempt must reject locally before reaching the host or creating another worker.
+      f.host.beginEvaluation = async () => { throw new Error('unexpected cached compilation'); };
+      await assert.rejects(f.controller.evaluate('main', []), /COMPILE-FIRST/);
+      assert.match(result.error?.message ?? 'unexpected successful result', /CANCELLED/);
+      f.host.finish = async () => false;
+      assert.equal((await f.controller.compile()).revision, action === 'edit' ? 3 : 2);
+    });
+  }
+}
+
+test('compile cache remains unavailable until successful host teardown completes', async () => {
+  const f = fixture(); const entered = deferred(); const teardown = deferred();
+  f.host.finish = () => { entered.resolve(); return teardown.promise; };
+  const pending = f.controller.compile();
+  await entered.promise;
+  assert.equal(f.controller.busy, true);
+  await assert.rejects(f.controller.evaluate('main', []), /COMPILE-FIRST/);
+  teardown.resolve(false);
+  assert.equal((await pending).status, 'compiled');
+  assert.equal(f.controller.busy, false);
+  f.host.finish = async () => false;
+  const evaluation = f.controller.evaluate('main', []);
+  await new Promise(resolve => setImmediate(resolve));
+  const worker = f.workers.at(-1);
+  worker.request.componentSha256 = await sha256(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]));
+  worker.reply();
+  assert.equal((await evaluation).value, 42);
+});
