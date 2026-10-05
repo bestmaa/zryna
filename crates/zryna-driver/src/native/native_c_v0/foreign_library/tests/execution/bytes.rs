@@ -5,6 +5,7 @@ mod harness;
 mod malformed;
 mod prefixes;
 mod provenance;
+mod reference;
 
 fn requirements(captured: &capture::Capture, name: &str) -> HandleLinkRequirements {
     let ir = zryna_native_c_ir::lower(&captured.sources, &captured.authority)

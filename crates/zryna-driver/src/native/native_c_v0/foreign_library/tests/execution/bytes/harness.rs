@@ -16,6 +16,27 @@ pub(super) fn observe(
     client: &str,
     sanitized: bool,
 ) -> native::BoundedProcessOutput {
+    observe_with_timeout(
+        fixture,
+        requirements,
+        captured,
+        library,
+        client,
+        sanitized,
+        native::MAX_NATIVE_RUN_TIMEOUT,
+    )
+    .expect("actual separately linked byte execution")
+}
+
+pub(super) fn observe_with_timeout(
+    fixture: &Fixture,
+    requirements: &HandleLinkRequirements,
+    captured: &CapturedForeignLibrary,
+    library: &str,
+    client: &str,
+    sanitized: bool,
+    timeout: std::time::Duration,
+) -> Result<native::BoundedProcessOutput, Diagnostic> {
     captured.check_binding(requirements).expect("genuine original byte issuer");
     // A separately rebuilt ordinary object must match the captured artifact before this source
     // may produce an instrumented observation object. This is provenance, never approval.
@@ -90,19 +111,20 @@ pub(super) fn observe(
         &executable,
         &[],
         &directory,
-        native::MAX_NATIVE_RUN_TIMEOUT,
+        timeout,
         4096,
         native::MAX_NATIVE_RUN_STDERR_BYTES,
         ProcessPhase::Run,
         Some(&directory),
-    )
-    .expect("actual separately linked byte execution");
+    );
     assert!(stage.cleanup().is_empty());
     assert!(private_stage.cleanup().is_empty());
     fixture.empty();
-    assert!(result.stdout.is_empty());
-    if result.status.success() {
-        assert!(result.stderr.is_empty());
+    if let Ok(output) = &result {
+        assert!(output.stdout.is_empty());
+        if output.status.success() {
+            assert!(output.stderr.is_empty());
+        }
     }
     result
 }
