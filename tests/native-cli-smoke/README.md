@@ -38,6 +38,23 @@ private source-checkout build behavior; it does **not** prove a clean ordinary i
 compile without Node, pnpm or Cargo. A separate control removes Cargo and requires the unchanged
 architecture failure `ZRYNA-A1101`.
 
+The normal pull-request activation workflow also has a distinct **private native CLI** job on
+Linux and Windows. It checks out the current PR head, fetches locked dependencies, and uses
+`run_ci.py` to build both CLIs in one fresh external target directory. Real Cargo/Rustc paths
+come from `rustup which`; the Windows system environment remains available while every CLI
+invocation retains the empty PATH used by the smoke. `verify_ci_receipts.py` independently
+requires all 21 unique outcomes, rehashes tracked/generated sources and binaries, and compares
+the retained complete bundles and rejection responses. Failed or partial receipts reject.
+Receipt hostile-case tests use synthetic files and establish no compiler/platform result.
+
+Current-head CLI job/artifact identities include the current head, run and attempt. They are
+separate from the same workflow's unchanged immutable-consumer preparation at `6c0f3f64…`.
+Small proof artifacts retain all bundle bytes, stdout/stderr and admitted receipts; separate
+executable artifacts preserve both compiled binaries. Windows qualification requires the actual
+current-head Windows job and admitted receipt to pass; a Linux result is never substituted.
+This remains build-only JS/Wasm/fixed-target object proof, with Cargo explicit and required.
+No native execution, ordinary installed no-Node acceptance or public activation follows from it.
+
 Nine real positive builds cover M1, the full registered M2 closure and seven M3 ownership sources, including three imported closures.
 For those closures, the runner copies the registered wrapper and dependency bytes into new
 task-owned `.zryna/cache` fixture directories as `main.zry` and `math.zry`; it binds original

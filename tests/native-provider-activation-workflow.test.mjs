@@ -15,6 +15,9 @@ const parsed = parseDocument(readFileSync(
 ));
 assert.deepEqual(parsed.errors, []);
 const workflow = parsed.toJS();
+const privateCliJob = JSON.parse(readFileSync(new URL(
+  './native-cli-smoke/workflow-job.json', import.meta.url,
+), 'utf8'));
 
 const expectedSteps = [
   {
@@ -89,6 +92,14 @@ const expected = {
         'tests/native-provider-activation-ci/**',
         'tests/native-provider-activation-workflow.test.mjs',
         'tests/workflow-routing.test.mjs',
+        'scripts/run-native-cli-smoke.py',
+        'tests/native-cli-smoke/**',
+        'apps/zryna/src/**',
+        'apps/zryna/Cargo.toml',
+        'crates/**',
+        'Cargo.toml',
+        'Cargo.lock',
+        'rust-toolchain.toml',
       ],
     },
     workflow_dispatch: null,
@@ -107,6 +118,7 @@ const expected = {
       'runs-on': expression('matrix.os'),
       steps: expectedSteps,
     },
+    'private-cli': privateCliJob,
   },
 };
 
@@ -264,5 +276,56 @@ test('publication, wider permissions and artifacts without exact consumer proven
     ['empty artifact accepted', (w) => { w.jobs.smoke.steps[11].with['if-no-files-found'] = 'ignore'; }],
     ['unreviewed retention', (w) => { w.jobs.smoke.steps[11].with['retention-days'] = 90; }],
     ['unrelated checkout uploaded', (w) => { w.jobs.smoke.steps[11].with.path += 'consumer\n'; }],
+  ]);
+});
+
+test('current CLI proof binds both hosts and exact source separately from immutable consumer', () => {
+  verify(workflow);
+  const job = workflow.jobs['private-cli'];
+  assert.deepEqual(job.env, { CLI_SOURCE_SHA: HEAD });
+  assert.deepEqual(job.strategy, {
+    'fail-fast': false, matrix: { os: ['ubuntu-latest', 'windows-latest'] },
+  });
+  assert.equal(job['runs-on'], expression('matrix.os'));
+  assert.equal(job['continue-on-error'], undefined);
+  assert.equal(job.if, undefined);
+  assert.equal(job.steps[0].with.ref, expression('env.CLI_SOURCE_SHA'));
+  const proof = job.steps.findIndex((step) => step.name === 'Build both current CLIs and run exact private smoke');
+  assert(proof > 0);
+  assert.match(job.steps[proof].run, /rustup which cargo/u);
+  assert.match(job.steps[proof].run, /rustup which rustc/u);
+  assert.match(job.steps[proof].run, /if \(\$LASTEXITCODE -ne 0\)/u);
+  assert.equal(job.steps[proof + 1].name, 'Require independently verified current CLI receipt');
+  assert.match(job.steps[proof + 1].run, /verify_ci_receipts\.py/u);
+  assert.match(job.steps[proof + 1].run, /--head "\$env:CLI_SOURCE_SHA"/u);
+  for (const step of job.steps) {
+    assert.equal(step['continue-on-error'], undefined);
+    if (step.uses?.startsWith('actions/upload-artifact@')) {
+      assert.equal(step.if, 'always()');
+      assert(step.with.name.includes(expression('env.CLI_SOURCE_SHA')));
+      assert(step.with.name.includes(expression('github.run_id')));
+      assert(step.with.name.includes(expression('github.run_attempt')));
+      assert.equal(step.with['if-no-files-found'], 'error');
+    } else assert.equal(step.if, undefined);
+  }
+  rejectMutations([
+    ['current proof uses historical source', (w) => { w.jobs['private-cli'].env.CLI_SOURCE_SHA = PIN; }],
+    ['current checkout uses consumer', (w) => { w.jobs['private-cli'].steps[0].with.ref = PIN; }],
+    ['historical checkout uses current proof', (w) => { w.jobs.smoke.steps[1].with.ref = HEAD; }],
+    ['private Windows omitted', (w) => { w.jobs['private-cli'].strategy.matrix.os.pop(); }],
+    ['private proof skipped', (w) => { w.jobs['private-cli'].if = 'false'; }],
+    ['private proof failure waived', (w) => { w.jobs['private-cli']['continue-on-error'] = true; }],
+    ['CLI post-verification omitted', (w) => { w.jobs['private-cli'].steps.splice(proof + 1, 1); }],
+    ['receipt admission precedes proof', (w) => {
+      const steps = w.jobs['private-cli'].steps;
+      [steps[proof], steps[proof + 1]] = [steps[proof + 1], steps[proof]];
+    }],
+    ['current proof claims consumer artifacts', (w) => {
+      w.jobs['private-cli'].steps.at(-2).with.name = w.jobs.smoke.steps.at(-1).with.name;
+    }],
+    ['native exit masked', (w) => {
+      w.jobs['private-cli'].steps[proof].run = w.jobs['private-cli'].steps[proof].run
+        .replace("if ($LASTEXITCODE -ne 0) { throw 'Private CLI proof failed' }", '');
+    }],
   ]);
 });
