@@ -91,10 +91,14 @@ fn independent_typed_selected_clone_rejects_wrong_operand_result_and_placeholder
         match attack {
             0 => hostile.extensions[0][1].operation = raw::Operation::CloneBorrowedString(0),
             1 => {
+                hostile.extensions[0][0].operation =
+                    raw::Operation::Borrow { value: 0, exclusive: true };
                 hostile.graph.functions[0].blocks[0].instructions[0].result.ty =
                     graph::Type::Borrow { referent: 2, exclusive: true }
             }
             2 => {
+                hostile.graph.functions[0].parameters[0] = graph::Type::Stored(0);
+                hostile.graph.functions[0].blocks[0].parameters[0].ty = graph::Type::Stored(0);
                 hostile.graph.functions[0].blocks[0].instructions[0].result.ty =
                     graph::Type::Borrow { referent: 0, exclusive: false }
             }
@@ -112,7 +116,14 @@ fn independent_typed_selected_clone_rejects_wrong_operand_result_and_placeholder
                 operation: raw::Operation::CloneBorrowedString(1),
             }),
         }
-        assert!(typed(&hostile, &layouts, &sources).is_err(), "typed attack {attack}");
+        let Failure::Diagnostics(errors) =
+            typed(&hostile, &layouts, &sources).expect_err("independent typed attack")
+        else {
+            panic!("typed diagnostic")
+        };
+        if matches!(attack, 1 | 2) {
+            assert_eq!(errors[0].message, "selected clone requires exact shared String loan");
+        }
         typed(&claim, &layouts, &sources).expect("pristine typed retry");
     }
 }
