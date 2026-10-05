@@ -1,6 +1,6 @@
 # Resolved build plan v0
 
-Status: source-only contract candidate for
+Status: integrated source-only contract with a **proposed D2 native alignment** for
 [#361](https://github.com/zryna/zryna/issues/361), within M5. The schema and checker validate
 synthetic records only. They do not resolve packages, read a workspace, acquire inputs, execute a
 tool, compile, link, populate a cache, or publish an artifact. Existing compiler/runtime behavior,
@@ -50,15 +50,16 @@ trusted. It also does not authorize acquisition, grant a trust exception, or def
 #362 remains the authority for those decisions and their evidence. No undeclared environment
 variable or executable is available to a plan consumer.
 
-The native appendix is provisional pending the relevant accepted #364 ABI decisions. It records the
-information #361 must eventually bind, but its `provisional-pending-364` status is not an accepted C
-ABI, calling convention, layout, ownership rule, or native support claim. Source-only v0 acceptance
-does not wait for this appendix or the rest of M7.
+The legacy native appendix stays `provisional-pending-364`. [PR #393](https://github.com/zryna/zryna/pull/393)
+accepted the source-only plan and source policy, explicitly leaving the native appendix a draft.
+The subsequently integrated [#364 review](../abi/NATIVE_C_INTEROP_V0_REVIEW.md#exact-identity-and-importexport-layout)
+specifies the exact C ABI tuple; it does not retroactively accept #361's appendix or prove FFI.
+Source-only v0 acceptance does not wait for this appendix or the rest of M7.
 
-The current read-only #364 candidate names `zryna-native-c-interop-v0`, exact
-`x86_64-unknown-linux-gnu`, System V AMD64 C ABI and its closed carrier/resource rules. The synthetic
-native fixture may bind those provisional inputs for coordination, but this contract does not copy
-their authority, make them accepted, or infer artifact acquisition from a foreign declaration.
+The prospective D2 variant below binds that specified tuple for independent review. Its explicit
+`proposed-specified-native-c-interop-v0` status is not the accepted status
+`specified-native-c-interop-v0`: the latter currently rejects. Neither variant supplies acquisition,
+runtime artifact, execution or publication authority. The driver and #362 remain their owners.
 
 ## Closed source-only record
 
@@ -201,7 +202,8 @@ or provenance record. #168 remains the authority for recording any resulting rel
 
 ## Optional native-input appendix
 
-The appendix makes host and target roles unambiguous while leaving ABI details provisional:
+The legacy appendix makes host and target roles unambiguous while leaving ABI inputs provisional;
+the prospective variant below fixes one tuple without granting native admission:
 
 | Section | Responsibility | Contents |
 | --- | --- | --- |
@@ -212,7 +214,7 @@ The appendix makes host and target roles unambiguous while leaving ABI details p
 | `acquisition.sharedArtifacts` | exact link/load artifacts | target id, byte size and digest |
 | `acquisition.runtimeDependencies` | artifacts required after link | target id and an exact shared-artifact reference |
 | `compilation.steps` | driver-requested compilation | declared host tool, target, typed versioned invocation adapter, inputs and object output identity |
-| `abi` | accepted native boundary inputs | target triple plus versioned ABI, calling-convention, carrier, ownership and runtime identities from relevant #364 decisions |
+| `abi` | native boundary descriptions | target triple plus versioned ABI, calling-convention, carrier, ownership and runtime identities from relevant #364 decisions |
 | `linking` | driver-owned final link | declared host linker, target, ordered typed linker inputs, typed versioned invocation adapter and exact declared output path |
 
 The appendix records acquisition identities; their presence never authorizes retrieval or execution.
@@ -237,16 +239,56 @@ artifacts, runtime dependencies, objects, or tools reject before process executi
 may satisfy an absent declaration.
 
 The appendix's target triple and runtime tuple must exactly match its selected source-plan target.
-Its calling-convention, carrier and ownership identities are opaque versioned #364 inputs: this
-contract binds them into cache identity but cannot derive, widen or interpret them. Acquisition
-authorization remains a #362 policy decision. Compilation, linking and publication remain driver
-operations and cannot be authorized by the presence of these identities.
+The legacy calling-convention, carrier and ownership identities are opaque versioned inputs. The
+prospective variant checks only the specified #364 literals; it cannot derive or widen those ABI
+rules, authenticate runtime bytes, or replace independently sealed language/layout authorities.
+Acquisition authorization remains a #362 policy decision. Compilation, linking and publication
+remain driver operations and cannot be authorized by the presence of these identities.
 
-Before this appendix can become accepted, #364 must supply the exact ABI identity/version and all
-relevant calling convention, target data-layout, symbol, carrier, ownership, allocator and runtime
-compatibility decisions. The appendix then needs a focused schema revision or an explicit review
-that removes `provisional-pending-364`; it does not wait for unrelated bindings, libraries, frontend
-replacement, or all of M7.
+### Proposed D2 native C v0 alignment
+
+This focused schema/checker revision is **proposed**, pending independent exact-revision review
+and explicit #361 native appendix acceptance. Passing its tests, integrating #364, closing a parent
+issue, or supplying an approval Boolean cannot accept it. A later separately reviewed change must
+record acceptance before admitting `specified-native-c-interop-v0`; this candidate rejects that
+unprefixed status and all implemented/conformance/public-support claims. No historical record is
+relabeled, normalized or upgraded.
+
+For `proposed-specified-native-c-interop-v0`, the closed schema requires:
+
+| Field | Exact value |
+| --- | --- |
+| `target` | `native-linux-x86_64` |
+| `abi.identity` | `zryna-native-c-interop-v0` |
+| `abi.version` | string `"0"`, retaining #361's existing version-string wire type |
+| `abi.targetTriple` | `x86_64-unknown-linux-gnu` |
+| `abi.callingConvention` | `sysv-amd64-c-v0` |
+| `abi.carrierModel` | `native-c-interop-v0-carriers` |
+| `abi.ownershipModel` | `native-c-interop-v0-resources` |
+| `abi.decisionIssue` | integer `364` |
+
+The historical illustrative `system-v-amd64-c` spelling is not an alias for the specified
+convention and rejects in the proposed variant. Legacy `provisional-pending-364` records remain
+structurally valid drafts with their existing opaque tuple grammar; their presence never becomes
+acceptance. Missing/unknown fields, other versions/targets/carriers/owners, and raw arguments still
+reject. The source target's language ABI remains a distinct input; #364 does not replace scalar
+ABI v1 or expose compiler-private ownership-runtime layouts.
+
+`abi.runtime` must exactly match the selected source target's runtime name/version/SHA-256 tuple.
+This equality binds a claimed input, not independently authenticated artifact bytes. The synthetic
+`zryna-native-runtime`/`1` fixture with SHA-256 `"3"` repeated 64 times is illustrative only; no
+runtime digest is fixed as artifact authority by this schema. Changing a matching tuple changes
+the plan/cache identity but still proves no runtime availability, ABI execution or isolation.
+The actual accepted language-runtime contract/version and retained target bytes require separate
+authentic evidence under their owning runtime/driver/#168 boundaries. A C allocator/library
+identity cannot satisfy that obligation, and a matching checksum cannot issue it.
+
+The fixture receipt's existing `native` flag describes appendix presence only. A proposed record
+additionally returns `nativeAdmission: "denied-proposed"`; it issues no capability. Existing recipe
+preflight remains fail closed even with exact tuple/material/digest comparisons and caller-supplied
+acceptance/FFI/runtime flags. Source-only bytes, receipt shape, cache domains, miss/hit validation,
+package graph and publication observations are unchanged. Every proposed field remains in the
+existing complete-plan cache projection; no native cache key is silently shared with a legacy one.
 
 ## Rejection phases
 
@@ -364,8 +406,9 @@ part of that slice.
   trust decision owned by #362.
 - Confirm whether #168 records this plan key as a provenance material/reference; #168 remains the
   record owner and must domain-separate any such digest in its own versioned extension.
-- Replace the provisional native ABI tuple only after the relevant #364 target/calling-convention,
-  carrier, ownership and runtime decisions are accepted; retain source-only validity without it.
+- Independently review the proposed #364 tuple mapping and runtime-artifact evidence separation
+  before accepting any native appendix status; retain legacy draft and source-only validity without
+  relabeling either. This proposal records no reviewer acceptance or runtime artifact authority.
 - Review any renamed field or changed projection as a cache-format change. Do not silently accept
   both spellings, infer defaults, or rewrite historical records.
 
