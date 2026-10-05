@@ -14,18 +14,22 @@ from verify_ci_receipts import exact, strict, digest, git
 from manifest_admission import graph_digest, _file
 
 REGISTRY_SHA='34cd29a5f146d77e7163b32d21e71e4f5a1fc5fd50f688d197de8bef9b38a508'
-GROUPS={'owned-shared':'aggregate','string':'text','owned-vec':'aggregate'}
+GROUPS={'owned-shared':'aggregate','string':'text','owned-vec':'aggregate','vec':None}
 PHYSICAL_CASE='owned-shared-physical-4'
 ORACLE='owned-shared-fault-2-2'
 FAULT={'mode':'physical-allocation','code':6,'ordinal':4,'command':0x26000004}
 TEST='ownership_commands::conformance::native_provider_faults::physical::owned_shared_physical_group_executes_through_retained_source'
 TESTS={'owned-shared':TEST,
        'string':'ownership_commands::conformance::native_provider_faults::physical::string_physical_group_executes_through_retained_source',
-       'owned-vec':'ownership_commands::conformance::native_provider_faults::physical::owned_vec_physical_group_executes_through_retained_source'}
+       'owned-vec':'ownership_commands::conformance::native_provider_faults::physical::owned_vec_physical_group_executes_through_retained_source',
+       'vec':'ownership_commands::conformance::native_provider_faults::physical::vec_physical_group_executes_through_retained_source'}
 PROBES={PHYSICAL_CASE:{'fixture':'owned-shared','trace_oracle':ORACLE,'ordinal':4},
         'string-physical-2':{'fixture':'string','trace_oracle':'string-fault-2-1','ordinal':2},
         'string-physical-4':{'fixture':'string','trace_oracle':'string-fault-2-2','ordinal':4},
-        'owned-vec-physical-10':{'fixture':'owned-vec','trace_oracle':'owned-vec-fault-2-6','ordinal':10}}
+        'owned-vec-physical-10':{'fixture':'owned-vec','trace_oracle':'owned-vec-fault-2-6','ordinal':10},
+        'vec-physical-2':{'fixture':'vec','trace_oracle':'vec-fault-2-1','ordinal':2},
+        'vec-physical-3':{'fixture':'vec','trace_oracle':'vec-fault-2-2','ordinal':3},
+        'vec-physical-4':{'fixture':'vec','trace_oracle':'vec-fault-2-3','ordinal':4}}
 
 
 def fault_for(case):
@@ -79,7 +83,7 @@ def authority(root,group='owned-shared'):
         exact(faults[0]['expected'],{'kind':'trapped','code':'zryna.trap.allocation-v1'})
         cases[case]=(faults[0],True)
     positives=[r for r in registry['valid'] if r['id']==r['fixture']==group]
-    assert len(positives)==1;exact(positives[0]['expected'],{'owned-shared':43,'string':17,'owned-vec':41}[group])
+    assert len(positives)==1;exact(positives[0]['expected'],{'owned-shared':43,'string':17,'owned-vec':41,'vec':13}[group])
     cases['positive-'+group]=(positives[0],False)
     return fixtures,cases
 

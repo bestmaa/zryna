@@ -24,11 +24,24 @@ Drop(Sequence), Drop(String), Cleanup(module 1, function 0, place 3), Drop(Seque
 Drop(String), Drop(String). Repeated drops are preserved. The frozen `aggregate` import edge
 and full source graph are bound independently; logical code 2/ordinal 6 is not executed.
 
+
+The explicit `--group vec` slice executes frozen Vec physical ordinals 2, 3 and 4, plus
+score-13 calibration: four provider pairs/eight actual native observations. Mode-6 selectors
+`0x26000002`, `0x26000003` and `0x26000004` fail actual allocation hooks. Their trace-only
+oracles are `vec-fault-2-1`, `vec-fault-2-2` and `vec-fault-2-3`, respectively. Ordinal 2 has
+an omitted empty trace; ordinals 3 and 4 require Cleanup(module 0, function 0, place 1),
+then Drop(Sequence). All fault outcomes are Allocation; logical code 2 is not executed.
+Vec has only frozen main.zry and no dependency/import edge. The existing imported fixture
+contract remains mandatory for owned-shared, String and OwnedVec. Vec admission discharges only its
+three probes, with nine outside the group; cumulative qualification must retain separate
+prior seals. The recovered OwnedVec seal independently credits its one row;
+local Vec admission alone cannot establish hosted or cumulative qualification.
+
 `run.py` binds the clean exact source head/tree, all tracked input bytes, pinned tools and actual
 libtest executable. `verify.py` independently checks the complete observations, frozen sources,
 import graph, strict manifest structure, artifact hashes and entire provider bundle equality.
 Version-2 receipts additionally bind the selected group to its exact test and complete case census.
-The private Linux workflow explicitly executes/admit OwnedVec only and names its archive distinctly.
+The private Linux workflow explicitly executes/admit Vec only and names its archive distinctly.
 No row is discharged unless the entire selected Rust execution and all observed pairs pass.
 It does not reconstruct source-dependent layout/ABI digests. Hostile reader controls are synthetic
 and never constitute target execution. Hosted execution is Linux-only; Windows native is unsupported.

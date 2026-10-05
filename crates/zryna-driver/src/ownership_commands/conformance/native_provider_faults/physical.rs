@@ -31,25 +31,35 @@ fn retain(
     .expect("actual physical observation");
 }
 
+fn frozen_source(root: &Path, registry: &Value, fixture: &str) -> BTreeMap<String, Vec<u8>> {
+    let fixtures = registry["fixtures"].as_array().expect("frozen fixture inventory");
+    let entry = fixtures.iter().find(|row| row["id"] == fixture).expect("frozen entrypoint");
+    let mut fixture_sources = vec![("main.zry", fixture)];
+    if fixture == "vec" {
+        assert!(entry.get("dependency").is_none(), "frozen Vec has no import");
+        assert!(!root.join("math.zry").exists(), "single-source Vec fixture");
+    } else {
+        let dependency = entry["dependency"].as_str().expect("frozen imported dependency");
+        fixture_sources.push(("math.zry", dependency));
+    }
+    fixture_sources
+        .into_iter()
+        .map(|(name, id)| {
+            let authority =
+                fixtures.iter().find(|row| row["id"] == id).expect("frozen source authority");
+            let bytes = fs::read(root.join(name)).expect("actual frozen source bytes");
+            assert_eq!(format!("{:x}", Sha256::digest(&bytes)), authority["sha256"]);
+            (name.to_owned(), bytes)
+        })
+        .collect()
+}
+
 fn pair(registry: &Value, fixture: &str, physical: Option<(&str, u32)>) {
     let injected = physical.is_some();
     let workspace = fixture_workspace();
     install(workspace.root(), registry, fixture);
     assert!(!workspace.root().join(".zryna").exists(), "native first cold capture");
-    let fixtures = registry["fixtures"].as_array().expect("frozen fixture inventory");
-    let entry = fixtures.iter().find(|row| row["id"] == fixture).expect("frozen entrypoint");
-    let dependency = entry["dependency"].as_str().expect("frozen imported dependency");
-    let source = ["main.zry", "math.zry"]
-        .map(|name| {
-            let id = if name == "main.zry" { fixture } else { dependency };
-            let authority =
-                fixtures.iter().find(|row| row["id"] == id).expect("frozen source authority");
-            let bytes = fs::read(workspace.root().join(name)).expect("actual frozen source bytes");
-            assert_eq!(format!("{:x}", Sha256::digest(&bytes)), authority["sha256"]);
-            (name.to_owned(), bytes)
-        })
-        .into_iter()
-        .collect::<BTreeMap<_, _>>();
+    let source = frozen_source(workspace.root(), registry, fixture);
     let oracle_id = physical.map_or(fixture, |(id, _)| id);
     let oracle = registry[if injected { "faults" } else { "valid" }]
         .as_array()
@@ -155,6 +165,20 @@ fn string_physical_group_executes_through_retained_source() {
     pair(&registry, "string", Some(("string-fault-2-2", 4)));
     println!(
         "physical corpus: 3 complete provider pairs; 2 physical probes + 1 positive calibration"
+    );
+}
+
+#[test]
+fn vec_physical_group_executes_through_retained_source() {
+    let _guard = route_guard();
+    assert_eq!(format!("{:x}", Sha256::digest(REGISTRY)), REGISTRY_SHA);
+    let registry = registry();
+    pair(&registry, "vec", None);
+    pair(&registry, "vec", Some(("vec-fault-2-1", 2)));
+    pair(&registry, "vec", Some(("vec-fault-2-2", 3)));
+    pair(&registry, "vec", Some(("vec-fault-2-3", 4)));
+    println!(
+        "physical corpus: 4 complete provider pairs; 3 physical probes + 1 positive calibration"
     );
 }
 
