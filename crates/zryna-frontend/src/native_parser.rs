@@ -20,6 +20,7 @@ mod rejection;
 mod v2_recovery;
 pub mod v3;
 pub mod v4;
+pub mod v5;
 
 /// A deterministic rejection of source outside this native candidate slice.
 #[derive(Clone, Debug)]
