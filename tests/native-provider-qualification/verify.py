@@ -93,6 +93,18 @@ def command_exits(commands):
     assert [r['exit'] for r in commands[5:]] == [0,0,0]
 
 
+def cargo_package_identity(row, receipt, platform):
+    path_type = PureWindowsPath if platform == 'win32' else PurePosixPath
+    test_path = path_type(receipt['test_binary']['path'])
+    assert test_path.is_relative_to(path_type(receipt['target'])/'debug/deps')
+    source = path_type(receipt['root'])/'crates/zryna-driver'
+    assert path_type(row['target']['src_path']) == source/'src/lib.rs'
+    exact(row['target']['kind'],['lib'])
+    exact(row['profile']['test'],True)
+    assert 'native-provider-internal' in row['features']
+    exact(row['package_id'],'path+'+source.as_uri()+'#0.2.3')
+
+
 def results(case, target, registry):
     if case == 'score13':
         outcome, trace = {'kind':'returned', 'value':{'type':'i32', 'value':13}}, []
@@ -256,15 +268,8 @@ def verify(root, output, head, platform, archived=False, cli_proof=None, run_id=
     built = [row['executable'] for row in build_records if row.get('reason') == 'compiler-artifact'
              and row.get('executable') and row['target']['name'] == 'zryna_driver' and row['profile']['test']]
     exact(built,[receipt['test_binary']['path']])
-    path_type = PureWindowsPath if platform == 'win32' else PurePosixPath
-    test_path = path_type(receipt['test_binary']['path'])
-    assert test_path.is_relative_to(path_type(receipt['target'])/'debug/deps')
     built_row = next(row for row in build_records if row.get('executable') == built[0])
-    assert path_type(built_row['target']['src_path']) == path_type(receipt['root'])/'crates/zryna-driver/src/lib.rs'
-    exact(built_row['target']['kind'],['lib'])
-    exact(built_row['profile']['test'],True)
-    assert 'native-provider-internal' in built_row['features']
-    assert built_row['package_id'].startswith('path+file://') and built_row['package_id'].endswith('#zryna-driver@0.2.3')
+    cargo_package_identity(built_row,receipt,platform)
     exact(commands[2]['argv'],['git','-C',receipt['root'],'worktree','add','--detach',receipt['cold_root'],head])
     for row in commands[:3]:
         exact(row['cwd'],receipt['root'])

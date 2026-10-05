@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 from pnpm_entry import resolve as resolve_pnpm
-from verify import SOURCE_SHA, cli_binding, command_exits, diagnostic, exact, mutation_control, read, results, strict
+from verify import SOURCE_SHA, cargo_package_identity, cli_binding, command_exits, diagnostic, exact, mutation_control, read, results, strict
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -152,7 +152,8 @@ class PnpmLayoutControls(unittest.TestCase):
         script = root/'bin/pnpm.mjs'
         script.parent.mkdir(parents=True)
         script.write_text('// independent package manager layout fixture\n')
-        (root/'package.json').write_text(json.dumps({'name':'pnpm','version':version}))
+        (root/'package.json').write_text(json.dumps({'name':'pnpm','version':version,'bin':{'pnpm':'bin/pnpm.mjs'}}))
+        (script.parent/'pnpm.cjs').write_text('// compatibility wrapper, not the declared entry\n')
         return script
 
     def test_local_node_entry_and_command_shim_layout(self):
@@ -191,6 +192,41 @@ class PnpmLayoutControls(unittest.TestCase):
             self.package(home/'global/v11/second/node_modules/pnpm','11.18.0')
             with self.assertRaises(AssertionError):
                 resolve_pnpm(shim,home)
+
+
+class CargoIdentityControls(unittest.TestCase):
+    def fixture(self, platform):
+        if platform == 'win32':
+            root, target = 'D:/a/zryna/zryna','D:/a/_temp/private-cli-target'
+            package = 'path+file:///D:/a/zryna/zryna/crates/zryna-driver#0.2.3'
+            suffix = '.exe'
+        else:
+            root, target = '/workspace/zryna','/workspace/external-target'
+            package = 'path+file:///workspace/zryna/crates/zryna-driver#0.2.3'
+            suffix = ''
+        receipt = {'root':root,'target':target,'test_binary':{'path':target+'/debug/deps/zryna_driver-fixed'+suffix}}
+        row = {'package_id':package,'target':{'src_path':root+'/crates/zryna-driver/src/lib.rs','kind':['lib']},
+               'profile':{'test':True},'features':['native-provider-internal']}
+        return receipt,row
+
+    def test_actual_pinned_cargo_short_version_fragment_on_both_platform_path_shapes(self):
+        for platform in ('linux','win32'):
+            receipt,row = self.fixture(platform)
+            cargo_package_identity(row,receipt,platform)
+
+    def test_package_version_source_feature_and_test_identity_substitution_reject(self):
+        for platform in ('linux','win32'):
+            receipt,row = self.fixture(platform)
+            for key,wrong in [('package_id',row['package_id'].replace('#0.2.3','#zryna-driver@0.2.3')),
+                              ('features',[]),('profile',{'test':False}),
+                              ('target',{'src_path':'elsewhere','kind':['lib']})]:
+                changed = copy.deepcopy(row)
+                changed[key] = wrong
+                with self.assertRaises(AssertionError):
+                    cargo_package_identity(changed,receipt,platform)
+            receipt['test_binary']['path'] = receipt['root']+'/foreign.exe'
+            with self.assertRaises(AssertionError):
+                cargo_package_identity(row,receipt,platform)
 
 
 if __name__ == '__main__':

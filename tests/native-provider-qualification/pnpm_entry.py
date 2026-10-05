@@ -24,7 +24,8 @@ def resolve(shim, home=None):
         if not manifest.is_file():
             continue
         value = json.loads(manifest.read_bytes())
-        if value.get('name') == 'pnpm' and value.get('version') == '11.18.0':
+        if (value.get('name') == 'pnpm' and value.get('version') == '11.18.0'
+                and value.get('bin',{}).get('pnpm') == entry.relative_to(manifest.parent).as_posix()):
             selected.add(entry)
     assert len(selected) == 1, 'exact requested pnpm Node entry is missing or ambiguous'
     return selected.pop()
