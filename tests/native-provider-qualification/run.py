@@ -97,7 +97,7 @@ def main():
         observations = output/'observations'
         observations.mkdir()
         fault_env = dict(env, ZRYNA_M3_NATIVE_FAULT_EVIDENCE=str(observations))
-        executed = run('retained-fault-tests', [str(binary), 'native_provider_faults', '--skip', 'native_provider_faults::corpus::', '--nocapture',
+        executed = run('retained-fault-tests', [str(binary), 'native_provider_faults', '--skip', 'native_provider_faults::corpus::', '--skip', 'native_provider_faults::physical::', '--nocapture',
                        '--test-threads=1'], process_env=fault_env, timeout=1800)
         assert executed.returncode == 0
         # Full production architecture validation happens in this fresh source checkout.

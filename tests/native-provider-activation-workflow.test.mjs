@@ -302,12 +302,12 @@ test('current CLI proof binds both hosts and exact source separately from immuta
   for (const step of job.steps) {
     assert.equal(step['continue-on-error'], undefined);
     if (step.uses?.startsWith('actions/upload-artifact@')) {
-      assert.equal(step.if, 'always()');
+      assert.equal(step.if, step.name === 'Preserve exact real physical allocation proof' ? "always() && matrix.os == 'ubuntu-latest'" : 'always()');
       assert(step.with.name.includes(expression('env.CLI_SOURCE_SHA')));
       assert(step.with.name.includes(expression('github.run_id')));
       assert(step.with.name.includes(expression('github.run_attempt')));
       assert.equal(step.with['if-no-files-found'], 'error');
-    } else assert.equal(step.if, undefined);
+    } else assert.equal(step.if, ['Verify independent physical allocation controls', 'Run owned-shared real physical allocation group', 'Require independent real physical allocation observations'].includes(step.name) ? "matrix.os == 'ubuntu-latest'" : undefined);
   }
   rejectMutations([
     ['current proof uses historical source', (w) => { w.jobs['private-cli'].env.CLI_SOURCE_SHA = PIN; }],
@@ -369,4 +369,20 @@ test('remaining frozen fault corpus has separate exact-head execution, admission
   assert.equal(steps[archive].with.name,
     'private-native-fault-corpus-' + expression('matrix.os') + '-' + expression('env.CLI_SOURCE_SHA')
       + '-' + expression('github.run_id') + '-' + expression('github.run_attempt'));
+});
+
+test('physical allocation proof is Linux-only with independent execution, admission and archive', () => {
+  const steps = workflow.jobs['private-cli'].steps;
+  const index = steps.findIndex((s) => s.name === 'Verify independent physical allocation controls');
+  assert(index > 0);
+  assert.match(steps[index + 1].run, /physical\/run\.py/u);
+  assert.match(steps[index + 2].run, /physical\/verify\.py/u);
+  assert.match(steps[index + 2].run, /--platform linux/u);
+  assert.equal(steps[index + 3].name, 'Preserve exact real physical allocation proof');
+  for (let i = index; i < index + 3; i++) assert.equal(steps[i].if, "matrix.os == 'ubuntu-latest'");
+  rejectMutations([
+    ['Windows physical execution claimed', (w) => { delete w.jobs['private-cli'].steps[index + 1].if; }],
+    ['physical selector bypassed', (w) => { w.jobs['private-cli'].steps[index + 1].run += ' --list'; }],
+    ['physical admission omitted', (w) => { w.jobs['private-cli'].steps.splice(index + 2, 1); }],
+  ]);
 });
