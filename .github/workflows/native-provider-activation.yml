@@ -9,6 +9,7 @@ on:
       - tests/workflow-routing.test.mjs
       - scripts/run-native-cli-smoke.py
       - tests/native-cli-smoke/**
+      - tests/native-provider-qualification/**
       - apps/zryna/src/**
       - apps/zryna/Cargo.toml
       - crates/**
@@ -120,6 +121,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
         with:
           toolchain: 1.97.1
+          components: clippy
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22.22.1
@@ -147,6 +149,26 @@ jobs:
           $platform = if ($IsWindows) { 'win32' } else { 'linux' }
           python -B tests/native-cli-smoke/verify_ci_receipts.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --output "$env:RUNNER_TEMP/private-cli-proof"
           if ($LASTEXITCODE -ne 0) { throw 'Current CLI receipt admission failed' }
+      - name: Check private feature Clippy on current host
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/private-cli-target
+          CARGO_PROFILE_DEV_DEBUG: '0'
+          CARGO_PROFILE_TEST_DEBUG: '0'
+          CARGO_BUILD_JOBS: '2'
+        run: cargo clippy --locked --offline -p zryna-driver --all-targets --features native-provider-internal -- -D warnings
+      - name: Verify cold qualification hostile receipt controls
+        run: python -B tests/native-provider-qualification/verify_test.py
+      - name: Run current cold BUILD and retained Vec fault execution
+        shell: pwsh
+        run: |
+          python -B tests/native-provider-qualification/run.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --cli-proof "$env:RUNNER_TEMP/private-cli-proof" --target "$env:RUNNER_TEMP/private-cli-target" --output "$env:RUNNER_TEMP/private-cold-proof" --cold-root "$env:RUNNER_TEMP/private-cold-source"
+          if ($LASTEXITCODE -ne 0) { throw 'Cold retained qualification failed' }
+      - name: Require independent cold BUILD and frozen fault receipts
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/verify.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --output "$env:RUNNER_TEMP/private-cold-proof"
+          if ($LASTEXITCODE -ne 0) { throw 'Cold retained receipt admission failed' }
       - name: Preserve exact current CLI proof
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -157,6 +179,14 @@ jobs:
             ${{ runner.temp }}/private-cli-proof/*.stdout
             ${{ runner.temp }}/private-cli-proof/*.stderr
             ${{ runner.temp }}/private-cli-proof/smoke
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve exact cold BUILD and retained Vec proof
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: private-native-cold-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-cold-proof
           if-no-files-found: error
           retention-days: 7
       - name: Preserve current CLI executables

@@ -94,6 +94,7 @@ const expected = {
         'tests/workflow-routing.test.mjs',
         'scripts/run-native-cli-smoke.py',
         'tests/native-cli-smoke/**',
+        'tests/native-provider-qualification/**',
         'apps/zryna/src/**',
         'apps/zryna/Cargo.toml',
         'crates/**',
@@ -327,5 +328,24 @@ test('current CLI proof binds both hosts and exact source separately from immuta
       w.jobs['private-cli'].steps[proof].run = w.jobs['private-cli'].steps[proof].run
         .replace("if ($LASTEXITCODE -ne 0) { throw 'Private CLI proof failed' }", '');
     }],
+  ]);
+});
+
+test('cold qualification requires real fault execution and independent admission on both hosts', () => {
+  const steps = workflow.jobs['private-cli'].steps;
+  const execute = steps.findIndex((step) => step.name === 'Run current cold BUILD and retained Vec fault execution');
+  assert(execute > 0);
+  assert.equal(steps[execute - 1].name, 'Verify cold qualification hostile receipt controls');
+  assert.equal(steps[execute + 1].name, 'Require independent cold BUILD and frozen fault receipts');
+  assert.match(steps[execute].run, /native-provider-qualification\/run\.py/u);
+  assert.match(steps[execute].run, /--head "\$env:CLI_SOURCE_SHA"/u);
+  assert.match(steps[execute].run, /--cold-root "\$env:RUNNER_TEMP\/private-cold-source"/u);
+  assert.match(steps[execute + 1].run, /native-provider-qualification\/verify\.py/u);
+  assert.match(steps[execute + 1].run, /'win32'/u);
+  rejectMutations([
+    ['cold execution omitted', (w) => { w.jobs['private-cli'].steps.splice(execute, 1); }],
+    ['cold receipt skipped', (w) => { w.jobs['private-cli'].steps[execute + 1].if = 'false'; }],
+    ['cold failures ignored', (w) => { w.jobs['private-cli'].steps[execute].run += ' || true'; }],
+    ['cold scope made native execution', (w) => { w.jobs['private-cli'].steps[execute].run += ' --windows-native-run'; }],
   ]);
 });

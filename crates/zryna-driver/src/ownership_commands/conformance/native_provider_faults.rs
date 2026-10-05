@@ -13,10 +13,12 @@ use std::cell::{Cell, RefCell};
 const IDS: [&str; 2] = ["vec-fault-2-1", "vec-fault-2-2"];
 const REGISTRY_SHA: &str = "34cd29a5f146d77e7163b32d21e71e4f5a1fc5fd50f688d197de8bef9b38a508";
 
+mod qualification;
+
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(
-    not(all(target_os = "linux", target_arch = "x86_64")),
-    expect(dead_code, reason = "source-write mutation probes require Linux retained handles")
+    not(any(windows, all(target_os = "linux", target_arch = "x86_64"))),
+    expect(dead_code, reason = "mutation probes execute only on the two supported hosts")
 )]
 enum Mutation {
     Execution,
@@ -30,6 +32,8 @@ struct Checkpoints {
     execution: Cell<usize>,
     publication: RefCell<Vec<String>>,
     mutated: Cell<bool>,
+    #[cfg(windows)]
+    attempt: RefCell<Option<Value>>,
 }
 
 fn mutate(
@@ -37,27 +41,37 @@ fn mutate(
     checkpoints: &Checkpoints,
     mutation: Option<Mutation>,
 ) {
-    if matches!(mutation, Some(Mutation::SourceDirectory)) {
-        let parent = request.workspace_root.join("sources");
-        let original = same_file::Handle::from_path(&parent).expect("original source directory");
-        let bytes = fs::read(parent.join("main.zry")).expect("original retained source bytes");
-        fs::rename(&parent, request.workspace_root.join("replaced-sources"))
-            .expect("actual source-directory replacement");
-        fs::create_dir(&parent).expect("replacement source directory");
-        fs::write(parent.join("main.zry"), &bytes).expect("identical deceptive replacement bytes");
-        assert_ne!(
-            original,
-            same_file::Handle::from_path(&parent).expect("replacement source directory identity")
-        );
-        assert_eq!(fs::read(parent.join("main.zry")).expect("replacement source bytes"), bytes);
-    } else {
-        fs::write(
-            request.workspace_root.join(&request.entrypoint),
-            "export function score(): i32 { return 99; }\n",
-        )
-        .expect("actual retained source mutation at the selected checkpoint");
+    #[cfg(windows)]
+    {
+        qualification::attempt(request, checkpoints, mutation);
     }
-    checkpoints.mutated.set(true);
+    #[cfg(not(windows))]
+    {
+        if matches!(mutation, Some(Mutation::SourceDirectory)) {
+            let parent = request.workspace_root.join("sources");
+            let original =
+                same_file::Handle::from_path(&parent).expect("original source directory");
+            let bytes = fs::read(parent.join("main.zry")).expect("original retained source bytes");
+            fs::rename(&parent, request.workspace_root.join("replaced-sources"))
+                .expect("actual source-directory replacement");
+            fs::create_dir(&parent).expect("replacement source directory");
+            fs::write(parent.join("main.zry"), &bytes)
+                .expect("identical deceptive replacement bytes");
+            assert_ne!(
+                original,
+                same_file::Handle::from_path(&parent)
+                    .expect("replacement source directory identity")
+            );
+            assert_eq!(fs::read(parent.join("main.zry")).expect("replacement source bytes"), bytes);
+        } else {
+            fs::write(
+                request.workspace_root.join(&request.entrypoint),
+                "export function score(): i32 { return 99; }\n",
+            )
+            .expect("actual retained source mutation at the selected checkpoint");
+        }
+        checkpoints.mutated.set(true);
+    }
 }
 
 fn native_run(
@@ -327,6 +341,7 @@ fn source_mutation_fails_at_execution_manifest_and_commit_without_partial_output
         assert_eq!(failure.kind(), CommandFailureKind::Source);
         assert_eq!(failure.diagnostics()[0].code(), "ZRYNA-D3004");
         assert_no_artifacts(workspace.root());
+        qualification::retain_mutation(&request, mutation, &checkpoints, Some(&failure), None);
         println!("retained native source guard {mutation:?}: actual mutation rejected; no output");
     }
 }
@@ -373,6 +388,7 @@ fn cold_native_score13_publication_is_create_only_and_leaves_no_private_transact
         assert_eq!(inventory(bundle.path()), published, "existing bundle bytes preserved");
         assert_eq!(inventory(&output), before, "failed rerun leaves no private partial files");
         assert_eq!(fs::read_dir(&output).expect("output entries").count(), 1);
+        qualification::retain_collision(&request, target, &bundle, &rerun, &failure);
         fs::remove_dir_all(bundle.path()).expect("test-owned final bundle cleanup");
         assert_no_artifacts(workspace.root());
         println!(
