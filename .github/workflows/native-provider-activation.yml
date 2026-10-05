@@ -189,8 +189,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Finite retained fault corpus admission failed' }
       - name: Verify independent physical allocation controls
         if: matrix.os == 'ubuntu-latest'
-        run: python -B tests/native-provider-qualification/physical/string_verify_test.py
-      - name: Run String real physical allocation group
+        run: python -B tests/native-provider-qualification/physical/owned_vec_verify_test.py
+      - name: Run OwnedVec real physical allocation group
         if: matrix.os == 'ubuntu-latest'
         shell: pwsh
         run: |
@@ -199,19 +199,19 @@ jobs:
           $rustc = rustup which rustc
           if ($LASTEXITCODE -ne 0) { throw 'Rustc resolution failed' }
           $node = (Get-Command node).Source
-          python -B tests/native-provider-qualification/physical/run.py --group string --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --target "$env:RUNNER_TEMP/private-cli-target" --output "$env:RUNNER_TEMP/private-physical-proof" --cargo "$cargo" --rustc "$rustc" --node "$node"
+          python -B tests/native-provider-qualification/physical/run.py --group owned-vec --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --target "$env:RUNNER_TEMP/private-cli-target" --output "$env:RUNNER_TEMP/private-physical-proof" --cargo "$cargo" --rustc "$rustc" --node "$node"
           if ($LASTEXITCODE -ne 0) { throw 'Real physical allocation corpus failed' }
       - name: Require independent real physical allocation observations
         if: matrix.os == 'ubuntu-latest'
         shell: pwsh
         run: |
-          python -B tests/native-provider-qualification/physical/verify.py --group string --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform linux --output "$env:RUNNER_TEMP/private-physical-proof"
+          python -B tests/native-provider-qualification/physical/verify.py --group owned-vec --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform linux --output "$env:RUNNER_TEMP/private-physical-proof"
           if ($LASTEXITCODE -ne 0) { throw 'Real physical allocation admission failed' }
       - name: Preserve exact real physical allocation proof
         if: always() && matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: private-native-physical-string-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: private-native-physical-owned-vec-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/private-physical-proof
           if-no-files-found: error
           retention-days: 7

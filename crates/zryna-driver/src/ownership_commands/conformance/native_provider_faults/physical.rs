@@ -157,3 +157,15 @@ fn string_physical_group_executes_through_retained_source() {
         "physical corpus: 3 complete provider pairs; 2 physical probes + 1 positive calibration"
     );
 }
+
+#[test]
+fn owned_vec_physical_group_executes_through_retained_source() {
+    let _guard = route_guard();
+    assert_eq!(format!("{:x}", Sha256::digest(REGISTRY)), REGISTRY_SHA);
+    let registry = registry();
+    pair(&registry, "owned-vec", None);
+    pair(&registry, "owned-vec", Some(("owned-vec-fault-2-6", 10)));
+    println!(
+        "physical corpus: 2 complete provider pairs; 1 physical probe + 1 positive calibration"
+    );
+}
