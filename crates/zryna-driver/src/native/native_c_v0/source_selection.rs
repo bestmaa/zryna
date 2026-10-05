@@ -43,7 +43,7 @@ pub(crate) fn emit_authenticated_handle_entry(
     function_name: &str,
 ) -> Result<ValidatedHandleEntries, Vec<Diagnostic>> {
     if !declarations.belongs_to(sources) {
-        return Err(rejection("ZRYNA-C4101", "native-C source issuer changed", None));
+        return Err(rejection("ZRYNA-C4106", "source-map-identity", None));
     }
     if selected_target != zryna_syntax::native_c_v0::TARGET {
         return Err(rejection("ZRYNA-C4103", "native-C target selection", None));

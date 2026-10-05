@@ -19,7 +19,7 @@ fn retained_emitter_rejects_transplanted_map_and_unsupported_target() {
     .expect("genuine retained declarations");
     let replacement = sources();
     for (map, target, code) in [
-        (&replacement, zryna_syntax::native_c_v0::TARGET, "ZRYNA-C4101"),
+        (&replacement, zryna_syntax::native_c_v0::TARGET, "ZRYNA-C4106"),
         (&original, "javascript", "ZRYNA-C4103"),
     ] {
         EMITTER_ENTRIES.with(|entries| entries.set(0));
