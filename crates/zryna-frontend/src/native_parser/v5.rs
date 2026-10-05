@@ -14,6 +14,7 @@ mod syntax;
 
 use crate::native_lexer::{Keyword, LexedProject, Token, TokenKind};
 
+mod collections;
 mod data;
 mod functions;
 mod generics;

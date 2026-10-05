@@ -49,6 +49,12 @@ fn input(text: String) -> Vec<SourceFileInput> {
     vec![SourceFileInput { path: "main.zry".into(), text }]
 }
 
+fn expect_native_candidate(files: &[SourceFileInput]) {
+    let sources = SourceMap::build(files.to_vec()).expect("source map");
+    parse_v5_candidate(&sources, &lex(&sources).expect("lexical bound"))
+        .expect("generic punctuation must preserve admitted collection counts");
+}
+
 fn compare(files: Vec<SourceFileInput>, response: &Value, verify: bool) {
     let sources = SourceMap::build(files).expect("source map");
     let raw = parse_v5_candidate(&sources, &lex(&sources).expect("lexical bound"));
@@ -148,6 +154,50 @@ fn generic_punctuation_keywords_utf8_and_four_line_endings_match_live() {
     }
     let replies = worker(&projects);
     for (files, reply) in projects.into_iter().zip(replies) {
+        compare(files, &reply, true);
+    }
+}
+
+#[test]
+fn generic_keyword_commas_preserve_intrinsic_and_payload_argument_counts() {
+    let projects = [
+        "function f(): i32 { return clone(g<i32,function>(1)); }",
+        "function f(): i32 { return Option.some<i32>(g<i32,function>(1)); }",
+        "function f(v: Vec<i32>): i32 { push(v, g<Result<i32,function>,i32>(1)); return 1; }",
+        "function f(w: Weak<i32>): i32 { upgradeWeak(g<i32,function>(w), (v) => {}, () => {}); return 1; }",
+    ]
+    .into_iter()
+    .map(|text| input(text.into()))
+    .collect::<Vec<_>>();
+    let replies = worker(&projects);
+    for (files, reply) in projects.into_iter().zip(replies) {
+        assert!(reply.get("result").is_some(), "bootstrap syntax must remain admitted");
+        expect_native_candidate(&files);
+        compare(files, &reply, true);
+    }
+}
+
+#[test]
+fn generic_keyword_commas_preserve_exact_parameter_and_call_limits() {
+    let mut projects = Vec::new();
+    for count in [256, 257] {
+        let parameters = (0..count)
+            .map(|i| if i == 0 { "p0: Result<i32,function>".into() } else { format!("p{i}: i32") })
+            .collect::<Vec<_>>()
+            .join(",");
+        projects.push(input(format!("function f({parameters}): i32 {{ return 1; }}")));
+        let arguments = (0..count)
+            .map(|i| if i == 0 { "g<i32,function>(1)" } else { "1" })
+            .collect::<Vec<_>>()
+            .join(",");
+        projects.push(input(format!("function f(): i32 {{ return h({arguments}); }}")));
+    }
+    let replies = worker(&projects);
+    for (index, (files, reply)) in projects.into_iter().zip(replies).enumerate() {
+        assert_eq!(reply.get("result").is_some(), index < 2, "exact versus first extra");
+        if index < 2 {
+            expect_native_candidate(&files);
+        }
         compare(files, &reply, true);
     }
 }

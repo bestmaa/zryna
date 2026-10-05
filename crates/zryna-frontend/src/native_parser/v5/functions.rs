@@ -66,7 +66,7 @@ impl FileParser<'_> {
         self.in_function = true;
         let type_parameters = self.type_parameters()?;
         self.take(TokenKind::OpenParen)?;
-        let count = super::super::collections::separated_bounds(
+        let count = super::collections::separated_bounds(
             &self.tokens,
             self.position - 1,
             TokenKind::Comma,
@@ -314,7 +314,7 @@ impl FileParser<'_> {
     ) -> Result<(), ParseError> {
         self.position += 1;
         self.take(TokenKind::OpenParen)?;
-        let arguments = super::super::collections::arguments(&self.tokens, self.position - 1)
+        let arguments = super::collections::arguments(&self.tokens, self.position - 1)
             .ok_or_else(|| unsupported(Some(keyword), "unsupported weak upgrade"))?;
         if arguments.len() != 3 {
             return Err(unsupported(Some(keyword), "unsupported weak upgrade"));
@@ -353,7 +353,7 @@ impl FileParser<'_> {
         if self.tokens.get(start).is_none_or(|token| token.kind() != TokenKind::OpenParen) {
             return false;
         }
-        let Some((close, _)) = super::super::collections::bounds(&self.tokens, start) else {
+        let Some((close, _)) = super::collections::bounds(&self.tokens, start) else {
             return false;
         };
         let parameters = if success {
@@ -364,7 +364,7 @@ impl FileParser<'_> {
         parameters
             && self.tokens.get(close).is_some_and(|token| token.kind() == TokenKind::FatArrow)
             && self.tokens.get(close + 1).is_some_and(|token| token.kind() == TokenKind::OpenBrace)
-            && super::super::collections::bounds(&self.tokens, close + 1)
+            && super::collections::bounds(&self.tokens, close + 1)
                 .is_some_and(|(close, _)| close == end)
     }
 

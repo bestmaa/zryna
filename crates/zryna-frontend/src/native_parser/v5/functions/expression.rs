@@ -318,7 +318,7 @@ impl FileParser<'_> {
         let callee = self.name(super::super::names::Role::Runtime)?;
         let type_arguments = self.type_arguments(0)?;
         let open = self.take(TokenKind::OpenParen)?;
-        let count = super::super::super::collections::bounds(&self.tokens, self.position - 1)
+        let count = super::super::collections::bounds(&self.tokens, self.position - 1)
             .map_or(0, |(_, count)| count);
         let required = match callee.text.as_str() {
             "clone" | "shared" | "downgrade" | "borrow" | "borrowMut" => Some(1),

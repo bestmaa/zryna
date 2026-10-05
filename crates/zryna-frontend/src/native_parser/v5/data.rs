@@ -11,7 +11,7 @@ use super::{FileParser, ParseError, raw, resource, unsupported};
 
 impl FileParser<'_> {
     fn member_inventory(&self) -> Result<(), ParseError> {
-        let count = super::super::collections::separated_bounds(
+        let count = super::collections::separated_bounds(
             &self.tokens,
             self.position - 1,
             TokenKind::Semicolon,

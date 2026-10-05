@@ -21,7 +21,7 @@ impl FileParser<'_> {
         let variant = self.identifier()?;
         let type_arguments = self.type_arguments(0)?;
         let open = self.take(TokenKind::OpenParen)?;
-        if super::super::super::collections::bounds(&self.tokens, self.position - 1)
+        if super::super::collections::bounds(&self.tokens, self.position - 1)
             .is_some_and(|(_, count)| count > 1)
         {
             return Err(unsupported(Some(open), "unsupported enum construction"));
@@ -63,8 +63,7 @@ impl FileParser<'_> {
         let type_name = self.identifier()?;
         let type_arguments = self.type_arguments(0)?;
         let open_paren = self.take(TokenKind::OpenParen)?;
-        if let Some((_, count)) =
-            super::super::super::collections::bounds(&self.tokens, self.position - 1)
+        if let Some((_, count)) = super::super::collections::bounds(&self.tokens, self.position - 1)
             && count != 1
         {
             return Err(if count > syntax::MAX_PARAMETERS_PER_FUNCTION {
@@ -186,7 +185,7 @@ impl FileParser<'_> {
         let type_start = self.position;
         let first = self.current().expect("typed construction name");
         let is_vec = self.spelling(first) == "Vec";
-        if super::super::super::collections::bounds(&self.tokens, type_end)
+        if super::super::collections::bounds(&self.tokens, type_end)
             .is_some_and(|(_, count)| count != 1)
         {
             return Err(unsupported(Some(first), "unsupported typed construction"));
@@ -266,7 +265,7 @@ impl FileParser<'_> {
         maximum: usize,
         message: &'static str,
     ) -> Result<usize, ParseError> {
-        let (_, count) = super::super::super::collections::bounds(&self.tokens, self.position - 1)
+        let (_, count) = super::super::collections::bounds(&self.tokens, self.position - 1)
             .ok_or_else(|| unsupported(self.current(), "unclosed collection"))?;
         if count > maximum {
             return Err(resource(message));
@@ -281,7 +280,7 @@ impl FileParser<'_> {
     ) -> Result<(u32, u32), ParseError> {
         let keyword = self.take(TokenKind::Identifier)?;
         let open_paren = self.take(TokenKind::OpenParen)?;
-        if super::super::super::collections::bounds(&self.tokens, self.position - 1)
+        if super::super::collections::bounds(&self.tokens, self.position - 1)
             .is_some_and(|(_, count)| count != 2)
         {
             return Err(unsupported(Some(keyword), "unsupported match expression"));

@@ -8,7 +8,7 @@ impl FileParser<'_> {
     pub(super) fn import(&mut self) -> Result<syntax::RawImportSyntax, ParseError> {
         let keyword = self.take(TokenKind::Keyword(Keyword::Import))?;
         self.take(TokenKind::OpenBrace)?;
-        let count = super::super::collections::bounds(&self.tokens, self.position - 1)
+        let count = super::collections::bounds(&self.tokens, self.position - 1)
             .map_or(0, |(_, count)| count);
         if count > syntax::MAX_IMPORTED_NAMES_PER_DECLARATION
             || self.previous_bindings + count > syntax::MAX_IMPORTED_NAMES_PER_PROJECT
