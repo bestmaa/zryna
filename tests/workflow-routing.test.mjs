@@ -299,6 +299,7 @@ test('consolidation preserves every prior contract command and pinned action', (
   assert.deepEqual(commands('package-release-contract'), [
     'pnpm install --frozen-lockfile',
     'pnpm package:contract',
+    'pnpm build-plan:contract',
     'cargo test --locked -p zryna-package',
   ]);
   assert.deepEqual(commands('provider-conformance-v4'), [
@@ -326,6 +327,51 @@ test('consolidation preserves every prior contract command and pinned action', (
     }
     assert(!uses.some((use) => use.endsWith('@main')));
   }
+});
+
+function requireBuildPlanContract(candidate) {
+  const job = candidate.jobs['package-release-contract'];
+  assert.deepEqual(job.strategy.matrix.os, ['ubuntu-latest', 'windows-latest']);
+  assert.equal(job['continue-on-error'], undefined);
+  assert.equal(job.needs, 'route-contracts');
+  assert.equal(job.if, "needs.route-contracts.outputs.package_release == 'true'");
+  assert.deepEqual(job.steps.flatMap(step => step.run ? [step.run] : []), [
+    'pnpm install --frozen-lockfile', 'pnpm package:contract',
+    'pnpm build-plan:contract', 'cargo test --locked -p zryna-package',
+  ]);
+  assert.deepEqual(job.steps.filter(step => step.run?.includes('build-plan:contract')),
+    [{ run: 'pnpm build-plan:contract' }]);
+}
+
+test('build-plan contracts run on both package hosts and cannot be disabled', () => {
+  requireBuildPlanContract(ci);
+  for (const mutate of [
+    job => { job.strategy.matrix.os.pop(); },
+    job => { job['continue-on-error'] = true; },
+    job => { job.steps = job.steps.filter(step => step.run !== 'pnpm build-plan:contract'); },
+    job => { job.steps.push({ run: 'pnpm build-plan:contract' }); },
+    job => { job.steps.push({ run: 'echo unrelated-command' }); },
+    job => { job.steps.reverse(); },
+    job => { const index = job.steps.findIndex(step => step.run === 'pnpm build-plan:contract'); const [step] = job.steps.splice(index, 1); job.steps.splice(index - 1, 0, step); },
+    job => { const index = job.steps.findIndex(step => step.run === 'pnpm build-plan:contract'); const [step] = job.steps.splice(index, 1); job.steps.splice(index + 1, 0, step); },
+    job => { job.steps = job.steps.filter(step => step.run !== 'pnpm package:contract'); },
+    job => { job.if = 'false'; },
+    job => { job.needs = []; },
+    job => { job.steps.find(step => step.run === 'pnpm build-plan:contract').if = 'false'; },
+    job => { job.steps.find(step => step.run === 'pnpm build-plan:contract')['continue-on-error'] = true; },
+    job => { job.steps.find(step => step.run === 'pnpm build-plan:contract').run += ' || true'; },
+  ]) {
+    const changed = structuredClone(ci);
+    mutate(changed.jobs['package-release-contract']);
+    assert.throws(() => requireBuildPlanContract(changed));
+  }
+  for (const path of [
+    'schemas/zryna-resolved-build-plan-v0.schema.json', 'scripts/build-plan/validate.mjs',
+    'tests/resolved-build-plan-v0.test.mjs', 'tests/resolved-build-plan-v0/source-only.json',
+    'tests/native-recipe/fixture.mjs', 'scripts/native-recipe/preflight.mjs',
+    'spec/package/RESOLVED_BUILD_PLAN_V0.md', 'spec/package/SOURCE_TRUST_V0.md',
+    'spec/abi/NATIVE_C_INTEROP_V0_REVIEW.md',
+  ]) assert.equal(classifyWorkflowPaths([path]).package_release, true, path);
 });
 
 test('pull-request workflows stay inventoried and every superseded run cancels', () => {
