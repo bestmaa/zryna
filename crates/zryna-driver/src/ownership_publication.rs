@@ -161,6 +161,21 @@ where
     publish_with_runner(success, &|_| Ok(()), runner)
 }
 
+#[cfg(all(test, feature = "native-provider-internal"))]
+pub(crate) fn publish_after_staging_with_checkpoint_for_test<Runner>(
+    success: &DataOwnershipCandidateSuccess,
+    checkpoint: Checkpoint<'_>,
+    runner: Runner,
+) -> Result<PublishedOwnershipBundle, CommandFailure>
+where
+    Runner: FnOnce(
+        &Transaction,
+        &ArtifactOutputRoot,
+    ) -> Result<Vec<OwnershipManifestResult>, CommandFailure>,
+{
+    publish_with_runner(success, checkpoint, runner)
+}
+
 fn publish_with_runner<Runner>(
     success: &DataOwnershipCandidateSuccess,
     checkpoint: Checkpoint<'_>,

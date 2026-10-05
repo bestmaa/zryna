@@ -1,14 +1,16 @@
 //! Native M3 build keeps the reviewed source owner alive through preparation and publication.
 
 use super::{
-    CommandFailure, CommandFailureKind, DataOwnershipBuildRequest, WorkspaceSourceRoot,
-    closure_failure, failure, preparation, validate_request,
+    CommandFailure, CommandFailureKind, DataOwnershipBuildRequest, DataOwnershipCandidateSuccess,
+    ScalarValue, WorkspaceSourceRoot, closure_failure, failure, preparation, validate_request,
 };
 use crate::native_frontend::NativeBuildRequest;
 use crate::{PublishedOwnershipBundle, capture_native_workspace_sources};
 use std::path::PathBuf;
 use zryna_diagnostics::Diagnostic;
 use zryna_source::NormalizedSourcePath;
+
+type Revalidate<'a> = &'a dyn Fn() -> Result<(), CommandFailure>;
 
 pub(crate) fn build(
     input: &NativeBuildRequest,
@@ -21,7 +23,35 @@ pub(crate) fn build(
         // No Node authority is issued: this compatibility field is unused by build preparation.
         node_runtime: PathBuf::new(),
     };
-    validate_request(&request)?;
+    with_prepared(&request, None, validate_request, |success, revalidate| {
+        crate::ownership_publication::publish_with_checkpoint(success, &|_| revalidate())
+    })
+}
+
+// Match the existing isolated conformance route's request-shape validation. Production BUILD
+// always uses full workspace validation above; all retained source checks are shared below.
+#[cfg(test)]
+pub(crate) fn run_for_test(
+    request: &DataOwnershipBuildRequest,
+    invocation: (String, Vec<ScalarValue>),
+    consume: impl FnOnce(
+        &DataOwnershipCandidateSuccess,
+        Revalidate<'_>,
+    ) -> Result<PublishedOwnershipBundle, CommandFailure>,
+) -> Result<PublishedOwnershipBundle, CommandFailure> {
+    with_prepared(request, Some(invocation), super::validate_request_shape, consume)
+}
+
+fn with_prepared(
+    request: &DataOwnershipBuildRequest,
+    invocation: Option<(String, Vec<ScalarValue>)>,
+    validate: fn(&DataOwnershipBuildRequest) -> Result<(), CommandFailure>,
+    consume: impl FnOnce(
+        &DataOwnershipCandidateSuccess,
+        Revalidate<'_>,
+    ) -> Result<PublishedOwnershipBundle, CommandFailure>,
+) -> Result<PublishedOwnershipBundle, CommandFailure> {
+    validate(request)?;
     let root = WorkspaceSourceRoot::capture(&request.workspace_root)
         .map_err(|item| failure(CommandFailureKind::Source, item))?;
     let path = NormalizedSourcePath::new(request.entrypoint.clone()).map_err(|error| {
@@ -50,7 +80,7 @@ pub(crate) fn build(
     let revalidate = || snapshot.revalidate().map_err(|error| closure_failure(&error));
     revalidate()?;
     let success =
-        preparation::prepare_closure(&request, closure, None, &|_| revalidate(), &revalidate)?;
+        preparation::prepare_closure(request, closure, invocation, &|_| revalidate(), &revalidate)?;
     revalidate()?;
-    crate::ownership_publication::publish_with_checkpoint(&success, &|_| revalidate())
+    consume(&success, &revalidate)
 }
