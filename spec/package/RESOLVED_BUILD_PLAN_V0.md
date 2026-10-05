@@ -56,10 +56,11 @@ The subsequently integrated [#364 review](../abi/NATIVE_C_INTEROP_V0_REVIEW.md#e
 specifies the exact C ABI tuple; it does not retroactively accept #361's appendix or prove FFI.
 Source-only v0 acceptance does not wait for this appendix or the rest of M7.
 
-The prospective D2 variant below binds that specified tuple for independent review. Its explicit
-`proposed-specified-native-c-interop-v0` status is not the accepted status
-`specified-native-c-interop-v0`: the latter currently rejects. Neither variant supplies acquisition,
-runtime artifact, execution or publication authority. The driver and #362 remain their owners.
+The prospective D2 successor below defines two explicit states for the same specified tuple:
+`proposed-specified-native-c-interop-v0` and specification-only `specified-native-c-interop-v0`.
+Approval and integration of this successor remain pending in the separate decision record. Neither
+state supplies acquisition, runtime artifact, execution, cache-reuse, linking, publication or grant
+authority. The driver and #362 remain their owners; no existing record is automatically upgraded.
 
 ## Closed source-only record
 
@@ -247,14 +248,16 @@ remain driver operations and cannot be authorized by the presence of these ident
 
 ### Proposed D2 native C v0 alignment
 
-This focused schema/checker revision is **proposed**, pending independent exact-revision review
-and explicit #361 native appendix acceptance. Passing its tests, integrating #364, closing a parent
-issue, or supplying an approval Boolean cannot accept it. A later separately reviewed change must
-record acceptance before admitting `specified-native-c-interop-v0`; this candidate rejects that
-unprefixed status and all implemented/conformance/public-support claims. No historical record is
-relabeled, normalized or upgraded.
+This specification-only successor is **prospective**, pending independent exact-revision review
+and normal integration with a factual [D2 decision record](../abi/NATIVE_C_INTEROP_V0_REVIEW.md#prospective-d2-native-appendix-contract-decision).
+It defines the explicit `specified-native-c-interop-v0` state alongside the retained proposed state;
+recognizing either grammar records no reviewer identity, approval, integration or execution.
+Passing tests, integrating #364, closing a parent issue or supplying an approval Boolean cannot
+replace that decision. Implemented/conformance/public-support and capability claims still reject.
+Legacy and proposed records retain their original status, canonical bytes, receipts and cache keys;
+no validator, normalization or cache operation relabels or upgrades them.
 
-For `proposed-specified-native-c-interop-v0`, the closed schema requires:
+For both `proposed-specified-native-c-interop-v0` and `specified-native-c-interop-v0`, the same closed schema requires:
 
 | Field | Exact value |
 | --- | --- |
@@ -268,7 +271,7 @@ For `proposed-specified-native-c-interop-v0`, the closed schema requires:
 | `abi.decisionIssue` | integer `364` |
 
 The historical illustrative `system-v-amd64-c` spelling is not an alias for the specified
-convention and rejects in the proposed variant. Legacy `provisional-pending-364` records remain
+convention and rejects in both D2 states. Legacy `provisional-pending-364` records remain
 structurally valid drafts with their existing opaque tuple grammar; their presence never becomes
 acceptance. Missing/unknown fields, other versions/targets/carriers/owners, and raw arguments still
 reject. The source target's language ABI remains a distinct input; #364 does not replace scalar
@@ -284,11 +287,15 @@ authentic evidence under their owning runtime/driver/#168 boundaries. A C alloca
 identity cannot satisfy that obligation, and a matching checksum cannot issue it.
 
 The fixture receipt's existing `native` flag describes appendix presence only. A proposed record
-additionally returns `nativeAdmission: "denied-proposed"`; it issues no capability. Existing recipe
-preflight remains fail closed even with exact tuple/material/digest comparisons and caller-supplied
-acceptance/FFI/runtime flags. Source-only bytes, receipt shape, cache domains, miss/hit validation,
-package graph and publication observations are unchanged. Every proposed field remains in the
-existing complete-plan cache projection; no native cache key is silently shared with a legacy one.
+returns `nativeAdmission: "denied-proposed"`; an explicit specification-only record returns
+`nativeAdmission: "denied-specified"`. Both are descriptive, frozen receipts and issue no capability
+for execution, acquisition, cache reuse, linking, publication or grants. The native-recipe preflight
+continues its existing fail-closed denial even with exact tuple/material/digest comparisons and
+caller-supplied acceptance/FFI/runtime flags; its acceptance prerequisite concerns execution policy,
+not this specification grammar. Source-only bytes, receipt shape, cache domains, miss/hit validation,
+package graph and publication observations are unchanged. Each explicit state remains in the
+complete-plan cache projection, so state changes require a distinct key; no key or receipt upgrades
+a historical draft or grants native cache reuse.
 
 ## Rejection phases
 
@@ -406,9 +413,10 @@ part of that slice.
   trust decision owned by #362.
 - Confirm whether #168 records this plan key as a provenance material/reference; #168 remains the
   record owner and must domain-separate any such digest in its own versioned extension.
-- Independently review the proposed #364 tuple mapping and runtime-artifact evidence separation
-  before accepting any native appendix status; retain legacy draft and source-only validity without
-  relabeling either. This proposal records no reviewer acceptance or runtime artifact authority.
+- Independently review this exact successor's #364 tuple mapping, specification-only receipt and
+  runtime-artifact evidence separation before completing the prospective D2 contract decision;
+  retain legacy/proposed/source-only validity without relabeling any state. Only real review and
+  integration outcomes may replace pending decision fields; runtime artifact authority stays separate.
 - Review any renamed field or changed projection as a cache-format change. Do not silently accept
   both spellings, infer defaults, or rewrite historical records.
 

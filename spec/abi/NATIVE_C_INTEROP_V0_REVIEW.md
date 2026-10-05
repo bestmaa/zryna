@@ -154,14 +154,42 @@ role or stale digest must fail without constructing a sealed value. MIR cannot
 erase an IR release obligation or introduce a new external symbol.
 
 The separate [#361 D2 package alignment](../package/RESOLVED_BUILD_PLAN_V0.md#proposed-d2-native-c-v0-alignment)
-is a prospective schema/checker candidate, not appendix acceptance recorded by this #364 review.
-PR #393 accepted the source-only contract with a draft native appendix. The proposed
-`specified-native-c-interop-v0` decision therefore requires independent review naming the exact
-candidate revision, fixed tuple/wire types, source/cache compatibility, and separation of runtime
-contract inputs from authenticated artifact bytes. Its wire tag remains explicitly
-`proposed-specified-native-c-interop-v0`, with native admission denied; the unprefixed tag rejects.
-This paragraph records no reviewer decision, retroactive approval, runtime digest or executed
-conformance. D2's appendix-acceptance prerequisite remains open until that separate acceptance.
+is a prospective specification-only successor, not appendix acceptance recorded by this #364 review.
+PR #393 accepted only the source-only contract with a draft native appendix. This successor defines
+explicit proposed and specification-only states with the same closed #364 tuple, preserves both
+historical grammars without auto-upgrade, and returns denied native admission in either state.
+Its prospective decision below requires actual independent successor review and normal integration.
+That decision can resolve D2's #361 native-appendix-contract prerequisite only; runtime artifacts,
+IR/MIR implementation, policy admission, linking, FFI conformance and public support remain separate.
+
+### Prospective D2 native-appendix-contract decision
+
+This is a pending repository decision record, not a maintainer sign-off or executed-conformance
+receipt. The parent reports an independent read-only review of the exact predecessor below found
+no substantive contract defect. That report does not approve this successor. Unknown reviewer
+identity and missing approval/integration outcomes remain pending until genuine results exist.
+
+| Decision input or outcome | Recorded fact or pending requirement |
+| --- | --- |
+| Decision scope | #361 specification-only native appendix alignment for #417 D2; no execution authority |
+| Independently reviewed predecessor | [PR #537](https://github.com/zryna/zryna/pull/537), head `5cb4a14db3cb49ed3df059d76436f3be1cc48890` |
+| Predecessor source tree | `d7afa01f528d9d6ecf3bec13cf380823041fe477` |
+| Locally checked predecessor before app publication | `2edb601eff7670606058532600d0ce5d127ab884`, identical source tree; not the published revision |
+| Accepted #364 specification reference | [PR #504](https://github.com/zryna/zryna/pull/504), reviewed head `bb92f44e1c1de2637163f7deb25a8c157cad6d29`, normal integration `65be51f6e1916ee8677d1cbf536ce2a8caf774a4` |
+| Successor revision under review | Pending; exact immutable candidate head/tree must be recorded in its independent review and PR evidence |
+| Independent successor reviewer identity and disposition | Pending; do not infer identity or approval from authorship, tests or predecessor review |
+| Linux/Windows build-plan contract receipts | Pending genuine exact-revision runs, including both D2 states and negative cases |
+| Repository approval decision | Pending real independent outcome; no retroactive PR #393 native approval |
+| Normal integration revision | Pending actual integration; no merge or issue closure recorded here |
+| Effective specification disposition | Pending approval and normal integration; this candidate remains prospective |
+
+The successor review must check the identical fixed ABI tuple and closed constraints in both new
+states, string/numeric wire-type boundaries, unchanged source-only canonical bytes/key/receipt,
+legacy/proposed non-upgrade, runtime-input versus authenticated-byte separation, and continued
+native-recipe denial. `denied-specified` is specification metadata, never an execution/acquisition,
+cache-reuse, link, publication or grant capability. Actual approval and integration may establish
+only this D2 contract prerequisite. No language-runtime artifact, concrete IR/MIR representation,
+foreign call, process isolation, #362 execution admission or #168 provenance is proved by it.
 
 Scalar imports/exports use signed 32-bit lanes; Boolean entry/result validation
 uses low 32 bits and accepts only 0/1. Narrow excess register bits are unspecified.

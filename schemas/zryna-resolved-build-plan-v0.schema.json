@@ -310,7 +310,7 @@
       "additionalProperties": false,
       "required": ["status", "target", "abi", "acquisition", "compilation", "linking"],
       "properties": {
-        "status": { "enum": ["provisional-pending-364", "proposed-specified-native-c-interop-v0"] },
+        "status": { "enum": ["provisional-pending-364", "proposed-specified-native-c-interop-v0", "specified-native-c-interop-v0"] },
         "target": { "$ref": "#/$defs/targetId" },
         "abi": {
           "type": "object",
@@ -360,18 +360,18 @@
       },
       "allOf": [{
         "if": {
-          "properties": { "status": { "const": "proposed-specified-native-c-interop-v0" } },
+          "properties": { "status": { "enum": ["proposed-specified-native-c-interop-v0", "specified-native-c-interop-v0"] } },
           "required": ["status"]
         },
         "then": {
           "properties": {
             "target": { "const": "native-linux-x86_64" },
-            "abi": { "$ref": "#/$defs/proposedNativeCInteropV0Abi" }
+            "abi": { "$ref": "#/$defs/nativeCInteropV0Abi" }
           }
         }
       }]
     },
-    "proposedNativeCInteropV0Abi": {
+    "nativeCInteropV0Abi": {
       "type": "object",
       "properties": {
         "identity": { "const": "zryna-native-c-interop-v0" },

@@ -265,9 +265,11 @@ export function validateBuildPlan(document, packageAuthority) {
   if (document.nativeAppendix) validateNativeAppendix(document.nativeAppendix, sourceAuthority);
   if (document.cacheKey !== deriveCacheKey(document)) fail('P361-CACHE', 'cache key does not bind the canonical plan');
   const receipt = { cacheKey: document.cacheKey, native: Boolean(document.nativeAppendix) };
-  if (document.nativeAppendix?.status === 'proposed-specified-native-c-interop-v0') {
-    // Schema/tuple and claimed runtime equality prove no artifact bytes or execution authority.
-    return Object.freeze({ ...receipt, nativeAdmission: 'denied-proposed' });
+  const status = document.nativeAppendix?.status;
+  if (status === 'proposed-specified-native-c-interop-v0' || status === 'specified-native-c-interop-v0') {
+    // Specification metadata proves no artifact bytes, execution, reuse, or publication authority.
+    return Object.freeze({ ...receipt, nativeAdmission: status === 'specified-native-c-interop-v0'
+      ? 'denied-specified' : 'denied-proposed' });
   }
   return Object.freeze(receipt);
 }
