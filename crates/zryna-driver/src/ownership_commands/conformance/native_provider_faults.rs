@@ -22,6 +22,7 @@ enum Mutation {
     Execution,
     Manifest,
     Commit,
+    SourceDirectory,
 }
 
 #[derive(Default)]
@@ -31,9 +32,31 @@ struct Checkpoints {
     mutated: Cell<bool>,
 }
 
-fn mutate(root: &Path, checkpoints: &Checkpoints) {
-    fs::write(root.join("main.zry"), "export function score(): i32 { return 99; }\n")
+fn mutate(
+    request: &DataOwnershipBuildRequest,
+    checkpoints: &Checkpoints,
+    mutation: Option<Mutation>,
+) {
+    if matches!(mutation, Some(Mutation::SourceDirectory)) {
+        let parent = request.workspace_root.join("sources");
+        let original = same_file::Handle::from_path(&parent).expect("original source directory");
+        let bytes = fs::read(parent.join("main.zry")).expect("original retained source bytes");
+        fs::rename(&parent, request.workspace_root.join("replaced-sources"))
+            .expect("actual source-directory replacement");
+        fs::create_dir(&parent).expect("replacement source directory");
+        fs::write(parent.join("main.zry"), &bytes).expect("identical deceptive replacement bytes");
+        assert_ne!(
+            original,
+            same_file::Handle::from_path(&parent).expect("replacement source directory identity")
+        );
+        assert_eq!(fs::read(parent.join("main.zry")).expect("replacement source bytes"), bytes);
+    } else {
+        fs::write(
+            request.workspace_root.join(&request.entrypoint),
+            "export function score(): i32 { return 99; }\n",
+        )
         .expect("actual retained source mutation at the selected checkpoint");
+    }
     checkpoints.mutated.set(true);
 }
 
@@ -57,17 +80,17 @@ fn native_run(
                     (Some(Mutation::Manifest), PublicationPhase::Manifest)
                         | (Some(Mutation::Commit), PublicationPhase::Commit)
                 ) {
-                    mutate(&request.workspace_root, checkpoints);
+                    mutate(request, checkpoints, mutation);
                 }
                 retained()
             },
             |transaction, output| {
                 run.execute(&node, transaction, output, &|| {
                     checkpoints.execution.set(checkpoints.execution.get() + 1);
-                    if matches!(mutation, Some(Mutation::Execution))
+                    if matches!(mutation, Some(Mutation::Execution | Mutation::SourceDirectory))
                         && checkpoints.execution.get() == 2
                     {
-                        mutate(&request.workspace_root, checkpoints);
+                        mutate(request, checkpoints, mutation);
                     }
                     retained()
                 })
@@ -212,7 +235,8 @@ fn two_frozen_faults_and_score13_execute_with_retained_native_provider() {
             let source = fs::read(workspace.root().join("main.zry")).expect("fixed test authority");
             let request = request(workspace.root(), target);
             let mut baseline = None;
-            for provider in ["bootstrap", "native-retained"] {
+            assert!(!workspace.root().join(".zryna").exists(), "genuinely cold native capture");
+            for provider in ["native-retained", "bootstrap"] {
                 let checkpoints = Checkpoints::default();
                 let bundle = if provider == "bootstrap" {
                     let prepared = prepare_data_ownership_for_test(
@@ -277,27 +301,22 @@ fn two_frozen_faults_and_score13_execute_with_retained_native_provider() {
 fn source_mutation_fails_at_execution_manifest_and_commit_without_partial_output() {
     let _guard = route_guard();
     let registry = registry();
-    // Preserve the current cold-root limitation separately: publication creates .zryna and
-    // changes the captured workspace root before execution. Do not weaken the source guard.
-    let cold = fixture_workspace();
-    install(cold.root(), &registry, "vec");
-    let checkpoints = Checkpoints::default();
-    let failure =
-        native_run(&request(cold.root(), TargetSelection::JavaScript), None, None, &checkpoints)
-            .expect_err(
-                "cold output-root creation is not yet admitted by the retained source owner",
-            );
-    assert_eq!(failure.kind(), CommandFailureKind::Source);
-    assert_eq!(failure.diagnostics()[0].code(), "ZRYNA-D3004");
-    assert_eq!(checkpoints.execution.get(), 0);
-    assert_no_artifacts(cold.root());
-    println!("retained native cold output root: D3004 before execution; owner coordination open");
-    for mutation in [Mutation::Execution, Mutation::Manifest, Mutation::Commit] {
+    for mutation in
+        [Mutation::Execution, Mutation::Manifest, Mutation::Commit, Mutation::SourceDirectory]
+    {
         let workspace = fixture_workspace();
         install(workspace.root(), &registry, "vec");
-        crate::ArtifactOutputRoot::prepare_for_workspace(workspace.root())
-            .expect("prepare the fixture output root before capturing source identity");
-        let request = request(workspace.root(), TargetSelection::JavaScript);
+        let mut request = request(workspace.root(), TargetSelection::JavaScript);
+        if matches!(mutation, Mutation::SourceDirectory) {
+            fs::create_dir(workspace.root().join("sources")).expect("source parent fixture");
+            fs::rename(
+                workspace.root().join("main.zry"),
+                workspace.root().join("sources/main.zry"),
+            )
+            .expect("source below the retained parent");
+            request.entrypoint = "sources/main.zry".to_owned();
+        }
+        assert!(!workspace.root().join(".zryna").exists(), "no test-only directory prewarming");
         let checkpoints = Checkpoints::default();
         let failure = native_run(&request, None, Some(mutation), &checkpoints)
             .expect_err("actual source mutation must reject before commit");
@@ -309,5 +328,55 @@ fn source_mutation_fails_at_execution_manifest_and_commit_without_partial_output
         assert_eq!(failure.diagnostics()[0].code(), "ZRYNA-D3004");
         assert_no_artifacts(workspace.root());
         println!("retained native source guard {mutation:?}: actual mutation rejected; no output");
+    }
+}
+
+#[test]
+fn cold_native_score13_publication_is_create_only_and_leaves_no_private_transaction() {
+    let _guard = route_guard();
+    let registry = registry();
+    for target in
+        [TargetSelection::JavaScript, TargetSelection::WebAssembly, TargetSelection::Native]
+    {
+        if target == TargetSelection::Native
+            && !cfg!(all(target_os = "linux", target_arch = "x86_64"))
+        {
+            continue;
+        }
+        let workspace = fixture_workspace();
+        install(workspace.root(), &registry, "vec");
+        assert!(!workspace.root().join(".zryna").exists());
+        let request = request(workspace.root(), target);
+        let checkpoints = Checkpoints::default();
+        let bundle = native_run(&request, None, None, &checkpoints)
+            .expect("cold native-only execution and publication");
+        assert_observation(&bundle, target, None);
+        assert_eq!(checkpoints.execution.get(), 3);
+        let published = inventory(bundle.path());
+        let output = workspace.root().join(".zryna/out");
+        let before = inventory(&output);
+        let rerun = Checkpoints::default();
+        let failure = native_run(&request, None, None, &rerun)
+            .expect_err("create-only publication must reject an existing bundle");
+        assert_eq!(failure.kind(), CommandFailureKind::Preparation);
+        assert_eq!(failure.diagnostics().len(), 1);
+        assert_eq!(failure.diagnostics()[0].code(), "ZRYNA-C1009");
+        assert_eq!(failure.diagnostics()[0].message(), "create-only output bundle already exists");
+        assert_eq!(rerun.execution.get(), 3, "the rerun reached complete target execution");
+        let stage = match target {
+            TargetSelection::JavaScript => "JavaScript",
+            TargetSelection::WebAssembly => "WebAssembly",
+            TargetSelection::Native => "Native",
+            _ => unreachable!(),
+        };
+        assert_eq!(*rerun.publication.borrow(), [stage, "Manifest", "Commit"]);
+        assert_eq!(inventory(bundle.path()), published, "existing bundle bytes preserved");
+        assert_eq!(inventory(&output), before, "failed rerun leaves no private partial files");
+        assert_eq!(fs::read_dir(&output).expect("output entries").count(), 1);
+        fs::remove_dir_all(bundle.path()).expect("test-owned final bundle cleanup");
+        assert_no_artifacts(workspace.root());
+        println!(
+            "cold retained native {target:?}: score13 published; rerun collision preserved bytes and cleaned private transaction"
+        );
     }
 }

@@ -5,7 +5,7 @@ use super::{
     ScalarValue, WorkspaceSourceRoot, closure_failure, failure, preparation, validate_request,
 };
 use crate::native_frontend::NativeBuildRequest;
-use crate::{PublishedOwnershipBundle, capture_native_workspace_sources};
+use crate::{ArtifactOutputRoot, PublishedOwnershipBundle, capture_native_workspace_sources};
 use std::path::PathBuf;
 use zryna_diagnostics::Diagnostic;
 use zryna_source::NormalizedSourcePath;
@@ -54,6 +54,10 @@ fn with_prepared(
     validate(request)?;
     let root = WorkspaceSourceRoot::capture(&request.workspace_root)
         .map_err(|item| failure(CommandFailureKind::Source, item))?;
+    // Hold workspace identity first, but create the exact compiler-owned directories before
+    // discovery records directory state. Publication must not invalidate its own source owner.
+    let output = ArtifactOutputRoot::prepare_for_workspace(&request.workspace_root)
+        .map_err(|item| failure(CommandFailureKind::Preparation, item))?;
     let path = NormalizedSourcePath::new(request.entrypoint.clone()).map_err(|error| {
         failure(CommandFailureKind::Request, Diagnostic::from_source_error(&error))
     })?;
@@ -77,7 +81,10 @@ fn with_prepared(
         *retained.graph_sha256(),
     )
     .map_err(|error| closure_failure(&error))?;
-    let revalidate = || snapshot.revalidate().map_err(|error| closure_failure(&error));
+    let revalidate = || {
+        snapshot.revalidate().map_err(|error| closure_failure(&error))?;
+        output.revalidate().map_err(|item| failure(CommandFailureKind::Preparation, item))
+    };
     revalidate()?;
     let success =
         preparation::prepare_closure(request, closure, invocation, &|_| revalidate(), &revalidate)?;
