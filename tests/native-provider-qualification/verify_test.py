@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def prevented(checkpoint='Execution'):
     return {'control':'source-mutation','checkpoint':checkpoint,'platform':'windows',
-            'attempt':{'action':'prevented','io_error':{'kind':'PermissionDenied','raw_os_error':32},
+            'attempt':{'action':'prevented','io_error':{'kind':'Uncategorized','raw_os_error':32},
                        'before_sha256':SOURCE_SHA,'after_sha256':SOURCE_SHA,'parent_replaced':False},
             'mutated':False,'execution_checkpoints':3,'publication_checkpoints':['JavaScript','Manifest','Commit'],
             'failure_kind':None,'diagnostics':[],
@@ -37,7 +37,11 @@ class AdmissionControls(unittest.TestCase):
             mutation_control(prevented(checkpoint),'win32')
 
     def test_denial_requires_exact_sharing_violation_and_unchanged_bytes(self):
-        for field, values in {'io_error':[None,{'kind':'PermissionDenied','raw_os_error':5},
+        for field, values in {'io_error':[None,{'kind':'Uncategorized','raw_os_error':None},
+                                          {'kind':'Uncategorized','raw_os_error':5},
+                                          {'kind':'Uncategorized','raw_os_error':33},
+                                          {'kind':'Uncategorized','raw_os_error':True},
+                                          {'kind':'PermissionDenied','raw_os_error':32},
                                           {'kind':'Other','raw_os_error':32}],
                               'after_sha256':['a'*64], 'parent_replaced':[True]}.items():
             for wrong in values:

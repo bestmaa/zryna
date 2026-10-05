@@ -194,7 +194,7 @@ def mutation_control(value, platform):
         assert platform == 'win32'
         exact(value['mutated'],False)
         exact(attempt['action'],'prevented')
-        exact(attempt['io_error'],{'kind':'PermissionDenied','raw_os_error':32})
+        exact(attempt['io_error'],{'kind':'Uncategorized','raw_os_error':32})
         exact(attempt['after_sha256'],SOURCE_SHA)
         exact(value['failure_kind'],None)
         exact(value['diagnostics'],[])

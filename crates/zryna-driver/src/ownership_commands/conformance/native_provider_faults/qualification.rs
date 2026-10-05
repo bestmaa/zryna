@@ -124,14 +124,20 @@ pub(super) fn attempt(
         }
         Err(error) => {
             // The attempted operation itself must establish OS denial; arbitrary I/O failures reject.
-            assert_eq!(error.kind(), std::io::ErrorKind::PermissionDenied);
+            // Retain the observed OS cause even if this fail-closed check rejects it.
+            eprintln!(
+                "Windows mutation denial at {mutation:?}: kind={:?}, raw_os_error={:?}, message={error}",
+                error.kind(),
+                error.raw_os_error()
+            );
             assert_eq!(error.raw_os_error(), Some(32), "expected Windows sharing violation");
+            assert_eq!(error.kind(), std::io::Error::from_raw_os_error(32).kind());
             assert_eq!(fs::read(&source).expect("source after denied attempt"), before);
             assert_eq!(
                 original,
                 same_file::Handle::from_path(parent).expect("parent after denied attempt")
             );
-            Some(serde_json::json!({"kind":"PermissionDenied","raw_os_error":error.raw_os_error()}))
+            Some(serde_json::json!({"kind":format!("{:?}",error.kind()),"raw_os_error":error.raw_os_error()}))
         }
     };
     let after = fs::read(&source).expect("source after actual attempt");

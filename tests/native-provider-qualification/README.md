@@ -19,7 +19,10 @@ transaction. The evidence includes separate retained collision bundles and check
 Four mutation controls attempt source writes at execution, Manifest and Commit, plus replacement
 of a source directory with identical file bytes. Windows prevention requires an actual sharing
 violation (OS error 32), unchanged source bytes/identity and continued canonical score-13
-execution. A successful mutation must fail with Source/D3004 and leave no output. The directory
+execution. Pinned Rust 1.97.1 classifies error 32 as `Uncategorized`; admission requires that
+exact kind/code pair. The runner prints the observed kind, raw code and message before checking
+the denial, so rejected OS causes remain in its retained stderr. A successful mutation must
+fail with Source/D3004 and leave no output. The directory
 replacement also changes root metadata/index; it does not isolate the nested identity alone.
 
 Production cold BUILD uses the ordinary private CLI with full architecture validation, with
