@@ -1,6 +1,9 @@
 //! Real source-to-executable successor Copy conformance.
 
-use std::process::Command;
+use std::{
+    process::Command,
+    sync::atomic::{AtomicU64, Ordering},
+};
 use zryna_ir::generic_v1::{copy_v1, wire};
 use zryna_layout::StorageTarget;
 use zryna_ownership_runtime_abi::generic_v1 as runtime;
@@ -115,10 +118,9 @@ fn execute(artifact: &crate::JavaScriptArtifact) {
         String::from_utf8(version.stdout).expect("genuine fixture invariant").trim(),
         "v22.22.1"
     );
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("genuine fixture invariant")
-        .as_nanos();
+    // Parallel fixtures share a process and may observe the same clock value.
+    static NEXT_TEMP_FILE: AtomicU64 = AtomicU64::new(0);
+    let unique = NEXT_TEMP_FILE.fetch_add(1, Ordering::Relaxed);
     let path =
         std::env::temp_dir().join(format!("zryna-416-generic-{}-{unique}.mjs", std::process::id()));
     std::fs::write(&path, &artifact.source).expect("genuine fixture invariant");
