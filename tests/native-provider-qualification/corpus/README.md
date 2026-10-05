@@ -25,8 +25,9 @@ runtime. No ordinary installed no-Node/no-pnpm/no-Cargo acceptance is claimed.
 The reader binds exact source/tree, locked feature build, actual test executable/tool bytes on a
 live host, and strict frozen observations. Archived mode cannot rehash removed host executables;
 a separate collector must bind actual run/job/attempt/step and authenticated artifact metadata.
-Layout hashes are checked for strict identity shape and complete provider byte equality, not
-independent semantic reconstruction. The eleven malformed-row and execution/source envelope controls include coherently altered
+Source-dependent layout and runtime ABI hashes are checked for strict identity fields/hash shape
+and complete provider byte equality, not
+independent semantic reconstruction. The twelve malformed-row and execution/source envelope controls include coherently altered
 traces, fault selectors, outcomes, source dependency, graph and artifact digest claims. Rust summary counts must match the recorded exit/status, and committed
 Git blob bytes must match all working inputs even when index flags hide a dirty file.
 

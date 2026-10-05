@@ -127,6 +127,16 @@ class CorpusControls(unittest.TestCase):
         m=v.cold.read(p/'zryna-manifest-v3.json');m['artifacts'][0].update(bytes=artifact.stat().st_size,sha256=v.digest(artifact))
         self.write(p/'zryna-manifest-v3.json',m);self.reject(values)
 
+    def test_source_dependent_runtime_abi_requires_exact_identity_types_and_digest_shape(self):
+        for field,wrong in [('identifier','foreign-runtime'),('version',True),('sha256','not-a-hash')]:
+            with tempfile.TemporaryDirectory() as temporary:
+                previous=self.output;self.output=Path(temporary);values=self.create()
+                self.change_both(values[0],lambda o,m,p:m['runtime_abi'].update({field:wrong}))
+                self.reject(values);self.output=previous
+        values=self.create()
+        p=self.output/f'javascript-{values[0]}-bootstrap/bundle/zryna-manifest-v3.json'
+        m=v.cold.read(p);m['runtime_abi']['sha256']='b'*64;self.write(p,m);self.reject(values)
+
     def test_checkpoint_cleanup_and_activation_claims_reject(self):
         for field,wrong in [('execution_checkpoints',2),('cleanup_entries',1),('native_first',False),('public_activation',True)]:
             with tempfile.TemporaryDirectory() as temporary:

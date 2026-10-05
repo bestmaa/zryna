@@ -88,11 +88,14 @@ def bundle(directory,target,expected,sources,edges):
                         'sources','edges','layouts','runtime_abi','stem','targets','artifacts','invocation','results','diagnostics'}
     layouts=value['layouts'];assert set(layouts)==set(cold.LAYOUTS)
     assert all(type(v) is str and re.fullmatch('[0-9a-f]{64}',v) for v in layouts.values())
-    # Layout digests bind whole provider equality; this does not independently reconstruct layouts.
+    runtime=value['runtime_abi'];assert set(runtime)=={'identifier','version','sha256'}
+    exact(runtime['identifier'],cold.RUNTIME['identifier']);exact(runtime['version'],1)
+    assert type(runtime['sha256']) is str and re.fullmatch('[0-9a-f]{64}',runtime['sha256'])
+    # Source-dependent layout/ABI digests bind whole provider equality, not independent reconstruction.
     exact({k:v for k,v in value.items() if k!='artifacts'},
           {'version':3,'profile':'zryna-data-ownership-v1','protocol_version':4,'command':'run',
            'entrypoint':'main.zry','graph_sha256':graph_digest(3,sources,edges),'sources':sources,'edges':edges,
-           'layouts':layouts,'runtime_abi':cold.RUNTIME,'stem':'fixed-oracle','targets':[target],
+           'layouts':layouts,'runtime_abi':runtime,'stem':'fixed-oracle','targets':[target],
            'invocation':{'export':'score','arguments':[]},'results':expected,'diagnostics':[]})
     assert type(value['artifacts']) is list and len(value['artifacts'])==1
     a=value['artifacts'][0];assert set(a)=={'target','kind','filename','bytes','sha256','metadata'}
@@ -209,7 +212,7 @@ def verify(root,output,head,platform,archived=False,run_id=None,run_attempt=None
             'passed_pairs':len(rows)-len(failed),'failed_pairs':len(failed),'observations':2*(len(rows)-len(failed)),
             'discharged_logical_fault_ids':discharged,'remaining_logical_fault_ids':[c for c,(r,f) in cases.items() if f and c not in discharged],
             'prior_two_fault_ids':list(PREVIOUS),'positive_groups':list(GROUPS),'archived':archived,
-            'layout_scope':'strict identity shape plus complete provider byte equality; no independent layout reconstruction',
+            'layout_abi_scope':'strict identity fields/hash shape plus complete provider byte equality; no independent layout/ABI reconstruction',
             'physical_allocation_probes':'separate, not discharged','public_activation':False,'installed_no_cargo_acceptance':False}
 
 
