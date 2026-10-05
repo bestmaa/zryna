@@ -137,7 +137,9 @@ pub(super) fn attempt(
                 original,
                 same_file::Handle::from_path(parent).expect("parent after denied attempt")
             );
-            Some(serde_json::json!({"kind":format!("{:?}",error.kind()),"raw_os_error":error.raw_os_error()}))
+            Some(
+                serde_json::json!({"kind":format!("{:?}",error.kind()),"raw_os_error":error.raw_os_error()}),
+            )
         }
     };
     let after = fs::read(&source).expect("source after actual attempt");
