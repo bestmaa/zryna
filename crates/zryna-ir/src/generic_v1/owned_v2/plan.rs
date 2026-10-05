@@ -3,6 +3,8 @@ use super::{Failure, graph, raw};
 use crate::generic_v1::{body, budget, cfg, reject, reserve};
 use zryna_layout::generic_v1::VerifiedLayouts;
 #[cfg(test)]
+mod mixed_clones;
+#[cfg(test)]
 mod nested_clones;
 mod state;
 mod topology;

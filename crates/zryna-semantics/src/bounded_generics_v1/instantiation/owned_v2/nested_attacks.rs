@@ -125,7 +125,7 @@ fn nested_source_wire_attacks_reject_in_both_module_forms_with_pristine_recovery
     }
 }
 
-fn mutate_nested_claim(hostile: &mut owned_v2::raw::Program, attack: usize) {
+pub(super) fn mutate_nested_claim(hostile: &mut owned_v2::raw::Program, attack: usize) {
     let clone = hostile
         .extensions
         .iter_mut()

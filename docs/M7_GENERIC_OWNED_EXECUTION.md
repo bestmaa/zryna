@@ -36,7 +36,9 @@ complete instance graph, original opaque affinity and owner/loan/drop plan. Only
 The finite structural-clone continuation admits `clone(namedOwner)` only for stored
 `Option<String>` and `Result<String,String>`, alongside the existing stored String clone.
 Its finite depth-two successor also admits exactly `Option<Option<String>>` and
-`Result<Option<String>,Option<String>>`. The closed-key whitelist remains exact.
+`Result<Option<String>,Option<String>>`. The asymmetric successor adds exactly
+`Result<Option<String>,String>` and `Result<String,Option<String>>`; each outer ordinal
+selects its own exact payload type. The six-entry closed-key whitelist remains exact.
 It retains the original owner and any surrounding shared loans. A temporary outer shared loan
 selects the active variant; only its String payload is cloned into a fresh owner and rebuilt
 with the same tag. None performs no runtime allocation. Child loans end before the join and
@@ -246,8 +248,39 @@ clone: 73 clones use 1,032,293 units and 74 use 1,050,578. Depth-two Result char
 `15467 + 264*j`: 48 clones use 1,040,208 and 49 use 1,068,347. The unchanged state ceiling is
 1,048,576. Complete binding keys, availability, nested loans and parents are charged before
 snapshot copies; nested payload keys receive credit before either copy. Genuine exact/first-extra
-and recovery fixtures supplement inherited checked-overflow tests. Other depths, mixed or
+and recovery fixtures supplement inherited checked-overflow tests. Other depths, further mixed or
 non-String payload forms, nominal/other containers and handle cloning still need separate proof.
+
+The finite asymmetric runner is
+`python3 tests/m7-generic-owned-mixed-clone/run.py <evidence-directory>`.
+Its independently frozen single/imported fixtures exercise all six variant paths: none/some
+on the nested arm and a direct String on the other arm, in both Result orientations. Fixed
+Unicode and empty-payload oracles retain exact tags, original/first/second clone identities,
+surrounding and selected-payload shared loans, and reverse cleanup. Each module form defines
+twelve initial successes, thirty-two reachable allocation failures with a pristine retry each,
+and four injected-but-inactive none-path fault controls with a pristine retry each. This gives
+84 JS/Wasm observations and 52 native successes plus 32 cleanup-before-SIGILL cases. The none
+controls prove that the injected first allocation failure is never reached and the next call
+is pristine. No inactive payload bytes are interpreted or cloned.
+
+Independent fixed heterogeneous CFGs authenticate each ordinal's String/Option binding and
+construction type. Both leaf paths retain the original root and surrounding loans; failures
+end deepest descendants before parents, clean the exact original owner, and exclude the
+unwritten fresh result. Swapped payload types, incorrect ordinals/bindings/operands, actual
+exclusive loans, ended/foreign loans, premature parent ending and unequal cleanup state reject
+with pristine recovery. Hostile keyword, newline, Unicode and payload-order source claims
+remain authenticated. Source clone(Borrow), opaque capability acquisition, moved/exclusive
+owners, temporary sources, other payload types and a third structural depth remain excluded.
+
+With 400 scalar locals, each asymmetric clone copies eight complete snapshots and creates
+seventeen definitions. The 24-byte root receives 208 units before copies; its sole Option
+arm receives 20 key-copy units and 96 selection units. Option-first snapshots charge
+`10196 + 136*j`; String-first snapshots charge `10207 + 136*j`. At 70 clones the totals are
+1,042,160 and 1,042,930; at 71 they are 1,061,876 and 1,062,657. Genuine source checks the
+last accepted count, first extra and fresh recovery under the unchanged 1,048,576 ceiling.
+These are private finite Linux execution proofs. They add no opcode, carrier, verifier/MIR
+authority, runtime declaration, ABI, dependency, provider or public selector and do not qualify
+separate Windows generic execution or complete #416.
 
 Structural selection precharges full snapshots before copying lexical bindings, complete type
 key bytes, availability, loans and loan parents. Values, blocks, arm and edge inventories retain

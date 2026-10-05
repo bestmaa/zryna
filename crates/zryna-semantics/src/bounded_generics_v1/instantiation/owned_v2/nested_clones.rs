@@ -62,8 +62,8 @@ fn nested_clone_seals_every_outer_and_inner_variant_with_original_owner_retained
 fn nested_clone_whitelist_and_original_affinity_remain_exact() {
     for ty in [
         "Option<Result<String,String>>",
-        "Result<Option<String>,String>",
-        "Result<String,Option<String>>",
+        "Result<Option<String>,bool>",
+        "Result<bool,Option<String>>",
         "Option<Option<i32>>",
         "Option<Option<Option<String>>>",
     ] {

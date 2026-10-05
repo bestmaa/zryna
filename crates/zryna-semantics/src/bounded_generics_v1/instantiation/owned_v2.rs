@@ -9,6 +9,10 @@ mod clones;
 #[cfg(test)]
 mod loops;
 #[cfg(test)]
+mod mixed_attacks;
+#[cfg(test)]
+mod mixed_clones;
+#[cfg(test)]
 mod mutable;
 #[cfg(test)]
 mod negative;

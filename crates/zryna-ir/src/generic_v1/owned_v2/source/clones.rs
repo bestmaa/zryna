@@ -9,16 +9,30 @@ const RESULT_OPTION: &[u8] = &[
     0x15, 2, 0, 0, 0, 10, 0, 0, 0, 0x14, 1, 0, 0, 0, 1, 0, 0, 0, 2, 10, 0, 0, 0, 0x14, 1, 0, 0, 0,
     1, 0, 0, 0, 2,
 ];
+const RESULT_OPTION_STRING: &[u8] =
+    &[0x15, 2, 0, 0, 0, 10, 0, 0, 0, 0x14, 1, 0, 0, 0, 1, 0, 0, 0, 2, 1, 0, 0, 0, 2];
+const RESULT_STRING_OPTION: &[u8] =
+    &[0x15, 2, 0, 0, 0, 1, 0, 0, 0, 2, 10, 0, 0, 0, 0x14, 1, 0, 0, 0, 1, 0, 0, 0, 2];
 
 pub(super) fn admitted(ty: &Closed) -> bool {
     matches!(ty, Closed::Stored(key) if key == OPTION || key == RESULT
-        || key == OPTION_OPTION || key == RESULT_OPTION)
+        || key == OPTION_OPTION || key == RESULT_OPTION
+        || key == RESULT_OPTION_STRING || key == RESULT_STRING_OPTION)
 }
 
-fn payload_key(stored: &Closed) -> Result<&'static [u8], Failure> {
+fn payload_key(stored: &Closed, ordinal: u32) -> Result<&'static [u8], Failure> {
+    if ordinal > 1 {
+        return Err(Failure::InternalFailure);
+    }
     match stored {
         Closed::Stored(key) if key == OPTION || key == RESULT => Ok(&[2]),
         Closed::Stored(key) if key == OPTION_OPTION || key == RESULT_OPTION => Ok(OPTION),
+        Closed::Stored(key) if key == RESULT_OPTION_STRING => {
+            Ok(if ordinal == 0 { OPTION } else { &[2] })
+        }
+        Closed::Stored(key) if key == RESULT_STRING_OPTION => {
+            Ok(if ordinal == 0 { &[2] } else { OPTION })
+        }
         _ => Err(Failure::InternalFailure),
     }
 }
@@ -137,7 +151,7 @@ impl Builder<'_, '_> {
         {
             (None, None)
         } else {
-            let key = payload_key(stored)?;
+            let key = payload_key(stored, ordinal)?;
             if key == OPTION {
                 // Both payload key copies precede nested selection's own complete key credit.
                 self.budget.branch_state(key.len() * 2)?;

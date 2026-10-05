@@ -4,25 +4,29 @@ use crate::generic_v1::inventory::Inventory;
 use zryna_layout::{StorageTarget, generic_v1 as layout};
 use zryna_source::{SourceFileInput, SourceMap, UntrustedSpan};
 
-fn definition(id: u32, ty: graph::Type) -> graph::Definition {
+pub(super) fn definition(id: u32, ty: graph::Type) -> graph::Definition {
     graph::Definition { id, ty }
 }
-fn borrow(referent: u32) -> graph::Type {
+pub(super) fn borrow(referent: u32) -> graph::Type {
     graph::Type::Borrow { referent, exclusive: false }
 }
 fn span() -> UntrustedSpan {
     UntrustedSpan { file: 0, start: 0, end: 1 }
 }
-fn instruction(id: u32, ty: graph::Type, operation: graph::Operation) -> graph::Instruction {
+pub(super) fn instruction(
+    id: u32,
+    ty: graph::Type,
+    operation: graph::Operation,
+) -> graph::Instruction {
     graph::Instruction { result: definition(id, ty), span: span(), operation }
 }
-fn edge(target: u32, arguments: Vec<u32>) -> graph::Edge {
+pub(super) fn edge(target: u32, arguments: Vec<u32>) -> graph::Edge {
     graph::Edge { target, arguments }
 }
-fn arm(ordinal: u32, binding: Option<graph::Definition>, target: u32) -> graph::Arm {
+pub(super) fn arm(ordinal: u32, binding: Option<graph::Definition>, target: u32) -> graph::Arm {
     graph::Arm { ordinal, binding, edge: edge(target, vec![]) }
 }
-fn block(
+pub(super) fn block(
     id: u32,
     parameters: Vec<graph::Definition>,
     instructions: Vec<graph::Instruction>,
@@ -32,7 +36,7 @@ fn block(
 }
 
 // Four explicitly specified blocks: borrowed Option selection, none/some, rebuild outer.
-fn child(
+pub(super) fn child(
     blocks: &mut Vec<graph::Block>,
     ext: &mut Vec<raw::Extension>,
     start: u32,
@@ -229,7 +233,11 @@ fn fixture(result: bool) -> (raw::Program, VerifiedLayouts, SourceMap) {
     (raw::Program { graph, extensions: vec![ext], plans: vec![] }, layouts, sources)
 }
 
-fn typed(claim: &raw::Program, layouts: &VerifiedLayouts, s: &SourceMap) -> Result<(), Failure> {
+pub(super) fn typed(
+    claim: &raw::Program,
+    layouts: &VerifiedLayouts,
+    s: &SourceMap,
+) -> Result<(), Failure> {
     super::super::typed::check(
         claim,
         s,
