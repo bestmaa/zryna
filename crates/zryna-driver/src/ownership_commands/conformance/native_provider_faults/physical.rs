@@ -68,7 +68,9 @@ fn pair(registry: &Value, fixture: &str, physical: Option<(&str, u32)>) {
         .expect("frozen result and cleanup oracle");
     assert_eq!(oracle["fixture"], fixture);
     let expected = if injected {
-        oracle["expected"].clone()
+        // Frozen logical rows supply cleanup traces. Physical allocation injection always
+        // returns Allocation, including handles whose logical trace oracle is Refcount.
+        serde_json::json!({"kind":"trapped","code":"zryna.trap.allocation-v1"})
     } else {
         serde_json::json!({"kind":"returned","value":{"type":"i32","value":oracle["expected"]}})
     };
@@ -190,5 +192,21 @@ fn owned_vec_physical_group_executes_through_retained_source() {
     pair(&registry, "owned-vec", Some(("owned-vec-fault-2-6", 10)));
     println!(
         "physical corpus: 2 complete provider pairs; 1 physical probe + 1 positive calibration"
+    );
+}
+
+#[test]
+fn handles_physical_group_executes_through_retained_source() {
+    let _guard = route_guard();
+    assert_eq!(format!("{:x}", Sha256::digest(REGISTRY)), REGISTRY_SHA);
+    let registry = registry();
+    pair(&registry, "handles", None);
+    pair(&registry, "handles", Some(("handles-fault-2-1", 1)));
+    pair(&registry, "handles", Some(("handles-fault-2-1", 2)));
+    pair(&registry, "handles", Some(("handles-fault-4-1", 3)));
+    pair(&registry, "handles", Some(("handles-fault-4-2", 4)));
+    pair(&registry, "handles", Some(("handles-fault-4-3", 5)));
+    println!(
+        "physical corpus: 6 complete provider pairs; 5 physical probes + 1 positive calibration"
     );
 }

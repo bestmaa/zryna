@@ -13,7 +13,8 @@ TEST = 'ownership_commands::conformance::native_provider_faults::physical::owned
 TESTS = {'owned-shared':TEST,
          'string':'ownership_commands::conformance::native_provider_faults::physical::string_physical_group_executes_through_retained_source',
          'owned-vec':'ownership_commands::conformance::native_provider_faults::physical::owned_vec_physical_group_executes_through_retained_source',
-         'vec':'ownership_commands::conformance::native_provider_faults::physical::vec_physical_group_executes_through_retained_source'}
+         'vec':'ownership_commands::conformance::native_provider_faults::physical::vec_physical_group_executes_through_retained_source',
+         'handles':'ownership_commands::conformance::native_provider_faults::physical::handles_physical_group_executes_through_retained_source'}
 
 
 def digest(path):

@@ -37,11 +37,22 @@ three probes, with nine outside the group; cumulative qualification must retain 
 prior seals. The recovered OwnedVec seal independently credits its one row;
 local Vec admission alone cannot establish hosted or cumulative qualification.
 
+The explicit `--group handles` slice selects physical ordinals 1 through 5 plus score-23
+calibration: six provider pairs/twelve actual native observations. Every injected outcome is
+Allocation with actual mode-6 selectors `0x26000001` through `0x26000005`. Ordinals 1 and 2
+use `handles-fault-2-1` only for the omitted empty trace. Ordinals 3, 4 and 5 use frozen logical
+Refcount rows `handles-fault-4-1`, `handles-fault-4-2` and `handles-fault-4-3` only for cleanup
+traces; their logical outcomes/selectors are never substituted. The full traces preserve
+Cleanup(module 1, function 0, places 1; 3 then 1; or 5 then 3 then 1), the corresponding
+Shared/Weak drops, ReleaseImplicitWeak, and ReleaseControl in order. The frozen `handles`
+import and both main.zry/math.zry sources remain mandatory. Admission is all-or-nothing for
+all five probes and positive calibration; synthetic hostile controls never prove native execution.
+
 `run.py` binds the clean exact source head/tree, all tracked input bytes, pinned tools and actual
 libtest executable. `verify.py` independently checks the complete observations, frozen sources,
 import graph, strict manifest structure, artifact hashes and entire provider bundle equality.
 Version-2 receipts additionally bind the selected group to its exact test and complete case census.
-The private Linux workflow explicitly executes/admit Vec only and names its archive distinctly.
+The private Linux workflow explicitly executes/admit handles only and names its archive distinctly.
 No row is discharged unless the entire selected Rust execution and all observed pairs pass.
 It does not reconstruct source-dependent layout/ABI digests. Hostile reader controls are synthetic
 and never constitute target execution. Hosted execution is Linux-only; Windows native is unsupported.
@@ -55,4 +66,8 @@ provider selection remain unchanged. Node is pinned for the existing private/boo
 this is not installed no-Node/no-Cargo acceptance. OwnedVec admission credits only its one probe;
 eleven probes lie outside that selected group. Cumulative coverage may combine the prior
 owned-shared and String rows only with their separately verified sealed b6 and cd5 checkpoints,
-leaving eight probes open after exact successor qualification.
+leaving eight probes open at the OwnedVec checkpoint. A separately sealed Vec successor brings
+cumulative qualification to seven of twelve, leaving the five handles probes. Local or hosted
+admission alone does not assign that cumulative credit. A separately qualified and sealed handles
+successor can discharge those five; allocator counts and independent installed no-Node/no-Cargo
+acceptance remain separate and unclaimed.

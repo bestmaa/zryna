@@ -104,26 +104,26 @@
     {
       "name": "Verify independent physical allocation controls",
       "if": "matrix.os == 'ubuntu-latest'",
-      "run": "python -B tests/native-provider-qualification/physical/vec_verify_test.py"
+      "run": "python -B tests/native-provider-qualification/physical/handles_verify_test.py"
     },
     {
-      "name": "Run Vec real physical allocation group",
+      "name": "Run handles real physical allocation group",
       "if": "matrix.os == 'ubuntu-latest'",
       "shell": "pwsh",
-      "run": "$cargo = rustup which cargo\nif ($LASTEXITCODE -ne 0) { throw 'Cargo resolution failed' }\n$rustc = rustup which rustc\nif ($LASTEXITCODE -ne 0) { throw 'Rustc resolution failed' }\n$node = (Get-Command node).Source\npython -B tests/native-provider-qualification/physical/run.py --group vec --root \"$env:GITHUB_WORKSPACE\" --head \"$env:CLI_SOURCE_SHA\" --target \"$env:RUNNER_TEMP/private-cli-target\" --output \"$env:RUNNER_TEMP/private-physical-proof\" --cargo \"$cargo\" --rustc \"$rustc\" --node \"$node\"\nif ($LASTEXITCODE -ne 0) { throw 'Real physical allocation corpus failed' }\n"
+      "run": "$cargo = rustup which cargo\nif ($LASTEXITCODE -ne 0) { throw 'Cargo resolution failed' }\n$rustc = rustup which rustc\nif ($LASTEXITCODE -ne 0) { throw 'Rustc resolution failed' }\n$node = (Get-Command node).Source\npython -B tests/native-provider-qualification/physical/run.py --group handles --root \"$env:GITHUB_WORKSPACE\" --head \"$env:CLI_SOURCE_SHA\" --target \"$env:RUNNER_TEMP/private-cli-target\" --output \"$env:RUNNER_TEMP/private-physical-proof\" --cargo \"$cargo\" --rustc \"$rustc\" --node \"$node\"\nif ($LASTEXITCODE -ne 0) { throw 'Real physical allocation corpus failed' }\n"
     },
     {
       "name": "Require independent real physical allocation observations",
       "if": "matrix.os == 'ubuntu-latest'",
       "shell": "pwsh",
-      "run": "python -B tests/native-provider-qualification/physical/verify.py --group vec --root \"$env:GITHUB_WORKSPACE\" --head \"$env:CLI_SOURCE_SHA\" --platform linux --output \"$env:RUNNER_TEMP/private-physical-proof\"\nif ($LASTEXITCODE -ne 0) { throw 'Real physical allocation admission failed' }\n"
+      "run": "python -B tests/native-provider-qualification/physical/verify.py --group handles --root \"$env:GITHUB_WORKSPACE\" --head \"$env:CLI_SOURCE_SHA\" --platform linux --output \"$env:RUNNER_TEMP/private-physical-proof\"\nif ($LASTEXITCODE -ne 0) { throw 'Real physical allocation admission failed' }\n"
     },
     {
       "name": "Preserve exact real physical allocation proof",
       "if": "always() && matrix.os == 'ubuntu-latest'",
       "uses": "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
       "with": {
-        "name": "private-native-physical-vec-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}",
+        "name": "private-native-physical-handles-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}",
         "path": "${{ runner.temp }}/private-physical-proof",
         "if-no-files-found": "error",
         "retention-days": 7
