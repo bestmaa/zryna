@@ -14,6 +14,10 @@ use std::{
 };
 use zryna_native_c_ir::VerifiedNativeCProgram;
 
+pub(super) fn boolean_import_fixture() -> VerifiedNativeCProgram {
+    capture::boolean_import()
+}
+
 static NEXT: AtomicUsize = AtomicUsize::new(0);
 struct Fixture(PathBuf);
 impl Fixture {
