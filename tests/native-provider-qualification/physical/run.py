@@ -1,4 +1,4 @@
-"""Execute the owned-shared physical allocation probe at one clean exact source head."""
+"""Execute one explicit frozen physical allocation group at one clean exact source head."""
 import argparse
 import hashlib
 import json
@@ -10,6 +10,8 @@ import subprocess
 import sys
 
 TEST = 'ownership_commands::conformance::native_provider_faults::physical::owned_shared_physical_group_executes_through_retained_source'
+TESTS = {'owned-shared':TEST,
+         'string':'ownership_commands::conformance::native_provider_faults::physical::string_physical_group_executes_through_retained_source'}
 
 
 def digest(path):
@@ -32,6 +34,7 @@ def main():
     for name in ('root','target','output','cargo','rustc','node'):
         p.add_argument('--'+name,type=Path,required=True)
     p.add_argument('--head',required=True)
+    p.add_argument('--group',choices=TESTS,default='owned-shared')
     a=p.parse_args();root=a.root.resolve(strict=True)
     assert sys.platform == 'linux' and platform.machine() == 'x86_64' and git(root,'rev-parse','HEAD')==a.head
     assert not git(root,'status','--porcelain','--untracked-files=all')
@@ -50,7 +53,7 @@ def main():
              CARGO=tools['cargo']['path'],RUSTC=tools['rustc']['path'],CARGO_BUILD_JOBS='2',
              CARGO_PROFILE_TEST_DEBUG='0',ZRYNA_TEST_NODE=tools['node']['path'],
              ZRYNA_M3_NATIVE_PHYSICAL_EVIDENCE=str(out/'observations'))
-    receipt={'format':'zryna.retained-physical-corpus.v1','head':a.head,
+    receipt={'format':'zryna.retained-physical-corpus.v2','group':a.group,'head':a.head,
              'tree':git(root,'rev-parse','HEAD^{tree}'),'platform':sys.platform,'root':str(root),
              'target':str(target),'inputs':before,'tools':tools,'commands':[],
              'run_id':os.getenv('GITHUB_RUN_ID'),'run_attempt':os.getenv('GITHUB_RUN_ATTEMPT'),
@@ -69,7 +72,7 @@ def main():
                  and row.get('executable') and row['target']['name']=='zryna_driver' and row['profile']['test']]
         assert len(matches)==1
         binary=Path(matches[0]);receipt['test_binary']={'path':str(binary),'sha256':digest(binary)}
-        result=run('physical-corpus',[str(binary),TEST,'--exact','--nocapture','--test-threads=1'],2400)
+        result=run('physical-corpus',[str(binary),TESTS[a.group],'--exact','--nocapture','--test-threads=1'],2400)
         assert inputs(root)==before and not git(root,'status','--porcelain','--untracked-files=all')
         assert digest(binary)==receipt['test_binary']['sha256']
         assert all(digest(Path(row['path']))==row['sha256'] for row in tools.values())

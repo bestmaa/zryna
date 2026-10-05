@@ -3,8 +3,6 @@
 use super::*;
 
 const ENV: &str = "ZRYNA_M3_NATIVE_PHYSICAL_EVIDENCE";
-const CASE: &str = "owned-shared-physical-4";
-const ORACLE: &str = "owned-shared-fault-2-2";
 
 fn retain(
     case: &str,
@@ -33,50 +31,54 @@ fn retain(
     .expect("actual physical observation");
 }
 
-fn pair(registry: &Value, injected: bool) {
+fn pair(registry: &Value, fixture: &str, physical: Option<(&str, u32)>) {
+    let injected = physical.is_some();
     let workspace = fixture_workspace();
-    install(workspace.root(), registry, "owned-shared");
+    install(workspace.root(), registry, fixture);
     assert!(!workspace.root().join(".zryna").exists(), "native first cold capture");
+    let fixtures = registry["fixtures"].as_array().expect("frozen fixture inventory");
+    let entry = fixtures.iter().find(|row| row["id"] == fixture).expect("frozen entrypoint");
+    let dependency = entry["dependency"].as_str().expect("frozen imported dependency");
     let source = ["main.zry", "math.zry"]
         .map(|name| {
-            let fixture = if name == "main.zry" { "owned-shared" } else { "owned-shared-body" };
-            let authority = registry["fixtures"]
-                .as_array()
-                .expect("frozen fixture inventory")
-                .iter()
-                .find(|row| row["id"] == fixture)
-                .expect("frozen source authority");
+            let id = if name == "main.zry" { fixture } else { dependency };
+            let authority =
+                fixtures.iter().find(|row| row["id"] == id).expect("frozen source authority");
             let bytes = fs::read(workspace.root().join(name)).expect("actual frozen source bytes");
             assert_eq!(format!("{:x}", Sha256::digest(&bytes)), authority["sha256"]);
             (name.to_owned(), bytes)
         })
         .into_iter()
         .collect::<BTreeMap<_, _>>();
-    let oracle = registry["faults"]
+    let oracle_id = physical.map_or(fixture, |(id, _)| id);
+    let oracle = registry[if injected { "faults" } else { "valid" }]
         .as_array()
-        .expect("frozen faults")
+        .expect("frozen observation authorities")
         .iter()
-        .find(|row| row["id"] == ORACLE)
-        .expect("frozen cleanup oracle");
-    assert_eq!(oracle["fixture"], "owned-shared");
+        .find(|row| row["id"] == oracle_id)
+        .expect("frozen result and cleanup oracle");
+    assert_eq!(oracle["fixture"], fixture);
     let expected = if injected {
         oracle["expected"].clone()
     } else {
-        serde_json::json!({"kind":"returned","value":{"type":"i32","value":43}})
+        serde_json::json!({"kind":"returned","value":{"type":"i32","value":oracle["expected"]}})
     };
     let trace: Vec<crate::OwnershipTraceEvent> = if injected {
         serde_json::from_value(oracle["trace"].clone()).expect("entire frozen cleanup trace")
     } else {
         vec![]
     };
-    let case = if injected { CASE } else { "positive-owned-shared" };
+    let case = physical.map_or_else(
+        || format!("positive-{fixture}"),
+        |(_, ordinal)| format!("{fixture}-physical-{ordinal}"),
+    );
     let request = request(workspace.root(), TargetSelection::Native);
     let mut baseline = None;
     for provider in ["native-retained", "bootstrap"] {
         let checkpoints = Checkpoints::default();
         // Mode 6 selects the actual allocate_bytes hook before malloc. This is not code-2
         // logical injection, even though the source cleanup oracle is a logical fault row.
-        let fault = injected.then(|| Fault::physical_allocation(4));
+        let fault = physical.map(|(_, ordinal)| Fault::physical_allocation(ordinal));
         let bundle = if provider == "native-retained" {
             native_run(&request, fault, None, &checkpoints)
         } else {
@@ -113,16 +115,16 @@ fn pair(registry: &Value, injected: bool) {
                 *bytes
             );
         }
-        let value = serde_json::json!({"case":case,"fixture":"owned-shared","injected":injected,
+        let value = serde_json::json!({"case":case,"fixture":fixture,"injected":injected,
             "provider":provider,"target":"native","platform":"linux","registry_sha256":REGISTRY_SHA,
-            "fault":if injected {serde_json::json!({"mode":"physical-allocation","code":6,"ordinal":4,"command":0x2600_0004_u32})} else {Value::Null},
-            "trace_oracle":if injected {Value::String(ORACLE.to_owned())} else {Value::Null},
+            "fault":physical.map(|(_, ordinal)| serde_json::json!({"mode":"physical-allocation","code":6,"ordinal":ordinal,"command":0x2600_0000_u32 | ordinal})),
+            "trace_oracle":physical.map(|(id, _)| id),
             "results":result,"sources":source.iter().map(|(n,b)|(n.clone(),format!("{:x}",Sha256::digest(b)))).collect::<BTreeMap<_,_>>(),
             "native_first":true,"execution_checkpoints":checkpoints.execution.get(),
             "publication_checkpoints":*checkpoints.publication.borrow(),"cleanup_entries":0,
             "zero_live_finalization":true,"physical_allocation_release_counts":Value::Null,
             "public_activation":false,"installed_no_cargo_acceptance":false});
-        retain(case, provider, &source, &bundle, &value);
+        retain(&case, provider, &source, &bundle, &value);
         // The canonical executable emitted its frame only after finish_invocation drained
         // scratch records and rejected live owned/control allocations. No count telemetry exists.
         fs::remove_dir_all(bundle.path()).expect("remove test-owned complete bundle");
@@ -136,9 +138,22 @@ fn owned_shared_physical_group_executes_through_retained_source() {
     let _guard = route_guard();
     assert_eq!(format!("{:x}", Sha256::digest(REGISTRY)), REGISTRY_SHA);
     let registry = registry();
-    pair(&registry, false);
-    pair(&registry, true);
+    pair(&registry, "owned-shared", None);
+    pair(&registry, "owned-shared", Some(("owned-shared-fault-2-2", 4)));
     println!(
         "physical corpus: 2 complete provider pairs; 1 physical probe + 1 positive calibration"
+    );
+}
+
+#[test]
+fn string_physical_group_executes_through_retained_source() {
+    let _guard = route_guard();
+    assert_eq!(format!("{:x}", Sha256::digest(REGISTRY)), REGISTRY_SHA);
+    let registry = registry();
+    pair(&registry, "string", None);
+    pair(&registry, "string", Some(("string-fault-2-1", 2)));
+    pair(&registry, "string", Some(("string-fault-2-2", 4)));
+    println!(
+        "physical corpus: 3 complete provider pairs; 2 physical probes + 1 positive calibration"
     );
 }

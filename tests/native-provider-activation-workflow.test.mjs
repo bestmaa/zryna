@@ -307,7 +307,7 @@ test('current CLI proof binds both hosts and exact source separately from immuta
       assert(step.with.name.includes(expression('github.run_id')));
       assert(step.with.name.includes(expression('github.run_attempt')));
       assert.equal(step.with['if-no-files-found'], 'error');
-    } else assert.equal(step.if, ['Verify independent physical allocation controls', 'Run owned-shared real physical allocation group', 'Require independent real physical allocation observations'].includes(step.name) ? "matrix.os == 'ubuntu-latest'" : undefined);
+    } else assert.equal(step.if, ['Verify independent physical allocation controls', 'Run String real physical allocation group', 'Require independent real physical allocation observations'].includes(step.name) ? "matrix.os == 'ubuntu-latest'" : undefined);
   }
   rejectMutations([
     ['current proof uses historical source', (w) => { w.jobs['private-cli'].env.CLI_SOURCE_SHA = PIN; }],
