@@ -153,6 +153,16 @@ signature, source binding, resource kind, status, output initialization, cleanup
 role or stale digest must fail without constructing a sealed value. MIR cannot
 erase an IR release obligation or introduce a new external symbol.
 
+The separate [#361 D2 package alignment](../package/RESOLVED_BUILD_PLAN_V0.md#proposed-d2-native-c-v0-alignment)
+is a prospective schema/checker candidate, not appendix acceptance recorded by this #364 review.
+PR #393 accepted the source-only contract with a draft native appendix. The proposed
+`specified-native-c-interop-v0` decision therefore requires independent review naming the exact
+candidate revision, fixed tuple/wire types, source/cache compatibility, and separation of runtime
+contract inputs from authenticated artifact bytes. Its wire tag remains explicitly
+`proposed-specified-native-c-interop-v0`, with native admission denied; the unprefixed tag rejects.
+This paragraph records no reviewer decision, retroactive approval, runtime digest or executed
+conformance. D2's appendix-acceptance prerequisite remains open until that separate acceptance.
+
 Scalar imports/exports use signed 32-bit lanes; Boolean entry/result validation
 uses low 32 bits and accepts only 0/1. Narrow excess register bits are unspecified.
 Pointer/count lanes are 64-bit INTEGER; out records are caller storage, never a
