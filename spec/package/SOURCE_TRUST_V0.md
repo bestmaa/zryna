@@ -34,6 +34,16 @@ ABI, calling-convention, carrier, ownership and runtime decisions plus this poli
 before native acquisition/execution, not completion of all M7 work. M6 playground consumers refer
 to this policy without moving playground implementation into M5.
 
+The subsequently specified #364 tuple does not retroactively accept #361's native appendix.
+The [proposed D2 mapping](RESOLVED_BUILD_PLAN_V0.md#proposed-d2-native-c-v0-alignment) keeps
+`proposed-specified-native-c-interop-v0` explicitly proposed and returns `denied-proposed` admission.
+Independent exact-revision review is still required for `specified-native-c-interop-v0`; that
+unprefixed status currently rejects. Neither status text, matching runtime tuple nor the synthetic
+fixture's runtime digest authenticates artifact bytes or grants execution/cache reuse. Runtime
+contract compatibility and retained artifact bytes require separate authentic evidence; exact
+operator approval, #417 conformance, isolation and #168 evidence remain additional requirements.
+Default recipe execution stays denied. Source-only identity and cache behavior are unchanged.
+
 ### Identity mapping
 
 The following semantic mapping consumes #360 and the accepted #168 records without defining
