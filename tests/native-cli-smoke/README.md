@@ -75,6 +75,30 @@ failures from the earlier baseline are retained in historical evidence and cover
 M2 diagnostic selection and three added CLI entrypoints. Fault-injection, ordinary installed
 no-Node proof and public-activation gaps remain open. There is no acceptance waiver or new skip.
 
+The separate `m2_semantic_oracle.py` reconstructs all thirteen ordered fields and canonical
+wire bytes for one retained M2 successful all-target build. Its artifact lengths and hashes
+come from the independently frozen M2 conformance registry, not candidate files or provider
+agreement. It rehashes the two original source files, recomputes the graph, separately checks
+the resolved edge target, and admits both complete provider bundles and success responses
+against the sealed `3f23fb7` local/Linux/Windows proof. The new oracle revision is separate
+from that old producer revision; this executes no compiler and does not re-label receipts.
+Synthetic hostile controls demonstrate rejection of jointly rehashed provider payloads that
+the earlier bounded header/inventory reader accepts. The existing hostile suite runs these
+controls with its normal command on both hosted CLI platforms.
+
+```sh
+python3 -B tests/native-cli-smoke/m2_semantic_oracle.py \
+  --source-repo /absolute/clean/3f23fb7-source-recovery \
+  --checkpoint /absolute/sealed/3f23fb7-evidence \
+  --output /absolute/new-one-m2-semantic-admission.json
+```
+
+M2 manifest v2 has no layout or runtime-ABI fields; those belong to M3 v3. Native object bytes
+here target Linux x86-64 on both host platforms. This adds no Windows-native execution
+requirement. One successful build content case does not close exhaustive production-manifest
+parity, run-result fields, publication/fault history, verified-IR reconstruction, M3 identities,
+the thirty corpus blockers, or ordinary installed no-Node/no-pnpm/no-Cargo acceptance.
+
 New private unsupported component selection uses `ZRYNA-C1013` (request rejection, status 2).
 Existing codes, serializers, default Node issuers, process/grant boundaries and release materials
 are unchanged. Pinned base: merged #413/#414 preparation at

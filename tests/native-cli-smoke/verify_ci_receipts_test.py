@@ -12,6 +12,9 @@ import unittest
 spec = importlib.util.spec_from_file_location('private_cli_receipts',Path(__file__).with_name('verify_ci_receipts.py'))
 oracle = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(oracle)
+semantic_spec = importlib.util.spec_from_file_location('m2_semantic_oracle',Path(__file__).with_name('m2_semantic_oracle.py'))
+semantic = importlib.util.module_from_spec(semantic_spec)
+semantic_spec.loader.exec_module(semantic)
 
 
 class ReceiptTests(unittest.TestCase):
@@ -239,6 +242,111 @@ class ReceiptTests(unittest.TestCase):
     def test_duplicate_and_nonfinite_json_reject(self):
         for raw in ('{"head":1,"head":2}','{"value":NaN}','{"value":Infinity}','{"value":1e999}'):
             with self.subTest(raw=raw),self.assertRaises((AssertionError,ValueError)):oracle.strict(raw)
+
+
+class M2SemanticTests(unittest.TestCase):
+    """Synthetic reject controls; actual positive qualification consumes sealed production bytes."""
+    def setUp(self):
+        self.repo = Path(__file__).resolve().parents[2]
+        self.expected = semantic.expected_manifest(self.repo)
+
+    def test_independent_canonical_reconstruction(self):
+        raw = semantic.canonical(self.expected)
+        # Corroborating sealed output identity, not an input to expectation derivation.
+        self.assertEqual(len(raw),1669)
+        self.assertEqual(oracle.hashlib.sha256(raw).hexdigest(),
+            '23aa01a3d8405aa2554c9b28ff0d9b65ef2f6743ae7078fd6fd7ad221c08ec5a')
+        self.assertEqual(list(self.expected),['version','profile','command','entrypoint','graph_sha256',
+            'sources','edges','stem','targets','artifacts','invocation','results','diagnostics'])
+        self.assertEqual([row['bytes'] for row in self.expected['artifacts']],[12108,1276,3688])
+        self.assertNotIn('layouts',self.expected)
+        self.assertNotIn('runtime_abi',self.expected)
+
+    def test_all_fields_and_canonical_wire_reject(self):
+        mutations = []
+        for key in self.expected:
+            data=copy.deepcopy(self.expected); del data[key]; mutations.append(data)
+        changes=[lambda d:d.update(version=True),lambda d:d.update(profile='i32-v1'),
+            lambda d:d.update(command='run'),lambda d:d.update(entrypoint='other.zry'),
+            lambda d:d.update(graph_sha256='0'*64),lambda d:d['sources'][0].update(id=False),
+            lambda d:d['sources'][0].update(sha256='0'*64),lambda d:d['sources'].reverse(),
+            lambda d:d['edges'][0].update(target=self.expected['entrypoint']),
+            lambda d:d['edges'][0].update(local='renamed'),lambda d:d.update(stem='other'),
+            lambda d:d['targets'].reverse(),lambda d:d['artifacts'].reverse(),
+            lambda d:d['artifacts'][0].update(bytes=True),lambda d:d['artifacts'][0].update(sha256='0'*64),
+            lambda d:d['artifacts'][0].update(path='../escape'),lambda d:d.update(invocation={}),
+            lambda d:d.update(results=[{}]),lambda d:d.update(diagnostics=[{}]),
+            lambda d:d.update(layouts={}),lambda d:d.update(runtime_abi={})]
+        for change in changes:
+            data=copy.deepcopy(self.expected);change(data);mutations.append(data)
+        for data in mutations:
+            with self.subTest(data=data),self.assertRaises(ValueError):
+                semantic.verify_manifest(self.repo,semantic.canonical(data))
+        raw=semantic.canonical(self.expected)
+        wires=[raw.rstrip(),json.dumps(self.expected).encode(),b'\xef\xbb\xbf'+raw,
+            raw.replace(b'"version": 2',b'"version": 2.0'),raw.replace(b'"version": 2',b'"version": NaN'),
+            raw.replace(b'"version": 2',b'"version": 2, "version": 2'),
+            semantic.canonical(dict(reversed(list(self.expected.items()))))]
+        for wire in wires:
+            with self.subTest(wire=wire[:80]),self.assertRaises(ValueError):
+                semantic.verify_manifest(self.repo,wire)
+
+    def test_jointly_rehashed_provider_payloads_reject(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            for provider in ('bootstrap','native'):
+                bundle=Path(temporary)/provider;bundle.mkdir()
+                candidate=copy.deepcopy(self.expected)
+                for row in candidate['artifacts']:
+                    path=bundle/row['path'];path.parent.mkdir()
+                    payload=b'export const forged = 1;\n' if row['target']=='javascript' else b'\0asm\x01\0\0\0'
+                    if row['target']=='native':
+                        elf=bytearray(64);elf[:7]=b'\x7fELF\x02\x01\x01'
+                        elf[16:18]=(1).to_bytes(2,'little');elf[18:20]=(62).to_bytes(2,'little')
+                        elf[20:24]=(1).to_bytes(4,'little');elf[52:54]=(64).to_bytes(2,'little');payload=bytes(elf)
+                    path.write_bytes(payload.ljust(row['bytes'],b'\0'))
+                    row['sha256']=oracle.digest(path)
+                (bundle/'zryna-manifest-v2.json').write_bytes(semantic.canonical(candidate))
+                files={str(p.relative_to(bundle)).replace('\\','/'):{'bytes':p.stat().st_size,'sha256':oracle.digest(p)}
+                       for p in bundle.rglob('*') if p.is_file()}
+                contract={'source':self.expected['entrypoint'],'profile':'control-flow-v1','version':2,
+                          'sources':self.expected['sources'],'edges':self.expected['edges']}
+                success={'version':1,'command':'build','diagnostics':[],'results':[],'ok':True,
+                         'manifest':'.zryna/out/private-smoke-m2.build/zryna-manifest-v2.json'}
+                # Existing bounded inventory/header admission accepts this coherent forgery.
+                oracle.verify_bundle(bundle,'m2',contract,files,success)
+                with self.subTest(provider=provider),self.assertRaisesRegex(ValueError,'independently frozen'):
+                    semantic.verify_bundle(self.repo,bundle)
+
+    def test_frozen_authority_tampering_reject(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            for name in (*semantic.PINS,*semantic.SOURCE_NAMES):
+                p=root/name;p.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(self.repo/name,p)
+            changes=[('tests/m2-conformance-v1.json',lambda b:b.replace(b'12108',b'12109')),
+                ('docs/M2_MANIFEST_V2.md',lambda b:b+b'Changed contract\n'),
+                (semantic.SOURCE_NAMES[0],lambda b:b.replace(b'return left + right;',b'return left - right;')),
+                (semantic.SOURCE_NAMES[1],lambda b:b.replace(b'return left + right;',b'return left - right;'))]
+            for name,change in changes:
+                p=root/name;before=p.read_bytes();p.write_bytes(change(before))
+                with self.subTest(name=name),self.assertRaises(ValueError):semantic.expected_manifest(root)
+                p.write_bytes(before)
+
+    def test_oracle_revision_rejects_dirty_and_hidden_module_changes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);module=root/'reader.py';module.write_bytes(b'authentic reader\n')
+            def git(*arguments):
+                return subprocess.check_output(['git','-C',str(root),*arguments])
+            git('init','-q');git('add','reader.py')
+            git('-c','user.name=Oracle Test','-c','user.email=oracle@example.invalid','commit','-qm','reader')
+            result=semantic.oracle_revision(root,'reader.py')
+            self.assertEqual(result['head'],git('rev-parse','HEAD').decode().strip())
+            module.write_bytes(b'changed reader\n')
+            with self.assertRaisesRegex(ValueError,'checkout dirty'):semantic.oracle_revision(root,'reader.py')
+            module.write_bytes(b'authentic reader\n');extra=root/'untracked';extra.write_text('new')
+            with self.assertRaisesRegex(ValueError,'checkout dirty'):semantic.oracle_revision(root,'reader.py')
+            extra.unlink();git('update-index','--assume-unchanged','reader.py');module.write_bytes(b'hidden change\n')
+            self.assertEqual(git('status','--porcelain=v1').strip(),b'')
+            with self.assertRaisesRegex(ValueError,'committed source'):semantic.oracle_revision(root,'reader.py')
 
 
 if __name__=='__main__':
