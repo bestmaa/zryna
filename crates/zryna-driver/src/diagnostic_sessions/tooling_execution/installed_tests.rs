@@ -4,7 +4,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use super::capture::CapturedToolingClosure;
+use super::{capture::CapturedToolingClosure, stage::ToolingStage};
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
@@ -47,7 +47,13 @@ fn installed_closure_rejects_missing_changed_worker_and_dependency_bytes() {
         fs::create_dir_all(destination.parent().expect("parent")).expect("directories");
         fs::copy(source.join(from), destination).expect("pinned source");
     }
-    CapturedToolingClosure::capture_installed(&root).expect("complete installed closure");
+    let captured =
+        CapturedToolingClosure::capture_installed(&root).expect("complete installed closure");
+    let stage = ToolingStage::create(&captured).expect("authenticated nine-file stage");
+    let stage_path = stage.physical_path().to_path_buf();
+    stage.revalidate().expect("authenticated stage inventory and identity");
+    stage.abort().expect("explicit authenticated stage cleanup");
+    assert!(!stage_path.exists(), "successful abort removes only the owned stage");
     for (from, to) in mappings {
         let destination = bootstrap.join(to);
         fs::write(&destination, b"untrusted substitute").expect("replace fixture");

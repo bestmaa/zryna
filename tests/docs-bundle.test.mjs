@@ -7,6 +7,8 @@ import './code-navigation-cases.mjs';
 import './cross-target-profile-contract.test.mjs';
 import './minimal-library-contract.test.mjs';
 import './js-wasm-adapter-contract.test.mjs';
+import './docs-playground.test.mjs';
+import './docs-playground-output.test.mjs';
 import './native-c-review-contract.test.mjs';
 import './beta-documentation-contract.test.mjs';
 
@@ -275,6 +277,8 @@ test('registry exports the exact implemented and planned publication inventory',
       { id: 'reference/m3-public-profile', source: 'docs/M3_PUBLIC_PROFILE.md', path: 'documents/reference/m3-public-profile.md', title: 'Public DataOwnershipV1 profile' },
       { id: 'reference/m3-shared-weak-authority', source: 'docs/M3_SHARED_WEAK_AUTHORITY.md', path: 'documents/reference/m3-shared-weak-authority.md', title: 'M3 Shared and Weak authority contract' },
       { id: 'reference/m3-shared-weak-evidence', source: 'docs/M3_SHARED_WEAK_EVIDENCE.md', path: 'documents/reference/m3-shared-weak-evidence.md', title: 'M3 Shared and Weak evidence matrix' },
+      { id: 'reference/m6-conformance', source: 'spec/tooling/M6_CONFORMANCE_V1.md', path: 'documents/reference/m6-conformance.md', title: 'M6 tooling conformance v1' },
+      { id: 'reference/m6-tooling', source: 'docs/M6_TOOLING.md', path: 'documents/reference/m6-tooling.md', title: 'M6 tooling support and evidence' },
       { id: 'reference/memory-model', source: 'spec/memory-model/OVERVIEW.md', path: 'documents/reference/memory-model.md', title: 'Memory model direction' },
       { id: 'reference/ownership-runtime-v1', source: 'spec/abi/OWNERSHIP_RUNTIME_V1.md', path: 'documents/reference/ownership-runtime-v1.md', title: 'Ownership runtime ABI v1' },
       { id: 'reference/scalar-abi-v1', source: 'spec/abi/SCALAR_V1.md', path: 'documents/reference/scalar-abi-v1.md', title: 'Scalar ABI v1' },

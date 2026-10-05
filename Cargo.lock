@@ -2007,6 +2007,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "zryna-playground-compiler"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "zryna-driver",
+]
+
+[[package]]
 name = "zryna-process"
 version = "0.2.3"
 

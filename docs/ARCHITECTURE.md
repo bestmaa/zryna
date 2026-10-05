@@ -86,6 +86,13 @@ semantic lowering never depends on a replaceable provider.
 14. The repository-owned documentation producer exports an explicit whitelist of reviewed
     Markdown with exact compiler provenance. The website validates and presents that bundle but
     never becomes a language, ABI, diagnostic, or support-status authority.
+15. The restricted source playground facade retains the existing captured scalar compiler and
+    verifier/audited component path in memory. Its registered stdio application depends only on
+    the driver; it cannot select a filename, package, target, publication or user command. Its
+    host owns independent executable/material authentication, Linux isolation and complete
+    process-tree limits. Source diagnostics remain compiler-owned schema 1; malformed transport
+    and host-policy errors remain separate. The current implementation is under verification;
+    public executable-toolkit and M6 evidence acceptance remain separate required boundaries.
 
 ## Dependency direction
 

@@ -14,6 +14,9 @@ use crate::ownership_closure::discover_ownership_module_closure_with_overlays_bo
 use crate::runtime::{NodeRuntimeCapability, node_compatible_path};
 use crate::{WorkspaceSourceRoot, discover_ownership_module_closure_with_overlays};
 
+mod browser;
+mod installed;
+
 /// Pinned protocol-v2 and protocol-v3 compiler frontends retained by a tooling transport.
 #[derive(Debug)]
 pub struct ToolingCompiler {
@@ -80,109 +83,94 @@ impl ToolingCompiler {
     /// # Errors
     /// Rejects unsafe paths or any worker, dependency or runtime bytes differing from the pins.
     pub fn discover_installed(root: &Path) -> Result<Self, ToolingCompilerError> {
-        let execution = ToolingExecutionClosure::capture_installed(root)
-            .map_err(ToolingCompilerError::Configuration)?;
-        let (path, size, digest) = if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
-            (
-                "runtime/node/node.exe",
-                87_059_456,
-                "923a41f268ab49ede2e3363fbdd9e790609e385c6f3ca880b4ee9a56a8133e5a",
-            )
-        } else if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
-            (
-                "runtime/node/bin/node",
-                124_674_920,
-                "243fd8938011479f41b3de101842150fa990f33fbbb3f7aabd330857f2d79e1d",
-            )
-        } else {
-            return Err(configuration_error(
-                "unsupported installed tooling host",
-                "use a verified Windows or Linux x86-64 setup",
-            ));
-        };
-        let node = NodeRuntimeCapability::discover_authenticated(
-            &root.join(path),
-            root,
-            crate::runtime::ExpectedRuntime { size, sha256: digest.to_owned() },
-        )
-        .map_err(ToolingCompilerError::Configuration)?;
-        Self::from_execution(execution, node)
+        Self::prepare_installed(root)?.finish()
     }
 
     fn from_execution(
         execution: ToolingExecutionClosure,
         node: NodeRuntimeCapability,
     ) -> Result<Self, ToolingCompilerError> {
-        let expected = ProviderExpectation::new(
-            "typescript-6",
-            "6.0.3",
-            syntax_v2::PROTOCOL_VERSION,
-            FrontendCapabilities { module_resolution: false, semantic_diagnostics: false },
-        )
-        .map_err(|_| {
-            configuration_error(
-                "the fixed tooling frontend expectation is invalid",
-                "restore the registered protocol-v2 adapter contract",
+        let configured = (|| {
+            let expected = ProviderExpectation::new(
+                "typescript-6",
+                "6.0.3",
+                syntax_v2::PROTOCOL_VERSION,
+                FrontendCapabilities { module_resolution: false, semantic_diagnostics: false },
             )
-        })?;
-        let spec = WorkerSpec::new(
-            node.executable().map_err(ToolingCompilerError::Configuration)?,
-            vec![OsString::from(node_compatible_path(execution.worker()))],
-            node_compatible_path(execution.working_directory()),
-            expected,
-            WorkerLimits::default(),
-        )
-        .map_err(|_| {
-            configuration_error(
-                "the fixed tooling frontend process could not be configured",
-                "restore the registered adapter and pinned runtime paths",
+            .map_err(|_| {
+                configuration_error(
+                    "the fixed tooling frontend expectation is invalid",
+                    "restore the registered protocol-v2 adapter contract",
+                )
+            })?;
+            let spec = WorkerSpec::new(
+                node.executable().map_err(ToolingCompilerError::Configuration)?,
+                vec![OsString::from(node_compatible_path(execution.worker()))],
+                node_compatible_path(execution.working_directory()),
+                expected,
+                WorkerLimits::default(),
             )
-        })?;
-        let expected_v3 = ProviderExpectationV3::new("typescript-6", "6.0.3").map_err(|_| {
-            configuration_error(
-                "the fixed control-flow tooling frontend expectation is invalid",
-                "restore the registered protocol-v3 adapter contract",
+            .map_err(|_| {
+                configuration_error(
+                    "the fixed tooling frontend process could not be configured",
+                    "restore the registered adapter and pinned runtime paths",
+                )
+            })?;
+            let expected_v3 =
+                ProviderExpectationV3::new("typescript-6", "6.0.3").map_err(|_| {
+                    configuration_error(
+                        "the fixed control-flow tooling frontend expectation is invalid",
+                        "restore the registered protocol-v3 adapter contract",
+                    )
+                })?;
+            let spec_v3 = WorkerSpecV3::new(
+                node.executable().map_err(ToolingCompilerError::Configuration)?,
+                vec![OsString::from(node_compatible_path(&execution.worker_v3()))],
+                node_compatible_path(execution.working_directory()),
+                expected_v3,
+                WorkerLimitsV3::default(),
             )
-        })?;
-        let spec_v3 = WorkerSpecV3::new(
-            node.executable().map_err(ToolingCompilerError::Configuration)?,
-            vec![OsString::from(node_compatible_path(&execution.worker_v3()))],
-            node_compatible_path(execution.working_directory()),
-            expected_v3,
-            WorkerLimitsV3::default(),
-        )
-        .map_err(|_| {
-            configuration_error(
-                "the fixed control-flow tooling frontend process could not be configured",
-                "restore the registered adapter and pinned runtime paths",
+            .map_err(|_| {
+                configuration_error(
+                    "the fixed control-flow tooling frontend process could not be configured",
+                    "restore the registered adapter and pinned runtime paths",
+                )
+            })?;
+            let expected_v4 =
+                ProviderExpectationV4::new("typescript-6", "6.0.3").map_err(|_| {
+                    configuration_error(
+                        "the fixed data-ownership tooling frontend expectation is invalid",
+                        "restore the registered protocol-v4 adapter contract",
+                    )
+                })?;
+            let spec_v4 = WorkerSpecV4::new(
+                node.executable().map_err(ToolingCompilerError::Configuration)?,
+                vec![OsString::from(node_compatible_path(&execution.worker_v4()))],
+                node_compatible_path(execution.working_directory()),
+                expected_v4,
+                WorkerLimitsV4::default(),
             )
-        })?;
-        let expected_v4 = ProviderExpectationV4::new("typescript-6", "6.0.3").map_err(|_| {
-            configuration_error(
-                "the fixed data-ownership tooling frontend expectation is invalid",
-                "restore the registered protocol-v4 adapter contract",
-            )
-        })?;
-        let spec_v4 = WorkerSpecV4::new(
-            node.executable().map_err(ToolingCompilerError::Configuration)?,
-            vec![OsString::from(node_compatible_path(&execution.worker_v4()))],
-            node_compatible_path(execution.working_directory()),
-            expected_v4,
-            WorkerLimitsV4::default(),
-        )
-        .map_err(|_| {
-            configuration_error(
-                "the fixed data-ownership tooling frontend process could not be configured",
-                "restore the registered adapter and pinned runtime paths",
-            )
-        })?;
-        Ok(Self {
-            node,
-            frontend: WorkerFrontend::new(spec),
-            frontend_v3: WorkerFrontendV3::new(spec_v3),
-            frontend_v4: WorkerFrontendV4::new(spec_v4),
-            execution,
-        })
+            .map_err(|_| {
+                configuration_error(
+                    "the fixed data-ownership tooling frontend process could not be configured",
+                    "restore the registered adapter and pinned runtime paths",
+                )
+            })?;
+            Ok((
+                WorkerFrontend::new(spec),
+                WorkerFrontendV3::new(spec_v3),
+                WorkerFrontendV4::new(spec_v4),
+            ))
+        })();
+        match configured {
+            Ok((frontend, frontend_v3, frontend_v4)) => {
+                Ok(Self { node, frontend, frontend_v3, frontend_v4, execution })
+            }
+            Err(primary) => {
+                drop(node);
+                Err(installed::abort_execution(execution, primary))
+            }
+        }
     }
 
     /// Analyzes and admits one exact in-memory source revision.

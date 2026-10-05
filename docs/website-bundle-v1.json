@@ -243,6 +243,18 @@
       "title": "M3 Shared and Weak evidence matrix"
     },
     {
+      "id": "reference/m6-conformance",
+      "source": "spec/tooling/M6_CONFORMANCE_V1.md",
+      "path": "documents/reference/m6-conformance.md",
+      "title": "M6 tooling conformance v1"
+    },
+    {
+      "id": "reference/m6-tooling",
+      "source": "docs/M6_TOOLING.md",
+      "path": "documents/reference/m6-tooling.md",
+      "title": "M6 tooling support and evidence"
+    },
+    {
       "id": "reference/memory-model",
       "source": "spec/memory-model/OVERVIEW.md",
       "path": "documents/reference/memory-model.md",

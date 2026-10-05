@@ -3,8 +3,7 @@
 Reviewed against main `9e31e6249aee44c93579c82c2e87fdafdb4b8b7d`. Paths and commands below are navigation pointers, not a second specification or proof of execution. Start with [CONTRIBUTING](../CONTRIBUTING.md), then the selected component's README and scoped guidance.
 [zryna.workspace.json](../zryna.workspace.json) owns registration/dependencies; [ARCHITECTURE](ARCHITECTURE.md) owns phase boundaries and [STRICT_WORKSPACE](STRICT_WORKSPACE.md) owns enforcement.
 Resolve disagreements there, rather than changing this index into another authority.
-Source-size policy: [reviewed inventory](../scripts/repository-structure-policy.json),
-[read-only checker](../scripts/check-repository-structure.mjs); run `pnpm structure:check` and `node --test tests/repository-structure.test.mjs`.
+Source-size policy: [reviewed inventory](../scripts/repository-structure-policy.json), [read-only checker](../scripts/check-repository-structure.mjs); run `pnpm structure:check` and `node --test tests/repository-structure.test.mjs`.
 
 Public execution is default M1 `I32V1`, explicit M2 `--profile control-flow-v1`, or explicit M3 `--profile data-ownership-v1`.
 M3 uses audited target/runtime and atomic manifest-v3 bundles, not a general-purpose allocator or public aggregate ABI.
@@ -62,10 +61,11 @@ Use [GETTING_STARTED](GETTING_STARTED.md) for M1/M2, [M3_GETTING_STARTED](M3_GET
 
 ## 6. JavaScript, core WebAssembly, or scalar component output
 
-- Start: [JavaScript README](../crates/zryna-backend-javascript/README.md) or [WebAssembly README](../crates/zryna-backend-webassembly/README.md).
+- Start: [JavaScript README](../crates/zryna-backend-javascript/README.md), [WebAssembly README](../crates/zryna-backend-webassembly/README.md), or [restricted source playground](../examples/playground/restricted/README.md) for the driver facade, thin transport and host verification status; `pnpm playground:contract` does not replace real compiler/browser or M6 acceptance.
 - Entries: each backend's `src/lib.rs::{emit,emit_control_flow,emit_data_ownership}` consumes the corresponding sealed IR, never source syntax. M3 code is isolated under `src/data_ownership_v1/`.
 - Scalar core sealing: `crates/zryna-backend-webassembly/src/scalar_audit.rs` owns the unchanged WASM1/I32V1 validation and instruction audit.
 - Scalar component: `crates/zryna-backend-webassembly/src/scalar_component/` owns deterministic wrapping plus the independent final-byte topology/import/type/export audit; `src/wit_world_audit/browser.rs` authenticates the exact empty browser capability world and `src/wit_world_audit/pins.rs` owns its compile-time source closure. Driver selection and publication live in `crates/zryna-driver/src/{pipeline.rs,pipeline/preparation.rs}`.
+- Dedicated compiler lifecycle: [installed preparation](../crates/zryna-driver/src/diagnostic_sessions/tooling_compiler/installed.rs) separates authentic provider staging from the first Node probe; [stage creation](../crates/zryna-driver/src/diagnostic_sessions/tooling_execution/stage/creation.rs) retains pending creation handles and owns fallible cleanup. [Executable lifecycle tests](../apps/zryna-playground-compiler/tests/lifecycle.rs) include a separately required authentic-provider resource regression; source checks and default tests do not establish its execution or parent launch envelope.
 - Focus: `cargo test --locked -p zryna-backend-javascript` or `cargo test --locked -p zryna-backend-webassembly`; use [the M3 target contract](M3_TARGET_BACKENDS.md) for the new focused execution and audit cases.
 - Publication and runtime invocation belong to the driver. The scalar component is build-only, default-M1-only, deliberately absent from `all`, and outside the advertised [v0.1.0 preview support matrix](DEVELOPER_PREVIEW.md); it does not activate a host. Preserve byte/capability audits, scalar carriers, and deterministic output; finish with full gates.
 

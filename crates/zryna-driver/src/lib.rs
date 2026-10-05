@@ -47,6 +47,7 @@ mod pipeline_runtime;
 mod process_spawn;
 mod profile_composition;
 mod project;
+mod restricted_browser;
 mod runtime;
 mod scalar_adapter_interface;
 mod source_api;
@@ -105,6 +106,10 @@ pub use pipeline::{
     run_control_flow_workspace, run_workspace,
 };
 pub use project::{ProjectBuildRequest, ProjectRunRequest, build_project, run_project};
+pub use restricted_browser::{
+    BROWSER_SOURCE_PATH, BrowserCompilation, MAX_BROWSER_SOURCE_BYTES, RestrictedBrowserCompiler,
+    RestrictedBrowserError, restrict_browser_runtime,
+};
 pub use source_api::{DualTargetArtifacts, SourceToIrError, SourceToIrSuccess};
 pub use webassembly::{
     MAX_WEBASSEMBLY_ARTIFACT_STEM_BYTES, PublishedWebAssemblyArtifact,

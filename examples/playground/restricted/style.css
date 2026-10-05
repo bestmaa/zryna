@@ -1,0 +1,23 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+body { margin: 0; background: #111827; color: #f9fafb; }
+main { max-width: 58rem; margin: auto; padding: 1.5rem; }
+p { line-height: 1.6; overflow-wrap: anywhere; }
+label { display: block; margin: 1rem 0 .4rem; font-weight: 650; }
+textarea, select, input, button { font: inherit; }
+textarea, select, input { box-sizing: border-box; padding: .7rem; background: #1f2937;
+  color: #f9fafb; border: 1px solid #9ca3af; border-radius: .3rem; }
+textarea { width: 100%; resize: vertical; font-family: ui-monospace, monospace; tab-size: 2; }
+select { max-width: 100%; }
+input { width: 13rem; max-width: 100%; }
+button { margin: .5rem .5rem .5rem 0; padding: .7rem 1rem; border: 2px solid #93c5fd;
+  border-radius: .3rem; background: #1e40af; color: #fff; cursor: pointer; }
+button:disabled { background: #374151; color: #d1d5db; border-color: #6b7280; cursor: default; }
+:focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }
+section { margin-top: 1.5rem; border-top: 1px solid #6b7280; }
+li { margin: .75rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+#status { min-height: 1.6rem; }
+#identity { font-family: ui-monospace, monospace; font-size: .85rem; }
+.input-error { color: #fca5a5; }
+[aria-invalid="true"] { border: 2px solid #fca5a5; }
+#diagnostics button { background: #1f2937; text-align: left; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }

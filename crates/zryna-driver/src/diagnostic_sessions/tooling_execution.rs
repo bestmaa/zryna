@@ -54,6 +54,11 @@ impl ToolingExecutionClosure {
     pub(super) fn revalidate(&self) -> Result<(), Diagnostic> {
         self.stage.revalidate()
     }
+
+    /// Explicitly disposes the owned stage; Drop alone is not cleanup evidence.
+    pub(super) fn abort(self) -> Result<(), Diagnostic> {
+        self.stage.abort()
+    }
 }
 
 pub(super) fn execution_error(message: impl Into<String>) -> Diagnostic {

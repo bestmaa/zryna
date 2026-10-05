@@ -22,6 +22,7 @@
     "distribution:check": "node --test --test-concurrency=1 tests/distribution-archive.test.mjs tests/distribution-inventory.test.mjs tests/distribution-source-receipt.test.mjs tests/distribution-receipt-compatibility.test.mjs tests/distribution-schema.test.mjs tests/distribution-payload.test.mjs tests/distribution-npm-materials.test.mjs tests/distribution-runtime-materials.test.mjs",
     "build-plan:contract": "node scripts/build-plan/validate.mjs && node --test tests/resolved-build-plan-v0.test.mjs",
     "docs:export": "node scripts/docs/export.mjs",
+    "docs:export-playground": "node scripts/docs/export-playground.mjs",
     "m2:contract": "node scripts/check-m2-contract.mjs",
     "m3:contract": "node scripts/check-m3-contract.mjs",
     "m3:data:quick": "cargo test --locked -p zryna-semantics data_ownership_v1 -- --skip authenticated_v4_derived_value_budget_is_exact_and_plus_one_fails_m3201",
@@ -41,7 +42,9 @@
     "m3:public": "cargo test --locked -p zryna --test m3_public",
     "editor:check": "pnpm --filter zryna check && pnpm --filter zryna test",
     "editor:host-acceptance": "node scripts/run-editor-host-acceptance.mjs",
-    "editor:package": "pnpm --filter zryna package"
+    "editor:package": "pnpm --filter zryna package",
+    "playground:contract": "node --test tests/playground.test.mjs tests/playground-protocol.test.mjs tests/playground-controller.test.mjs tests/playground-executable.test.mjs tests/playground-presentation.test.mjs tests/playground-ui-state.test.mjs tests/playground-service.test.mjs tests/playground-client.test.mjs tests/playground-toolkit-schema.test.mjs tests/playground-signature.test.mjs tests/playground-watchdog.test.mjs tests/playground-browser-archive.test.mjs tests/playground-publication.test.mjs tests/playground-wit-closure.test.mjs",
+    "m6:contract": "node --test tests/m6-evidence.test.mjs tests/m6-receipts.test.mjs tests/m6-closure.test.mjs"
   },
   "devDependencies": {
     "@vscode/test-electron": "3.1.0",
