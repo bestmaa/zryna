@@ -14,6 +14,9 @@ pub mod resource_identity;
 /// Retained foreign ELF inputs and source-bound audit receipts; no host execution authority.
 pub mod foreign_library;
 
+#[allow(dead_code, reason = "private native-C source selection precedes public activation")]
+mod source_selection;
+
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 use {
     std::{fmt::Write as _, sync::Arc},
