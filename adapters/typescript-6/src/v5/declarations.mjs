@@ -171,7 +171,8 @@ function normalizeDataDeclaration(node, sourceFile, file, collector, budgets, ty
     }
     seen.add(memberName.text);
     const colon = requiredToken(member, ts.SyntaxKind.ColonToken, sourceFile, 'a data member colon');
-    const semicolon = requiredToken(member, ts.SyntaxKind.SemicolonToken, sourceFile, 'a data member semicolon');
+    const semicolon = findToken(member, ts.SyntaxKind.SemicolonToken, sourceFile);
+    if (!semicolon) collector.unsupported(member, sourceFile, file, 'data member without a semicolon');
     const base = {
       span: nodeSpan(member, sourceFile, file), name: memberName,
       colon_span: nodeSpan(colon, sourceFile, file), semicolon_span: nodeSpan(semicolon, sourceFile, file),

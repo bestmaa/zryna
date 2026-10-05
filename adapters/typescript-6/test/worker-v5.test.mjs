@@ -123,6 +123,22 @@ test('wire rejects duplicates, wrong protocol, unknown fields, invalid UTF-8, an
   }
 });
 
+test('parser-valid nominal members without semicolons reject as unsupported source and recover', () => {
+  for (const text of [
+    'interface Box<T extends ZrynaValue> extends ZrynaStruct { value: T }',
+    'interface Choice<T extends ZrynaValue> extends ZrynaEnum { value: T }',
+    'interface Box<T extends ZrynaValue> extends ZrynaStruct { value: T /* ; */ }',
+  ]) {
+    const valid = text.replace('value: T', 'value: T;');
+    const responses = exchange([analyze(single(text)), analyze(single(valid), 3), handshake]).responses;
+    assert.equal(responses[0].error?.code, 'ZRYNA-F2002', text);
+    assert.equal(responses[0].result, undefined, 'never return a reduced source inventory');
+    assert.equal(responses[1].error, undefined, JSON.stringify(responses[1].error));
+    assert.equal(validate(responses[1].result), true, JSON.stringify(validate.errors));
+    assert.equal(responses[2].result.protocol_version, 5);
+  }
+});
+
 test('lowered byte/file/nesting/type budgets fail at first extra and preserve handshake recovery', () => {
   const source = 'function p(): i32 { return 7; }';
   const cases = [

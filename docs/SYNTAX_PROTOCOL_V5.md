@@ -189,6 +189,8 @@ Unsupported source and parser recovery reject the complete analysis request thro
 remain source syntax for the Zryna-owned declaration/semantic phases. The complete diagnostic-only
 source context needed to assign excluded-form M7001/M7004/M7006 remains unimplemented; provider
 rejection text is not a canonical compiler diagnostic or a replacement for that future transport.
+Parser-valid nominal members missing a required semicolon follow this same unsupported-source
+route. Such excluded input is not a TypeScript invariant failure; successful member DTOs are unchanged.
 
 The independently authored [two-module wire reference](../tests/m7-syntax-fixtures/reference.json)
 and its [source](../tests/m7-syntax-fixtures/main.zry) preserve imported templates, one/two
