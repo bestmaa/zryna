@@ -78,6 +78,23 @@ fn production() -> WorkerFrontendV5 {
         WorkerLimitsV5::default(),
     )
 }
+fn launch_diagnostic() -> String {
+    if !cfg!(windows) {
+        return "Windows launch probe not applicable".into();
+    }
+    let output = Command::new(node())
+        .args(["-e", include_str!("fixtures/worker-v5-launch-diagnostic.cjs")])
+        .arg(root())
+        .arg(root().join("adapters/typescript-6/src/worker-v5.mjs"))
+        .output()
+        .expect("failure-only launch probe");
+    format!(
+        "status={:?}; stdout={}; stderr={}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    )
+}
 fn hostile(mode: &str, limits: WorkerLimitsV5, seen: Option<&PathBuf>) -> WorkerFrontendV5 {
     let mut args = vec![
         root().join("crates/zryna-frontend/tests/fixtures/worker-v5-hostile.mjs").into(),
@@ -107,7 +124,9 @@ fn pinned_worker_seals_all_independent_fixtures_without_changing_their_bytes() {
         "m7-generic-owned-cfg-cross",
     ] {
         let (sources, raw) = fixture(name);
-        let first = production().analyze_verified_v5(&sources).expect(name);
+        let first = production().analyze_verified_v5(&sources).unwrap_or_else(|error| {
+            panic!("{name}: {error:?}; Node launch probe: {}", launch_diagnostic())
+        });
         let second = production().analyze_verified_v5(&sources).expect("fresh process");
         assert!(first.is_bound_to(&sources));
         assert!(!first.is_bound_to(&fixture(name).0));
