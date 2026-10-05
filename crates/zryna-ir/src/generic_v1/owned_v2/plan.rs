@@ -3,6 +3,7 @@ use super::{Failure, graph, raw};
 use crate::generic_v1::{body, budget, cfg, reject, reserve};
 use zryna_layout::generic_v1::VerifiedLayouts;
 mod state;
+mod topology;
 use state::State;
 /// Complete owner state copies and cleanup action credits per invocation of this checker.
 pub const MAX_OWNER_UNITS: usize = 1_048_576;
@@ -61,13 +62,9 @@ pub(super) fn derive(
                 b.parameters.iter().map(|p| p.ty).chain(b.instructions.iter().map(|i| i.result.ty))
             })
             .collect::<Vec<_>>();
-        let mut degree = vec![0usize; f.blocks.len()];
-        for b in &f.blocks {
-            for e in cfg::edges(&b.terminator) {
-                degree[e.target as usize] += 1;
-            }
-        }
+        let mut topology = topology::build(f, &mut used)?;
         let mut states = vec![None; f.blocks.len()];
+        let mut headers = vec![None; f.blocks.len()];
         let mut entry = State::default();
         for p in &f.blocks[0].parameters {
             entry.add(p.id, owned(p.ty, &ownership));
@@ -84,6 +81,10 @@ pub(super) fn derive(
             next += 1;
             let b = &f.blocks[bi];
             let mut state = states[bi].take().ok_or(Failure::InternalFailure)?;
+            if topology.headers[bi] {
+                charge(&mut used, state.owners.len() + state.loans.len() + state.order.len() + 1)?;
+                headers[bi] = Some(state.clone());
+            }
             for (pi, i) in b.instructions.iter().enumerate() {
                 let ty = |id: u32| {
                     types.get(id as usize).copied().ok_or_else(|| reject("unknown owner operand"))
@@ -202,6 +203,15 @@ pub(super) fn derive(
                     incoming.add(param.id, owned(param.ty, &ownership));
                 }
                 let ti = edge.target as usize;
+                if topology.backedge(bi, ti) {
+                    let prior = headers[ti].as_ref().ok_or_else(|| {
+                        reject("owned backedge lacks its independently replayed header")
+                    })?;
+                    if prior != &incoming {
+                        return Err(reject("owner/loan state differs at loop backedge"));
+                    }
+                    continue;
+                }
                 if let Some(prior) = &states[ti] {
                     if prior != &incoming {
                         return Err(reject("owner/loan state differs at CFG merge"));
@@ -209,20 +219,23 @@ pub(super) fn derive(
                 } else {
                     states[ti] = Some(incoming);
                 }
-                degree[ti] -= 1;
-                if degree[ti] == 0 {
+                topology.degree[ti] -= 1;
+                if topology.degree[ti] == 0 {
                     ready.push(ti);
                 }
             }
         }
         if next != f.blocks.len() {
-            return Err(reject("owned graph contains cycle or unavailable state"));
+            return Err(reject("owned graph is irreducible or has unavailable forward state"));
         }
         plan.steps.sort_by_key(|s| (s.block, s.position, s.failure));
         plans.push(plan);
     }
     Ok(plans)
 }
+#[cfg(test)]
+#[path = "plan/loops.rs"]
+mod loop_tests;
 #[cfg(test)]
 #[path = "plan/tests.rs"]
 mod tests;

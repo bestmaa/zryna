@@ -62,6 +62,14 @@ and complete availability/loan states must agree without implicit repair. Both r
 return directly, with no join parameter or unreachable join. Branch-dependent replacements,
 loops and loan-carrying edge arguments remain outside this source slice.
 
+The independent internal plan replay supports reducible natural-loop topology as a prerequisite.
+Only a target that independently dominates its predecessor is treated as a backedge. The
+forward schedule must remain complete after removing those edges; its original header snapshot
+is retained and every backedge must restore exact owners, loans and cleanup order. No fixed-point
+repair or repeated replay is used. Ordinary loan-carrying edges remain rejected. This planner
+capability alone cannot issue an owned seal: complete source replay still rejects all loops.
+Typed CFG dominance, edge arity and inherited nesting limits remain separate mandatory checks.
+
 Steps occur before a fallible instruction or at successful return. `position` equals the
 instruction index, or the instruction count for return. A failure step ends current loans and
 drops live owners in reverse creation/transfer order. Call arguments transfer to the callee

@@ -3,7 +3,7 @@ use super::*;
 use zryna_layout::{StorageTarget, generic_v1 as layout};
 use zryna_source::{SourceFileInput, SourceMap, UntrustedSpan};
 
-fn fixture() -> (graph::Program, Vec<Vec<raw::Extension>>, VerifiedLayouts) {
+pub(super) fn fixture() -> (graph::Program, Vec<Vec<raw::Extension>>, VerifiedLayouts) {
     let sources =
         SourceMap::build(vec![SourceFileInput { path: "main.zry".into(), text: "x".into() }])
             .expect("source");

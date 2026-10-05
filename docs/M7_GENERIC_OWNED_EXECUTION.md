@@ -61,6 +61,24 @@ rejects even when both replacements have the same type. No implicit drop or owne
 inserted to reconcile unequal incoming states. A returning path does not constrain the state
 of the remaining continuing path.
 
+## Loop-plan prerequisite
+
+The private independent owned planner now replays reducible natural-loop graphs once. It
+computes complete dominators independently, removes only dominating backedges from forward
+scheduling, and retains each loop-header owner, loan and reverse-cleanup-order snapshot. Every
+backedge must restore that exact state after its edge transfers; it receives no implicit drop,
+clone or merge repair. Body-local owners and loans must finish before returning to the header.
+Forward joins still require exact state agreement, and unreachable, irreducible, foreign-entry
+and unknown-target graphs reject. Header retention and topology inventories contribute to the
+existing aggregate owner-plan credit before allocation; inherited typed CFG and loop-nesting
+checks remain mandatory.
+
+This is an internal verifier prerequisite, not source loop admission or executed loop evidence.
+The source checker still rejects every `while`, including unused originals. A following source
+slice must independently replay condition evaluation, lexical cleanup, early returns and exact
+loop-carried binding identities, including header parameters for mutable Copy values. Existing
+wire, layout, runtime, backend and public-profile contracts are unchanged.
+
 ## Target execution
 
 JavaScript keeps private typed enum values and opaque runtime handles. Its private binding is
