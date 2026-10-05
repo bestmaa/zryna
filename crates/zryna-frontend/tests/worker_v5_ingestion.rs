@@ -7,7 +7,13 @@ use zryna_frontend::{
 use zryna_source::{SourceFileInput, SourceMap};
 
 fn root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..").canonicalize().expect("root")
+    // Cargo supplies an absolute path; canonicalization adds a Windows verbatim prefix that
+    // pinned Node rejects before its entrypoint can emit the authenticated handshake.
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(std::path::Path::parent)
+        .expect("repository root")
+        .to_path_buf()
 }
 fn node() -> PathBuf {
     let output = Command::new("node")
