@@ -15,7 +15,7 @@ pub struct Program {
 pub struct Extension {
     /// Exact result ID of the replaced Unit placeholder.
     pub result: u32,
-    /// Separate v2 opcode.
+    /// Separate owned opcode; selected shared String clone requires private v3 transport.
     pub operation: Operation,
 }
 /// Separate owned operation vocabulary.
@@ -38,6 +38,9 @@ pub enum Operation {
     Drop(u32),
     /// Explicit String clone, retaining its source on failure.
     CloneString(u32),
+    /// Compiler-generated selected payload clone through a live shared String loan.
+    /// Encoded only in the distinct private v3 domain.
+    CloneBorrowedString(u32),
 }
 /// Complete instruction and terminator cleanup records.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]

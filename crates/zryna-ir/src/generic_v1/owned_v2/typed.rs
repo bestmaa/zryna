@@ -73,11 +73,9 @@ pub(super) fn check(
                             }
                             graph::Type::Unit
                         }
-                        raw::Operation::CloneString(id) => {
-                            if operand(*id)? != graph::Type::Stored(2) {
-                                return Err(reject("clone requires exact String"));
-                            }
-                            graph::Type::Stored(2)
+                        raw::Operation::CloneString(id) => string_clone(operand(*id)?, false)?,
+                        raw::Operation::CloneBorrowedString(id) => {
+                            string_clone(operand(*id)?, true)?
                         }
                     }
                 } else {
@@ -107,4 +105,19 @@ pub(super) fn check(
         }
     }
     crate::generic_v1::calls::check(claim.graph.declarations.len(), &calls)
+}
+
+fn string_clone(operand: graph::Type, borrowed: bool) -> Result<graph::Type, Failure> {
+    let (expected, message) = if borrowed {
+        (
+            graph::Type::Borrow { referent: 2, exclusive: false },
+            "selected clone requires exact shared String loan",
+        )
+    } else {
+        (graph::Type::Stored(2), "clone requires exact String")
+    };
+    if operand != expected {
+        return Err(reject(message));
+    }
+    Ok(graph::Type::Stored(2))
 }

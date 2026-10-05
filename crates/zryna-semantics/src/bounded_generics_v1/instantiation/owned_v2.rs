@@ -3,6 +3,10 @@ use super::{BodyTypeContext, InstanceContext};
 #[cfg(test)]
 mod branches;
 #[cfg(test)]
+mod clone_attacks;
+#[cfg(test)]
+mod clones;
+#[cfg(test)]
 mod loops;
 #[cfg(test)]
 mod mutable;
@@ -55,7 +59,7 @@ pub fn discover<'b, 'c, 's>(
         }
     })
 }
-/// Produces untrusted source-owned claims; separate v2 decoding and IR sealing remain mandatory.
+/// Produces untrusted source-owned claims; separate owned decoding and IR sealing remain mandatory.
 /// # Errors
 /// Rejects source ownership, unsupported forms, foreign layouts and checked amplification.
 pub fn produce_claim(

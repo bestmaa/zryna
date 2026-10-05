@@ -214,7 +214,9 @@ fn edges<'a>(
                 if let Some(ext) = p.program().extension(index, i.result.id) {
                     match ext {
                         Operation::StringLiteral(_) => add(plan.symbol(), imports[0], 1),
-                        Operation::CloneString(_) => add(plan.symbol(), imports[1], 1),
+                        Operation::CloneString(_) | Operation::CloneBorrowedString(_) => {
+                            add(plan.symbol(), imports[1], 1);
+                        }
                         Operation::Drop(id) => {
                             add(plan.symbol(), imports[2], release_calls(p, value_type(f, *id)?)?);
                         }

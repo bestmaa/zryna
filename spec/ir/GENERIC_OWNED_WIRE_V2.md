@@ -35,6 +35,10 @@ complete source replay. The embedded message alone grants no owned execution aut
 | 5 Drop | owner value ID |
 | 6 CloneString | exact String owner ID |
 
+Opcode 7 rejects in both this encoder and decoder. The finite compiler-generated shared String
+payload clone uses only the distinct [private v3 domain](GENERIC_OWNED_WIRE_V3.md). Existing v2
+messages and opcode 6 semantics are unchanged.
+
 Unknown domains, versions, opcodes, noncanonical booleans, invalid UTF-8, truncation and trailing
 bytes reject the complete message. Encoding checks its result with the independent decoder.
 `DecodedProgram` exposes only immutable untrusted claims; only independent verification can

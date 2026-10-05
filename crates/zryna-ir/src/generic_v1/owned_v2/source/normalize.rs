@@ -71,7 +71,11 @@ pub(super) fn run(blocks: &mut [raw::Block], extensions: &mut [Extension]) -> Re
     for e in extensions.iter_mut() {
         map(&mut e.result)?;
         match &mut e.operation {
-            Owned::Move(id) | Owned::EndLoan(id) | Owned::Drop(id) | Owned::CloneString(id) => {
+            Owned::Move(id)
+            | Owned::EndLoan(id)
+            | Owned::Drop(id)
+            | Owned::CloneString(id)
+            | Owned::CloneBorrowedString(id) => {
                 map(id)?;
             }
             Owned::Borrow { value, .. } => map(value)?,

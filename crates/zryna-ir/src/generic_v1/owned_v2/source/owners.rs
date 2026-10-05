@@ -180,6 +180,14 @@ impl Builder<'_, '_> {
                 }
             }
             Owned::StringLiteral(_) => {}
+            Owned::CloneBorrowedString(id) => {
+                if !self.alive[*id as usize]
+                    || !matches!(self.loans.get(id), Some((_, false)))
+                    || !matches!(ty, Closed::Stored(ref key) if key.as_slice() == [2])
+                {
+                    return Err(ownership("selected String clone requires a live shared loan"));
+                }
+            }
         }
         let value = self.emit(ty, span, raw::Operation::Unit)?;
         if let Owned::Borrow { value: root, exclusive } = op {

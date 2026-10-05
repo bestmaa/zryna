@@ -60,6 +60,9 @@ impl Builder<'_, '_> {
             }
             Expr::Clone { value, .. } => {
                 let value = self.reference_operand(*value)?;
+                if super::clones::admitted(&value.ty) {
+                    return self.clone_enum(value, source.span);
+                }
                 if value.ty != Closed::Stored(vec![2]) {
                     return Err(reject(
                         "this owned opcode requires exact String; opaque T cannot acquire Clone",

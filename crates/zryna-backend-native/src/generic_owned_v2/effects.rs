@@ -37,7 +37,9 @@ pub(super) fn operation(
             drop_value(context, b, get(values, *id)?, value_type(f, *id)?)?;
             Vec::new()
         }
-        Operation::StringLiteral(_) | Operation::CloneString(_) => {
+        Operation::StringLiteral(_)
+        | Operation::CloneString(_)
+        | Operation::CloneBorrowedString(_) => {
             let out = b.ins().stack_addr(types::I64, record, 0);
             let call = match op {
                 Operation::StringLiteral(bytes) => {
@@ -60,7 +62,7 @@ pub(super) fn operation(
                         b.ins().iconst(types::I64, i64::try_from(bytes.len()).map_err(codegen)?);
                     b.ins().call(runtime[0], &[pointer, length, out])
                 }
-                Operation::CloneString(id) => {
+                Operation::CloneString(id) | Operation::CloneBorrowedString(id) => {
                     let pointer = b.ins().stack_addr(types::I64, record, 24);
                     store(b, pointer, get(values, *id)?)?;
                     b.ins().call(runtime[1], &[pointer, out])

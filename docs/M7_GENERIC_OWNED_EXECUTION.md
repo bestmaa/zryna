@@ -33,6 +33,21 @@ complete instance graph, original opaque affinity and owner/loan/drop plan. Only
 `VerifiedOwnedProgram` enters the three emitters. See the exact
 [wire and cleanup contract](../spec/ir/GENERIC_OWNED_WIRE_V2.md).
 
+The finite structural-clone continuation admits `clone(namedOwner)` only for stored
+`Option<String>` and `Result<String,String>`, alongside the existing stored String clone.
+It retains the original owner and any surrounding shared loans. A temporary outer shared loan
+selects the active variant; only its String payload is cloned into a fresh owner and rebuilt
+with the same tag. None performs no runtime allocation. Child loans end before the join and
+outer loan. Repeated clones have distinct allocation identities and leave the source reusable.
+Nested structural clone, other payload types, opaque `T` without Clone capability, and source
+`clone(Borrow<String>)` remain excluded. Moved or exclusively borrowed owners reject.
+
+The compiler-generated payload leaf uses opcode 7 in the distinct private
+[owned wire v3](../spec/ir/GENERIC_OWNED_WIRE_V3.md). Both v2 encoding and decoding reject it;
+v2's existing opcode 6 still requires a stored String. V3 yields the same untrusted decoded
+carrier and enters the existing mandatory source/IR verifier and native MIR seal. It creates
+no new execution authority, runtime symbol, layout, scalar ABI or public entrypoint.
+
 The current source lane admits immutable and mutable whole stored locals, scalar literals/addition, explicit calls,
 String literals/clones, whole-value moves, Option/Result construction and exhaustive match,
 shared/exclusive complete-place loans, borrowed payload matches, nested lexical blocks and nested
@@ -194,6 +209,23 @@ qualification, provider parity, and supported-platform execution. This revision'
 validation occurs separately; older hosted Windows receipts do not qualify it. Driver/profile
 activation remains a distinct future decision. Keep historical plain-cloud N4009 cleanup
 failures separate from scoped init-style gates and record each exact tested revision.
+
+The structural-clone runner is
+`python3 tests/m7-generic-owned-clone/run.py <evidence-directory>`.
+Independent frozen DTOs and allocation/release oracles cover all four variants, Unicode and
+empty payloads, repeated clones, source retention, surrounding shared loans, every reachable
+allocation failure, reverse cleanup and pristine retry. In each single/imported module form,
+JavaScript and Wasm check 56 observations; native checks 32 successes and 24 cleanup-before-SIGILL
+failures. None allocates nothing and inactive payloads are never cloned. This is private Linux
+execution evidence; Windows generic execution remains a separate unrun requirement.
+
+Structural selection precharges full snapshots before copying lexical bindings, complete type
+key bytes, availability, loans and loan parents. Values, blocks, arm and edge inventories retain
+their existing credits. With 400 scalar locals, genuine Option source permits 140 repeated clones
+(1,044,960 state units) and rejects 141 (1,054,962); Result permits 129 (1,044,900) and rejects 130
+(1,056,120), then both recover. The existing aggregate state ceiling remains 1,048,576 per original
+and across closed production. Independent typed and owner-plan attacks supplement source-bound
+wire mutations. Unsupported-source diagnostic context remains an existing acceptance gap.
 
 The original ownership boundary rejects unsupported container signatures, including unused
 functions and nested Option/Result containers, before closed discovery or layout. Independent

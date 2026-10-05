@@ -25,7 +25,9 @@ pub(super) fn operation(function: &raw::Function, op: &Operation) -> Result<Stri
         }
         Operation::Move(id) | Operation::Borrow { value: id, .. } => format!("$v{id}"),
         Operation::EndLoan(_) => "undefined".into(),
-        Operation::CloneString(id) => format!("$handle($clone($v{id}))"),
+        Operation::CloneString(id) | Operation::CloneBorrowedString(id) => {
+            format!("$handle($clone($v{id}))")
+        }
         Operation::Drop(id) => {
             let ty = super::cleanup::value_type(function, *id)?;
             let raw::Type::Stored(index) = ty else {

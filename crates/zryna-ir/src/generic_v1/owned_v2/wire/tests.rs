@@ -80,3 +80,68 @@ fn complete_child_credit_ceiling_is_checked_before_reservation() {
         matches!(reader.vector(1,4,Reader::u32),Err(Failure::Diagnostics(v)) if v[0].code=="ZRYNA-I3201")
     );
 }
+
+#[test]
+fn borrowed_string_clone_requires_distinct_v3_on_both_encoding_and_decoding() {
+    let mut c = claim();
+    c.extensions[0][0].operation = raw::Operation::CloneString(0);
+    let old = encode(&c).expect("stored String remains v2");
+    let opcode = core_end(&old) + 12;
+    assert_eq!(old[opcode], 6);
+    let stored_v3 = v3::encode(&c).expect("stored String keeps its opcode in v3");
+    assert_eq!(&old[HEADER.len() + 4..], &stored_v3[v3::HEADER.len() + 4..]);
+    let mut forged = old.clone();
+    forged[opcode] = 7;
+    assert!(decode(&forged).is_err());
+    c.extensions[0][0].operation = raw::Operation::CloneBorrowedString(0);
+    assert!(encode(&c).is_err());
+    let bytes = v3::encode(&c).expect("untrusted v3");
+    assert_eq!(v3::decode(&bytes).expect("v3 raw").claims(), &c);
+    assert!(decode(&bytes).is_err());
+    assert!(v3::decode(&old).is_err());
+    for end in 0..bytes.len() {
+        assert!(v3::decode(&bytes[..end]).is_err());
+    }
+    for (at, value) in [(0, b'X'), (v3::HEADER.len(), 2), (opcode, 8)] {
+        let mut attack = bytes.clone();
+        attack[at] = value;
+        assert!(v3::decode(&attack).is_err());
+    }
+    let mut trailing = bytes.clone();
+    trailing.push(0);
+    assert!(v3::decode(&trailing).is_err());
+    assert_eq!(v3::decode(&bytes).expect("pristine retry").claims(), &c);
+}
+
+#[test]
+fn v3_preserves_exact_literal_children_and_transport_credit_limits() {
+    let mut c = claim();
+    c.extensions[0][0].operation = raw::Operation::StringLiteral(vec![b'x'; 65_536]);
+    let bytes = v3::encode(&c).expect("v3 exact literal ceiling");
+    assert_eq!(v3::decode(&bytes).expect("v3 exact literal").claims(), &c);
+    let ext = core_end(&bytes);
+    for offset in [ext, ext + 4, ext + 13] {
+        let mut hostile = bytes.clone();
+        hostile[offset..offset + 4].copy_from_slice(&u32::MAX.to_le_bytes());
+        assert!(v3::decode(&hostile).is_err());
+        v3::decode(&bytes).expect("pristine retry");
+    }
+    c.extensions[0][0].operation = raw::Operation::StringLiteral(vec![b'x'; 65_537]);
+    assert!(matches!(v3::encode(&c),Err(Failure::Diagnostics(v)) if v[0].code=="ZRYNA-I3201"));
+    assert!(
+        matches!(v3::decode(&vec![0;MAX_BYTES+1]),Err(Failure::Diagnostics(v)) if v[0].code=="ZRYNA-I3201")
+    );
+    // Both domains share these exact accounting primitives, before allocation.
+    let mut writer = Writer(Vec::new());
+    writer.bytes(&vec![0; MAX_BYTES]).expect("exact transport credit");
+    assert!(matches!(writer.bytes(&[0]),Err(Failure::Diagnostics(v)) if v[0].code=="ZRYNA-I3201"));
+    let data = [1, 0, 0, 0, 0, 0, 0, 0];
+    let mut reader = Reader { bytes: &data, position: 0, children: MAX_CHILDREN - 1 };
+    assert_eq!(reader.vector(1, 4, Reader::u32).expect("exact child credit"), vec![0]);
+    let mut reader = Reader { bytes: &data, position: 0, children: MAX_CHILDREN };
+    assert!(
+        matches!(reader.vector(1,4,Reader::u32),Err(Failure::Diagnostics(v)) if v[0].code=="ZRYNA-I3201")
+    );
+    let mut reader = Reader { bytes: &data, position: usize::MAX, children: 0 };
+    assert!(reader.take(1).is_err());
+}

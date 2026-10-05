@@ -112,6 +112,18 @@ pub(super) fn derive(
                             state.read(*id, ty(*id)?, true)?;
                             step(&mut plan, &state, bi, pi, true, &mut used)?;
                         }
+                        raw::Operation::CloneBorrowedString(id) => {
+                            if ty(*id)? != (graph::Type::Borrow { referent: 2, exclusive: false })
+                                || state.loans.get(id).is_none_or(|loan| loan.exclusive)
+                            {
+                                return Err(reject(
+                                    "selected clone requires a live shared String loan",
+                                ));
+                            }
+                            state.read(*id, ty(*id)?, false)?;
+                            // Capture failure before the fresh result becomes an owner.
+                            step(&mut plan, &state, bi, pi, true, &mut used)?;
+                        }
                     }
                 } else {
                     match &i.operation {
@@ -233,6 +245,9 @@ pub(super) fn derive(
     }
     Ok(plans)
 }
+#[cfg(test)]
+#[path = "plan/clones.rs"]
+mod clone_tests;
 #[cfg(test)]
 #[path = "plan/loops.rs"]
 mod loop_tests;

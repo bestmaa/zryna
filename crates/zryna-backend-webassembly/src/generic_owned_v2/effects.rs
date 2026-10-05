@@ -37,7 +37,9 @@ pub(super) fn operation(
         Operation::Drop(id) => {
             drop_value(body, layout, locals.values[*id as usize], value_type(f, *id)?)?;
         }
-        Operation::StringLiteral(_) | Operation::CloneString(_) => {
+        Operation::StringLiteral(_)
+        | Operation::CloneString(_)
+        | Operation::CloneBorrowedString(_) => {
             match op {
                 Operation::StringLiteral(_) => {
                     let (offset, bytes) =
@@ -49,7 +51,7 @@ pub(super) fn operation(
                     runtime::record(body, locals.frame, 0)?;
                     body.op(&Op::Call(0))?;
                 }
-                Operation::CloneString(id) => {
+                Operation::CloneString(id) | Operation::CloneBorrowedString(id) => {
                     let source = locals.values[*id as usize];
                     for lane in 0..3 {
                         body.op(&Op::LocalGet(source.start + lane))?;

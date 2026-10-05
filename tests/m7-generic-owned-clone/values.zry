@@ -1,0 +1,7 @@
+export function option<T extends ZrynaValue>(value:Option<String>):Option<String> { const view:Borrow<Option<String>> =borrow(value); const first:Option<String> =clone(value); const second:Option<String> =clone(value); return second; }
+export function result<T extends ZrynaValue>(value:Result<String,String>):Result<String,String> { const view:Borrow<Result<String,String>> =borrow(value); const first:Result<String,String> =clone(value); const second:Result<String,String> =clone(value); return second; }
+export function makeOption<T extends ZrynaValue>(flag:bool):Option<String> { if(flag) { return Option.some<String>("入"); } return Option.some<String>(""); }
+export function makeOk<T extends ZrynaValue>(flag:bool):Result<String,String> { if(flag) { return Result.ok<String,String>("成功"); } return Result.ok<String,String>(""); }
+export function makeErr<T extends ZrynaValue>(flag:bool):Result<String,String> { if(flag) { return Result.err<String,String>("失敗"); } return Result.err<String,String>(""); }
+export function discardOption<T extends ZrynaValue>(value:Option<String>):i32 { return match(value, { "Option.none": () => 3, "Option.some": (payload) => 7 }); }
+export function discardResult<T extends ZrynaValue>(value:Result<String,String>):i32 { return match(value, { "Result.ok": (payload) => 11, "Result.err": (payload) => 13 }); }
