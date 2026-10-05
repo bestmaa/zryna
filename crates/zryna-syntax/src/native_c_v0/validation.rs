@@ -69,7 +69,13 @@ fn slots(values: &[u8], maximum: usize, range: u8) -> Result<(), DecodeError> {
     )
 }
 
+#[cfg(test)]
 pub(super) fn check(declarations: &DeclarationSet) -> Result<(), DecodeError> {
+    report(declarations)
+        .map_err(|errors| errors.into_iter().next().expect("nonempty rejection report"))
+}
+
+fn prelude(declarations: &DeclarationSet) -> Result<(), DecodeError> {
     require(
         declarations.format == "zryna.native-c-declarations.v0"
             && declarations.version == 0
@@ -90,20 +96,30 @@ pub(super) fn check(declarations: &DeclarationSet) -> Result<(), DecodeError> {
         "ZRYNA-C4101",
         "empty-set",
     )?;
-    for source in &declarations.sources {
-        path(&source.path)?;
-        digest(&source.sha256)?;
-    }
-    for library in &declarations.libraries {
-        check_library(library)?;
-    }
-    for operation in &declarations.operations {
-        check_operation(operation)?;
-    }
-    for site in &declarations.sites {
-        check_site(site)?;
-    }
     Ok(())
+}
+
+pub(super) fn report(declarations: &DeclarationSet) -> Result<(), Vec<DecodeError>> {
+    prelude(declarations).map_err(|error| vec![error])?;
+    let candidates = declarations
+        .sources
+        .iter()
+        .map(|source| path(&source.path).and_then(|()| digest(&source.sha256)))
+        .chain(declarations.libraries.iter().map(check_library))
+        .chain(declarations.operations.iter().map(check_operation))
+        .chain(declarations.sites.iter().map(check_site));
+    let mut errors = Vec::new();
+    for candidate in candidates {
+        if let Err(failure) = candidate {
+            if errors.len() == super::MAX_DIAGNOSTICS {
+                errors[super::MAX_DIAGNOSTICS - 1] =
+                    super::error("ZRYNA-C4108", "declaration-diagnostics");
+                break;
+            }
+            errors.push(failure);
+        }
+    }
+    if errors.is_empty() { Ok(()) } else { Err(errors) }
 }
 
 fn check_library(library: &super::raw::Library) -> Result<(), DecodeError> {

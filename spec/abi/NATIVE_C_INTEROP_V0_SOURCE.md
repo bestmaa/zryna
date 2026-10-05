@@ -1,10 +1,16 @@
 # Native C v0 sidecar and source forms
 
-State: **specified-only normative future contract**, for #364, effective upon
-normal integration. These spellings and records are fixed future requirements.
-The current parser, compiler, CLI and runtime accept none
-of the FFI forms here. This document selects the sidecar design; it does not
-offer a second source grammar alternative or activate a selector.
+Specification status: **specified-only normative future contract**, for #364,
+effective upon normal integration. This design status is separate from the private
+implementation and conformance stages described below. The closed forms remain fixed.
+Private compiler APIs now authenticate the restricted source fixtures and verify
+declarations, typed bodies, native C IR and MIR; reviewed Linux fixture tests emit,
+link and execute audited objects. The private source-selection checkpoint
+[`09882e4`](https://github.com/zryna/zryna/commit/09882e42e36200d376e1f1d8f79ac8b87d59b349)
+passed [exact-revision CI](https://github.com/zryna/zryna/actions/runs/37267662189).
+The public CLI/provider routes do not admit these forms. Full #417 acceptance
+still requires the native appendix decision, declaration boundary/report proofs,
+the transitive-native review vector and independent review. No selector is activated.
 
 ## Closed sidecar syntax
 
@@ -15,7 +21,8 @@ unknown enum tags and missing fields reject. The complete
 [canonical fixture](../../tests/native-c-abi-v0/declarations.ffi.json) includes
 seven imports, one total scalar C export, exact library/header/policy identities,
 source bindings, every resource policy and every source primitive site.
-It is a design fixture, not a currently accepted compiler input.
+It is accepted by the private declaration/source APIs and exercised by Linux
+fixture tests; it supplies no public compiler input route or execution permission.
 
 One authenticated source set supplies the .zry files and one separately
 authenticated sidecar supplies declarations. Neither is discovered by ambient
@@ -137,7 +144,7 @@ Consumption invalidates every alias; no unchecked branch, exceptional exit or
 loop backedge can skip the complete cleanup plan. These restrictions do not enlarge
 any accepted M3 syntax, layout or verification budget.
 
-The future authority chain is authenticated source bytes plus new foreign syntax
+The private authority chain is authenticated source bytes plus foreign syntax
 authority and sidecar, independently verified foreign declarations/typed IR,
 independently verified native call/entry MIR, then audited object and driver link
 authority. Each stage replays the predecessor identity and resource facts; no
@@ -157,13 +164,14 @@ The complete positive source examples are
 [scalar/reverse export](../../tests/native-c-abi-v0/source-scalar.zry),
 [buffer borrow/copy](../../tests/native-c-abi-v0/source-buffer.zry), and
 [handle acquire/read/release](../../tests/native-c-abi-v0/source-handle.zry).
-They are inert reference-source fixtures, deliberately outside the M3 corpus.
+They remain separate reference-source fixtures outside the M3 corpus.
 All primitive sites in them have exact independently checked bytes/spans in the
-sidecar. They have not been accepted by any current source provider or executed.
+sidecar. The private source authenticator parses them; reviewed Linux tests execute
+selected bodies. Public source providers do not admit this grammar.
 The [concrete negative source records](../../tests/native-c-abi-v0/source-negatives.json)
-fix rejected spellings and token flows with their expected future boundary. Current
-documentation tests verify this review inventory only; they do not parse those
-records or claim that a compiler rejected them.
+fix rejected spellings and token flows. Documentation inventory checks remain
+distinct from the private authenticator's independent malformed-source tests;
+an inventory check alone does not prove compiler rejection.
 
 ## Fixed failure carrier and fixture statuses
 

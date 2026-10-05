@@ -19,14 +19,19 @@ pub(super) fn emit_handle_entry(
 ) -> Result<ValidatedHandleEntries, Vec<Diagnostic>> {
     let syntax = zryna_syntax::native_c_source_v0::authenticate_sources(sources)
         .map_err(|error| rejection(error.code(), error.detail(), None))?;
-    let declarations = zryna_semantics::native_c_v0::verify(
+    let declarations = zryna_semantics::native_c_v0::verify_report(
         declaration_bytes,
         sources,
         &syntax,
         materials,
         selected_target,
     )
-    .map_err(|error| rejection(error.code(), error.detail(), None))?;
+    .map_err(|errors| {
+        errors
+            .into_iter()
+            .flat_map(|error| rejection(error.code(), error.detail(), None))
+            .collect::<Vec<_>>()
+    })?;
     let bodies = verify_bodies(sources, &declarations)
         .map_err(|error| rejection(error.code(), error.detail(), error.span()))?;
     let private = compose_private_boundaries(sources, &bodies).map_err(|error| {

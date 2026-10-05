@@ -14,6 +14,8 @@ const HEADER: &[u8] = include_bytes!("../../../../../../tests/native-c-abi-v0/ca
 const POLICY: &[u8] =
     include_bytes!("../../../../../../tests/native-c-auth-v0/library-policy.json");
 
+mod report;
+
 fn sources() -> SourceMap {
     SourceMap::build(
         [("buffer", BUFFER), ("handle", HANDLE), ("scalar", SCALAR)]

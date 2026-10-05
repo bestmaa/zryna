@@ -282,6 +282,14 @@ Separate C wrappers observe declared private traps, unknown statuses, malformed 
 failure atomicity, alias refusal and failed releases. Unresolved fault cases deliberately retain
 allocations; subsequent oracle disposal is not generated cleanup or leak-free evidence.
 
-These tests remain private reviewed fixture linkage. Arbitrary foreign libraries, actual host
-authorization/containment and the full #417 acceptance matrix remain unfinished. No CLI selector,
+These tests remain private reviewed fixture linkage. The private source-selection entry now
+authenticates original source/declaration/material issuers before semantic, IR, MIR and real
+object emission. At
+[`09882e4`](https://github.com/zryna/zryna/commit/09882e42e36200d376e1f1d8f79ac8b87d59b349),
+[all 33 exact-revision CI jobs passed](https://github.com/zryna/zryna/actions/runs/37267662189).
+Four unsupported single selections reject before the emitter; the native-only Linux fixture
+emits an audited object. Full #417 acceptance remains pending: the #361 native appendix decision,
+declaration string/report boundary proofs, the transitive A→B→C mixed-selection vector and
+independent acceptance still need explicit evidence. Arbitrary foreign libraries and actual host
+authorization/containment retain their separate owning requirements. No CLI selector,
 executable publication or Windows native C target is added.

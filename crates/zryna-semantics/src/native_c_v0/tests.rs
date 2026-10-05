@@ -10,6 +10,8 @@ const DECLARATIONS: &[u8] =
 const HEADER: &[u8] = include_bytes!("../../../../tests/native-c-abi-v0/candidate.h");
 const POLICY: &[u8] = include_bytes!("../../../../tests/native-c-auth-v0/library-policy.json");
 
+mod bounds;
+
 fn source_inputs() -> Vec<SourceFileInput> {
     [
         ("buffer", include_str!("../../../../tests/native-c-abi-v0/source-buffer.zry")),

@@ -4,6 +4,8 @@ use super::{TARGET, decode, raw, validation, wire};
 
 const FIXTURE: &[u8] = include_bytes!("../../../../tests/native-c-abi-v0/declarations.ffi.json");
 
+mod bounds;
+
 fn document() -> Value {
     serde_json::from_slice(FIXTURE).expect("independent committed reference document")
 }

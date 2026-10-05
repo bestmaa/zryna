@@ -20,6 +20,8 @@ pub const MAX_WIRE_BYTES: usize = 1_048_576;
 pub const MAX_WIRE_DEPTH: usize = 16;
 /// Maximum aggregate string-value UTF-8 bytes, counting every occurrence.
 pub const MAX_STRING_BYTES: usize = 65_536;
+/// Maximum declaration report entries, including a terminal truncation entry.
+pub const MAX_DIAGNOSTICS: usize = 256;
 
 /// Stable rejection at the untrusted declaration decoding boundary.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -69,13 +71,31 @@ fn require(condition: bool, code: &'static str, detail: &'static str) -> Result<
 /// Rejects invalid UTF-8/JSON, duplicate keys, noncanonical encoding, closed-shape violations,
 /// exact resource-limit overflow and unsupported target selection. It retains no partial set.
 pub fn decode(bytes: &[u8], selected_target: &str) -> Result<raw::DeclarationSet, DecodeError> {
-    let document = wire::decode(bytes)?;
+    decode_report(bytes, selected_target).map_err(|errors| {
+        errors.into_iter().next().unwrap_or_else(|| error("ZRYNA-C4101", "empty-rejection-report"))
+    })
+}
+
+/// Decodes declarations with an atomic bounded rejection report.
+///
+/// Wire or closed-shape failures terminate decoding. For a shaped document, independently
+/// invalid records are reported in canonical collection order. Exactly 256 candidates are
+/// retained; candidate 257 replaces slot 256 with C4108. No partial declaration set escapes.
+///
+/// # Errors
+/// Returns at most [`MAX_DIAGNOSTICS`] errors, with the same first error as [`decode`].
+pub fn decode_report(
+    bytes: &[u8],
+    selected_target: &str,
+) -> Result<raw::DeclarationSet, Vec<DecodeError>> {
+    let document = wire::decode(bytes).map_err(|error| vec![error])?;
     let string_budget = wire::check_string_budget(&document);
     let declarations =
-        serde_json::from_value(document).map_err(|_| error("ZRYNA-C4101", "closed-shape"))?;
-    validation::check(&declarations)?;
-    string_budget?;
-    require(selected_target == TARGET && declarations.target == TARGET, "ZRYNA-C4103", "target")?;
+        serde_json::from_value(document).map_err(|_| vec![error("ZRYNA-C4101", "closed-shape")])?;
+    validation::report(&declarations)?;
+    string_budget.map_err(|error| vec![error])?;
+    require(selected_target == TARGET && declarations.target == TARGET, "ZRYNA-C4103", "target")
+        .map_err(|error| vec![error])?;
     Ok(declarations)
 }
 

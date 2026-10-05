@@ -180,8 +180,48 @@ pub fn verify(
     materials: &[LibraryMaterial<'_>],
     selected_target: &str,
 ) -> Result<VerifiedDeclarationSet, DeclarationError> {
-    let declarations = native_c_v0::decode(declaration_bytes, selected_target)
-        .map_err(|failure| DeclarationError { code: failure.code(), detail: failure.detail() })?;
+    verify_report(declaration_bytes, sources, syntax, materials, selected_target).map_err(
+        |errors| {
+            errors.into_iter().next().unwrap_or(DeclarationError {
+                code: "ZRYNA-C4101",
+                detail: "empty-rejection-report",
+            })
+        },
+    )
+}
+
+/// Authenticates declarations while retaining the bounded decoder rejection report.
+///
+/// Exactly 256 decoder candidates remain ordinary diagnostics; a 257th replaces slot 256
+/// with C4108. Later identity/policy/source stages fail atomically at their first contradiction.
+/// All returned entries describe sidecar/workspace inputs, not fabricated source spans.
+///
+/// # Errors
+/// Returns a nonempty report with at most 256 entries and no partially verified set.
+pub fn verify_report(
+    declaration_bytes: &[u8],
+    sources: &SourceMap,
+    syntax: &AuthenticatedForeignSources,
+    materials: &[LibraryMaterial<'_>],
+    selected_target: &str,
+) -> Result<VerifiedDeclarationSet, Vec<DeclarationError>> {
+    let declarations =
+        native_c_v0::decode_report(declaration_bytes, selected_target).map_err(|failures| {
+            failures
+                .into_iter()
+                .map(|failure| DeclarationError { code: failure.code(), detail: failure.detail() })
+                .collect::<Vec<_>>()
+        })?;
+    seal(declarations, declaration_bytes, sources, syntax, materials).map_err(|error| vec![error])
+}
+
+fn seal(
+    declarations: raw::DeclarationSet,
+    declaration_bytes: &[u8],
+    sources: &SourceMap,
+    syntax: &AuthenticatedForeignSources,
+    materials: &[LibraryMaterial<'_>],
+) -> Result<VerifiedDeclarationSet, DeclarationError> {
     require(syntax.belongs_to(sources), "ZRYNA-C4106", "source-map-identity")?;
     identity::check(&declarations, materials)?;
     policy::check(&declarations)?;
