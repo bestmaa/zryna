@@ -264,7 +264,12 @@ export function validateBuildPlan(document, packageAuthority) {
   const sourceAuthority = validateSourcePlan(document.sourcePlan, packageAuthority);
   if (document.nativeAppendix) validateNativeAppendix(document.nativeAppendix, sourceAuthority);
   if (document.cacheKey !== deriveCacheKey(document)) fail('P361-CACHE', 'cache key does not bind the canonical plan');
-  return Object.freeze({ cacheKey: document.cacheKey, native: Boolean(document.nativeAppendix) });
+  const receipt = { cacheKey: document.cacheKey, native: Boolean(document.nativeAppendix) };
+  if (document.nativeAppendix?.status === 'proposed-specified-native-c-interop-v0') {
+    // Schema/tuple and claimed runtime equality prove no artifact bytes or execution authority.
+    return Object.freeze({ ...receipt, nativeAdmission: 'denied-proposed' });
+  }
+  return Object.freeze(receipt);
 }
 
 export function validateBuildPlanBytes(input, packageAuthority) {
