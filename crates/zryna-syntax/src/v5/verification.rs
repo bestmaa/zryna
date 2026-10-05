@@ -110,7 +110,7 @@ fn source_facts(sources: &SourceMap, unit: &RawSourceUnit) -> Result<(), Declara
 ///
 /// # Errors
 /// Rejects malformed/foreign/noncanonical source and arena claims project-wide before declaration
-/// shape failures. Syntax budgets terminate without a partial seal. Providers remain unimplemented.
+/// shape failures. Syntax budgets terminate without a partial seal; executable authorities are separate.
 pub fn verify_snapshot(
     raw: RawProjectSyntaxSnapshot,
     sources: &SourceMap,

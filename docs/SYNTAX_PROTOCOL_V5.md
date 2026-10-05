@@ -4,18 +4,18 @@ This internal candidate for [Issue #416](https://github.com/zryna/zryna/issues/4
 contains an untrusted raw grammar, source-backed declaration checks and a separately
 authored complete-source/arena verifier for the
 [accepted bounded generic contract](../spec/language/BOUNDED_GENERICS_OPTION_RESULT_V1.md).
-The success-verifier successor is under source review and has not been compiled or
-exercised in Rust. It has no provider registration,
-semantic admission, public selector, layout, IR, runtime or target capability. The enclosing
-issue remains open.
+The Rust success verifier is exercised by independent source/arena tests. The pinned
+TypeScript bootstrap worker and isolated typed transport now construct only its source-bound
+syntax seal. Driver/provider selection remains unregistered; this ingestion boundary grants
+no semantic, layout, IR, runtime or target capability. The enclosing issue remains open.
 Protocol v2/v3/v4 and their routes remain separate and unchanged.
 
 The independent [JSON schema](../schemas/zryna-syntax-v5.schema.json) closes the complete
 raw DTO grammar. `zryna_syntax::v5::decode_snapshot` returns only raw claims. The new
 declaration check returns `Result<(), DeclarationError>`; no successfully checked
 declaration inventory can be passed to current semantics or interpreted as v4 authority.
-Full body/arena/source verification and two-provider differential conformance remain
-required before a future opaque executable snapshot exists.
+The immutable `VerifiedProjectSyntaxV5` proves complete source/arena correspondence only.
+Native v5 and two-provider differential conformance remain a separately reserved later lane.
 
 ## Wire records
 
@@ -142,6 +142,54 @@ implemented here, and syntax cannot select M7001/M7004/M7006 from a provider for
 
 ## Evidence and remaining work
 
+### Bootstrap ingestion boundary
+
+`adapters/typescript-6/src/worker-v5.mjs` is an explicit isolated entrypoint using the frozen
+TypeScript 6.0.3 implementation. Private `src/v5/` modules own request framing, source helpers,
+types, declarations, statements, expressions and construction syntax. The package's default
+v2 registration and all v2/v3/v4 worker bytes remain unchanged. No worker resolves names,
+modules, types or instantiated functions.
+
+The exact v5 handshake retains `module_resolution: false`, `semantic_diagnostics: false`,
+`control_flow_v1: true` and `data_ownership_syntax_v1: true`, adding only
+`bounded_generics_syntax_v1: true`. Unknown/missing capability fields reject. The distinct
+`WorkerSpecV5`, `ProviderExpectationV5`, `WorkerLimitsV5` and `WorkerFrontendV5` APIs live in
+`crates/zryna-frontend/src/worker/v5/`; they reuse the established process/framing lifecycle
+without changing older transports. `analyze_verified_v5` sends authoritative sources only
+after authentication, checks clean exit/framing/budgets, preserves nullable-field presence and
+duplicate rejection, then decodes and source-verifies before returning a seal bound to that map.
+V5 inherits v4's 64 MiB response and source/declaration/arena caps, and adds fixed one/two-element
+generic lists. Caller limits only tighten the hard process caps.
+
+The [frozen corpus](../tests/provider-conformance-v5/corpus.json) binds original independent
+DTO/source bytes, exact assembly recipes and hashes for six complete syntax/keyword cases and
+six previously qualified Copy/owned/owned-CFG source forms. Expected DTOs are never produced
+by this worker. Fresh-process raw equality, reversed file input order and Rust ingestion/sealing
+are checked by `adapters/typescript-6/test/worker-v5.test.mjs` and
+`crates/zryna-frontend/tests/worker_v5_ingestion.rs`. Independent hostile transport cases check
+authentication before analysis, malformed/duplicate/missing fields, forged/foreign spans,
+strict keyword targets, all four newline boundaries, nested generic punctuation/type ownership,
+byte caps, timeout, extra replies and failing exits. Equality to executable reference DTOs is
+ingestion evidence; target execution retains its separate exact-revision receipts.
+
+`python tests/provider-conformance-v5/run.py <explicit-output-directory>` exercises actual
+production-worker ingestion through original semantic checking, owned instance discovery,
+independently verified layouts/IR and all three target emitters for the two frozen owned-CFG
+source forms. The existing fixed JavaScript/Wasm/native allocation and failure observers are
+reused unchanged; they remain distinct from raw DTO equality and syntax-only cases.
+
+`pnpm adapter:test` includes the v5 bootstrap suite. The complete workspace Rust test gate
+includes the v5 transport suite; focused syntax work can run those two files together with
+`node --test tests/syntax-protocol-v5.test.mjs` and `cargo test --locked -p zryna-syntax v5::`.
+The same corpus is reserved for later independent native v5 comparison. This slice adds no
+native parser implementation and does not alter #414's source discovery/recovery ownership.
+
+Unsupported source and parser recovery reject the complete analysis request through
+`ZRYNA-F2002`, not a reduced success DTO. Unknown identifier bounds and omitted call arguments
+remain source syntax for the Zryna-owned declaration/semantic phases. The complete diagnostic-only
+source context needed to assign excluded-form M7001/M7004/M7006 remains unimplemented; provider
+rejection text is not a canonical compiler diagnostic or a replacement for that future transport.
+
 The independently authored [two-module wire reference](../tests/m7-syntax-fixtures/reference.json)
 and its [source](../tests/m7-syntax-fixtures/main.zry) preserve imported templates, one/two
 parameters, i32/String applications, nominal construction, all four standard constructors,
@@ -169,8 +217,8 @@ occurrence forests, and parses without errors; parser acceptance alone does not 
 its strict identifier role. Source tests cover keyword relabeling, type ownership, hidden
 export prefixes, shorthand aliases, weak/match bindings and strict directive rejection.
 
-Complete successor review, both providers and broader excluded-source conformance remain
-the syntax slice's next steps. Closed semantic discovery is an internal candidate in the
+Independent native v5, two-provider comparison and broader excluded-source diagnostic transport
+remain the syntax slice's next steps. Closed semantic discovery is an internal candidate in the
 [continuation](M7_GENERIC_CONTINUATION.md); complete instantiation conformance, successor sealed layout/IR,
 real owned Option/Result construction/matching/cleanup, hostile authorities, cross-target
 fault/conformance and separately reviewed driver admission remain later #416 work.

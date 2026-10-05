@@ -187,3 +187,20 @@ TypeScript 6 adapter implements the protocol-v2 executable-syntax contract. Prot
 syntax-only worker and source-map-verifying transport, including the exact
 `control_flow_v1: true`, `module_resolution: false`, and `semantic_diagnostics: false`
 capabilities. It is not connected to the driver, semantics, backends, or CLI.
+
+## Isolated v5 bootstrap ingestion
+
+`WorkerFrontendV5` authenticates the exact pinned provider using distinct v5 configuration,
+capabilities and limits. It reuses the established direct-execution, cleared-environment,
+bounded-pipe and process-tree cleanup engine. Analysis starts only after all five capability
+fields and provider/version/protocol identity match. Raw response field presence and duplicate
+keys are preserved for the closed v5 decoder; source verification returns only the immutable
+`VerifiedProjectSyntaxV5` bound to the authoritative map. It supplies no public selection or
+executable authority. Existing v2/v3/v4 typed boundaries remain separate.
+
+The new `tests/worker_v5_ingestion.rs` exercises the actual pinned TypeScript worker against
+the independently authored [frozen corpus](../../tests/provider-conformance-v5/corpus.json),
+plus hostile handshakes, wire mutations, source spans, keyword/newline/Unicode boundaries,
+framing, exit and process limits. Native v5 is a separate later lane using the same corpus.
+Full excluded-source diagnostic transport remains unimplemented; see
+[the v5 contract](../../docs/SYNTAX_PROTOCOL_V5.md).

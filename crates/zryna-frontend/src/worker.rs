@@ -1,3 +1,8 @@
+use crate::{
+    AnalyzeRequest, FrontendCapabilities, ProviderInfo, SourceInput, syntax_v2, syntax_v3,
+    syntax_v4,
+};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{
     error::Error,
     ffi::{OsStr, OsString},
@@ -9,21 +14,17 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
-
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use zryna_diagnostics::Diagnostic;
 use zryna_source::SourceMap;
-
-use crate::{
-    AnalyzeRequest, FrontendCapabilities, ProviderInfo, SourceInput, syntax_v2, syntax_v3,
-    syntax_v4,
-};
-
 #[cfg(unix)]
 mod unix_process;
+mod v5;
 #[cfg(unix)]
 use unix_process::spawn_worker;
-
+pub use v5::{
+    FrontendCapabilitiesV5, MAX_WORKER_STDOUT_BYTES_V5, ProviderExpectationV5, ProviderInfoV5,
+    VerifiedFrontendProviderV5, WorkerFrontendV5, WorkerLimitsV5, WorkerSpecV5,
+};
 const HANDSHAKE_ID: u32 = 1;
 const ANALYZE_ID: u32 = 2;
 const MAX_PROVIDER_ID_BYTES: usize = 128;
@@ -32,7 +33,6 @@ const MAX_RESPONSE_LINES: usize = 2;
 const MAX_WORKER_ARGUMENTS: usize = 64;
 const MAX_WORKER_ARGUMENT_BYTES: usize = 64 * 1_024;
 const MAX_CLEANUP_RESERVE: Duration = Duration::from_secs(2);
-
 /// Maximum serialized bytes accepted for the worker handshake response.
 pub const MAX_HANDSHAKE_RESPONSE_BYTES: usize = 64 * 1_024;
 /// Maximum serialized bytes written for one worker request.
