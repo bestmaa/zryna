@@ -112,14 +112,14 @@ fn compile(files: &[(&str, &str)], snapshot: &[u8]) -> crate::JavaScriptArtifact
 }
 
 fn execute(artifact: &crate::JavaScriptArtifact) {
+    // Parallel fixtures share a process and may observe the same clock value.
+    static NEXT_TEMP_FILE: AtomicU64 = AtomicU64::new(0);
     let version =
         Command::new("node").arg("--version").output().expect("genuine fixture invariant");
     assert_eq!(
         String::from_utf8(version.stdout).expect("genuine fixture invariant").trim(),
         "v22.22.1"
     );
-    // Parallel fixtures share a process and may observe the same clock value.
-    static NEXT_TEMP_FILE: AtomicU64 = AtomicU64::new(0);
     let unique = NEXT_TEMP_FILE.fetch_add(1, Ordering::Relaxed);
     let path =
         std::env::temp_dir().join(format!("zryna-416-generic-{}-{unique}.mjs", std::process::id()));
