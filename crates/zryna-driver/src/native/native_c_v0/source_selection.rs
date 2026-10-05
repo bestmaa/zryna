@@ -3,7 +3,7 @@
 use zryna_backend_native::native_c_v0::resources::ValidatedHandleEntries;
 use zryna_diagnostics::Diagnostic;
 use zryna_semantics::native_c_v0::{
-    LibraryMaterial,
+    LibraryMaterial, VerifiedDeclarationSet,
     body::{compose_private_boundaries, verify_bodies},
 };
 use zryna_source::{SourceMap, Span};
@@ -32,7 +32,23 @@ pub(super) fn emit_handle_entry(
             .flat_map(|error| rejection(error.code(), error.detail(), None))
             .collect::<Vec<_>>()
     })?;
-    let bodies = verify_bodies(sources, &declarations)
+    emit_authenticated_handle_entry(sources, &declarations, selected_target, function_name)
+}
+
+/// Consumes the retained declaration/source seal after private graph selection has passed.
+pub(crate) fn emit_authenticated_handle_entry(
+    sources: &SourceMap,
+    declarations: &VerifiedDeclarationSet,
+    selected_target: &str,
+    function_name: &str,
+) -> Result<ValidatedHandleEntries, Vec<Diagnostic>> {
+    if !declarations.belongs_to(sources) {
+        return Err(rejection("ZRYNA-C4101", "native-C source issuer changed", None));
+    }
+    if selected_target != zryna_syntax::native_c_v0::TARGET {
+        return Err(rejection("ZRYNA-C4103", "native-C target selection", None));
+    }
+    let bodies = verify_bodies(sources, declarations)
         .map_err(|error| rejection(error.code(), error.detail(), error.span()))?;
     let private = compose_private_boundaries(sources, &bodies).map_err(|error| {
         if error.layout_diagnostics().is_empty() {
@@ -71,7 +87,7 @@ fn rejection(code: &str, detail: &str, span: Option<Span>) -> Vec<Diagnostic> {
 
 #[cfg(test)]
 std::thread_local! {
-    static EMITTER_ENTRIES: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+    pub(crate) static EMITTER_ENTRIES: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
 }
 
 #[cfg(test)]

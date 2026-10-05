@@ -15,6 +15,7 @@ const POLICY: &[u8] =
     include_bytes!("../../../../../../tests/native-c-auth-v0/library-policy.json");
 
 mod report;
+mod retained;
 
 fn sources() -> SourceMap {
     SourceMap::build(
