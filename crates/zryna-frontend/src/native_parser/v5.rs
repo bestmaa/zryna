@@ -195,7 +195,7 @@ impl FileParser<'_> {
 
 /// Constructs an untrusted protocol-v5 candidate for the admitted native source subset.
 ///
-/// The existing v4 verifier must authenticate its exact source map and all DTO edges.
+/// The existing v5 verifier must authenticate its exact source map and all DTO edges.
 ///
 /// # Errors
 ///
