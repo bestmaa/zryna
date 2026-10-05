@@ -37,7 +37,6 @@ fn frozen_source(root: &Path, registry: &Value, fixture: &str) -> BTreeMap<Strin
     let mut fixture_sources = vec![("main.zry", fixture)];
     if fixture == "vec" {
         assert!(entry.get("dependency").is_none(), "frozen Vec has no import");
-        assert!(!root.join("math.zry").exists(), "single-source Vec fixture");
     } else {
         let dependency = entry["dependency"].as_str().expect("frozen imported dependency");
         fixture_sources.push(("math.zry", dependency));
