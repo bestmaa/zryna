@@ -35,11 +35,13 @@ complete instance graph, original opaque affinity and owner/loan/drop plan. Only
 
 The finite structural-clone continuation admits `clone(namedOwner)` only for stored
 `Option<String>` and `Result<String,String>`, alongside the existing stored String clone.
+Its finite depth-two successor also admits exactly `Option<Option<String>>` and
+`Result<Option<String>,Option<String>>`. The closed-key whitelist remains exact.
 It retains the original owner and any surrounding shared loans. A temporary outer shared loan
 selects the active variant; only its String payload is cloned into a fresh owner and rebuilt
 with the same tag. None performs no runtime allocation. Child loans end before the join and
 outer loan. Repeated clones have distinct allocation identities and leave the source reusable.
-Nested structural clone, other payload types, opaque `T` without Clone capability, and source
+Other nested structural clone, other payload types, opaque `T` without Clone capability, and source
 `clone(Borrow<String>)` remain excluded. Moved or exclusively borrowed owners reject.
 
 The compiler-generated payload leaf uses opcode 7 in the distinct private
@@ -218,6 +220,34 @@ allocation failure, reverse cleanup and pristine retry. In each single/imported 
 JavaScript and Wasm check 56 observations; native checks 32 successes and 24 cleanup-before-SIGILL
 failures. None allocates nothing and inactive payloads are never cloned. This is private Linux
 execution evidence; Windows generic execution remains a separate unrun requirement.
+
+The separate depth-two runner is
+`python3 tests/m7-generic-owned-nested-clone/run.py <evidence-directory>`.
+Its independently frozen single/imported fixtures cover outer none, some-none and some-some,
+plus both Result tags containing none or some. The first clone executes while a borrowed
+match payload is live; the second retains the surrounding shared root loan. Internal selected
+enum loans retain the original complete owner and end their String descendants before their
+parents and joins. Source `clone(Borrow)` remains excluded; compiler-created nested selection
+does not grant that capability. The existing private v3 leaf, decoded carrier, verifier,
+owner plan, MIR, runtime declarations, ABI and three emitters are unchanged.
+
+The frozen depth-two oracle defines fourteen initial successes, twenty-four reachable
+allocation failures and a pristine retry after each failure per module form. That yields
+62 JS/Wasm observations and 38 native successes plus 24 cleanup-before-SIGILL cases.
+Every none path allocates nothing, including some-none and both Result-none paths. Unicode
+and empty String payloads retain exact selected tags, distinct clone identities and reverse
+release order. Independent hand-authored Option and Result CFGs verify the nested loan chain,
+retained-root cleanup and exclusion of the unwritten leaf result. Actual exclusive loans with
+forged shared declarations, ended/foreign loans, wrong enum operands, parent-before-child
+ending and unmatched loan states reject independently of source production.
+
+With 400 scalar locals, depth-two Option snapshots charge `10109 + 112*j` units per discarded
+clone: 73 clones use 1,032,293 units and 74 use 1,050,578. Depth-two Result charges
+`15467 + 264*j`: 48 clones use 1,040,208 and 49 use 1,068,347. The unchanged state ceiling is
+1,048,576. Complete binding keys, availability, nested loans and parents are charged before
+snapshot copies; nested payload keys receive credit before either copy. Genuine exact/first-extra
+and recovery fixtures supplement inherited checked-overflow tests. Other depths, mixed or
+non-String payload forms, nominal/other containers and handle cloning still need separate proof.
 
 Structural selection precharges full snapshots before copying lexical bindings, complete type
 key bytes, availability, loans and loan parents. Values, blocks, arm and edge inventories retain

@@ -19,7 +19,7 @@ fn structural_clone_rejects_moved_exclusively_borrowed_and_unsupported_owners() 
             "ZRYNA-M7007",
         ),
         ("", "Option<i32>", "ZRYNA-M3008"),
-        ("", "Option<Option<String>>", "ZRYNA-M3008"),
+        ("", "Option<Option<Option<String>>>", "ZRYNA-M3008"),
         ("", "Result<String,bool>", "ZRYNA-M3008"),
     ] {
         let source = format!(

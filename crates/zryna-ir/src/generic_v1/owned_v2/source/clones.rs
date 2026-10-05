@@ -4,9 +4,23 @@ use zryna_source::UntrustedSpan;
 
 const OPTION: &[u8] = &[0x14, 1, 0, 0, 0, 1, 0, 0, 0, 2];
 const RESULT: &[u8] = &[0x15, 2, 0, 0, 0, 1, 0, 0, 0, 2, 1, 0, 0, 0, 2];
+const OPTION_OPTION: &[u8] = &[0x14, 1, 0, 0, 0, 10, 0, 0, 0, 0x14, 1, 0, 0, 0, 1, 0, 0, 0, 2];
+const RESULT_OPTION: &[u8] = &[
+    0x15, 2, 0, 0, 0, 10, 0, 0, 0, 0x14, 1, 0, 0, 0, 1, 0, 0, 0, 2, 10, 0, 0, 0, 0x14, 1, 0, 0, 0,
+    1, 0, 0, 0, 2,
+];
 
 pub(super) fn admitted(ty: &Closed) -> bool {
-    matches!(ty, Closed::Stored(key) if key == OPTION || key == RESULT)
+    matches!(ty, Closed::Stored(key) if key == OPTION || key == RESULT
+        || key == OPTION_OPTION || key == RESULT_OPTION)
+}
+
+fn payload_key(stored: &Closed) -> Result<&'static [u8], Failure> {
+    match stored {
+        Closed::Stored(key) if key == OPTION || key == RESULT => Ok(&[2]),
+        Closed::Stored(key) if key == OPTION_OPTION || key == RESULT_OPTION => Ok(OPTION),
+        _ => Err(Failure::InternalFailure),
+    }
 }
 
 impl Builder<'_, '_> {
@@ -18,19 +32,33 @@ impl Builder<'_, '_> {
         let Closed::Stored(key) = &root.ty else { return Err(Failure::InternalFailure) };
         // All key copies and both arm/edge/output inventories are charged before allocation.
         self.budget.branch_state(key.len() * 8 + 16)?;
-        let ty = if self.symbolic {
-            0
-        } else {
-            let raw::Type::Stored(id) = type_id(self.program, root.ty.clone())? else {
-                return Err(Failure::InternalFailure);
-            };
-            id
-        };
         let loan = self.ext(
             Closed::Borrow(key.clone(), false),
             span,
             Owned::Borrow { value: root.id, exclusive: false },
         )?;
+        let value = self.clone_selection(root.id, root.ty, &loan, span)?;
+        self.ext(Closed::Unit, span, Owned::EndLoan(loan.id))?;
+        Ok(value)
+    }
+
+    // Only an admitted outer form can enter; its sole enum child is exact Option<String>.
+    // The internal loan is matched, never exposed as a source clone(Borrow) capability.
+    fn clone_selection(
+        &mut self,
+        owner: u32,
+        stored: Closed,
+        loan: &Value,
+        span: UntrustedSpan,
+    ) -> Result<Value, Failure> {
+        let ty = if self.symbolic {
+            0
+        } else {
+            let raw::Type::Stored(id) = type_id(self.program, stored.clone())? else {
+                return Err(Failure::InternalFailure);
+            };
+            id
+        };
         let entry = self.block;
         self.charge_branch_state()?;
         let saved = self.locals.clone();
@@ -48,7 +76,7 @@ impl Builder<'_, '_> {
             self.alive.resize(self.next as usize, false);
             self.loans = loans.clone();
             self.loan_parents = parents.clone();
-            let (arm, block, result) = self.clone_arm(&root, &loan, ty, ordinal, span)?;
+            let (arm, block, result) = self.clone_arm(owner, &stored, loan, ty, ordinal, span)?;
             if self.alive[..alive.len()] != alive
                 || self.loans != loans
                 || self.loan_parents != parents
@@ -68,7 +96,7 @@ impl Builder<'_, '_> {
         self.loans = loans;
         self.loan_parents = parents;
         self.block = self.new_block(span)?;
-        let value = self.value(root.ty)?;
+        let value = self.value(stored)?;
         let definition = self.definition(&value)?;
         self.blocks[self.block]
             .parameters
@@ -90,12 +118,12 @@ impl Builder<'_, '_> {
             mode: raw::MatchMode::SharedBorrow,
             arms,
         };
-        self.ext(Closed::Unit, span, Owned::EndLoan(loan.id))?;
         Ok(value)
     }
     fn clone_arm(
         &mut self,
-        root: &Value,
+        owner: u32,
+        stored: &Closed,
         loan: &Value,
         ty: u32,
         ordinal: u32,
@@ -104,26 +132,35 @@ impl Builder<'_, '_> {
         self.block = self.new_block(span)?;
         let target = self.block;
         let from = self.next as usize;
-        let (binding, payload) = if matches!(&root.ty, Closed::Stored(key) if key == OPTION)
+        let (binding, payload) = if matches!(stored, Closed::Stored(key) if key == OPTION || key == OPTION_OPTION)
             && ordinal == 0
         {
             (None, None)
         } else {
-            let borrowed = self.value(Closed::Borrow(vec![2], false))?;
+            let key = payload_key(stored)?;
+            if key == OPTION {
+                // Both payload key copies precede nested selection's own complete key credit.
+                self.budget.branch_state(key.len() * 2)?;
+            }
+            let borrowed = self.value(Closed::Borrow(key.to_vec(), false))?;
             let definition = self.definition(&borrowed)?;
             self.blocks[target]
                 .parameters
                 .try_reserve(1)
                 .map_err(|_| Failure::AllocationFailure)?;
             self.blocks[target].parameters.push(definition.clone());
-            self.loans.insert(borrowed.id, (root.id, false));
+            self.loans.insert(borrowed.id, (owner, false));
             self.loan_parents.insert(borrowed.id, loan.id);
-            let cloned =
-                self.ext(Closed::Stored(vec![2]), span, Owned::CloneBorrowedString(borrowed.id))?;
+            let cloned = if key == OPTION {
+                self.budget.branch_state(key.len() * 8 + 16)?;
+                self.clone_selection(owner, Closed::Stored(key.to_vec()), &borrowed, span)?
+            } else {
+                self.ext(Closed::Stored(vec![2]), span, Owned::CloneBorrowedString(borrowed.id))?
+            };
             (Some(definition), Some(cloned.id))
         };
         let value = self.emit(
-            root.ty.clone(),
+            stored.clone(),
             span,
             raw::Operation::ClosedEnumConstruct { ty, ordinal, payload },
         )?;

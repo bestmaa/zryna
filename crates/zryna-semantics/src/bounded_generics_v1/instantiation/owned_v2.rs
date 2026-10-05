@@ -13,6 +13,12 @@ mod mutable;
 #[cfg(test)]
 mod negative;
 #[cfg(test)]
+mod nested_attacks;
+#[cfg(test)]
+mod nested_clones;
+#[cfg(test)]
+mod nested_resources;
+#[cfg(test)]
 mod resources;
 #[cfg(test)]
 mod tests;
