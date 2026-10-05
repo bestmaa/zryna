@@ -64,6 +64,10 @@ class ReceiptTests(unittest.TestCase):
             path = self.root/name
             path.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy2(self.root/row['original'],path)
+        def failure(code):
+            return {'version':1,'command':'build','diagnostics':[{'code':code,'guidance':'synthetic guidance',
+                'message':'synthetic rejection','primary':{'kind':'global'},'severity':'error'}],
+                'manifest':None,'ok':False,'results':[]}
         rows=[]
         for label in oracle.POSITIVES:
             contract = cases[label]
@@ -113,21 +117,22 @@ class ReceiptTests(unittest.TestCase):
                 (bundle/manifest).write_text(json.dumps(meta))
                 (smoke/(label+'-'+route+'.stdout')).write_text(json.dumps({'version':1,'ok':True,'command':'build',
                     'manifest':'.zryna/out/'+stem+'.build/'+manifest,'results':[],'diagnostics':[]}))
-            (smoke/(label+'-create-only.stdout')).write_text('{"ok":false}')
+            (smoke/(label+'-create-only.stdout')).write_text(json.dumps(failure('ZRYNA-C1009')))
             rows.append({'id':label,'status':'passed','detail':{'source':contract['source'],'profile':contract['profile'],
                          'files':oracle.files(bundle),'success_json_exact':True,
                          'manifest_bytes_exact':True,'create_only':True,'node_on_path':False,'pnpm_on_path':False}})
         for label,code in oracle.NEGATIVES.items():
-            raw=json.dumps({'ok':False,'diagnostics':[{'code':code}]})
+            raw=json.dumps(failure(code))
             (smoke/(label+'.stdout')).write_text(raw); (smoke/(label+'-bootstrap.stdout')).write_text(raw)
             rows.append({'id':label,'status':'passed','detail':{'expected_code':code,'exit':1,'final_bundle_absent':True}})
         for label in oracle.CONTROLS[:-1]:
-            detail={'exit':2}
+            detail={'exit':2,'expected_code':{'private-project-denied':'ZRYNA-C2001',
+                    'private-component-denied':'ZRYNA-C1013'}.get(label)}
             if label in ('private-project-denied','private-component-denied'):
                 code='ZRYNA-C2001' if label=='private-project-denied' else 'ZRYNA-C1013'
-                (smoke/(label+'.stdout')).write_text(json.dumps({'ok':False,'diagnostics':[{'code':code}]}))
+                (smoke/(label+'.stdout')).write_text(json.dumps(failure(code)))
             elif label=='source-checkout-still-needs-cargo':
-                detail['architecture_gate_retained']=True; (smoke/(label+'.stdout')).write_text('ZRYNA-A1101')
+                detail.pop('expected_code'); detail['architecture_gate_retained']=True; (smoke/(label+'.stdout')).write_text(json.dumps(failure('ZRYNA-A1101')))
             else:
                 (smoke/(label+'.stderr')).write_text('--native-frontend --node rejected')
             rows.append({'id':label,'status':'passed','detail':detail})
@@ -159,7 +164,10 @@ class ReceiptTests(unittest.TestCase):
             lambda:self.ci['commands'][5].update(argv=['unrelated-proof']),
             lambda:self.ci.update(target='/unrelated'),
             lambda:self.smoke['records'][0]['detail'].update(source='unrelated.zry'),
-            lambda:self.smoke.update(blocked_acceptance=[])]
+            lambda:self.smoke.update(blocked_acceptance=[]),
+            lambda:self.smoke['records'][-1].update(detail={}),
+            lambda:self.smoke['records'][-2]['detail'].update(ignored=True),
+            lambda:self.smoke['binaries'].update(unreviewed=self.smoke['binaries']['node'])]
         original=(copy.deepcopy(self.ci),copy.deepcopy(self.smoke))
         for change in mutations:
             with self.subTest(change=change):
@@ -175,6 +183,58 @@ class ReceiptTests(unittest.TestCase):
             before=path.read_bytes(); path.write_bytes(b'substituted')
             with self.subTest(path=path),self.assertRaises((AssertionError,ValueError)):self.verify()
             path.write_bytes(before)
+
+    def test_rehashed_matching_malformed_manifests_and_success_reject(self):
+        edits = [('m2',lambda d:d['sources'][0].update(path='unrelated.zry')),
+                 ('m2',lambda d:d.update(graph_sha256='a'*64)),
+                 ('m3-pair',lambda d:d.update(protocol_version=True)),
+                 ('m3-pair',lambda d:d.update(profile='unrelated')),
+                 ('m3-pair',lambda d:d['layouts'].update(linear32_sha256='invalid')),
+                 ('m3-pair',lambda d:d['artifacts'][-1]['metadata'].update(program_object_sha256='a'*64))]
+        for label,change in edits:
+            paths=[self.output/'smoke'/(label+'-'+route+'-bundle') for route in ('bootstrap','native')]
+            name='zryna-manifest-v'+('2' if label=='m2' else '3')+'.json'
+            saved=[(path/name).read_bytes() for path in paths]
+            row=next(r for r in self.smoke['records'] if r['id']==label)
+            original=copy.deepcopy(row['detail']['files'])
+            for path in paths:
+                data=json.loads((path/name).read_bytes()); change(data)
+                (path/name).write_text(json.dumps(data))
+            row['detail']['files']=oracle.files(paths[-1])
+            with self.subTest(label=label,change=change),self.assertRaises(AssertionError):self.verify()
+            for path,before in zip(paths,saved): (path/name).write_bytes(before)
+            row['detail']['files']=original
+        paths=[self.output/'smoke'/('m1-'+route+'.stdout') for route in ('bootstrap','native')]
+        saved=[p.read_bytes() for p in paths]
+        for change in (lambda d:d.update(version=True),lambda d:d.update(manifest='unrelated'),
+                       lambda d:d.update(results=[{}])):
+            for path,before in zip(paths,saved):
+                data=json.loads(before); change(data); path.write_text(json.dumps(data))
+            with self.subTest(change=change),self.assertRaises(AssertionError):self.verify()
+            for path,before in zip(paths,saved):path.write_bytes(before)
+
+    def test_complete_typed_failure_envelopes_required(self):
+        labels=['m1-negative','m1-create-only','private-project-denied','source-checkout-still-needs-cargo']
+        edits=[lambda d:d.pop('version'),lambda d:d.update(version=True),lambda d:d.update(manifest='unexpected'),
+               lambda d:d.update(results=[{}]),lambda d:d['diagnostics'][0].pop('message'),
+               lambda d:d['diagnostics'][0].update(severity='warning'),
+               lambda d:d['diagnostics'][0].update(primary={'kind':'source','span':{'file':0,'start':True,'end':2}})]
+        for label in labels:
+            paths=[self.output/'smoke'/(label+'.stdout')]
+            if label=='m1-negative':paths.append(self.output/'smoke'/(label+'-bootstrap.stdout'))
+            saved=[path.read_bytes() for path in paths]
+            for change in edits:
+                for path,before in zip(paths,saved):
+                    data=json.loads(before); change(data); path.write_text(json.dumps(data))
+                with self.subTest(label=label,change=change),self.assertRaises(AssertionError):self.verify()
+                for path,before in zip(paths,saved):path.write_bytes(before)
+
+    def test_rejected_route_cannot_leave_final_bundle(self):
+        for label in ('m1-negative','m2-cycle-main','denied'):
+            path=self.root/'.zryna/out'/('private-smoke-'+label+'.build')
+            path.mkdir(parents=True)
+            with self.subTest(label=label),self.assertRaises(AssertionError):self.verify()
+            path.rmdir()
 
     def test_duplicate_and_nonfinite_json_reject(self):
         for raw in ('{"head":1,"head":2}','{"value":NaN}','{"value":Infinity}','{"value":1e999}'):

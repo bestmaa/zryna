@@ -68,6 +68,40 @@ def git(root,*args):
     return subprocess.check_output(['git','-C',str(root),*args],text=True).strip()
 
 
+def absent(path):
+    try:
+        path.lstat()
+    except FileNotFoundError:
+        return
+    raise AssertionError('rejected command left a final bundle or link')
+
+
+def failure_envelope(data, code):
+    assert type(data) is dict and set(data) == {'version','command','diagnostics','manifest','ok','results'}
+    exact({key:data[key] for key in ('version','command','manifest','ok','results')},
+          {'version':1,'command':'build','manifest':None,'ok':False,'results':[]})
+    rows = data['diagnostics']
+    assert type(rows) is list and rows
+    for row in rows:
+        assert type(row) is dict and set(row) == {'code','guidance','message','primary','severity'}
+        assert type(row['code']) is str and re.fullmatch(r'ZRYNA-[A-Z][0-9]{4}',row['code'])
+        assert row['severity'] == 'error'
+        assert all(type(row[key]) is str and row[key] for key in ('guidance','message'))
+        primary = row['primary']
+        assert type(primary) is dict
+        if primary.get('kind') == 'global':
+            exact(primary,{'kind':'global'})
+        elif primary.get('kind') == 'source':
+            assert set(primary) == {'kind','span'}
+            span = primary['span']
+            assert type(span) is dict and set(span) == {'file','start','end'}
+            assert all(type(value) is int and value >= 0 for value in span.values())
+            assert span['start'] <= span['end']
+        else:
+            exact(primary,{'kind':'workspace-path','path':'Cargo.toml'})
+    assert code in [row['code'] for row in rows]
+
+
 def verify(root, output, head, platform):
     assert __debug__, 'optimized verification forbidden'
     assert re.fullmatch('[0-9a-f]{40}',head) and platform in ('linux','win32')
@@ -130,11 +164,14 @@ def verify(root, output, head, platform):
     assert all(type(v) is int for v in smoke['counts'].values())
     assert smoke['counts'] == {'passed':21,'failed':0,'ignored':0}
     rows = smoke['records']
+    assert type(rows) is list and all(type(row) is dict for row in rows)
+    assert all(set(row) == ({'id','status'} if row['id'] == 'source-and-binary-identity' else {'id','status','detail'}) for row in rows)
     assert len(rows) == 21 and {row['id'] for row in rows} == set(POSITIVES)|set(NEGATIVES)|set(CONTROLS)
     assert all(row['status'] == 'passed' for row in rows)
     by_id = {row['id']:row for row in rows}
     empty = Path(smoke['path'])
     assert empty.resolve() == (output/'smoke/empty-path').resolve() and empty.is_dir() and not list(empty.iterdir())
+    assert set(smoke['binaries']) == {'default_cli','feature_cli','node','cargo','rustc'}
     for key,label in (('default_cli','default'),('feature_cli','feature')):
         assert smoke['binaries'][key] == receipt['binaries'][label]
     for name in ('node','cargo','rustc'):
@@ -157,32 +194,41 @@ def verify(root, output, head, platform):
         assert expected_manifest in native
         assert (output/'smoke'/(label+'-bootstrap.stdout')).read_bytes() == (output/'smoke'/(label+'-native.stdout')).read_bytes()
         success = strict((output/'smoke'/(label+'-native.stdout')).read_bytes())
+        verify_bundle(output/'smoke'/(label+'-bootstrap-bundle'),label,expected_cases[label],baseline,success)
         verify_bundle(output/'smoke'/(label+'-native-bundle'),label,expected_cases[label],native,success)
-        assert strict((output/'smoke'/(label+'-create-only.stdout')).read_bytes())['ok'] is False
+        failure_envelope(strict((output/'smoke'/(label+'-create-only.stdout')).read_bytes()),'ZRYNA-C1009')
     for label,code in NEGATIVES.items():
         detail = by_id[label]['detail']
+        assert set(detail) == {'expected_code','exit','final_bundle_absent'}
         assert detail['expected_code'] == code and type(detail['exit']) is int and detail['exit'] != 0
         assert detail['final_bundle_absent'] is True
+        absent(root/'.zryna/out'/('private-smoke-'+label+'.build'))
         raw = (output/'smoke'/(label+'.stdout')).read_bytes()
         assert raw == (output/'smoke'/(label+'-bootstrap.stdout')).read_bytes()
         diagnostics = strict(raw)
-        assert diagnostics['ok'] is False and code in [d['code'] for d in diagnostics['diagnostics']]
+        failure_envelope(diagnostics,code)
     assert len(smoke['generated_inputs']) == 6
     for name,row in smoke['generated_inputs'].items():
         assert row['original'] in actual and row['sha256'] == actual[row['original']] == digest(root/name)
     assert by_id['source-checkout-still-needs-cargo']['detail']['architecture_gate_retained'] is True
-    assert 'ZRYNA-A1101' in (output/'smoke/source-checkout-still-needs-cargo.stdout').read_text()
+    failure_envelope(strict((output/'smoke/source-checkout-still-needs-cargo.stdout').read_bytes()),'ZRYNA-A1101')
     for label in CONTROLS[:-1]:
         detail = by_id[label]['detail']
         assert type(detail['exit']) is int and detail['exit'] != 0
+        if label == 'source-checkout-still-needs-cargo':
+            assert set(detail) == {'exit','architecture_gate_retained'}
+        else:
+            assert set(detail) == {'exit','expected_code'}
+            assert detail['expected_code'] == {'private-project-denied':'ZRYNA-C2001',
+                'private-component-denied':'ZRYNA-C1013'}.get(label)
         if label in ('private-project-denied','private-component-denied'):
             code = 'ZRYNA-C2001' if label == 'private-project-denied' else 'ZRYNA-C1013'
             data = strict((output/'smoke'/(label+'.stdout')).read_bytes())
-            assert data['ok'] is False and code in [d['code'] for d in data['diagnostics']]
+            failure_envelope(data,code)
         elif label in ('default-feature-disabled','ordinary-feature-build-needs-node'):
             text = (output/'smoke'/(label+'.stderr')).read_text()
             assert ('--native-frontend' if label == 'default-feature-disabled' else '--node') in text
-    assert not (root/'.zryna/out/private-smoke-denied.build').exists()
+    absent(root/'.zryna/out/private-smoke-denied.build')
     assert smoke['blocked_acceptance'] == ['ordinary installed CLI without Node/pnpm/Cargo',
         'public activation','native run selection','cross-platform installed distribution proof']
     return {'head':head,'tree':receipt['tree'],'platform':platform,'passed':21,'failed':0,
