@@ -349,3 +349,24 @@ test('cold qualification requires real fault execution and independent admission
     ['cold scope made native execution', (w) => { w.jobs['private-cli'].steps[execute].run += ' --windows-native-run'; }],
   ]);
 });
+
+test('remaining frozen fault corpus has separate exact-head execution, admission and archive', () => {
+  const steps = workflow.jobs['private-cli'].steps;
+  const cold = steps.findIndex((step) => step.name === 'Require independent cold BUILD and frozen fault receipts');
+  const controls = steps.findIndex((step) => step.name === 'Verify independent finite fault corpus controls');
+  const execute = steps.findIndex((step) => step.name === 'Run remaining frozen M3 fault groups');
+  const admit = steps.findIndex((step) => step.name === 'Require independent remaining frozen fault observations');
+  const archive = steps.findIndex((step) => step.name === 'Preserve exact remaining frozen fault corpus');
+  assert.ok(cold < controls && controls < execute && execute < admit && admit < archive);
+  assert.equal(steps[controls].run, 'python -B tests/native-provider-qualification/corpus/verify_test.py');
+  assert.match(steps[execute].run, /corpus\/run\.py --root "\$env:GITHUB_WORKSPACE" --head "\$env:CLI_SOURCE_SHA"/u);
+  assert.match(steps[execute].run, /--target "\$env:RUNNER_TEMP\/private-cli-target"/u);
+  assert.match(steps[execute].run, /--output "\$env:RUNNER_TEMP\/private-fault-corpus-proof"/u);
+  assert.match(steps[admit].run, /corpus\/verify\.py/u);
+  assert.match(steps[admit].run, /throw 'Finite retained fault corpus admission failed'/u);
+  assert.equal(steps[archive].if, 'always()');
+  assert.equal(steps[archive].with.path, expression('runner.temp') + '/private-fault-corpus-proof');
+  assert.equal(steps[archive].with.name,
+    'private-native-fault-corpus-' + expression('matrix.os') + '-' + expression('env.CLI_SOURCE_SHA')
+      + '-' + expression('github.run_id') + '-' + expression('github.run_attempt'));
+});

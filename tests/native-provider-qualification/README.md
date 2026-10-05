@@ -45,3 +45,7 @@ four mutation controls, cold BUILD and bootstrap comparison. Full M1–M3 parity
 coverage, ordinary installed no-Node/no-pnpm/no-Cargo acceptance, integrated #417 readiness and
 public activation remain open. Existing historical pinned-consumer receipts retain their own
 source identity and do not qualify this current revision.
+
+The [remaining logical fault corpus](corpus/README.md) has a separate exact-head execution and
+receipt path. The three-test lane excludes that child module; its original observation, mutation
+and cold publication census stays separate.

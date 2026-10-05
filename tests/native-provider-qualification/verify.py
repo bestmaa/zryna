@@ -263,7 +263,7 @@ def verify(root, output, head, platform, archived=False, cli_proof=None, run_id=
     command_exits(commands)
     exact(commands[0]['argv'],[receipt['tools']['cargo']['path'],'test','--locked','--offline','-p',
                              'zryna-driver','--features','native-provider-internal','--lib','--no-run','--message-format=json'])
-    exact(commands[1]['argv'],[receipt['test_binary']['path'],'native_provider_faults','--nocapture','--test-threads=1'])
+    exact(commands[1]['argv'],[receipt['test_binary']['path'],'native_provider_faults','--skip','native_provider_faults::corpus::','--nocapture','--test-threads=1'])
     build_records = [strict(line) for line in (output/'feature-test-build.stdout').read_bytes().splitlines()]
     built = [row['executable'] for row in build_records if row.get('reason') == 'compiler-artifact'
              and row.get('executable') and row['target']['name'] == 'zryna_driver' and row['profile']['test']]

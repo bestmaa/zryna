@@ -13,6 +13,7 @@ use std::cell::{Cell, RefCell};
 const IDS: [&str; 2] = ["vec-fault-2-1", "vec-fault-2-2"];
 const REGISTRY_SHA: &str = "34cd29a5f146d77e7163b32d21e71e4f5a1fc5fd50f688d197de8bef9b38a508";
 
+mod corpus;
 mod qualification;
 
 #[derive(Clone, Copy, Debug)]
