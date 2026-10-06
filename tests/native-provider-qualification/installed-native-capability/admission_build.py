@@ -154,15 +154,36 @@ def image(raw, binding, platform):
     return file_binding(raw)
 
 
-def captured(folder, label, source, previous=None):
+def captured(folder, label, source, previous=None, *, linker_help=False):
+    require(type(linker_help) is bool and (not linker_help or label == 'observed-linker-version'), 'linker help scope')
     row = document(folder / (label + '-execution.json'))
     require(exact(row['source_before'], source) and exact(row['source_after'], source) and row['source_unchanged'] is True
-            and type(row['exit']) is int and row['exit'] == 0 and row['direct_child_reaped'] is True, 'build execution')
+            and type(row['exit']) is int and row['exit'] == (1100 if linker_help else 0)
+            and row['direct_child_reaped'] is True, 'build execution')
     start = dt.datetime.fromisoformat(row['started_at']); end = dt.datetime.fromisoformat(row['completed_at'])
     require(start.tzinfo and end.tzinfo and start <= end and (previous is None or previous <= start), 'build order')
     for stream in ('stdout', 'stderr'):
         require(exact(file_binding(read(folder / (label + '.' + stream), 16 * 1024 * 1024)), row[stream]), 'build raw stream')
     return row, end
+
+
+def observed_linker_help(p, row, stdout, stderr):
+    """Independently recognize LINK help; producer exit declarations are unused."""
+    require(type(row['exit']) is int and row['exit'] == 1100 and row['direct_child_reaped'] is True
+            and row['source_unchanged'] is True and exact(row['source_before'], row['source_after']), 'linker help execution')
+    require(row['argv'] == [p['tools']['linker']['path'], '/?']
+            and exact(row['selected_environment'], p['host_environment'])
+            and ntpath.basename(row['cwd']) == 'toolchain', 'linker help query')
+    require(exact(file_binding(stdout), row['stdout']) and exact(file_binding(stderr), row['stderr'])
+            and not stderr and 0 < len(stdout) <= 65536, 'linker help streams')
+    lines = stdout.replace(b'\r\n', b'\n').split(b'\n')
+    require(len(lines) > 7, 'linker help lines')
+    match = re.fullmatch(rb'Microsoft \(R\) Incremental Linker Version (14\.\d+\.\d+\.\d+)', lines[0])
+    require(match is not None and match.group(1).decode().split('.')[:2] == p['msvc']['version'].split('.')[:2], 'linker help version')
+    require(lines[1:7] == [b'Copyright (C) Microsoft Corporation.  All rights reserved.', b'',
+            b' usage: LINK [options] [files] [@commandfile]', b'', b'   options:', b''], 'linker help header')
+    require(all(any(line.startswith(prefix) for line in lines[7:]) for prefix in
+            (b'      /ALIGN:', b'      /OUT:', b'      /VERSION:')) and not any(line.startswith(b'LINK :') for line in lines), 'linker help options')
 
 
 def windows_observations(proof, p, src, live):
@@ -178,10 +199,13 @@ def windows_observations(proof, p, src, live):
             require(sys.platform == 'win32' and file_binding(read(row['path'], MAX)) == file_binding(raw), 'live tool bytes')
     last = None
     for role in ('python', 'cargo', 'rustc', 'linker', 'dumpbin'):
-        row, last = captured(folder, 'observed-' + role + '-version', src, last)
+        row, last = captured(folder, 'observed-' + role + '-version', src, last, linker_help=role == 'linker')
         tool = p['python'] if role == 'python' else p['tools'][role]
         require(row['argv'] == [tool['path'], {'python': '--version', 'cargo': '-V', 'rustc': '-vV', 'linker': '/?', 'dumpbin': '/?'}[role]]
                 and row['selected_environment'] == p['host_environment'] and ntpath.basename(row['cwd']) == 'toolchain', 'observed tool query')
+        if role == 'linker':
+            observed_linker_help(p, row, read(folder / 'observed-linker-version.stdout'),
+                                 read(folder / 'observed-linker-version.stderr'))
     require(read(folder / 'observed-python-version.stdout').decode().strip() == 'Python 3.12.10', 'actual Python version')
     require(read(folder / 'observed-cargo-version.stdout').decode().startswith('cargo 1.97.1 '), 'actual Cargo version')
     rust = read(folder / 'observed-rustc-version.stdout').decode().replace('\r\n', '\n')

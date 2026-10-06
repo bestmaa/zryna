@@ -1,6 +1,8 @@
 """Observe original installed Windows tools before compilation; never issue syntax."""
 import os
+import ntpath
 from pathlib import Path, PureWindowsPath
+import re
 import sys
 
 from build import command, sha, write
@@ -16,6 +18,24 @@ def retain_original(output, role, path):
     assert sha(raw) == row['sha256']
     write(output / relative, raw)
     return {**row, 'raw_relative_path': relative}
+
+
+def verify_linker_help(profile, row, stdout, stderr):
+    """Accept the observed help exit only with original, bound LINK help streams."""
+    assert type(row['exit']) is int and row['exit'] == 1100 and row['direct_child_reaped'] is True
+    assert row['source_unchanged'] is True and row['source_before'] == row['source_after']
+    assert row['argv'] == [profile['tools']['linker']['path'], '/?']
+    assert row['selected_environment'] == profile['host_environment'] and ntpath.basename(row['cwd']) == 'toolchain'
+    assert row['stdout'] == {'bytes': len(stdout), 'sha256': sha(stdout)}
+    assert row['stderr'] == {'bytes': len(stderr), 'sha256': sha(stderr)} and stderr == b''
+    assert 0 < len(stdout) <= 64 * 1024
+    text = stdout.replace(b'\r\n', b'\n')
+    banner = re.match(rb'\AMicrosoft \(R\) Incremental Linker Version (14\.\d+\.\d+\.\d+)\n'
+                      rb'Copyright \(C\) Microsoft Corporation\.  All rights reserved\.\n\n'
+                      rb' usage: LINK \[options\] \[files\] \[@commandfile\]\n\n   options:\n\n', text)
+    assert banner and banner.group(1).decode().split('.')[:2] == profile['msvc']['version'].split('.')[:2]
+    assert all(option in text for option in (b'      /ALIGN:', b'      /OUT:', b'      /VERSION:'))
+    assert b'\nLINK :' not in text
 
 
 def capture(source, output, cargo, rustc, rustup):
@@ -55,7 +75,11 @@ def capture(source, output, cargo, rustc, rustup):
     for role, argv in [('python', [sys.executable, '--version']),
                        ('cargo', [str(cargo), '-V']), ('rustc', [str(rustc), '-vV']),
                        ('linker', [str(paths['linker']), '/?']), ('dumpbin', [str(paths['dumpbin']), '/?'])]:
-        command(output, 'observed-' + role + '-version', argv, output, host, source, timeout=60)
+        row = command(output, 'observed-' + role + '-version', argv, output, host, source,
+                      timeout=60, linker_help=role == 'linker')
+        if role == 'linker':
+            verify_linker_help(profile, row, (output / 'observed-linker-version.stdout').read_bytes(),
+                               (output / 'observed-linker-version.stderr').read_bytes())
     assert (output / 'observed-cargo-version.stdout').read_text().startswith('cargo 1.97.1 ')
     rust_text = (output / 'observed-rustc-version.stdout').read_text()
     assert '\nrelease: 1.97.1\n' in rust_text and '\nhost: ' + TARGET + '\n' in rust_text
