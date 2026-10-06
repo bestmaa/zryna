@@ -42,6 +42,15 @@ and destruction, zero live socket handles and transport reservations, and final 
 prove admission and cleanup. Terminal TCP resets are allowed for early rejection; timeouts are
 failures. These cases retain the existing request, service and attempt limits.
 
+The same real transport accepts a 256-byte path, rejects the first extra path byte before Store
+creation, and recovers at the maximum body, complete header and field count. `POST` plus that path
+charges all 260 routing bytes. A separate service successfully handles all 64 permitted attempts
+at these intersecting limits, destroying 64 Stores and 320 resources, with zero live inputs,
+socket handles or reservations after every attempt. Its listener closes before the earliest
+possible service expiry, proving attempt-budget exhaustion followed by actual joining and socket
+closure. Path and body rejection are composed transport/lifecycle evidence; these cases do not
+isolate the framing checks from the lifecycle's duplicate bounds.
+
 Transport reserves `header_bytes + body_bytes + 1024` bytes before framing. Header-name slots
 borrow the bounded header buffer, with no copied-name map. The extra 1024 bytes cover 32 borrowed
 name slots, bounded routing copies and the fixed response. The raw header is dropped before body
