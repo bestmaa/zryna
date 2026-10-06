@@ -89,3 +89,29 @@ test('owned layout review schema rejects unknown fields, wrong family and malfor
     assert.equal(validate(changed), false);
   }
 });
+
+test('private owned execution documentation distinguishes scalar joins from owner replacement', async () => {
+  const document = await readFile(new URL('../docs/M7_GENERIC_OWNED_EXECUTION.md', import.meta.url), 'utf8');
+  const source = document.split('## Source and authority')[1].split('## Loop-plan prerequisite')[0]
+    .replace(/\s+/g, ' ');
+  const loop = document.split('## Loop-plan prerequisite')[1].split('## Target execution')[0]
+    .replace(/\s+/g, ' ');
+  assert.match(source, /mutable concrete `bool` or `i32` bindings through typed join parameters/);
+  assert.match(source, /unchanged arm passes its incoming value/);
+  assert.match(source, /Returning arms contribute no join edge/);
+  assert.match(source, /Retained owner identities and complete availability\/loan\/parent states must agree exactly/);
+  assert.match(source, /no loan is transferred as an edge argument/);
+  assert.match(source, /Owned, opaque and aggregate replacement joins remain excluded/);
+  assert.match(source, /currently borrowed root.*before evaluating the replacement/);
+  assert.match(loop, /Concrete bool\/i32 branch joins also compose inside these scalar loops/);
+  assert.match(loop, /Borrowed mutable scalar roots, owner or aggregate header replacement/);
+  assert.doesNotMatch(source, /empty edge to a no-phi join/);
+  assert.doesNotMatch(source, /branch-dependent replacement\/phi state remain rejected/);
+  assert.doesNotMatch(loop, /aggregate header replacement, branch-dependent replacement,/);
+  assert.match(document, /tests\/m7-generic-owned-scalar-phi\/README\.md/);
+  assert.match(document.replace(/\s+/g, ' '),
+    /Full acceptance still requires.*branch-dependent owner\/aggregate replacement\/phi state/);
+  assert.match(document, /Public generic support and full #416\s+acceptance remain unfinished/);
+  const proof = await readFile(new URL('../tests/m7-generic-owned-scalar-phi/README.md', import.meta.url), 'utf8');
+  assert.match(proof, /branches inside a scalar `while`/);
+});

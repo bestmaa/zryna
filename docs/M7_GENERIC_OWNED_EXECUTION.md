@@ -58,27 +58,34 @@ shared/exclusive complete-place loans, borrowed payload matches, nested lexical 
 early returns. Whole reassignment completes its replacement before releasing the old live value;
 a moved binding can be reinitialized. Copy mutable roots and their observations have separate
 SSA identities, so a loan of an immutable observation does not freeze the mutable source place.
-Replacing any currently borrowed root is rejected at its exact assignment target.
+Replacing any currently borrowed root is rejected at its exact assignment target before
+evaluating the replacement.
 Only scalar signatures may be public exports. Opaque generic parameters remain affine;
 specializing to a Copy type cannot legalize repeated moves or add a Clone capability.
 
 Nominal declaration bodies, other containers, projections/partial initialization, mutable
-loan bindings and branch-dependent replacement/phi state remain rejected. Borrowed payloads can pass to
-appropriately typed private callees; further borrowed observation/mutation operations are not
-implemented. These are acceptance gaps, not restrictions added to the accepted full contract.
+loan bindings and branch-dependent owner/aggregate replacement/phi state remain rejected.
+Borrowed payloads can pass to appropriately typed private callees; further borrowed
+observation/mutation operations are not implemented. These are acceptance gaps, not restrictions
+added to the accepted full contract.
 
 Structured `if` now admits explicit or omitted `else`, nested/repeated branches, lexical
 shadowing, branch-local cleanup and direct early returns. The condition is evaluated once and
 must have exact original bool type. Both returning arms have direct Return terminators and no
-join block. Each fallthrough arm closes its local scope before an empty edge to a no-phi join;
-incoming place identities and complete availability/loan/parent states must agree exactly.
+join block. Each fallthrough arm closes its local scope before its join edge. Continuing arms
+carry changed mutable concrete `bool` or `i32` bindings through typed join parameters;
+an unchanged arm passes its incoming value. Returning arms contribute no join edge.
+Branches with no changed scalar binding retain empty edges and no join parameters.
+Retained owner identities and complete availability/loan/parent states must agree exactly.
 Moving an opaque owner on only one continuing path rejects before specialization, including
 in unused templates. Moving it on both paths leaves it unavailable after the join. Retained
-loans may remain identical across empty edges; no loan is transferred as an edge argument.
-Branch-dependent assignment to an incoming binding still requires a separate phi proof and
-rejects even when both replacements have the same type. No implicit drop or owner repair is
-inserted to reconcile unequal incoming states. A returning path does not constrain the state
-of the remaining continuing path.
+loans must remain identical across continuing edges; no loan is transferred as an edge argument.
+Owned, opaque and aggregate replacement joins remain excluded even when both replacements
+have the same type. Copy specialization cannot admit an opaque original to these scalar joins.
+The [scalar branch proof](../tests/m7-generic-owned-scalar-phi/README.md) covers the concrete
+bool/i32 successor in single-module and imported generic Option/Result programs. No implicit
+drop or owner repair is inserted to reconcile unequal incoming states. A returning path does
+not constrain the state of the remaining continuing path.
 
 ## Loop-plan prerequisite
 
@@ -100,8 +107,10 @@ close lexical locals and loans before restoring exact incoming availability, own
 loan parents. Only scalar Copy binding identities may change. Direct returns need no backedge;
 the false path retains header values for post-loop continuation. Nested/repeated loops and lexical
 shadowing use the same replay. Opaque originals are checked before substitution, including unused
-functions; Copy specialization cannot hide an owner move. Borrowed mutable scalar roots, owner or
-aggregate header replacement, branch-dependent replacement, break/continue and unstructured CFG
+functions; Copy specialization cannot hide an owner move. Concrete bool/i32 branch joins also
+compose inside these scalar loops, retaining exact owner and loan state at joins and backedges.
+Borrowed mutable scalar roots, owner or aggregate header replacement, branch-dependent
+owner/aggregate replacement, break/continue and unstructured CFG
 remain excluded. Existing wire, layout, runtime, backend and public-profile contracts are unchanged.
 
 ## Target execution
@@ -208,8 +217,9 @@ These are private Linux execution proofs; they do not establish Windows generic 
 full supported-platform/runtime qualification.
 
 Full acceptance still requires nominal/container ownership and partial state, branch-dependent
-replacement/phi state and further loop-carried owner/aggregate state, remaining borrowed operations, canonical multi-error diagnostics, full status/trap/runtime
-qualification, provider parity, and supported-platform execution. This revision's Windows
+owner/aggregate replacement/phi state and further loop-carried owner/aggregate state, remaining
+borrowed operations, canonical multi-error diagnostics, full status/trap/runtime qualification,
+provider parity, and supported-platform execution. This revision's Windows
 validation occurs separately; older hosted Windows receipts do not qualify it. Driver/profile
 activation remains a distinct future decision. Keep historical plain-cloud N4009 cleanup
 failures separate from scoped init-style gates and record each exact tested revision.
