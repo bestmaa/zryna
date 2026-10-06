@@ -133,7 +133,7 @@ def main():
         for name in ('cargo','rustc'):
             resolved = Path(subprocess.check_output([str(rustup),'which','--toolchain','1.97.1',name],env=env,text=True).strip())
             state['compiler_tools'][name] = dict(path=str(resolved),sha256=SUPPORT.digest(resolved))
-        package = evidence/'package' 
+        package = evidence/'package'
         src = package/'src'
         src.mkdir(parents=True)
         for source in HERE.glob('*.rs'):
