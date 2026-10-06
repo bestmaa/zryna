@@ -67,6 +67,7 @@ fn genuine_copy_enum_key_credits_stop_at_the_frozen_first_extra_and_recover() {
                 write!(source, "if(flag){{v0={yes};}}else{{v0={no};}}").expect("source");
             }
             source.push_str("return 0;}");
+            let source = source.replace(';', ";\n");
             let result = claim(&[("main.zry", &source)]);
             if accepted {
                 result.expect("independent exact/recovery complete-key credit");
@@ -107,6 +108,7 @@ fn concrete_copy_enum_parameter_ceiling_counts_the_split_changed_union() {
                 }
             }
             source.push_str("}return 0;}");
+            let source = source.replace(';', ";\n");
             let result = claim(&[("main.zry", &source)]);
             if accepted {
                 result.expect("unchanged exact256/recovery");
