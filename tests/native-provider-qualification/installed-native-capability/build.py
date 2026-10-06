@@ -46,7 +46,9 @@ def snapshot(root):
         assert kind == 'blob' and stat.S_ISREG(info.st_mode)
         raw = path.read_bytes()
         assert hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest() == blob
-        assert bool(info.st_mode & 0o111) == (mode == '100755')
+        assert mode in ('100644', '100755')
+        if os.name != 'nt':
+            assert bool(info.st_mode & 0o111) == (mode == '100755')
         files[name.decode()] = {'bytes': len(raw), 'sha256': sha(raw), 'git_mode': mode, 'blob': blob}
     return {'head': git(root, 'rev-parse', 'HEAD'), 'tree': git(root, 'rev-parse', 'HEAD^{tree}'), 'files': files}
 
@@ -93,8 +95,12 @@ def image(raw, binding, platform):
     return {'bytes': len(raw), 'sha256': sha(raw), 'purpose_marker_count': 1}
 
 
-def build(source, output, target, cargo, platform):
-    assert platform == 'linux', 'this saved-environment builder is pinned only for Linux GNU; Windows proof is blocked pending an independently pinned Windows/MSVC runner'
+def build(source, output, target, cargo, platform, windows_profile=None):
+    assert platform in TARGETS
+    if platform == 'win32':
+        from windows_build import environment, verify_profile
+        assert os.name == 'nt' and windows_profile is not None
+        verify_profile(windows_profile)
     before = snapshot(source)
     output.mkdir(mode=0o700)
     license_bytes = (source / 'LICENSE').read_bytes()
@@ -124,22 +130,27 @@ def build(source, output, target, cargo, platform):
            'CARGO_PROFILE_DEV_OPT_LEVEL': '1',
            'CARGO_INCREMENTAL': '0', 'CARGO_BUILD_JOBS': '2',
            'LANG': 'C', 'LC_ALL': 'C', 'HOME': str(output), 'TMPDIR': str(output)}
+    if platform == 'win32':
+        env = environment(windows_profile, output, target)
     # The caller supplies a pinned toolchain root; Windows keeps only documented OS variables.
     for key in ['SYSTEMROOT', 'SystemRoot', 'WINDIR', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP', 'INCLUDE', 'LIB', 'LIBPATH']:
-        if key in os.environ:
+        if platform == 'linux' and key in os.environ:
             env[key] = os.environ[key]
     command(output, 'pinned-cargo-version', [cargo, '-V'], package, env, source)
     assert (output / 'pinned-cargo-version.stdout').read_text().startswith('cargo 1.97.1 ')
-    rustc = pathlib.Path(cargo).with_name('rustc')
+    rustc = pathlib.Path(windows_profile['tools']['rustc']['path']) if platform == 'win32' else pathlib.Path(cargo).with_name('rustc')
+    rustup = pathlib.Path(windows_profile['tools']['rustup']['path']) if platform == 'win32' else pathlib.Path(cargo).with_name('rustup')
     command(output, 'pinned-rustc-version', [str(rustc), '-vV'], package, env, source)
     version_text = (output / 'pinned-rustc-version.stdout').read_text()
-    assert '\nrelease: 1.97.1\n' in version_text and '\nhost: x86_64-unknown-linux-gnu\n' in version_text
-    command(output, 'actual-rustc-path', [str(pathlib.Path(cargo).with_name('rustup')), 'which', 'rustc'], package, env, source)
+    assert '\nrelease: 1.97.1\n' in version_text and '\nhost: ' + TARGETS[platform][0] + '\n' in version_text
+    command(output, 'actual-rustc-path', [str(rustup), 'which', 'rustc'], package, env, source)
     actual_rustc = pathlib.Path((output / 'actual-rustc-path.stdout').read_text().strip())
-    command(output, 'actual-cargo-path', [str(pathlib.Path(cargo).with_name('rustup')), 'which', 'cargo'], package, env, source)
+    command(output, 'actual-cargo-path', [str(rustup), 'which', 'cargo'], package, env, source)
     actual_cargo = pathlib.Path((output / 'actual-cargo-path.stdout').read_text().strip())
     tools = {str(path): {'bytes': path.stat().st_size, 'sha256': sha(path.read_bytes())}
-             for path in [pathlib.Path(cargo), rustc, pathlib.Path(cargo).with_name('rustup'), actual_rustc, actual_cargo]}
+             for path in [pathlib.Path(cargo), rustc, rustup, actual_rustc, actual_cargo]}
+    if platform == 'win32':
+        assert pathlib.Path(cargo) == actual_cargo and rustc == actual_rustc
     write(output / 'pinned-tool-identities.json', json.dumps(tools, indent=2).encode() + b'\n')
     command(output, 'generate-proof-lock', [cargo, 'generate-lockfile', '--offline', '--manifest-path', str(package / 'Cargo.toml')], package, env, source)
     root_packages = tomllib.loads((source / 'Cargo.lock').read_text())['package']
@@ -166,6 +177,9 @@ def build(source, output, target, cargo, platform):
               'descriptor_bytes': len(payload), 'descriptor_sha256': sha(payload),
               'license_sha256': sha(license_bytes), 'platform': platform,
               'dependencies_match_committed_lock': True, 'compiler_or_public_default_acceptance': False}
+    if platform == 'win32':
+        verify_profile(windows_profile)
+        result['windows_toolchain'] = windows_profile
     write(output / 'build-receipt.json', json.dumps(result, indent=2).encode() + b'\n')
     assert snapshot(source) == before
     return result

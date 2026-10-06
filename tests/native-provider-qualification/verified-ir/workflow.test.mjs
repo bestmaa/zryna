@@ -68,6 +68,15 @@ const steps = [
       'if-no-files-found': 'error', 'retention-days': 7,
     },
   },
+  {
+    name: 'Preserve original unadmitted IR diagnostic bytes', if: 'always()',
+    uses: 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
+    with: {
+      name: 'unadmitted-original-ir-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}',
+      path: '${{ runner.temp }}/private-verified-ir-proof',
+      'include-hidden-files': true, 'if-no-files-found': 'error', 'retention-days': 7,
+    },
+  },
 ];
 const expectedCli = structuredClone(baseline);
 expectedCli.steps.find((step) => step.uses?.startsWith('dtolnay/rust-toolchain@'))
@@ -85,6 +94,7 @@ const capabilityAdmission = {
 };
 export const currentIrJob = {
   name: 'private complete IR (${{ matrix.os }})',
+  needs: 'private-ir-contract-controls',
   'timeout-minutes': expectedCli['timeout-minutes'],
   strategy: structuredClone(expectedCli.strategy),
   'runs-on': expectedCli['runs-on'],
@@ -92,7 +102,15 @@ export const currentIrJob = {
   steps: [...setup, {
     name: 'Verify current tool capability controls',
     run: 'python -B tests/native-provider-qualification/verified-ir/tool_capability_test.py',
-  }, ...steps.slice(0, 3), capabilityAdmission, ...steps.slice(3)],
+  }, ...steps.slice(1, 3), capabilityAdmission, ...steps.slice(3)],
+};
+export const currentIrControlsJob = {
+  name: 'independent complete IR contracts (${{ matrix.os }})',
+  'timeout-minutes': expectedCli['timeout-minutes'],
+  strategy: structuredClone(expectedCli.strategy),
+  'runs-on': expectedCli['runs-on'],
+  env: structuredClone(expectedCli.env),
+  steps: [...setup.slice(0, 5), steps[0]],
 };
 const verify = (job) => assert.deepEqual(job, currentIrJob);
 
@@ -101,31 +119,49 @@ test('dedicated IR job retains every original proof step and host requirement', 
   verify(JSON.parse(readFileSync(new URL('./current-ir-workflow-job.json', import.meta.url), 'utf8')));
 });
 
+test('independent complete IR contract job preserves the unchanged source-only suite', () => {
+  assert.deepEqual(workflow.jobs['private-ir-contract-controls'], currentIrControlsJob);
+  assert.deepEqual(JSON.parse(readFileSync(new URL('./ir-contract-controls-workflow-job.json', import.meta.url), 'utf8')), currentIrControlsJob);
+  assert.equal(currentIrJob.needs, 'private-ir-contract-controls');
+  assert.deepEqual(currentIrControlsJob.steps.at(-1), steps[0]);
+  for (const changed of [
+    { ...currentIrJob, needs: undefined },
+    { ...currentIrJob, needs: [] },
+  ]) assert.throws(() => verify(changed));
+});
+
 test('CLI job preserves every qualified H5 command and its original time bound', () => {
   assert.deepEqual(workflow.jobs['private-cli'], expectedCli);
   assert.deepEqual(JSON.parse(readFileSync(new URL('../../native-cli-smoke/workflow-job.json', import.meta.url), 'utf8')), expectedCli);
 });
 
 test('dedicated IR job rejects omitted proof, controls, host, pin and archive requirements', () => {
-  const insertion = setup.length + 1;
+  const index = (name) => currentIrJob.steps.findIndex((step) => step.name === name);
+  const producer = index('Run complete sealed IR observations');
+  const admission = index('Require independent current sealed IR admission');
+  const upload = index('Preserve complete sealed IR observations');
   const mutations = [
-    (job) => job.steps.splice(insertion, 1),
+    (job) => job.steps.splice(producer, 1),
     (job) => job.steps.splice(setup.length, 1),
-    (job) => { job.steps[insertion + 1].run = job.steps[insertion + 1].run.replace('--rustup "$rustup"', ''); },
-    (job) => { job.steps[insertion + 1].if = "matrix.os == 'ubuntu-latest'"; },
-    (job) => job.steps.splice(insertion + 3, 1),
-    (job) => { job.steps[insertion + 4].run = job.steps[insertion + 4].run.replace(' --live', ''); },
-    (job) => { job.steps[insertion + 4].run = job.steps[insertion + 4].run.replace(' --run-attempt "$env:GITHUB_RUN_ATTEMPT"', ''); },
-    (job) => { job.steps[insertion + 6].with.path = '${{ runner.temp }}/private-verified-ir-proof'; },
-    (job) => { job.steps[insertion + 6].uses = 'actions/upload-artifact@main'; },
-    (job) => { job.steps[insertion + 6].with['if-no-files-found'] = 'ignore'; },
-    (job) => { job.steps[insertion + 6].if = 'success()'; },
+    (job) => { job.steps[producer].run = job.steps[producer].run.replace('--rustup "$rustup"', ''); },
+    (job) => { job.steps[producer].if = "matrix.os == 'ubuntu-latest'"; },
+    (job) => job.steps.splice(index('Verify current tool capability admission controls'), 1),
+    (job) => { job.steps[admission].run = job.steps[admission].run.replace(' --live', ''); },
+    (job) => { job.steps[admission].run = job.steps[admission].run.replace(' --run-attempt "$env:GITHUB_RUN_ATTEMPT"', ''); },
+    (job) => { job.steps[upload].with.path = '${{ runner.temp }}/private-verified-ir-proof'; },
+    (job) => { job.steps[upload].uses = 'actions/upload-artifact@main'; },
+    (job) => { job.steps[upload].with['if-no-files-found'] = 'ignore'; },
+    (job) => { job.steps[upload].if = 'success()'; },
     (job) => { job.steps[1].with.components = 'clippy'; },
     (job) => { job.steps[2].with['node-version'] = '22'; },
     (job) => { job.steps[3].with.version = 'latest'; },
     (job) => { job.strategy.matrix.os = ['ubuntu-latest']; },
     (job) => { job['timeout-minutes'] = 90; },
     (job) => { job.steps[4].run = 'pnpm install'; },
+    (job) => { job.needs = undefined; },
+    (job) => job.steps.pop(),
+    (job) => { job.steps.at(-1).if = 'success()'; },
+    (job) => { job.steps.at(-1).with['include-hidden-files'] = false; },
   ];
   for (const mutate of mutations) {
     const changed = structuredClone(currentIrJob);

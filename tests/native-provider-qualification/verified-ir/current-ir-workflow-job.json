@@ -1,5 +1,6 @@
 {
   "name": "private complete IR (${{ matrix.os }})",
+  "needs": "private-ir-contract-controls",
   "timeout-minutes": "${{ matrix.os == 'windows-latest' && 60 || 40 }}",
   "strategy": {
     "fail-fast": false,
@@ -54,11 +55,6 @@
       "run": "python -B tests/native-provider-qualification/verified-ir/tool_capability_test.py"
     },
     {
-      "name": "Verify complete IR workflow and archive controls",
-      "shell": "pwsh",
-      "run": "node --test tests/native-provider-activation-workflow.test.mjs\nif ($LASTEXITCODE -ne 0) { throw 'Complete IR workflow contract failed' }\npython -B tests/native-provider-qualification/verified-ir/archive_test.py\nif ($LASTEXITCODE -ne 0) { throw 'Complete IR archive controls failed' }\n"
-    },
-    {
       "name": "Run complete sealed IR observations",
       "shell": "pwsh",
       "run": "$cargo = (Get-Command cargo).Source\n$rustup = (Get-Command rustup).Source\n$node = (Get-Command node).Source\npython -B tests/native-provider-qualification/verified-ir/run.py --evidence-dir \"$env:RUNNER_TEMP/private-verified-ir-proof\" --baseline-dir \"$env:GITHUB_WORKSPACE/tests/native-provider-qualification/verified-ir/baseline-H4\" --cargo \"$cargo\" --rustup \"$rustup\" --node \"$node\" --target-dir \"$env:RUNNER_TEMP/private-verified-ir-target\"\nif ($LASTEXITCODE -ne 0) { throw 'Complete sealed IR proof failed' }\n"
@@ -90,6 +86,18 @@
       "with": {
         "name": "private-verified-ir-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}",
         "path": "${{ runner.temp }}/private-verified-ir-proof.zip",
+        "if-no-files-found": "error",
+        "retention-days": 7
+      }
+    },
+    {
+      "name": "Preserve original unadmitted IR diagnostic bytes",
+      "if": "always()",
+      "uses": "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+      "with": {
+        "name": "unadmitted-original-ir-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}",
+        "path": "${{ runner.temp }}/private-verified-ir-proof",
+        "include-hidden-files": true,
         "if-no-files-found": "error",
         "retention-days": 7
       }

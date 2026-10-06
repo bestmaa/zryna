@@ -22,6 +22,16 @@ OWNED = (
     'tests/native-provider-qualification/installed-native-capability/probe.rs',
     'tests/native-provider-qualification/installed-native-capability/run.py',
     'tests/native-provider-qualification/installed-native-capability/source_registration_test.py',
+    'tests/native-provider-qualification/installed-native-capability/windows_build.py',
+    'tests/native-provider-qualification/installed-native-capability/windows_build_test.py',
+    'tests/native-provider-qualification/installed-native-capability/toolchain.py',
+    'tests/native-provider-qualification/installed-native-capability/ci.py',
+    'tests/native-provider-qualification/installed-native-capability/admission.py',
+    'tests/native-provider-qualification/installed-native-capability/admission_build.py',
+    'tests/native-provider-qualification/installed-native-capability/admission_test.py',
+    'tests/native-provider-qualification/installed-native-capability/admission_original_controls.py',
+    'tests/native-provider-qualification/installed-native-capability/windows-workflow.test.mjs',
+    'tests/native-provider-qualification/installed-native-capability/windows-workflow-job.json',
 )
 
 

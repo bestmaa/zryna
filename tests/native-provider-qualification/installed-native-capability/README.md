@@ -40,11 +40,31 @@ python3 -B tests/native-provider-qualification/installed-native-capability/run.p
   --cargo /absolute/toolchain-root/cargo/bin/cargo
 ```
 
-This builder explicitly supports only that Linux GNU layout and records actual pinned
-Cargo/Rust versions, resolved tool paths and byte identities. A Windows/MSVC installation
-execution proof is blocked until an independently pinned runner exists on that host.
+The Linux route retains that GNU layout and actual Cargo/Rust versions, resolved tool paths
+and byte identities. A dedicated private Windows job runs `ci.py` on `windows-2022`, with
+Rust/Cargo 1.97.1 resolved through rustup and Python 3.12.10 checked against the actual
+interpreter. It captures the selected VS2022/MSVC and Windows SDK versions and paths,
+retains the actual tools and four named core SDK library inputs, and compares their bytes
+before and after compilation. These are exact per-run observations and pins; neither the
+runner label nor these observations establish upstream supplier byte authority or the
+entire DLL/header/SDK input closure. Identity observations before and after are sampled
+checks, not an atomic execution guarantee. Missing or changed tools fail closed. Windows Git blob/mode
+authority is checked without inferring POSIX executable bits from Windows metadata.
 The private probe uses optimization level 1, debug information off and 16 codegen units;
 the original build receipts retain that actual configuration. Public build profiles are unchanged.
+
+The Windows job independently admits the original build, command streams, image bytes,
+source census and all fifty selection dispositions. It also retains the actual descriptor
+unit executable. The number of probe invocations is derived from originals: a denied
+pre-mutation setup does not fabricate a candidate invocation. Both unchanged OS prevention
+and partial setup failures leave qualification incomplete, with exit 2 from admission.
+Raw always-uploaded evidence has a distinct `unadmitted-` name and does not grant admission.
+
+The independent source-only complete-IR workflow and 37 archive model controls run in a
+separate required job. All real producer and 28+13 admission controls, their real baselines,
+original proof integrity, final live admission and closed archive remain mandatory. Windows
+jobs retain their 60-minute bound; the Linux bound remains 40 minutes. No prior cancelled
+proof is rerun or recreated, and no diagnostic upload substitutes for the admitted archive.
 
 The installed consumer runs with an empty PATH and without Node, npm, pnpm, Cargo or Rust
 runtime hooks. Building the probe requires the pinned Rust toolchain and source; consuming

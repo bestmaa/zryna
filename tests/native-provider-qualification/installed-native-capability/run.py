@@ -93,7 +93,25 @@ def proof(source, output, built, platform):
             executable = relocated / TARGETS[platform][1]
             authenticate(executable, selected, receipt['binding'], platform)
         if phase == 'pre-capture':
-            executable = pre_mutation(case_id, install, project, backups, executable)
+            before_mutation = tree(case / 'live')
+            try:
+                executable = pre_mutation(case_id, install, project, backups, executable)
+            except OSError as error:
+                after_mutation = tree(case / 'live')
+                journal = {'case': case_id, 'status': 'blocked-pre-mutation-setup',
+                           'error': {'type': type(error).__name__, 'errno': error.errno,
+                                     'winerror': getattr(error, 'winerror', None), 'message': str(error)},
+                           'before': before_mutation, 'after': after_mutation,
+                           'original_tree_unchanged': before_mutation == after_mutation,
+                           'baseline_passed': baseline is not None,
+                           'probe_executed_after_mutation': False}
+                write(case / 'blocked-pre-mutation-setup.json', json.dumps(journal, indent=2).encode() + b'\n')
+                results.append({'id': unique_id or case_id, 'scenario': case_id,
+                                'status': 'blocked-pre-mutation-setup', 'protocol': protocol,
+                                'baseline_passed': baseline is not None,
+                                'setup_journal': 'blocked-pre-mutation-setup.json'})
+                shutil.rmtree(case / 'live')
+                return
             if case_id in ('installation-parent-link', 'executable-hardlink'):
                 try:
                     authenticate(executable, selected, receipt['binding'], platform)
@@ -112,7 +130,13 @@ def proof(source, output, built, platform):
                         case_id if phase in ('after-capture', 'after-source-capture') or case_id.startswith('callback-') or case_id in ('non-frozen-request', 'wrong-package-identity') else 'positive',
                         protocol, env_override)
         mutation = record['result'].get('mutation')
-        if observe:
+        if record['result']['status'] == 'setup-failed':
+            assert record['exit'] == 3 and record['result']['phase'] in ('probe-setup', 'mutation-setup')
+            status = 'blocked-runtime-mutation-setup'
+        elif mutation and mutation.get('effective') is False:
+            assert record['exit'] in (0, 2)
+            status = 'blocked-effective-mutation; observed-OS-prevention'
+        elif observe:
             status = 'observed-owning-package-contract'
             assert record['exit'] in (0, 2)
             assert mutation and mutation['id'] == case_id and mutation['effective'] is True
@@ -121,9 +145,6 @@ def proof(source, output, built, platform):
             else:
                 assert record['result']['status'] == 'rejected' and record['result']['phase'] == 'syntax-verification'
                 assert record['result']['diagnostics'] and all(row['code'] == 'ZRYNA-P4004' for row in record['result']['diagnostics'])
-        elif mutation and mutation.get('effective') is False:
-            assert record['exit'] in (0, 2)
-            status = 'blocked-effective-mutation; observed-OS-prevention'
         elif expected_reject or phase or full_m2 or unprepared or case_id.startswith('callback-'):
             assert record['exit'] == 2 and record['result']['status'] == 'rejected', case_id
             expected_phase = {'pre-capture': 'installation-capture',
@@ -183,7 +204,10 @@ def proof(source, output, built, platform):
         else:
             raise AssertionError(case_id)
     assert snapshot(source) == before and sha((built / 'prepared-image').read_bytes()) == sha(original)
-    result = {'status': 'passed-bounded-private-installation-proof', 'head': before['head'], 'tree': before['tree'],
+    blocked = sum(row['status'].startswith('blocked-') for row in results)
+    result = {'status': 'incomplete-bounded-private-installation-proof' if blocked else 'passed-bounded-private-installation-proof',
+              'blocked_selections': blocked, 'qualification_complete': blocked == 0,
+              'head': before['head'], 'tree': before['tree'],
               'source_before': before, 'source_after': snapshot(source), 'cases': results,
               'prepared_image': receipt['prepared_image'], 'unprepared_image': receipt['unprepared_image'],
               'shared_actual_original_image_bytes_retained': str(built / 'prepared-image'),
@@ -196,7 +220,9 @@ def proof(source, output, built, platform):
                                       'separately_frozen': True, 'full_M2_credit': False},
               'running_image_versus_installed_path': 'mapped to executable-path-replaced-identical-bytes; no extra independently executed case',
               'late_mutated_invalid_syntax': 'not exercised by this bounded run',
-              'Windows_execution_credit': platform == 'win32', 'OS_denied_mutations_separate': True,
+              'Windows_execution_credit': platform == 'win32',
+              'Windows_execution_credit_scope': 'host execution only; complete qualification requires independent admission',
+              'OS_denied_mutations_separate': True,
               'ephemeral_fixture_cleanup': 'only stopped copied fixtures after full retained byte/state journals and verified original image recovery; no source/evidence/cache deletion',
               'completed_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}
     write(output / 'receipt.json', json.dumps(result, indent=2).encode() + b'\n')
@@ -209,9 +235,11 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=pathlib.Path, required=True)
     parser.add_argument('--target', type=pathlib.Path, required=True)
     parser.add_argument('--cargo', required=True)
+    parser.add_argument('--windows-profile', type=pathlib.Path)
     args = parser.parse_args()
     assert sys.platform in TARGETS
     args.output.mkdir(mode=0o700)
-    build(args.source, args.output / 'build', args.target, args.cargo, sys.platform)
+    profile = json.loads(args.windows_profile.read_bytes()) if args.windows_profile else None
+    build(args.source, args.output / 'build', args.target, args.cargo, sys.platform, profile)
     result = proof(args.source, args.output / 'cases', args.output / 'build', sys.platform)
     print(json.dumps({'status': result['status'], 'cases': len(result['cases']), 'head': result['head'], 'ordinary_no_Node_acceptance': False}))
