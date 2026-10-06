@@ -25,6 +25,10 @@ mod nested_resources;
 #[cfg(test)]
 mod resources;
 #[cfg(test)]
+mod scalar_phi;
+#[cfg(test)]
+mod scalar_phi_frozen;
+#[cfg(test)]
 mod tests;
 /// Complete discovery issued only after original ownership checking, before closed layout work.
 /// ```compile_fail

@@ -170,11 +170,10 @@ fn opaque_branch_moves_are_checked_before_copy_substitution_in_used_and_unused_o
 }
 
 #[test]
-fn unequal_loan_states_and_branch_replacement_fail_without_implicit_repair() {
+fn unequal_loan_states_and_owned_branch_replacement_fail_without_implicit_repair() {
     for body in [
         "const item:String=\"α\"; const view:Borrow<String> =borrow(item); if(flag) { view; } return input;",
         "let item:String=\"α\"; if(flag) { item=\"yes\"; } else { item=\"no\"; } return input;",
-        "let item:i32=input; if(flag) { item=8; } return item;",
     ] {
         let source = format!("export function root(flag:bool,input:i32):i32 {{ {body} }}");
         let Failure::Diagnostics(errors) =

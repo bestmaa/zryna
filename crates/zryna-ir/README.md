@@ -255,3 +255,14 @@ layout-derived empty owned/loan/drop effects and unchanged scalar ABI verificati
 program has an internal JavaScript consumer. It rejects owned values, loans, mutable control flow
 and nominal original declarations. These remaining obligations still prevent full #416 acceptance;
 the two earlier validation entrypoints retain their original partial-contract behavior.
+
+The separate private `generic_v1::owned_v2` lane authenticates original source,
+closed typed CFGs and independently replayed owner/loan/cleanup plans. Its structured
+source builder joins continuing mutable concrete bool/i32 replacements through
+existing block parameters and edge operands. Every continuing arm still agrees on
+the exact incoming owner and loan state; opaque and owned replacement joins remain
+excluded. Sparse scalar changes, copied type keys, parameters and edge operands
+are charged before allocation against the unchanged source-state and parameter
+ceilings. The [fixed scalar branch proof](../../tests/m7-generic-owned-scalar-phi/README.md)
+covers source replay separately from a hand-authored typed graph and fault cleanup.
+No public profile or new wire/opcode/runtime authority is selected by this lane.

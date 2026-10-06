@@ -256,6 +256,9 @@ mod clone_tests;
 #[path = "plan/loops.rs"]
 mod loop_tests;
 #[cfg(test)]
+#[path = "plan/scalar_phi.rs"]
+mod scalar_phi_tests;
+#[cfg(test)]
 #[path = "plan/tests.rs"]
 mod tests;
 #[cfg(test)]

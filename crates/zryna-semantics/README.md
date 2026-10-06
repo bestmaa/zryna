@@ -306,4 +306,15 @@ a general expression-level match implementation. No runtime, backend, driver, CL
 claims from complete closed semantic discovery and the retained original bodies. It verifies
 complete type-key equality with successor layouts; the output must still cross the separately
 versioned wire decoder and independent source/ownership/ABI issuer before JavaScript emission.
-Owned, loan, mutable CFG and nominal-source replay remain unfinished under #416.
+Complete owned, loan, mutable CFG and nominal-source replay remain unfinished under #416.
+
+The separate private `owned_v2` source lane admits finite Option/Result execution,
+exact ownership and loans, and concrete mutable bool/i32 control flow. Continuing
+structured branches now join changed concrete scalar places with typed block
+parameters, including an unchanged arm, early return, nested branches and branches
+inside scalar loops. Original opaque generic owners and all owner/loan states still
+require exact agreement; this does not admit owned or opaque replacement joins.
+The [fixed scalar branch proof](../../tests/m7-generic-owned-scalar-phi/README.md)
+documents genuine single/imported source, hostile bytes/IR, unchanged resource
+ceilings and actual JS/core-Wasm/Linux-native cleanup. These private proofs do not
+activate a provider, driver, manifest or public profile, or complete #416 acceptance.

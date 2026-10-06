@@ -1,4 +1,5 @@
-//! Structured no-phi branches: original opaque states must agree without owner repair.
+//! Structured scalar joins: original opaque ownership must agree without owner repair.
+use super::phi::Output;
 use super::{Builder, Closed, Failure, raw, reject, reserve};
 use zryna_source::UntrustedSpan;
 
@@ -43,23 +44,15 @@ impl Builder<'_, '_> {
                 false
             };
             if !returned {
-                // No phi is issued by this slice. An incoming lexical binding must keep its
-                // exact place identity, even if both arms replace it with the same type.
-                if self.locals.iter().zip(&saved).any(|(a, b)| a.value.id != b.value.id) {
-                    return Err(self.locate(
-                        super::owners::ownership(
-                            "branch replacement requires a separate phi proof",
-                        ),
-                        span,
-                    ));
-                }
+                let changes = self.scalar_changes(&saved, span)?;
                 self.charge_branch_state()?;
-                outputs.push((
-                    self.block,
-                    self.alive[..saved_alive.len()].to_vec(),
-                    self.loans.clone(),
-                    self.loan_parents.clone(),
-                ));
+                outputs.push(Output {
+                    block: self.block,
+                    alive: self.alive[..saved_alive.len()].to_vec(),
+                    loans: self.loans.clone(),
+                    parents: self.loan_parents.clone(),
+                    changes,
+                });
             }
         }
         self.blocks[entry].span = span;
@@ -70,28 +63,32 @@ impl Builder<'_, '_> {
         };
         self.locals = saved;
         self.scope_start = prior_scope;
-        let Some((_, alive, loans, parents)) = outputs.first() else {
+        let Some(first) = outputs.first() else {
             // Both arms return directly. There is no unreachable join block or return phi.
             return Ok(true);
         };
-        if outputs.iter().any(|(_, a, l, p)| a != alive || l != loans || p != parents) {
+        if outputs
+            .iter()
+            .any(|o| o.alive != first.alive || o.loans != first.loans || o.parents != first.parents)
+        {
             return Err(self.locate(
                 super::owners::ownership("owner/loan state differs at structured branch join"),
                 span,
             ));
         }
         self.charge_branch_state()?;
-        self.alive.clone_from(alive);
+        self.alive.clone_from(&first.alive);
         self.alive.resize(self.next as usize, false);
-        self.loans.clone_from(loans);
-        self.loan_parents.clone_from(parents);
+        self.loans.clone_from(&first.loans);
+        self.loan_parents.clone_from(&first.parents);
         self.block = self.new_block(span)?;
-        for (block, ..) in outputs {
-            self.blocks[block].terminator = raw::Terminator::Jump(raw::Edge {
+        for output in &outputs {
+            self.blocks[output.block].terminator = raw::Terminator::Jump(raw::Edge {
                 target: u32::try_from(self.block).map_err(|_| Failure::InternalFailure)?,
                 arguments: Vec::new(),
             });
         }
+        self.scalar_join(&outputs)?;
         Ok(false)
     }
 
