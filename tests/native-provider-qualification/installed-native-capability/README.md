@@ -40,6 +40,10 @@ python3 -B tests/native-provider-qualification/installed-native-capability/run.p
   --cargo /absolute/toolchain-root/cargo/bin/cargo
 ```
 
+This builder explicitly supports only that Linux GNU layout and records actual pinned
+Cargo/Rust versions, resolved tool paths and byte identities. A Windows/MSVC installation
+execution proof is blocked until an independently pinned runner exists on that host.
+
 The installed consumer runs with an empty PATH and without Node, npm, pnpm, Cargo or Rust
 runtime hooks. Building the probe requires the pinned Rust toolchain and source; consuming
 the resulting private installation does not require a compiler checkout. This proves only

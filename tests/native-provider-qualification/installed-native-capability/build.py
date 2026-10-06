@@ -91,6 +91,7 @@ def image(raw, binding, platform):
 
 
 def build(source, output, target, cargo, platform):
+    assert platform == 'linux', 'this saved-environment builder is pinned only for Linux GNU; Windows proof is blocked pending an independently pinned Windows/MSVC runner'
     before = snapshot(source)
     output.mkdir(mode=0o700)
     license_bytes = (source / 'LICENSE').read_bytes()
@@ -123,6 +124,19 @@ def build(source, output, target, cargo, platform):
     for key in ['SYSTEMROOT', 'SystemRoot', 'WINDIR', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP', 'INCLUDE', 'LIB', 'LIBPATH']:
         if key in os.environ:
             env[key] = os.environ[key]
+    command(output, 'pinned-cargo-version', [cargo, '-V'], package, env, source)
+    assert (output / 'pinned-cargo-version.stdout').read_text().startswith('cargo 1.97.1 ')
+    rustc = pathlib.Path(cargo).with_name('rustc')
+    command(output, 'pinned-rustc-version', [str(rustc), '-vV'], package, env, source)
+    version_text = (output / 'pinned-rustc-version.stdout').read_text()
+    assert '\nrelease: 1.97.1\n' in version_text and '\nhost: x86_64-unknown-linux-gnu\n' in version_text
+    command(output, 'actual-rustc-path', [str(pathlib.Path(cargo).with_name('rustup')), 'which', 'rustc'], package, env, source)
+    actual_rustc = pathlib.Path((output / 'actual-rustc-path.stdout').read_text().strip())
+    command(output, 'actual-cargo-path', [str(pathlib.Path(cargo).with_name('rustup')), 'which', 'cargo'], package, env, source)
+    actual_cargo = pathlib.Path((output / 'actual-cargo-path.stdout').read_text().strip())
+    tools = {str(path): {'bytes': path.stat().st_size, 'sha256': sha(path.read_bytes())}
+             for path in [pathlib.Path(cargo), rustc, pathlib.Path(cargo).with_name('rustup'), actual_rustc, actual_cargo]}
+    write(output / 'pinned-tool-identities.json', json.dumps(tools, indent=2).encode() + b'\n')
     command(output, 'generate-proof-lock', [cargo, 'generate-lockfile', '--offline', '--manifest-path', str(package / 'Cargo.toml')], package, env, source)
     root_packages = tomllib.loads((source / 'Cargo.lock').read_text())['package']
     actual_packages = tomllib.loads((package / 'Cargo.lock').read_text())['package']

@@ -114,6 +114,12 @@ def proof(source, output, built, platform):
         if observe:
             status = 'observed-owning-package-contract'
             assert record['exit'] in (0, 2)
+            assert mutation and mutation['id'] == case_id and mutation['effective'] is True
+            if record['exit'] == 0:
+                assert record['result']['status'] == 'verified' and record['result']['summary'] == expected_summary(source, protocol)
+            else:
+                assert record['result']['status'] == 'rejected' and record['result']['phase'] == 'syntax-verification'
+                assert record['result']['diagnostics'] and all(row['code'] == 'ZRYNA-P4004' for row in record['result']['diagnostics'])
         elif mutation and mutation.get('effective') is False:
             assert record['exit'] in (0, 2)
             status = 'blocked-effective-mutation; observed-OS-prevention'
