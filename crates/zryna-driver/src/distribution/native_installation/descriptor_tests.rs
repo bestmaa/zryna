@@ -33,8 +33,8 @@ fn bytes(value: &Value) -> Vec<u8> {
     result
 }
 
-fn rejected(value: Value) {
-    assert!(Descriptor::parse(&bytes(&value), &binding()).is_err());
+fn rejected(value: &Value) {
+    assert!(Descriptor::parse(&bytes(value), &binding()).is_err());
 }
 
 fn noncanonical_rejected(raw: &[u8]) {
@@ -58,21 +58,21 @@ fn independent_duplicate_key_rejected() {
 fn independent_unknown_top_field_rejected() {
     let mut value = positive();
     value["runtime"] = json!("node");
-    rejected(value);
+    rejected(&value);
 }
 
 #[test]
 fn independent_unknown_source_field_rejected() {
     let mut value = positive();
     value["source"]["authenticated"] = json!(true);
-    rejected(value);
+    rejected(&value);
 }
 
 #[test]
 fn independent_missing_field_rejected() {
     let mut value = positive();
     value.as_object_mut().expect("object").remove("license_sha256");
-    rejected(value);
+    rejected(&value);
 }
 
 #[test]
@@ -157,7 +157,7 @@ macro_rules! top_case {
         fn $name() {
             let mut value = positive();
             value[$key] = json!($value);
-            rejected(value);
+            rejected(&value);
         }
     };
 }
@@ -184,26 +184,26 @@ fn independent_foreign_host_target_rejected() {
     let mut value = positive();
     value["target"] =
         json!(if cfg!(windows) { "x86_64-unknown-linux-gnu" } else { "x86_64-pc-windows-msvc" });
-    rejected(value);
+    rejected(&value);
 }
 
 #[test]
 fn independent_foreign_repository_rejected() {
     let mut value = positive();
     value["source"]["repository"] = json!("https://example.invalid/zryna");
-    rejected(value);
+    rejected(&value);
 }
 
 #[test]
 fn independent_wrong_commit_rejected() {
     let mut value = positive();
     value["source"]["commit"] = json!(TREE);
-    rejected(value);
+    rejected(&value);
 }
 
 #[test]
 fn independent_wrong_tree_rejected() {
     let mut value = positive();
     value["source"]["tree"] = json!(COMMIT);
-    rejected(value);
+    rejected(&value);
 }
