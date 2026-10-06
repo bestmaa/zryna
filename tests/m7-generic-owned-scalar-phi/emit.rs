@@ -90,8 +90,8 @@ fn main() {
             zryna_backend_javascript::generic_owned_v2::emit(&p).expect("repeat JS").source
         );
         assert_eq!(
-            wasm.bytes,
-            zryna_backend_webassembly::generic_owned_v2::emit(&p).expect("repeat Wasm").bytes
+            wasm.bytes(),
+            zryna_backend_webassembly::generic_owned_v2::emit(&p).expect("repeat Wasm").bytes()
         );
         std::fs::write(out.join(format!("{cross}.o")), native.bytes()).expect("ELF evidence");
         std::fs::write(out.join(format!("{cross}.mjs")), js.source).expect("JS evidence");
