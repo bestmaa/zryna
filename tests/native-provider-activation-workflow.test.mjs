@@ -371,6 +371,35 @@ test('remaining frozen fault corpus has separate exact-head execution, admission
       + '-' + expression('github.run_id') + '-' + expression('github.run_attempt'));
 });
 
+test('seven accepted BUILD closures require both-host controls, execution, live admission and archive', () => {
+  const steps = workflow.jobs['private-cli'].steps;
+  const index = steps.findIndex((s) => s.name === 'Verify independent seven-source manifest controls');
+  assert(index > 0);
+  assert.equal(steps[index - 1].name, 'Require independently verified current CLI receipt');
+  assert.equal(steps[index].run, 'python -B tests/native-provider-qualification/production-manifests/verify_test.py');
+  assert.equal(steps[index + 1].name, 'Run seven accepted production manifest pairs');
+  assert.match(steps[index + 1].run, /production-manifests\/run\.py/u);
+  assert.match(steps[index + 1].run, /--cli-proof "\$env:RUNNER_TEMP\/private-cli-proof"/u);
+  assert.equal(steps[index + 2].name, 'Require independent seven-source manifest admission');
+  assert.match(steps[index + 2].run, /--platform "\$platform".*--live/u);
+  assert.match(steps[index + 2].run, /'win32'/u);
+  assert.equal(steps[index + 3].name, 'Preserve seven accepted production manifest pairs');
+  assert.equal(steps[index + 3].with.path, expression('runner.temp') + '/private-production-manifests');
+  assert.equal(steps[index + 3].with.name, 'private-production-manifests-'
+    + expression('matrix.os') + '-' + expression('env.CLI_SOURCE_SHA') + '-'
+    + expression('github.run_id') + '-' + expression('github.run_attempt'));
+  for (let offset = 0; offset < 3; offset++) assert.equal(steps[index + offset].if, undefined);
+  rejectMutations([
+    ['seven-source Windows skipped', (w) => { w.jobs['private-cli'].steps[index + 1].if = "matrix.os == 'ubuntu-latest'"; }],
+    ['live source binding omitted', (w) => {
+      w.jobs['private-cli'].steps[index + 2].run = w.jobs['private-cli'].steps[index + 2].run.replace(' --live', '');
+    }],
+    ['seven-source admission omitted', (w) => { w.jobs['private-cli'].steps.splice(index + 2, 1); }],
+    ['existing nine-source proof replaced', (w) => { w.jobs['private-cli'].steps.splice(index - 1, 1); }],
+    ['seven-source failure masked', (w) => { w.jobs['private-cli'].steps[index + 1].run += ' || true'; }],
+  ]);
+});
+
 test('physical allocation proof is Linux-only with independent execution, admission and archive', () => {
   const steps = workflow.jobs['private-cli'].steps;
   const index = steps.findIndex((s) => s.name === 'Verify independent physical allocation controls');
