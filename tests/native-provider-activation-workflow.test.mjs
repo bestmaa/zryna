@@ -458,3 +458,31 @@ test('complete source corpus freezes 33 BUILD and 36 diagnostic pairs on both ho
     }],
   ]);
 });
+
+test('three remaining M2 roots retain both-host controls, BUILD, admission and original ZIP', () => {
+  const steps = workflow.jobs['private-cli'].steps;
+  const index = steps.findIndex((s) => s.name === 'Verify independent three-root M2 manifest controls');
+  assert.ok(index > 0);
+  const base = 'tests/native-provider-qualification/production-m2-roots/';
+  assert.equal(steps[index].run, 'python -B ' + base + 'verify_test.py');
+  assert.equal(steps[index + 1].run, 'python -B ' + base + 'archive_test.py');
+  assert.match(steps[index + 2].run, /production-m2-roots\/run\.py/u);
+  assert.match(steps[index + 2].run, /--cli-proof "\$env:RUNNER_TEMP\/private-cli-proof"/u);
+  assert.match(steps[index + 3].run, /--platform "\$platform".*--live/u);
+  assert.match(steps[index + 4].run, /production-m2-roots\/archive\.py pack/u);
+  assert.equal(steps[index + 5].if, 'always()');
+  assert.equal(steps[index + 5].with.path, expression('runner.temp') + '/private-production-m2-roots.zip');
+  assert.equal(steps[index + 5].with.name, 'private-production-m2-roots-'
+    + expression('matrix.os') + '-' + expression('env.CLI_SOURCE_SHA') + '-'
+    + expression('github.run_id') + '-' + expression('github.run_attempt'));
+  for (const step of steps.slice(index, index + 5)) assert.equal(step.if, undefined);
+  rejectMutations([
+    ['Windows M2 roots skipped', (w) => { w.jobs['private-cli'].steps[index + 2].if = "matrix.os == 'ubuntu-latest'"; }],
+    ['M2 root controls omitted', (w) => { w.jobs['private-cli'].steps.splice(index, 1); }],
+    ['M2 root admission omitted', (w) => { w.jobs['private-cli'].steps.splice(index + 3, 1); }],
+    ['M2 archive failure masked', (w) => { w.jobs['private-cli'].steps[index + 4].run += ' || true'; }],
+    ['M2 original directory evidence lost', (w) => {
+      w.jobs['private-cli'].steps[index + 5].with.path = expression('runner.temp') + '/private-production-m2-roots';
+    }],
+  ]);
+});
