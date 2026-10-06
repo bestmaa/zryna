@@ -122,6 +122,13 @@ receipts use compact JSON within the same 2MiB bound; tamper controls must remai
 so a size rejection cannot masquerade as the intended mutation rejection. All capability records
 remain inside the original receipt, preserving the closed 393-file archive census.
 
+An open-handle rejection reports the original seven compared metadata fields, their exact
+differences, the Python implementation/version and any available birth-time observations.
+The bounded rejection report does not normalize timestamps or retry a failed comparison;
+regular-file, size, identity and before/after stability checks remain enforced. Separate
+thirteen diagnostic controls verify this report without crediting an unobserved Windows run. A report
+must identify the actual host discrepancy before any proposed cross-platform comparison repair.
+
 The dedicated current IR matrix job retains the original six IR proof steps and adds capability
 controls before live admission. The qualified CLI/corpus job retains its original commands. Both
 jobs retain the original 40-minute Linux and 60-minute Windows bounds, with pinned frozen setup

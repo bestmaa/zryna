@@ -6,6 +6,7 @@ they do not provide an atomic handle-relative executable sandbox.
 """
 from collections import deque
 import hashlib
+import json
 import ntpath
 import os
 from pathlib import Path, PurePosixPath, PureWindowsPath
@@ -168,6 +169,37 @@ def stable_handle(info):
             info.st_mtime_ns, info.st_ctime_ns, info.st_nlink)
 
 
+HANDLE_FIELDS = ('device', 'inode', 'file_type', 'bytes', 'mtime_ns', 'ctime_ns', 'links')
+
+
+def require_open_handle(opened, path_info):
+    left, right = stable_handle(opened), stable_handle(path_info)
+    regular = stat.S_ISREG(opened.st_mode)
+    bounded = opened.st_size <= MAX_BYTES
+    if regular and bounded and left == right:
+        return
+    # Diagnose the original predicate without relaxing, retrying or normalizing it.
+    # Values outside the stat field bound never expand a rejection log arbitrarily.
+    def value(item):
+        return item if type(item) is int and abs(item) < (1 << 128) else 'invalid-or-unbounded-integer'
+    def birthtime(info):
+        item = getattr(info, 'st_birthtime_ns', None)
+        return 'unavailable' if item is None else value(item)
+    implementation = sys.implementation.name
+    platform = sys.platform
+    detail = dict(format='zryna.tool-handle-rejection.v1',
+                  platform=platform if type(platform) is str and re.fullmatch(r'[a-z0-9_]{1,32}', platform) else 'unknown',
+                  python_implementation=implementation if type(implementation) is str and re.fullmatch(r'[a-z_]{1,32}', implementation) else 'unknown',
+                  python_version=[value(part) for part in sys.version_info[:3]],
+                  regular_handle=regular, within_byte_limit=bounded, metadata_equal=left == right,
+                  byte_limit=MAX_BYTES,
+                  observed_birthtime_ns=dict(opened=birthtime(opened), path=birthtime(path_info)),
+                  opened={name: value(item) for name, item in zip(HANDLE_FIELDS, left)},
+                  path={name: value(item) for name, item in zip(HANDLE_FIELDS, right)},
+                  differing_fields=[name for name, a, b in zip(HANDLE_FIELDS, left, right) if a != b])
+    raise ValueError('stable canonical open handle; ' + json.dumps(detail, sort_keys=True, separators=(',', ':')))
+
+
 def read_canonical(path):
     target = Path(path)
     before = entry(path)
@@ -177,8 +209,7 @@ def read_canonical(path):
     flags |= getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0)
     with os.fdopen(os.open(target, flags), 'rb') as source:
         opened = os.fstat(source.fileno())
-        require(stat.S_ISREG(opened.st_mode) and opened.st_size <= MAX_BYTES
-                and stable_handle(opened) == stable_handle(target.lstat()), 'stable canonical open handle')
+        require_open_handle(opened, target.lstat())
         check = source.read(MAX_BYTES + 1)
         require(len(check) <= MAX_BYTES and check == raw
                 and stable_handle(opened) == stable_handle(os.fstat(source.fileno()))
