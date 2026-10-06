@@ -39,7 +39,7 @@ INSTALLATION_PREPARATION = {
     'tests/native-provider-qualification/installed-native-capability/mutations.rs': {'mode': '100644', 'blob': '5708883c984d345d41bcc2dabef38423e01b870d'},
     'tests/native-provider-qualification/installed-native-capability/probe.rs': {'mode': '100644', 'blob': '3dd76530320a52bd73af9ffec77ea8e297909308'},
     'tests/native-provider-qualification/installed-native-capability/run.py': {'mode': '100644', 'blob': '3cd094ee2ef784f74c5f41c7ecf89388f02ef72c'},
-    'tests/native-provider-qualification/installed-native-capability/source_registration_test.py': {'mode': '100644', 'blob': 'da94ae29ab840780f70a4ea5149012c32ad80026'},
+    'tests/native-provider-qualification/installed-native-capability/source_registration_test.py': {'mode': '100644', 'blob': 'dbe805b69573ab79169d4f5fd4f2b3eaaaf01a33'},
 }
 
 def qualified_change(path):
