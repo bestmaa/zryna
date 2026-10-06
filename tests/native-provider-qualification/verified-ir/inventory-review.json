@@ -1,0 +1,47 @@
+{
+  "accepted_counts_by_case_kind": {
+    "m1-run": 3,
+    "m1-source": 1,
+    "m2-run": 20,
+    "m2-source": 4,
+    "m3-context": 14,
+    "m3-invalid": 1,
+    "m3-run": 15,
+    "m3-runtime-invalid": 2,
+    "m3-source": 47
+  },
+  "candidate_inventory": {
+    "path": "/workspace/414-ir-implementation/inventory.json",
+    "sha256": "159cbc97325a4f1019d0c6c0b5cc72ed176599fb00373eac04023449f184a4d0"
+  },
+  "corpus_graph_observations_matched": 85,
+  "counts": {
+    "accepted": 107,
+    "fixture_groups": 52,
+    "graph_applicable": 103,
+    "source_context_occurrences": 66
+  },
+  "derived_only_missing_H4_graph_observation": 18,
+  "graph_hashes_independently_rederived": 103,
+  "independent_inventory": {
+    "path": "/workspace/414-ir-independent-review/independent-inventory.json",
+    "sha256": "e10346600a31e58dde3e67c724768fc345eda3e53cc2d50b7b7ca0abc1b1cf52"
+  },
+  "mismatches": [],
+  "provenance": "new independent H4 inventory; unavailable original handoff comparison pending",
+  "review": "independent read-only inventory/source/context/graph reconstruction",
+  "reviewer_builds": 0,
+  "reviewer_provider_invocations": 0,
+  "reviewer_repository_edits": 0,
+  "scope": "inventory review only; no IR implementation reviewed or acceptance approval issued",
+  "source_head": "0a5f86b77a84c37e19e0dd59388c8a782d385131",
+  "source_tree": "f7799f19a77609e2a19396b925aea0648f1780fe",
+  "status": "matched",
+  "unchanged_corpus": {
+    "blocked": 30,
+    "failed": 0,
+    "passed": 190,
+    "path": "/workspace/414-ir-derived-baseline/corpus/corpus.json",
+    "sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+  }
+}
