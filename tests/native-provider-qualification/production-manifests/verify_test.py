@@ -60,10 +60,11 @@ class ManifestControls(unittest.TestCase):
         self.output.mkdir()
         windows = platform == 'win32'
         path = PureWindowsPath if windows else PurePosixPath
-        source = str(path('C:/source' if windows else str(self.source)))
-        output = str(path('C:/evidence/proof' if windows else str(self.output)))
-        prior = str(path('C:/evidence/cli' if windows else str(Path(self.temp.name)/'cli')))
-        target = str(path('C:/target' if windows else str(Path(self.temp.name)/'target')))
+        # Archive metadata models its recorded host independently of this test's real host.
+        source = str(path('C:/source' if windows else '/synthetic-source'))
+        output = str(path('C:/evidence/proof' if windows else '/synthetic-evidence/proof'))
+        prior = str(path('C:/evidence/cli' if windows else '/synthetic-evidence/cli'))
+        target = str(path('C:/target' if windows else '/synthetic-target'))
         tool_base = path('C:/tools' if windows else '/synthetic-tools')
         suffix = '.exe' if windows else ''
         python = str(tool_base/('python'+suffix))
@@ -172,6 +173,9 @@ class ManifestControls(unittest.TestCase):
                 self.receipt['commands'].append({'label': name, 'argv': argv, 'cwd': source,
                     'exit': 4 if role == 'create-only' else 0, 'timed_out': False, **logs})
         self.save()
+        # Every fresh archive must pass before a hostile mutation can earn rejection credit.
+        baseline = v.verify(self.source, self.output, self.head, platform, run_id='123', run_attempt='1')
+        self.assertEqual(baseline['counts'], {'passed': 7, 'failed': 0, 'ignored': 0})
 
     def save(self):
         self.write(self.output/'receipt.json', self.receipt)
