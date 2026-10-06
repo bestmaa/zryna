@@ -9,12 +9,15 @@ import ntpath
 import posixpath
 from pathlib import Path
 import re
+import os
+import shutil
 import subprocess
 import sys
 
 sys.dont_write_bytecode = True
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import verify as ir
+import tool_capability
 
 HERE = Path(__file__).resolve().parent
 LABELS = ('lock','build','format','clippy','collector','hostile-controls')
@@ -38,6 +41,109 @@ def runner_module():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+def capabilities(state,platform,live,pathmod):
+    """Separate recorded tool aliases from the unchanged artifact path policy."""
+    roles = {'cargo','rustc','node','rustup','supplied_cargo'}
+    rows = state['tool_capabilities']
+    after = state['after_tool_capabilities']
+    ir.require(type(rows) is dict and type(after) is dict and set(rows) == set(after) == roles,
+               'complete five-role tool capability census')
+    legacy = dict(**state['compiler_tools'],node=state['node'],rustup=state['rustup'],supplied_cargo=state['supplied_cargo'])
+    def validate_map(values,expected):
+        ir.require(type(values) is dict and set(values) == set(expected),'closed tool capability checkpoint roles')
+        for name,row in values.items():
+            tool_capability.validate(row,platform)
+            ir.require(tool_capability.same(expected[name],row),'stable exact tool capability checkpoint: '+name)
+    for name,row in rows.items():
+        tool_capability.validate(row,platform,live=live)
+        ir.require(row['path'] == legacy[name]['path'] and row['sha256'] == legacy[name]['sha256'],
+                   'legacy invocation path and canonical tool byte binding: '+name)
+    validate_map(after,rows)
+    selection = state['tool_selection']
+    ir.require(type(selection) is dict and set(selection) == {'cargo_argument','node_argument','rustup_argument','paths','before','after','argument_capabilities','after_argument_capabilities'},
+               'closed original tool selection fields')
+    for name in ('cargo_argument','node_argument','rustup_argument'):
+        ir.require(tool_capability.text(selection[name]),'bounded original selector argument')
+    selector = selection['cargo_argument']
+    supplied = rows['supplied_cargo']['path']
+    environment = state['selected_environment']
+    ir.require(type(environment['PATH']) is str and environment['PATH']
+               and (environment['PATHEXT'] is None or type(environment['PATHEXT']) is str),'typed tool selection search environment')
+    if pathmod.dirname(selector):
+        candidate = pathmod.normpath(selector if pathmod.isabs(selector) else pathmod.join(state['repository_root'],selector))
+        ir.require(pathmod.normcase(candidate)==pathmod.normcase(supplied),'original explicit Cargo selector binding')
+    else:
+        names = [selector]
+        if platform=='win32':
+            suffixes=(environment['PATHEXT'] or '.COM;.EXE;.BAT;.CMD').split(';')
+            names += [selector+suffix for suffix in suffixes if suffix and not selector.lower().endswith(suffix.lower())]
+        directories = environment['PATH'].split(';' if platform=='win32' else ':')
+        if platform=='win32':directories.insert(0,state['repository_root'])
+        candidates = [pathmod.normcase(pathmod.normpath(pathmod.join(
+            directory if pathmod.isabs(directory) else pathmod.join(state['repository_root'],directory),name)))
+            for directory in directories for name in names]
+        ir.require(pathmod.normcase(supplied) in candidates,'original bare Cargo selector and recorded search paths')
+    if live:
+        ir.require(environment['PATHEXT']==os.getenv('PATHEXT'),'actual original executable suffix search environment')
+        actual = shutil.which(selector,path=environment['PATH'])
+        ir.require(actual is not None and pathmod.normcase(pathmod.normpath(actual))==pathmod.normcase(supplied),
+                   'actual original Cargo selector still resolves to its recorded invocation path')
+    arguments = selection['argument_capabilities']
+    ir.require(type(arguments) is dict and set(arguments)=={'node','rustup'},'original explicit argument capabilities')
+    for name,row in arguments.items():
+        tool_capability.validate(row,platform,live=live)
+        original = selection[name+'_argument']
+        original = pathmod.normpath(original if pathmod.isabs(original) else pathmod.join(state['repository_root'],original))
+        ir.require(row['path']==original and row['resolved_path']==rows[name]['path']
+                   and tool_capability.identity(row['resolution'][-1])==tool_capability.identity(rows[name]['resolution'][-1]),
+                   'original explicit selector and actual invocation capability binding')
+    validate_map(selection['after_argument_capabilities'],arguments)
+    selected = dict(node=rows['node']['path'],rustup=rows['rustup']['path'],supplied_cargo=rows['supplied_cargo']['path'],
+                    initial_rustc=pathmod.join(pathmod.dirname(rows['supplied_cargo']['path']),'rustc.exe' if platform=='win32' else 'rustc'))
+    ir.require(ir.exact(selection['paths'],selected),'source-derived initial tool selections')
+    initial = selection['before']
+    ir.require(type(initial) is dict and set(initial) == set(selected),'all original selected tool snapshots')
+    for name,row in initial.items():
+        tool_capability.validate(row,platform,live=live)
+        ir.require(row['path'] == selected[name],'exact original selected invocation path')
+        if name != 'initial_rustc':
+            ir.require(tool_capability.same(rows[name],row),'initial and actual invocation capability binding')
+    validate_map(selection['after'],initial)
+    queries = state['metadata_queries']
+    commands = [[selected['node'],'--version'],[selected['supplied_cargo'],'--version'],[selected['initial_rustc'],'--version'],
+                [selected['rustup'],'which','--toolchain','1.97.1','cargo'],[selected['rustup'],'which','--toolchain','1.97.1','rustc'],
+                [rows['cargo']['path'],'--version'],[rows['rustc']['path'],'--version']]
+    outputs = [state['node']['version'],state['cargo_version'],state['rustc_version'],rows['cargo']['path'],rows['rustc']['path'],None,None]
+    query_roles = ['node','supplied_cargo','initial_rustc','rustup','rustup','cargo','rustc']
+    ir.require(type(queries) is list and len(queries)==7,'seven actual original tool metadata queries')
+    previous = None
+    for index,(query,argv,role) in enumerate(zip(queries,commands,query_roles)):
+        ir.require(type(query) is dict and set(query) == {'argv','cwd','selected_environment','started_at','completed_at','before','after','exit','stdout','stderr'},
+                   'closed metadata query capture fields')
+        ir.require(ir.exact(query['argv'],argv) and query['cwd']==state['repository_root']
+                   and type(query['exit']) is int and query['exit']==0,'exact successful metadata command')
+        expected_env = dict(state['selected_environment'])
+        if index<5:expected_env['RUSTC']=selected['initial_rustc']
+        ir.require(ir.exact(query['selected_environment'],expected_env),'exact metadata query environment')
+        ir.require(type(query['stdout']) is str and len(query['stdout'])<=8192
+                   and type(query['stderr']) is str and len(query['stderr'])<=8192,'bounded actual metadata streams')
+        output = query['stdout'].strip()
+        ir.require(output==outputs[index] if index<5 else output.startswith('cargo 1.97.1 ' if index==5 else 'rustc 1.97.1 '),
+                   'exact pinned metadata observation')
+        expected = initial[role] if index<5 else rows[role]
+        for field in ('before','after'):
+            tool_capability.validate(query[field],platform)
+            ir.require(tool_capability.same(expected,query[field]),'metadata invocation capability binding')
+        start,stop=stamp(query['started_at']),stamp(query['completed_at'])
+        ir.require(start<=stop and (previous is None or previous<=start),'ordered metadata capture times')
+        previous=stop
+    ir.require(previous<=stamp(state['commands'][0]['started_at']),'metadata completes before proof execution')
+    for command in state['commands']:
+        for field in ('tool_capabilities_before','tool_capabilities_after'):
+            validate_map(command[field],rows)
+    return dict(roles=5,metadata_queries=7,command_checkpoints=12,
+                artifact_link_policy='unchanged',atomic_execution_sandbox=False)
 
 def verify(root,proof,head,platform,live=False,run_id=None,run_attempt=None):
     ir.require(__debug__ and platform in ('linux','win32'),'supported explicit host')
@@ -125,6 +231,7 @@ def verify(root,proof,head,platform,live=False,run_id=None,run_attempt=None):
     commands = state['commands']
     ir.require(type(commands) is list and [c['label'] for c in commands] == list(LABELS),'six actual ordered commands')
     selected = state['selected_environment']
+    capability_result = capabilities(state,platform,live,pathmod)
     ir.require(selected['RUSTUP_TOOLCHAIN'] == '1.97.1' and selected['RUSTC'] == tools['rustc']['path']
                and selected['CARGO_INCREMENTAL'] == '0' and selected['CARGO_BUILD_JOBS'] == '2',
                'exact build environment')
@@ -200,9 +307,6 @@ def verify(root,proof,head,platform,live=False,run_id=None,run_attempt=None):
     if live:
         ir.require(platform == sys.platform,'actual current live host')
         ir.require(original_root == str(root) and original_evidence == str(proof),'exact actual live execution paths')
-        for row in [*tools.values(),state['node'],state['rustup'],state['supplied_cargo']]:
-            ir.require(ir.digest(ir.read_bounded(Path(row['path']),128*1024*1024)) == row['sha256'],
-                       'actual original tool capability bytes')
         ir.require(ir.digest(ir.read_bounded(Path(executable['path']),128*1024*1024)) == executable['sha256'],
                    'actual built collector still unchanged')
         ir.require(ir.exact(source_runner.compiler_inputs(Path(state['node']['path'])),state['compiler_inputs']),
@@ -211,7 +315,8 @@ def verify(root,proof,head,platform,live=False,run_id=None,run_attempt=None):
                 counts=dict(passed=107,failed=0,ignored=0),hostile_controls=49,
                 compiler_source_files=len(actual_tracked),commands=6,public_activation=False,
                 graph_hashes=103,historical_H4_graph_observations=85,historical_H4_missing_graph_observations=18,
-                installed_no_node_acceptance=False,execution_attestation='requires original hosted API/log/archive binding')
+                installed_no_node_acceptance=False,tool_capabilities=capability_result,
+                execution_attestation='requires original hosted API/log/archive binding')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)

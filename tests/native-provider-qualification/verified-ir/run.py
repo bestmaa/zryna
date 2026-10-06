@@ -24,6 +24,11 @@ REGISTRATION = {
     'tests/native-provider-activation-workflow.test.mjs',
 }
 PROVIDER = 'zryna-verified-ir-proof'
+ENVIRONMENT = (
+    'RUSTUP_TOOLCHAIN','CARGO_TARGET_DIR','CARGO_INCREMENTAL','CARGO_BUILD_JOBS',
+    'RUSTC','CARGO_HOME','RUSTUP_HOME','PATH','PATHEXT','NODE_OPTIONS','NODE_PATH',
+    'RUSTC_WRAPPER','RUSTC_WORKSPACE_WRAPPER','RUSTFLAGS','CARGO_ENCODED_RUSTFLAGS',
+)
 
 def module(name, path):
     spec = importlib.util.spec_from_file_location(name,path)
@@ -34,6 +39,7 @@ def module(name, path):
 sys.path.insert(0,str(HERE))
 import verify
 import derive_inventory
+import tool_capability
 
 LEGACY = module('legacy_ir_support', ROOT / 'scripts/run-native-provider-corpus.py')
 SUPPORT = LEGACY.SUPPORT
@@ -133,11 +139,45 @@ def main():
         subprocess.run(['git','merge-base','--is-ancestor',H4,'HEAD'],cwd=ROOT,check=True)
         before = authority()
         state['inputs'] = before
+        supplied_cargo = shutil.which(args.cargo)
+        verify.require(supplied_cargo is not None,'pinned Cargo available')
+        verify.require(Path.cwd() == ROOT,'runner invocation at its exact source checkout')
+        argument_paths = dict(node=os.path.abspath(str(args.node)),rustup=os.path.abspath(str(args.rustup)))
+        argument_capabilities = {name:tool_capability.snapshot(path) for name,path in argument_paths.items()}
         node = args.node.resolve(strict=True)
-        node_env = dict(os.environ)
-        for name in ('NODE_OPTIONS','NODE_PATH'):
-            node_env.pop(name,None)
-        node_version = subprocess.check_output([str(node),'--version'],env=node_env,text=True).strip()
+        rustup = args.rustup.resolve(strict=True)
+        initial_rustc = Path(supplied_cargo).parent / ('rustc.exe' if os.name == 'nt' else 'rustc')
+        selection_paths = dict(node=str(node),rustup=str(rustup),supplied_cargo=supplied_cargo,
+                               initial_rustc=str(initial_rustc))
+        state['tool_selection'] = dict(cargo_argument=args.cargo,node_argument=str(args.node),
+                                       rustup_argument=str(args.rustup),paths=selection_paths,
+                                       argument_capabilities=argument_capabilities,
+                                       before={name:tool_capability.snapshot(path) for name,path in selection_paths.items()})
+        state['metadata_queries'] = []
+        env = dict(os.environ)
+        for name in ('RUSTC','RUSTC_WRAPPER','RUSTC_WORKSPACE_WRAPPER','RUSTFLAGS','CARGO_ENCODED_RUSTFLAGS','NODE_OPTIONS','NODE_PATH'):
+            env.pop(name,None)
+        env.update(RUSTUP_TOOLCHAIN='1.97.1',CARGO_TARGET_DIR=str(target),CARGO_INCREMENTAL='0',CARGO_BUILD_JOBS='2',
+                   RUSTC=str(initial_rustc))
+
+        def query(command):
+            command = list(map(str,command))
+            record = dict(argv=command,cwd=str(ROOT),
+                          selected_environment={name:env.get(name) for name in ENVIRONMENT},
+                          started_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                          before=tool_capability.snapshot(command[0]),exit=None)
+            try:
+                result = subprocess.run(command,cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=False)
+                record.update(exit=result.returncode,stdout=result.stdout.decode('utf8'),stderr=result.stderr.decode('utf8'))
+            finally:
+                record['completed_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                record['after'] = tool_capability.snapshot(command[0])
+                state['metadata_queries'].append(record)
+            verify.require(record['exit'] == 0,'successful actual pinned tool metadata query')
+            verify.require(tool_capability.same(record['before'],record['after']),'metadata tool capability changed')
+            return record['stdout'].strip()
+
+        node_version = query([str(node),'--version'])
         verify.require(node_version == 'v22.22.1','pinned Node22.22.1')
         state['node'] = dict(path=str(node),version=node_version,sha256=SUPPORT.digest(node))
         state['compiler_inputs'] = compiler_inputs(node)
@@ -160,40 +200,44 @@ def main():
         state['inventory_sha256'] = verify.digest(inventory_bytes)
         state['baseline_raw_sha256'] = verify.digest(baseline_bytes)
         state['h4_graph_evidence'] = dict(observed=85,derived_only=18,inapplicable=4,open_obligations=inventory['open_obligations'])
-        cargo = shutil.which(args.cargo)
-        verify.require(cargo is not None,'pinned Cargo available')
-        env = dict(os.environ)
-        for name in ('RUSTC','RUSTC_WRAPPER','RUSTC_WORKSPACE_WRAPPER','RUSTFLAGS','CARGO_ENCODED_RUSTFLAGS','NODE_OPTIONS','NODE_PATH'):
-            env.pop(name,None)
-        env.update(RUSTUP_TOOLCHAIN='1.97.1',CARGO_TARGET_DIR=str(target),CARGO_INCREMENTAL='0',CARGO_BUILD_JOBS='2')
-        rustc = Path(cargo).parent / ('rustc.exe' if os.name == 'nt' else 'rustc')
-        env['RUSTC'] = str(rustc)
-        for tool,prefix in ((cargo,'cargo 1.97.1 '),(str(rustc),'rustc 1.97.1 ')):
-            version = subprocess.check_output([tool,'--version'],env=env,text=True).strip()
+        for tool,prefix in ((supplied_cargo,'cargo 1.97.1 '),(str(initial_rustc),'rustc 1.97.1 ')):
+            version = query([tool,'--version'])
             verify.require(version.startswith(prefix),'pinned compiler tool version')
             state[Path(tool).stem+'_version'] = version
-        rustup = args.rustup.resolve(strict=True)
         state['rustup'] = dict(path=str(rustup),sha256=SUPPORT.digest(rustup))
-        state['supplied_cargo'] = dict(path=cargo,sha256=SUPPORT.digest(Path(cargo)))
+        state['supplied_cargo'] = dict(path=supplied_cargo,sha256=SUPPORT.digest(Path(supplied_cargo)))
         state['compiler_tools'] = {}
         for name in ('cargo','rustc'):
-            resolved = Path(subprocess.check_output([str(rustup),'which','--toolchain','1.97.1',name],env=env,text=True).strip())
+            resolved = Path(query([str(rustup),'which','--toolchain','1.97.1',name]))
             state['compiler_tools'][name] = dict(path=str(resolved),sha256=SUPPORT.digest(resolved))
         cargo = state['compiler_tools']['cargo']['path']
         rustc = Path(state['compiler_tools']['rustc']['path'])
         env['RUSTC'] = str(rustc)
         for tool,prefix in ((cargo,'cargo 1.97.1 '),(str(rustc),'rustc 1.97.1 ')):
-            verify.require(subprocess.check_output([tool,'--version'],env=env,text=True).strip().startswith(prefix),
+            verify.require(query([tool,'--version']).startswith(prefix),
                            'actually invoked resolved compiler version')
-        selected_env = {name:env.get(name) for name in (
-            'RUSTUP_TOOLCHAIN','CARGO_TARGET_DIR','CARGO_INCREMENTAL','CARGO_BUILD_JOBS',
-            'RUSTC','CARGO_HOME','RUSTUP_HOME','PATH','NODE_OPTIONS','NODE_PATH',
-            'RUSTC_WRAPPER','RUSTC_WORKSPACE_WRAPPER','RUSTFLAGS','CARGO_ENCODED_RUSTFLAGS')}
+        state['tool_selection']['after'] = {name:tool_capability.snapshot(path) for name,path in selection_paths.items()}
+        state['tool_selection']['after_argument_capabilities'] = {name:tool_capability.snapshot(path) for name,path in argument_paths.items()}
+        verify.require(all(tool_capability.same(argument_capabilities[name],row)
+                           for name,row in state['tool_selection']['after_argument_capabilities'].items()),'original tool argument capability changed')
+        verify.require(all(tool_capability.same(state['tool_selection']['before'][name],row)
+                           for name,row in state['tool_selection']['after'].items()),'selected tool capability changed')
+        capability_paths = dict(node=str(node),rustup=str(rustup),supplied_cargo=supplied_cargo,
+                                cargo=cargo,rustc=str(rustc))
+        state['tool_capabilities'] = {name:tool_capability.snapshot(path) for name,path in capability_paths.items()}
+
+        def capabilities():
+            rows = {name:tool_capability.snapshot(path) for name,path in capability_paths.items()}
+            verify.require(all(tool_capability.same(state['tool_capabilities'][name],row) for name,row in rows.items()),
+                           'actual tool capability changed during proof')
+            return rows
+        selected_env = {name:env.get(name) for name in ENVIRONMENT}
         state['selected_environment'] = selected_env
 
         def execute(label, command, cwd):
             record = dict(label=label,argv=list(map(str,command)),cwd=str(cwd),
                           selected_environment=selected_env,
+                          tool_capabilities_before=capabilities(),
                           started_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),exit=None)
             paths = {name:evidence/(label+'.'+name) for name in ('stdout','stderr')}
             try:
@@ -207,6 +251,7 @@ def main():
                         raise
             finally:
                 record['completed_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                record['tool_capabilities_after'] = capabilities()
                 record['captures'] = {name:dict(path=path.name,bytes=path.stat().st_size,sha256=SUPPORT.digest(path))
                                       for name,path in paths.items() if path.exists()}
                 state['commands'].append(record)
@@ -262,13 +307,21 @@ def main():
         verify.require(SUPPORT.digest(rustup) == state['rustup']['sha256'],'explicit rustup bytes after proof')
         verify.require(SUPPORT.digest(Path(state['supplied_cargo']['path'])) == state['supplied_cargo']['sha256'],
                        'supplied compiler capability bytes after proof')
+        state['after_tool_capabilities'] = capabilities()
         state['exact_revision_after_proof'] = True
         state['status'] = 'passed'
     except Exception as error:
         state['failed'].append(str(error))
         raise
     finally:
-        (evidence/'receipt.json').write_text(json.dumps(state,indent=2)+'\n')
+        encoded = (json.dumps(state,separators=(',',':'))+'\n').encode()
+        if len(encoded) > verify.MAX_RECEIPT:
+            state['status'] = 'failed'
+            state['failed'].append('original runner receipt exceeds unchanged 2MiB admission bound')
+            encoded = (json.dumps(state,separators=(',',':'))+'\n').encode()
+        with (evidence/'receipt.json').open('xb') as output:
+            output.write(encoded)
+        verify.require(len(encoded) <= verify.MAX_RECEIPT,'original runner receipt exceeds unchanged 2MiB admission bound')
     print(json.dumps(dict(format='zryna.verified-ir.stdout.v1',status=state['status'],
                          head=state['repository_sha'],tree=state['head_tree'],platform=sys.platform,
                          inventory_sha256=state['inventory_sha256'],corpus_sha256=SUPPORT.digest(evidence/'corpus.json'),

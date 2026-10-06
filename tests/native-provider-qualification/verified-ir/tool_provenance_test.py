@@ -137,11 +137,16 @@ class ToolProvenanceControls(unittest.TestCase):
         with mock.patch.object(d, 'components', changed):
             self.assertTrue(d.inspect_tool(self.tool)['stable_components_and_tool_bytes'])
 
-    def modeled_queries(self, mutate=False, node_version='v22.22.1'):
+    def modeled_queries(self, mutate=False, node_version='v22.22.1', node_alias=False):
         paths = {name: self.tools / name for name in ('rustup', 'node', 'rustc.exe' if os.name == 'nt' else 'rustc')}
         for path in paths.values():
             path.write_bytes(b'query model only; never execute\n')
         rustc = next(path for name, path in paths.items() if name.startswith('rustc'))
+        canonical_node = paths['node'].resolve(strict=True)
+        node_selector = paths['node']
+        if node_alias:
+            node_selector = self.tools / 'node-selector'
+            node_selector.write_bytes(paths['node'].read_bytes())
         calls = []
         def query(argv, env):
             args = list(map(str, argv)); calls.append(args)
@@ -150,14 +155,17 @@ class ToolProvenanceControls(unittest.TestCase):
             elif args[1:] == ['which', '--toolchain', '1.97.1', 'rustc']:
                 stdout = str(rustc)
             elif args[1:] == ['--version']:
-                stdout = node_version if args[0] == str(paths['node']) else ('rustc 1.97.1 model' if args[0] == str(rustc) else 'cargo 1.97.1 model')
+                stdout = node_version if Path(args[0]) == canonical_node else ('rustc 1.97.1 model' if Path(args[0]) == rustc else 'cargo 1.97.1 model')
             else:
                 raise AssertionError('unapproved query: ' + repr(args))
             if mutate and len(calls) == 6:
                 self.tool.write_bytes(b'changed selected capability after query\n')
             return dict(argv=args, stdout=stdout + '\n')
-        with mock.patch.object(d.shutil, 'which', return_value=str(self.tool)), mock.patch.object(d, 'query', query):
-            result = d.diagnose(self.tool, paths['rustup'], paths['node'])
+        original_resolve = Path.resolve
+        def resolve(path, *args, **kwargs):
+            return canonical_node if node_alias and path == node_selector else original_resolve(path, *args, **kwargs)
+        with mock.patch.object(d.shutil, 'which', return_value=str(self.tool)), mock.patch.object(d, 'query', query), mock.patch.object(Path, 'resolve', resolve):
+            result = d.diagnose(self.tool, paths['rustup'], node_selector)
         self.assertEqual(len(calls), 7)
         return result
 
@@ -172,6 +180,11 @@ class ToolProvenanceControls(unittest.TestCase):
     def test_capability_change_across_metadata_queries_rejects(self):
         with self.assertRaisesRegex(ValueError, 'capability changed'):
             self.modeled_queries(mutate=True)
+
+    def test_full_selection_queries_canonical_Node_alias(self):
+        row = self.modeled_queries(node_alias=True)
+        self.assertEqual(row['status'], 'UNQUALIFIED')
+        self.assertEqual(row['selected_rows']['node']['original_guard_path'], str((self.tools / 'node').resolve(strict=True)))
 
     def test_full_selection_rejects_Node_version_prefix_collision(self):
         with self.assertRaisesRegex(ValueError, 'exact pinned Node metadata version'):

@@ -23,7 +23,7 @@ def digest(raw):
 
 
 def encode(value):
-    return (json.dumps(value, indent=2) + '\n').encode()
+    return (json.dumps(value, separators=(',', ':')) + '\n').encode()
 
 
 class Controls:
@@ -65,7 +65,10 @@ class Controls:
         state = copy.deepcopy(self.original)
         try:
             mutation(state)
-            self.write('receipt.json', encode(state))
+            encoded = encode(state)
+            if len(encoded) > admission.ir.MAX_RECEIPT:
+                raise AssertionError('tamper control must stay inside the unchanged receipt size bound')
+            self.write('receipt.json', encoded)
             try:
                 self.admit()
             except (ValueError, KeyError, TypeError, IndexError, OSError) as error:

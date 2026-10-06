@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import './native-provider-qualification/verified-ir/workflow.test.mjs';
+import { currentIrJob } from './native-provider-qualification/verified-ir/workflow.test.mjs';
 import { toolProvenanceJob } from './native-provider-qualification/verified-ir/tool-provenance-workflow.test.mjs';
 import { parseDocument } from 'yaml';
 
@@ -122,6 +122,7 @@ const expected = {
       steps: expectedSteps,
     },
     'private-cli': privateCliJob,
+    'private-ir': currentIrJob,
     'tool-provenance': toolProvenanceJob,
   },
 };

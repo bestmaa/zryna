@@ -106,6 +106,27 @@ source, both frozen TypeScript package trees, the original collector binary and 
 baseline. The admission controls challenge 28 coherently rehashed metadata/source/stream forgeries
 against an admitted real proof without running a compiler or provider again.
 
+Tool capability admission records the original lexical selectors and their complete bounded
+resolution chains, including intermediate symlinks and supported Windows junctions. Canonical
+ordinary executable bytes and identities are bound before and after seven metadata queries and
+each of the six proof commands. Cargo proxy metadata runs through its original `cargo` filename;
+the actual compiler commands use the pinned `rustup which` paths. The artifact reader retains its
+strict no-link/reparse policy unchanged. Recorded capability snapshots detect observed changes;
+they do not provide atomic executable isolation or reconstruct a departed host's tool identity.
+Live admission recaptures every selected capability. Original authenticated runner receipt/log/ZIP
+bindings remain required for historical execution provenance.
+
+The 34 modeled capability controls and thirteen additional real-proof capability admission controls
+are separate from the existing 49 IR, 28 admission and 37 archive controls. Runner and tamper-control
+receipts use compact JSON within the same 2MiB bound; tamper controls must remain under that bound
+so a size rejection cannot masquerade as the intended mutation rejection. All capability records
+remain inside the original receipt, preserving the closed 393-file archive census.
+
+The dedicated current IR matrix job retains the original six IR proof steps and adds capability
+controls before live admission. The qualified CLI/corpus job retains its original commands. Both
+jobs retain the original 40-minute Linux and 60-minute Windows bounds, with pinned frozen setup
+and separate fresh targets; no qualification step is omitted to fit the time budget.
+
 The original archive contains exactly 393 regular files and their explicit parent directory entries.
 Packing requires live admission; recovery validates the complete original ZIP before creating an
 output, preserves every original member byte, rejects links/aliases/extra or missing entries, and
