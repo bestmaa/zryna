@@ -122,12 +122,21 @@ receipts use compact JSON within the same 2MiB bound; tamper controls must remai
 so a size rejection cannot masquerade as the intended mutation rejection. All capability records
 remain inside the original receipt, preserving the closed 393-file archive census.
 
-An open-handle rejection reports the original seven compared metadata fields, their exact
-differences, the Python implementation/version and any available birth-time observations.
-The bounded rejection report does not normalize timestamps or retry a failed comparison;
-regular-file, size, identity and before/after stability checks remain enforced. Separate
-thirteen diagnostic controls verify this report without crediting an unobserved Windows run. A report
-must identify the actual host discrepancy before any proposed cross-platform comparison repair.
+An open-handle rejection reports all seven raw metadata fields, their exact differences,
+the Python implementation/version, birth-time observations and the selected comparison.
+H9's original Windows IR log observed seven ctime-only rejections on CPython 3.12.10;
+the other six fields and both explicit birth times matched. CPython 3.12.10's Windows path stat
+exposes creation time through ctime for compatibility, while handle stat exposes change time.
+This observation does not recover the unprinted H8 fields or qualify a Windows IR producer.
+
+The cross-API Windows comparison requires the same device, inode, type, size, mtime and
+link count plus exact, typed and bounded `st_birthtime_ns`; missing/invalid creation times
+fail closed. Same-handle before/after checks retain all seven raw fields, including ctime,
+and exact birth time. Both path snapshots, strict bounded artifact reads, full byte equality,
+double reads and final resolution checks remain enforced. Linux retains its seven-field
+comparison. There is no timestamp normalization, tolerance or retry. The original 34 controls,
+13 platform-aware rejection controls and 21 separate Windows comparison controls all run
+through the existing capability-control entrypoint; modeled checks do not establish a Windows run.
 
 The dedicated current IR matrix job retains the original six IR proof steps and adds capability
 controls before live admission. The qualified CLI/corpus job retains its original commands. Both

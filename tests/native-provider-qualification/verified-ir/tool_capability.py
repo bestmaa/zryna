@@ -172,13 +172,33 @@ def stable_handle(info):
 HANDLE_FIELDS = ('device', 'inode', 'file_type', 'bytes', 'mtime_ns', 'ctime_ns', 'links')
 
 
+def canonical_identity(info):
+    raw = stable_handle(info)
+    if sys.platform != 'win32':
+        return raw
+    # CPython 3.12 path ctime is creation time; handle ctime is change time.
+    # Compare the explicit creation field across APIs, retaining all other fields.
+    born = getattr(info, 'st_birthtime_ns', None)
+    if type(born) is not int or abs(born) >= (1 << 128):
+        return None
+    return raw[:5] + (born,) + raw[6:]
+
+
+def same_open_handle(before, after):
+    left, right = canonical_identity(before), canonical_identity(after)
+    return (stable_handle(before) == stable_handle(after)
+            and left is not None and left == right)
+
+
 def require_open_handle(opened, path_info):
     left, right = stable_handle(opened), stable_handle(path_info)
+    comparable_left, comparable_right = canonical_identity(opened), canonical_identity(path_info)
+    canonical_equal = comparable_left is not None and comparable_left == comparable_right
     regular = stat.S_ISREG(opened.st_mode)
     bounded = opened.st_size <= MAX_BYTES
-    if regular and bounded and left == right:
+    if regular and bounded and canonical_equal:
         return
-    # Diagnose the original predicate without relaxing, retrying or normalizing it.
+    # Report raw values and the selected cross-API predicate without normalization.
     # Values outside the stat field bound never expand a rejection log arbitrarily.
     def value(item):
         return item if type(item) is int and abs(item) < (1 << 128) else 'invalid-or-unbounded-integer'
@@ -192,6 +212,8 @@ def require_open_handle(opened, path_info):
                   python_implementation=implementation if type(implementation) is str and re.fullmatch(r'[a-z_]{1,32}', implementation) else 'unknown',
                   python_version=[value(part) for part in sys.version_info[:3]],
                   regular_handle=regular, within_byte_limit=bounded, metadata_equal=left == right,
+                  canonical_identity_equal=canonical_equal,
+                  canonical_time_field='birthtime_ns' if sys.platform == 'win32' else 'ctime_ns',
                   byte_limit=MAX_BYTES,
                   observed_birthtime_ns=dict(opened=birthtime(opened), path=birthtime(path_info)),
                   opened={name: value(item) for name, item in zip(HANDLE_FIELDS, left)},
@@ -211,9 +233,10 @@ def read_canonical(path):
         opened = os.fstat(source.fileno())
         require_open_handle(opened, target.lstat())
         check = source.read(MAX_BYTES + 1)
+        after_handle = os.fstat(source.fileno())
         require(len(check) <= MAX_BYTES and check == raw
-                and stable_handle(opened) == stable_handle(os.fstat(source.fileno()))
-                == stable_handle(target.lstat()), 'canonical bytes and handle unchanged')
+                and same_open_handle(opened, after_handle), 'canonical bytes and handle unchanged')
+        require_open_handle(after_handle, target.lstat())
     require(entry(path) == before, 'canonical same-path metadata unchanged')
     return len(raw), hashlib.sha256(raw).hexdigest()
 
