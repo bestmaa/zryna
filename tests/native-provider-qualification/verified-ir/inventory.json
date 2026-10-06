@@ -1,0 +1,4155 @@
+{
+  "schema_version": 1,
+  "provenance": "independently-derived-H4-Git-inventory",
+  "original_library_comparison": "pending-unverified-original",
+  "repository_sha": "0a5f86b77a84c37e19e0dd59388c8a782d385131",
+  "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430",
+  "baseline_canonical_json_sha256": "525f5b61038c6f6a78e509ada9728b727b8c4e0b6ce7e4152b722b66919169fc",
+  "open_obligations": [
+    {
+      "case_id": "m3-run:pair-positive",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:pair-negative",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:pair-wrap",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:array",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:borrow",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:vec",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:string",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:handles",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:owned-aggregate",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:bounds-last",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:enum-match",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:weak-live",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:weak-expired",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:owned-vec",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-run:owned-shared",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-runtime-invalid:bounds-first-extra",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-runtime-invalid:bounds-negative",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    },
+    {
+      "case_id": "m3-invalid:abi-mismatch",
+      "obligation": "authentic-graph-observation-missing-from-unchanged-H4-receipt"
+    }
+  ],
+  "cases": [
+    {
+      "id": "m1-source:valid",
+      "profile": "m1",
+      "source": "examples/universal/add.zry",
+      "entrypoint": "examples/universal/add.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "examples/universal/add.zry",
+          "origin": "examples/universal/add.zry",
+          "sha256": "ed651dbee782db394cb09bc00c7cc52660cf7f0bf6986b58b4128d7a22e8f411",
+          "bytes": 61
+        }
+      ],
+      "edges": [],
+      "graph_sha256": null,
+      "context_snapshot_sha256": "63d2f9316b93f250e727ca86a29f74f9bbf555457a1cf7a2e420284ee49cc10e",
+      "baseline_graph_observation": {
+        "status": "not-applicable-M1",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m1-run:one-plus-two",
+      "profile": "m1",
+      "source": "examples/universal/add.zry",
+      "entrypoint": "examples/universal/add.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "examples/universal/add.zry",
+          "origin": "examples/universal/add.zry",
+          "sha256": "ed651dbee782db394cb09bc00c7cc52660cf7f0bf6986b58b4128d7a22e8f411",
+          "bytes": 61
+        }
+      ],
+      "edges": [],
+      "graph_sha256": null,
+      "context_snapshot_sha256": "63d2f9316b93f250e727ca86a29f74f9bbf555457a1cf7a2e420284ee49cc10e",
+      "baseline_graph_observation": {
+        "status": "not-applicable-M1",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m1-run:maximum-plus-one-wraps",
+      "profile": "m1",
+      "source": "examples/universal/add.zry",
+      "entrypoint": "examples/universal/add.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "examples/universal/add.zry",
+          "origin": "examples/universal/add.zry",
+          "sha256": "ed651dbee782db394cb09bc00c7cc52660cf7f0bf6986b58b4128d7a22e8f411",
+          "bytes": 61
+        }
+      ],
+      "edges": [],
+      "graph_sha256": null,
+      "context_snapshot_sha256": "63d2f9316b93f250e727ca86a29f74f9bbf555457a1cf7a2e420284ee49cc10e",
+      "baseline_graph_observation": {
+        "status": "not-applicable-M1",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m1-run:minimum-minus-one-wraps",
+      "profile": "m1",
+      "source": "examples/universal/add.zry",
+      "entrypoint": "examples/universal/add.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "examples/universal/add.zry",
+          "origin": "examples/universal/add.zry",
+          "sha256": "ed651dbee782db394cb09bc00c7cc52660cf7f0bf6986b58b4128d7a22e8f411",
+          "bytes": 61
+        }
+      ],
+      "edges": [],
+      "graph_sha256": null,
+      "context_snapshot_sha256": "63d2f9316b93f250e727ca86a29f74f9bbf555457a1cf7a2e420284ee49cc10e",
+      "baseline_graph_observation": {
+        "status": "not-applicable-M1",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-source:invalid/bare-import/dep.zry",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/invalid/bare-import/dep.zry",
+      "entrypoint": "tests/m2-fixtures/invalid/bare-import/dep.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/invalid/bare-import/dep.zry",
+          "origin": "tests/m2-fixtures/invalid/bare-import/dep.zry",
+          "sha256": "8e8f9d38f3ab6b459434289bca4889bc866f9f70805dbebe5005a1bb3b4d34dc",
+          "bytes": 45
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e2048bc016e197a293483c2b99634111f20c1e8056fb4f2c6132b3cbdfd02f60",
+      "context_snapshot_sha256": "756848151ecccf6b1a12fd2260750e9efe53f582c31e7a0427ae069954851cae",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "e2048bc016e197a293483c2b99634111f20c1e8056fb4f2c6132b3cbdfd02f60",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-source:invalid/case-colliding-module/Dep.zry",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/invalid/case-colliding-module/Dep.zry",
+      "entrypoint": "tests/m2-fixtures/invalid/case-colliding-module/Dep.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/invalid/case-colliding-module/Dep.zry",
+          "origin": "tests/m2-fixtures/invalid/case-colliding-module/Dep.zry",
+          "sha256": "8e8f9d38f3ab6b459434289bca4889bc866f9f70805dbebe5005a1bb3b4d34dc",
+          "bytes": 45
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "d3ac9c5e714172b864667ef80d6e7e4230625da06eda1caf16b4aa3d4e9a501f",
+      "context_snapshot_sha256": "73c409d384a972dc040cd458cdaf0f97b82ca92c2c7779c2a654ab852659eeff",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d3ac9c5e714172b864667ef80d6e7e4230625da06eda1caf16b4aa3d4e9a501f",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-source:valid/main.zry",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-source:valid/math.zry",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/math.zry",
+      "entrypoint": "tests/m2-fixtures/valid/math.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "582f97c031f19c0036d8b114f5406b0e5462851aa35b34ee445cb062bdc21aa0",
+      "context_snapshot_sha256": "b640a0fdde309bf2089ea8ccf6515c6eb0c12592f10e5ebacc149a4e93929e1a",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "582f97c031f19c0036d8b114f5406b0e5462851aa35b34ee445cb062bdc21aa0",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:add-wraps-maximum",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:subtract-wraps-minimum",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:multiply-keeps-low-bits",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:negate-minimum-wraps",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:signed-less-than",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:signed-less-equal",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:signed-greater-than",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:signed-greater-equal",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:i32-exact-equality",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:i32-exact-inequality",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:boolean-exact-equality",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:boolean-exact-inequality",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:mutable-local-assignment",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:direct-call-chain",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:argument-order-is-positional",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:if-selects-true-edge",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:if-selects-false-edge",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:while-zero-iterations",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:while-many-iterations",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m2-run:named-cross-module-call",
+      "profile": "m2",
+      "source": "tests/m2-fixtures/valid/main.zry",
+      "entrypoint": "tests/m2-fixtures/valid/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m2-fixtures/valid/main.zry",
+          "origin": "tests/m2-fixtures/valid/main.zry",
+          "sha256": "833c3e7465ae4328d0ea31a94aa8293f73696e42c0cdef6b0859b60bdc2c30ca",
+          "bytes": 1997
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m2-fixtures/valid/math.zry",
+          "origin": "tests/m2-fixtures/valid/math.zry",
+          "sha256": "a833600f480d718c86be001d55644b5e06a2d0cf9c52520f39fdc26e8185328c",
+          "bytes": 79
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m2-fixtures/valid/main.zry",
+          "target": "tests/m2-fixtures/valid/math.zry",
+          "specifier": "./math.zry",
+          "imported": "addPair",
+          "local": "addPair",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+      "context_snapshot_sha256": "1c1389814c5f4d1bcd1b68924cbd89eb79f8d11816e586eb8a406bdb8151ef04",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "d9cafc44fb02760ed51bf989c0ec4fcf5db9c34918ba6cd07d784eeed1b57dca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:borrow-forwarding-exclusive.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/borrow-forwarding-exclusive.zry",
+      "entrypoint": "tests/m3-fixtures/borrow-forwarding-exclusive.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/borrow-forwarding-exclusive.zry",
+          "origin": "tests/m3-fixtures/borrow-forwarding-exclusive.zry",
+          "sha256": "88c940161a9812a697eeb571233e4d2be83c48d5ccec0c6ee3a879cb8a9afa47",
+          "bytes": 345
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "ecd195fb0fcc976344b68cf3599ff23785b100f732ce3a55d7801f88aacf3a12",
+      "context_snapshot_sha256": "30a36f676501213955daffd9e26d53ab703a9683e5fd6cdc631a9c1cdcb79482",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "ecd195fb0fcc976344b68cf3599ff23785b100f732ce3a55d7801f88aacf3a12",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:borrow-forwarding-shared.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/borrow-forwarding-shared.zry",
+      "entrypoint": "tests/m3-fixtures/borrow-forwarding-shared.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/borrow-forwarding-shared.zry",
+          "origin": "tests/m3-fixtures/borrow-forwarding-shared.zry",
+          "sha256": "fe03daa8af7cc43bd58fa14fbed9caa413ee85bfdb9931139b1da4cf3a02ddb4",
+          "bytes": 322
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "622f00a72055f9ae6dd9fcecfbe079f54f9047e5de3cbe1057b5fbbf681b35b8",
+      "context_snapshot_sha256": "523782606a2883ca349e8e35279bd0f128a27a1dcfebda4724c3ab34bef38603",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "622f00a72055f9ae6dd9fcecfbe079f54f9047e5de3cbe1057b5fbbf681b35b8",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:borrow-parameter-mixed-order.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/borrow-parameter-mixed-order.zry",
+      "entrypoint": "tests/m3-fixtures/borrow-parameter-mixed-order.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/borrow-parameter-mixed-order.zry",
+          "origin": "tests/m3-fixtures/borrow-parameter-mixed-order.zry",
+          "sha256": "01668387d692f63687f5026846ccbf5616df5b751d596b0585d1755aa5ce3490",
+          "bytes": 272
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "9fd72a01b0ee3acf1311b2ccd4ac8f9c38b665d8ad2ff8c20e45fb525e2e77b5",
+      "context_snapshot_sha256": "ac31c62ba6ad832c7ad229fc6f562d1f0253ed0de2c29314401ec81d24d850f0",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "9fd72a01b0ee3acf1311b2ccd4ac8f9c38b665d8ad2ff8c20e45fb525e2e77b5",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:candidate-modules/main.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/candidate-modules/main.zry",
+      "entrypoint": "tests/m3-fixtures/candidate-modules/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/candidate-modules/main.zry",
+          "origin": "tests/m3-fixtures/candidate-modules/main.zry",
+          "sha256": "b7721c176f4421257ead1c4bc515295e38b5b72cc9e15f49efe8c415906f11b0",
+          "bytes": 105
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m3-fixtures/candidate-modules/math.zry",
+          "origin": "tests/m3-fixtures/candidate-modules/math.zry",
+          "sha256": "1769433d0167be7f80f0b7da2b934c82621df6beedfe497622b30ffa928dfe0a",
+          "bytes": 68
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m3-fixtures/candidate-modules/main.zry",
+          "target": "tests/m3-fixtures/candidate-modules/math.zry",
+          "specifier": "./math.zry",
+          "imported": "double",
+          "local": "double",
+          "declaration": [
+            0,
+            0,
+            36
+          ],
+          "specifier_span": [
+            0,
+            23,
+            35
+          ],
+          "imported_span": [
+            0,
+            9,
+            15
+          ],
+          "local_span": [
+            0,
+            9,
+            15
+          ]
+        }
+      ],
+      "graph_sha256": "3ea5633b48614a84960f1c6af519286d637a05e1d1056a701d10be7d53a95fcc",
+      "context_snapshot_sha256": "66b713a209620a064a0baa66b69325205d50f9a2071d0bb556f271b475974485",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "3ea5633b48614a84960f1c6af519286d637a05e1d1056a701d10be7d53a95fcc",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:candidate-modules/math.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/candidate-modules/math.zry",
+      "entrypoint": "tests/m3-fixtures/candidate-modules/math.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/candidate-modules/math.zry",
+          "origin": "tests/m3-fixtures/candidate-modules/math.zry",
+          "sha256": "1769433d0167be7f80f0b7da2b934c82621df6beedfe497622b30ffa928dfe0a",
+          "bytes": 68
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "b996951a5c759692b9cc4dcdcac6a38b53eed914148dea7fd9e2a279eb87dcb3",
+      "context_snapshot_sha256": "80add8961b872f08267dd3d1ec550b27da64452c5f3e29e5f1a47e13d37fc257",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "b996951a5c759692b9cc4dcdcac6a38b53eed914148dea7fd9e2a279eb87dcb3",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conditional-root-borrow-else-only.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conditional-root-borrow-else-only.zry",
+      "entrypoint": "tests/m3-fixtures/conditional-root-borrow-else-only.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow-else-only.zry",
+          "origin": "tests/m3-fixtures/conditional-root-borrow-else-only.zry",
+          "sha256": "4ad715858d72ebd43c263f3289a107b950fb71ee6b221eb08d2303d77f72c6ce",
+          "bytes": 204
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "f790e00618dca24d5b9463894760abd1d2b45d1fe57fd1e5c629073b2ab87048",
+      "context_snapshot_sha256": "c5d76de5da361c8f7d3881ed77db1d784c1dbc5ae71a9abe872ad8b23eb82c7a",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "f790e00618dca24d5b9463894760abd1d2b45d1fe57fd1e5c629073b2ab87048",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conditional-root-borrow-exclusive-arms.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conditional-root-borrow-exclusive-arms.zry",
+      "entrypoint": "tests/m3-fixtures/conditional-root-borrow-exclusive-arms.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow-exclusive-arms.zry",
+          "origin": "tests/m3-fixtures/conditional-root-borrow-exclusive-arms.zry",
+          "sha256": "5ef977f452a56dcacb45b5ca6b1633f241e5af8034265852d658ba601ee9cbd9",
+          "bytes": 368
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "c188532d030598edc59439641f058f1ee18d710cf2104cb84fc95b45ce6e3942",
+      "context_snapshot_sha256": "1ff4b81c39372cba0dd4dff6f7612ee143a2186c9ef41fe21f895c42ccca3e12",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "c188532d030598edc59439641f058f1ee18d710cf2104cb84fc95b45ce6e3942",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conditional-root-borrow-one-arm.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conditional-root-borrow-one-arm.zry",
+      "entrypoint": "tests/m3-fixtures/conditional-root-borrow-one-arm.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow-one-arm.zry",
+          "origin": "tests/m3-fixtures/conditional-root-borrow-one-arm.zry",
+          "sha256": "0e09d6714915f3f4842d440e69f3eb416e5ebaf3f5668b035447bf883a109850",
+          "bytes": 204
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "2eb601b142bf57d942b0b9aaa04fa9cd08992716766b6c07b7a5623f212fa088",
+      "context_snapshot_sha256": "4736ef79afef23aa4709abbe6f68d58052e0615ab1c2110ff141fcc4d1707374",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "2eb601b142bf57d942b0b9aaa04fa9cd08992716766b6c07b7a5623f212fa088",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conditional-root-borrow.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conditional-root-borrow.zry",
+      "entrypoint": "tests/m3-fixtures/conditional-root-borrow.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow.zry",
+          "origin": "tests/m3-fixtures/conditional-root-borrow.zry",
+          "sha256": "916e03df12da4e6076339fee167757f8940758d50edc952a63c547f871e43159",
+          "bytes": 385
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "b4c6030dca27ff82ba8fe20d95eb4a7b96fe038e00785a27cde5c1fd73177ae8",
+      "context_snapshot_sha256": "b3989797146c4c329ef751ef7c58a68185491d3a1a16f5dbc3c4da681e8f2732",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "b4c6030dca27ff82ba8fe20d95eb4a7b96fe038e00785a27cde5c1fd73177ae8",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/abi.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/abi.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/abi.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/abi.zry",
+          "origin": "tests/m3-fixtures/conformance/abi.zry",
+          "sha256": "cafc15d865a5e5e015a598f29e5aeb966c6143ea64050b37d306571ad68f804f",
+          "bytes": 57
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "fa075f0a55ae59d462016d455498746440542fdd8275ac54cf6f337ea7a3b3d7",
+      "context_snapshot_sha256": "2d87dceb6f4f28f157229edf92bcae82ec3e0e72ac7570960a18355c7ba16ebe",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "fa075f0a55ae59d462016d455498746440542fdd8275ac54cf6f337ea7a3b3d7",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/array.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/array.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/array.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/array.zry",
+          "origin": "tests/m3-fixtures/conformance/array.zry",
+          "sha256": "7fcdf511e1f6b40a9e8c0b8053f5218b08b146c6eb06e734ac1ce83821deacd0",
+          "bytes": 154
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "b2145ab07053b689090532c92d575fd293ba20cfec3ef43be0c79005aad0b48f",
+      "context_snapshot_sha256": "f73115a1270bc368b280af4cad8dac603f89e91113025a79475844db2ee0c8b5",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "b2145ab07053b689090532c92d575fd293ba20cfec3ef43be0c79005aad0b48f",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/borrow.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/borrow.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/borrow.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/borrow.zry",
+          "origin": "tests/m3-fixtures/conformance/borrow.zry",
+          "sha256": "1c02973b59be2f575fad73738d08deb717cc0e1d65053bb0081811634c05ec2f",
+          "bytes": 247
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "0fd29c5d3b4b0d07ca7ea298d03e50b8c7df8a8772f6d276ed49154407c9bb77",
+      "context_snapshot_sha256": "ba804c78222d57ff7c397b85f06188ddb83b6cce938c049a4dffb016f3a8c63d",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "0fd29c5d3b4b0d07ca7ea298d03e50b8c7df8a8772f6d276ed49154407c9bb77",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/bounds.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/bounds.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/bounds.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/bounds.zry",
+          "origin": "tests/m3-fixtures/conformance/bounds.zry",
+          "sha256": "34a2b3210f2fa03eb990fbae3cd881b7cf182abdc6ec651dc8bf85c16bd414d9",
+          "bytes": 165
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "f1c38c1c22d50bedc980ee8b06b1e5c2bf3abb73ef963c0e49a2a39531dd7b11",
+      "context_snapshot_sha256": "ce337394bd572c942e5e6e87b6626932e10449c0444c9994180008c67506af42",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "f1c38c1c22d50bedc980ee8b06b1e5c2bf3abb73ef963c0e49a2a39531dd7b11",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/enum.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/enum.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/enum.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/enum.zry",
+          "origin": "tests/m3-fixtures/conformance/enum.zry",
+          "sha256": "5052c0754d74a8b2ad1d3d20496ef4b09fe428f7af1591be1712052b1d6426f2",
+          "bytes": 117
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m3-fixtures/conformance/math.zry",
+          "origin": "tests/m3-fixtures/conformance/enum-body.zry",
+          "sha256": "7d65eeacbcad853fe9470679d714cf08c1796d1d0375bbf2df05a713cf54bdc0",
+          "bytes": 245
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m3-fixtures/conformance/enum.zry",
+          "target": "tests/m3-fixtures/conformance/math.zry",
+          "specifier": "./math.zry",
+          "imported": "score",
+          "local": "enumScore",
+          "declaration": [
+            0,
+            0,
+            48
+          ],
+          "specifier_span": [
+            0,
+            35,
+            47
+          ],
+          "imported_span": [
+            0,
+            9,
+            14
+          ],
+          "local_span": [
+            0,
+            18,
+            27
+          ]
+        }
+      ],
+      "graph_sha256": "1f6b1d93e0baf08588aadb5729ce74217ccfca90e80d85631ffbc461a2adf051",
+      "context_snapshot_sha256": "442a47749dd2af58484705991366af1ecd16a2e22d4dc1b9c6d3178b6abada30",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "1f6b1d93e0baf08588aadb5729ce74217ccfca90e80d85631ffbc461a2adf051",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/handles.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/handles.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/handles.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/handles.zry",
+          "origin": "tests/m3-fixtures/conformance/handles.zry",
+          "sha256": "3367e2543514e4f73d862556b27c4691082acee78aba9e576b7e4168f8397495",
+          "bytes": 89
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m3-fixtures/conformance/math.zry",
+          "origin": "tests/m3-fixtures/conformance/handles-body.zry",
+          "sha256": "aace98260d527614117b7ad7b40b0da402ee2e9aed72f1889c202113682fa968",
+          "bytes": 206
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m3-fixtures/conformance/handles.zry",
+          "target": "tests/m3-fixtures/conformance/math.zry",
+          "specifier": "./math.zry",
+          "imported": "handles",
+          "local": "handles",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "7f13e6ef284c8007c54e6d9b2808a90fe422be2303480975a60f26453b2558e0",
+      "context_snapshot_sha256": "551aebd165c4f162fc252aac557c55b55db9822a80eecd14f969f7bbbf321726",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "7f13e6ef284c8007c54e6d9b2808a90fe422be2303480975a60f26453b2558e0",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/owned-aggregate.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/owned-aggregate.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/owned-aggregate.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/math.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-aggregate-body.zry",
+          "sha256": "5e72890982471583db622bcfd43c2e126dcccefc3b368a7b517336f9740682d6",
+          "bytes": 257
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m3-fixtures/conformance/owned-aggregate.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-aggregate.zry",
+          "sha256": "ca02b53a2edb217c4e7c0b333fe33d2c4a900bcd78713eb7f1d8fde26012d675",
+          "bytes": 93
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m3-fixtures/conformance/owned-aggregate.zry",
+          "target": "tests/m3-fixtures/conformance/math.zry",
+          "specifier": "./math.zry",
+          "imported": "aggregate",
+          "local": "aggregate",
+          "declaration": [
+            1,
+            0,
+            39
+          ],
+          "specifier_span": [
+            1,
+            26,
+            38
+          ],
+          "imported_span": [
+            1,
+            9,
+            18
+          ],
+          "local_span": [
+            1,
+            9,
+            18
+          ]
+        }
+      ],
+      "graph_sha256": "f5c4047228f456b38f6e455303d7c0757be29e5e82ac113f873114c3e7165f78",
+      "context_snapshot_sha256": "2af6246b9808319ff7518bd7dd8579285478f44f2a825bee540dcad14556e6cf",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "f5c4047228f456b38f6e455303d7c0757be29e5e82ac113f873114c3e7165f78",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/owned-shared.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/owned-shared.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/owned-shared.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/math.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-shared-body.zry",
+          "sha256": "d2c9057d40a558eefb680c23387662ad76a639d33cfc8cb75c737958ba96606c",
+          "bytes": 142
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m3-fixtures/conformance/owned-shared.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-shared.zry",
+          "sha256": "ca02b53a2edb217c4e7c0b333fe33d2c4a900bcd78713eb7f1d8fde26012d675",
+          "bytes": 93
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m3-fixtures/conformance/owned-shared.zry",
+          "target": "tests/m3-fixtures/conformance/math.zry",
+          "specifier": "./math.zry",
+          "imported": "aggregate",
+          "local": "aggregate",
+          "declaration": [
+            1,
+            0,
+            39
+          ],
+          "specifier_span": [
+            1,
+            26,
+            38
+          ],
+          "imported_span": [
+            1,
+            9,
+            18
+          ],
+          "local_span": [
+            1,
+            9,
+            18
+          ]
+        }
+      ],
+      "graph_sha256": "45862334b904efa5c7083bdac755675d42c69e7208339b564ad6b581102d98ca",
+      "context_snapshot_sha256": "f789fa4093aa90079c4b312045f658f63a88c3832cc82b47e499ff9b4772a875",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "45862334b904efa5c7083bdac755675d42c69e7208339b564ad6b581102d98ca",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/owned-vec.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/owned-vec.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/owned-vec.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/math.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-vec-body.zry",
+          "sha256": "8cbc1323b239a280945199d62aa33385bbe653e67f36473b7038de7e47e37b65",
+          "bytes": 151
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m3-fixtures/conformance/owned-vec.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-vec.zry",
+          "sha256": "ca02b53a2edb217c4e7c0b333fe33d2c4a900bcd78713eb7f1d8fde26012d675",
+          "bytes": 93
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m3-fixtures/conformance/owned-vec.zry",
+          "target": "tests/m3-fixtures/conformance/math.zry",
+          "specifier": "./math.zry",
+          "imported": "aggregate",
+          "local": "aggregate",
+          "declaration": [
+            1,
+            0,
+            39
+          ],
+          "specifier_span": [
+            1,
+            26,
+            38
+          ],
+          "imported_span": [
+            1,
+            9,
+            18
+          ],
+          "local_span": [
+            1,
+            9,
+            18
+          ]
+        }
+      ],
+      "graph_sha256": "09d44aeb13e003701897d2fc1a668bd19d66001c07c5fb2e3d0913d917364efc",
+      "context_snapshot_sha256": "6f31818202b885d6927b606252d7ce5cb991ab2749c31ac3fbb7258e44895165",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "09d44aeb13e003701897d2fc1a668bd19d66001c07c5fb2e3d0913d917364efc",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/pair.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/pair.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/pair.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/pair.zry",
+          "origin": "tests/m3-fixtures/conformance/pair.zry",
+          "sha256": "c746b889df39e9679a3117ec88dd6511f73338987f416e31db6746d5a9cd103f",
+          "bytes": 194
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "6b087a6c2996162918ee85acea2c0688601eb86218b35723d5799f7cce46b858",
+      "context_snapshot_sha256": "beaea0c37e991ae87d6bcceb9baf351c5722085389e4d729fda4a4cbf18035b0",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "6b087a6c2996162918ee85acea2c0688601eb86218b35723d5799f7cce46b858",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/string.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/string.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/string.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/math.zry",
+          "origin": "tests/m3-fixtures/conformance/string-body.zry",
+          "sha256": "2600d157a71237d3ab8641761b57392a7edb954ef79397e33c784b584dc2ec94",
+          "bytes": 196
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m3-fixtures/conformance/string.zry",
+          "origin": "tests/m3-fixtures/conformance/string.zry",
+          "sha256": "16d10babf51903110aaee0c8ef327e29b5a70a3be9071eb255f75b3106f51b50",
+          "bytes": 83
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m3-fixtures/conformance/string.zry",
+          "target": "tests/m3-fixtures/conformance/math.zry",
+          "specifier": "./math.zry",
+          "imported": "text",
+          "local": "text",
+          "declaration": [
+            1,
+            0,
+            34
+          ],
+          "specifier_span": [
+            1,
+            21,
+            33
+          ],
+          "imported_span": [
+            1,
+            9,
+            13
+          ],
+          "local_span": [
+            1,
+            9,
+            13
+          ]
+        }
+      ],
+      "graph_sha256": "97358be9a397cc5e5c65441a96cc19e48dd66e70409b8ed6fb24d1bb80c27e40",
+      "context_snapshot_sha256": "e87fb42a626e9c9ed8c2c49c8f6b927fe152832f765adfeab2cb3021a920ac2a",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "97358be9a397cc5e5c65441a96cc19e48dd66e70409b8ed6fb24d1bb80c27e40",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/vec.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/vec.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/vec.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/vec.zry",
+          "origin": "tests/m3-fixtures/conformance/vec.zry",
+          "sha256": "69f54f0870b70e0818538141e4b89ef44e24424fbade6adef02b389ff86f7917",
+          "bytes": 191
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "afefdaa56c1f78d75618c924ecbcd5722cc01847fd90e91ba298225827495bc6",
+      "context_snapshot_sha256": "301b8fbc1ed9516945231d09b64412d71c147f97058a30775554a53206274eef",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "afefdaa56c1f78d75618c924ecbcd5722cc01847fd90e91ba298225827495bc6",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/weak-expired.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/weak-expired.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/weak-expired.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/math.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-expired-body.zry",
+          "sha256": "7f149fe308e1e75761721371ead063c072a7643dae7f7454643ba8c199247225",
+          "bytes": 233
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m3-fixtures/conformance/weak-expired.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-expired.zry",
+          "sha256": "a4ed2aa2b621b69a16c0365a8eb5fdd7db9ca9dddc4cae495f045157c8e92cb1",
+          "bytes": 85
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m3-fixtures/conformance/weak-expired.zry",
+          "target": "tests/m3-fixtures/conformance/math.zry",
+          "specifier": "./math.zry",
+          "imported": "check",
+          "local": "check",
+          "declaration": [
+            1,
+            0,
+            35
+          ],
+          "specifier_span": [
+            1,
+            22,
+            34
+          ],
+          "imported_span": [
+            1,
+            9,
+            14
+          ],
+          "local_span": [
+            1,
+            9,
+            14
+          ]
+        }
+      ],
+      "graph_sha256": "dc6d18c34384d5bac3a5c4c8f7d9d52c1fb1992b099ba1cc33ae9ddb1ed567af",
+      "context_snapshot_sha256": "9397fe7958de2b088b52c6a2cebf15eef0df428ff02f55e6bea3f2e030386848",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "dc6d18c34384d5bac3a5c4c8f7d9d52c1fb1992b099ba1cc33ae9ddb1ed567af",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:conformance/weak-live.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/weak-live.zry",
+      "entrypoint": "tests/m3-fixtures/conformance/weak-live.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/conformance/math.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-live-body.zry",
+          "sha256": "77e3f2ee548371a30ab057eb43dc8e486a8fd032ddda8e53ae58aecac5bdd53c",
+          "bytes": 181
+        },
+        {
+          "file_id": 1,
+          "path": "tests/m3-fixtures/conformance/weak-live.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-live.zry",
+          "sha256": "a4ed2aa2b621b69a16c0365a8eb5fdd7db9ca9dddc4cae495f045157c8e92cb1",
+          "bytes": 85
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m3-fixtures/conformance/weak-live.zry",
+          "target": "tests/m3-fixtures/conformance/math.zry",
+          "specifier": "./math.zry",
+          "imported": "check",
+          "local": "check",
+          "declaration": [
+            1,
+            0,
+            35
+          ],
+          "specifier_span": [
+            1,
+            22,
+            34
+          ],
+          "imported_span": [
+            1,
+            9,
+            14
+          ],
+          "local_span": [
+            1,
+            9,
+            14
+          ]
+        }
+      ],
+      "graph_sha256": "57f7c608eba6d569132f207ec1808fa4f6f666e71cb48a5267958bbff5156bfa",
+      "context_snapshot_sha256": "0276809acc735045873cb145e86dc6cc8a9912bfb10cb1405a9856830b4acac2",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "57f7c608eba6d569132f207ec1808fa4f6f666e71cb48a5267958bbff5156bfa",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:exclusive-root-borrow-bool.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/exclusive-root-borrow-bool.zry",
+      "entrypoint": "tests/m3-fixtures/exclusive-root-borrow-bool.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/exclusive-root-borrow-bool.zry",
+          "origin": "tests/m3-fixtures/exclusive-root-borrow-bool.zry",
+          "sha256": "878fbd02168e80a007f60b796f41fd46a2cb5ca8b7e19c826283c65c4f5546a3",
+          "bytes": 177
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "1a61ea3f4ad9fa3c129837f05266c68f5b1fd40be1556b9f92f5ef3dc23ad92f",
+      "context_snapshot_sha256": "498ab6a3c3d46c11f1208c5ce1bc853a8ed586a123f571e30f17ddd5dc5cc9a4",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "1a61ea3f4ad9fa3c129837f05266c68f5b1fd40be1556b9f92f5ef3dc23ad92f",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:exclusive-root-borrow.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/exclusive-root-borrow.zry",
+      "entrypoint": "tests/m3-fixtures/exclusive-root-borrow.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/exclusive-root-borrow.zry",
+          "origin": "tests/m3-fixtures/exclusive-root-borrow.zry",
+          "sha256": "d5f2a9d12b2189c53a1269624dbae4be2916142b75a29fd0d503d5fd29aa5c0c",
+          "bytes": 197
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "3087aca4cbafb94a9e7526cac3358b8f1c38b1f74a255ca34c505d285c2745a8",
+      "context_snapshot_sha256": "10607e2c57ecb2aa5cc5c1420b95f794216d39bfbe77db9ed288a15c7a6640e9",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "3087aca4cbafb94a9e7526cac3358b8f1c38b1f74a255ca34c505d285c2745a8",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:finite-recursive-composition.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/finite-recursive-composition.zry",
+      "entrypoint": "tests/m3-fixtures/finite-recursive-composition.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/finite-recursive-composition.zry",
+          "origin": "tests/m3-fixtures/finite-recursive-composition.zry",
+          "sha256": "c02fd655ec5db95a1c622f6516a3938408b1649271a9c83d3df9813a1f15719d",
+          "bytes": 437
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "cf8bce4844dd4a77435502a84c06a7b0c5bf0c0932b61447d2a2fbc07866ab15",
+      "context_snapshot_sha256": "a54265dfc52925d88c169380e4aabfd29adbc18f7dfbf9a6c1ac1d56a9cae450",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "cf8bce4844dd4a77435502a84c06a7b0c5bf0c0932b61447d2a2fbc07866ab15",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:finite-recursive-projections.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/finite-recursive-projections.zry",
+      "entrypoint": "tests/m3-fixtures/finite-recursive-projections.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/finite-recursive-projections.zry",
+          "origin": "tests/m3-fixtures/finite-recursive-projections.zry",
+          "sha256": "e5366332c53b8c92defeb106a3d93b1eec55b763464ebe79b062d2353b3fd6ee",
+          "bytes": 977
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "a9a7f68218746f5c75bdeec462cdd66ce4e51e6f46950e95f5d3dded25315861",
+      "context_snapshot_sha256": "5a94290f1848814f6dd9682e9c782255963ac66173c3b4acc02308d830182f73",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "a9a7f68218746f5c75bdeec462cdd66ce4e51e6f46950e95f5d3dded25315861",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:fixed-array-subobject-assignment.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/fixed-array-subobject-assignment.zry",
+      "entrypoint": "tests/m3-fixtures/fixed-array-subobject-assignment.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/fixed-array-subobject-assignment.zry",
+          "origin": "tests/m3-fixtures/fixed-array-subobject-assignment.zry",
+          "sha256": "94d5f6e1040f8b56a0a990d1f7e15958e4b466b2b15d87a99f235cf1b6033be1",
+          "bytes": 345
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "f8051861139c6e20851aede481921327c2e88c3d4e98283370d9cda293252452",
+      "context_snapshot_sha256": "4f1e3a51eb43f77c885637afdd0d7f92b17223a8bbfdb68edeea5a6cfe2dee96",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "f8051861139c6e20851aede481921327c2e88c3d4e98283370d9cda293252452",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:fixed-array-subobject-clone-assignment.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/fixed-array-subobject-clone-assignment.zry",
+      "entrypoint": "tests/m3-fixtures/fixed-array-subobject-clone-assignment.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/fixed-array-subobject-clone-assignment.zry",
+          "origin": "tests/m3-fixtures/fixed-array-subobject-clone-assignment.zry",
+          "sha256": "926e493feb82f0171e33a7995df15b2f48d653880512a9493e27a89a10847f0a",
+          "bytes": 352
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "f475f7225d02d085caa345b9144688ffee73fb971a333bcf9ecf063cd7302f27",
+      "context_snapshot_sha256": "c3dd4b5c9b4d8618e710deabf2a989419d62ae1888529a32057121bd5be8387e",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "f475f7225d02d085caa345b9144688ffee73fb971a333bcf9ecf063cd7302f27",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:fixed-array-subobject-return.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/fixed-array-subobject-return.zry",
+      "entrypoint": "tests/m3-fixtures/fixed-array-subobject-return.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/fixed-array-subobject-return.zry",
+          "origin": "tests/m3-fixtures/fixed-array-subobject-return.zry",
+          "sha256": "49a5fe0da46bee92dd7933ef103458361b0a2c43b3259cb8518e5ad135054c23",
+          "bytes": 194
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "adf988a8665136585566119afd1c94e6f35c33622276a771f864afa1ebd6a63b",
+      "context_snapshot_sha256": "bb46fc293e47614c260d85a9202cb1a1f2663d5177d34313bd7d24f6d4fea5cb",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "adf988a8665136585566119afd1c94e6f35c33622276a771f864afa1ebd6a63b",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:lexical-borrow-call-exclusive.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/lexical-borrow-call-exclusive.zry",
+      "entrypoint": "tests/m3-fixtures/lexical-borrow-call-exclusive.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-exclusive.zry",
+          "origin": "tests/m3-fixtures/lexical-borrow-call-exclusive.zry",
+          "sha256": "9c836f6147f4fe2e68e095508e3fe1a04cf27a0ceceaf82b976d716f35ef5949",
+          "bytes": 232
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "5b764238f836fb90c2ef23b04e13f1961ed0aff7f1fef066580ba9c2470de62f",
+      "context_snapshot_sha256": "1114896db5da62c1dfa037badac8dfdd85951c263a1ea6d6585917a51d67f4a8",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "5b764238f836fb90c2ef23b04e13f1961ed0aff7f1fef066580ba9c2470de62f",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:lexical-borrow-call-shared.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/lexical-borrow-call-shared.zry",
+      "entrypoint": "tests/m3-fixtures/lexical-borrow-call-shared.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-shared.zry",
+          "origin": "tests/m3-fixtures/lexical-borrow-call-shared.zry",
+          "sha256": "9c32e727af98b87d18a30115a813ebd4a91ca0664c5df782efeadb1bdc8fd893",
+          "bytes": 225
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "60cbc4a5464009ddff2f3b29cf64c9404dc30133df7791611116032c0be5345f",
+      "context_snapshot_sha256": "01fe7578106defb7755171e570680598ec3564f66715802d074708e50addac0a",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "60cbc4a5464009ddff2f3b29cf64c9404dc30133df7791611116032c0be5345f",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:loop-root-borrow.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/loop-root-borrow.zry",
+      "entrypoint": "tests/m3-fixtures/loop-root-borrow.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/loop-root-borrow.zry",
+          "origin": "tests/m3-fixtures/loop-root-borrow.zry",
+          "sha256": "85041a0926588d7e74be8eef21238f58da57d2ef4fbf9f662b01804b9f86e210",
+          "bytes": 210
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "bc1682be40196a39b745499c745bb316fc877176ee092763639ccc607a59e534",
+      "context_snapshot_sha256": "9b82fcb7b5b7d93f53e56817fd368fd82dfd2e9872ca0638ce918efa103192ac",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "bc1682be40196a39b745499c745bb316fc877176ee092763639ccc607a59e534",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:loop-shared-root-borrow.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/loop-shared-root-borrow.zry",
+      "entrypoint": "tests/m3-fixtures/loop-shared-root-borrow.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/loop-shared-root-borrow.zry",
+          "origin": "tests/m3-fixtures/loop-shared-root-borrow.zry",
+          "sha256": "c69306dee91a7387d6732a3d6d029d061369a2d5160c0a1a50ba34090e2484b5",
+          "bytes": 221
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "0327ea31256509f361bf71e2093e180282bb98481feaee50222236a7768473cb",
+      "context_snapshot_sha256": "ce37c1bf401a931181ed0d3d4d818a1a9bbb89aacea963ca8407f74634841ed8",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "0327ea31256509f361bf71e2093e180282bb98481feaee50222236a7768473cb",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:nonindexed-borrow-nested-call-exclusive.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/nonindexed-borrow-nested-call-exclusive.zry",
+      "entrypoint": "tests/m3-fixtures/nonindexed-borrow-nested-call-exclusive.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/nonindexed-borrow-nested-call-exclusive.zry",
+          "origin": "tests/m3-fixtures/nonindexed-borrow-nested-call-exclusive.zry",
+          "sha256": "3c347610120cd289d81473ec0027a8c4e4417bbfe9a7dfaea85a457e38c5c60a",
+          "bytes": 250
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "7c5e6f13e31a72d62f6921d9ab997cb824d0f6de80478f2df969581a066ae50e",
+      "context_snapshot_sha256": "47898736f75cf338e9bcde5c992ae51c56c7f51d7dbb5577115b8ece0fe84e86",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "7c5e6f13e31a72d62f6921d9ab997cb824d0f6de80478f2df969581a066ae50e",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:nonindexed-borrow-nested-call.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/nonindexed-borrow-nested-call.zry",
+      "entrypoint": "tests/m3-fixtures/nonindexed-borrow-nested-call.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/nonindexed-borrow-nested-call.zry",
+          "origin": "tests/m3-fixtures/nonindexed-borrow-nested-call.zry",
+          "sha256": "8e487f43542c2a9859727a41045fa96d9b2dcf8eaaf111b2c0ec19e5f2ce2848",
+          "bytes": 241
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "3566264fcaaec42140ffba4e056fb5a7861fdaf4615e413e24b567380d9e714c",
+      "context_snapshot_sha256": "7c1fbd7cde13b118ff6c74196f6c2098c698f81854b2dbfc7fcd1462578750aa",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "3566264fcaaec42140ffba4e056fb5a7861fdaf4615e413e24b567380d9e714c",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:owned-root-borrow-reads.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/owned-root-borrow-reads.zry",
+      "entrypoint": "tests/m3-fixtures/owned-root-borrow-reads.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/owned-root-borrow-reads.zry",
+          "origin": "tests/m3-fixtures/owned-root-borrow-reads.zry",
+          "sha256": "4aef456b194ee1ec0f0c92869cf61148f505e54ef39522fff1c12654cd76d7f7",
+          "bytes": 1509
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "3d2a1295efafc0a9a1fa88e4a1f7e7f0edc01751239ec384fc62d33a06c4def6",
+      "context_snapshot_sha256": "e7f13bf667660899cfbf7cef78e67770ef0dce037380ef6405b3b672056f62fd",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "3d2a1295efafc0a9a1fa88e4a1f7e7f0edc01751239ec384fc62d33a06c4def6",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:pair-score-v4.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/pair-score-v4.zry",
+      "entrypoint": "tests/m3-fixtures/pair-score-v4.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/pair-score-v4.zry",
+          "origin": "tests/m3-fixtures/pair-score-v4.zry",
+          "sha256": "1b69b5dddac20f5469833fc94db1865ccc796645060114c10571deb083798f49",
+          "bytes": 191
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "994e5f86dce7d1f47346979e1cd090566a680b1734299103db8e4381b1591a61",
+      "context_snapshot_sha256": "01fa3ec74df6cf507510d33be83f14574470df23b4b7aa896cd4b0515dfae91a",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "994e5f86dce7d1f47346979e1cd090566a680b1734299103db8e4381b1591a61",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:projected-borrow-shared-overlap.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/projected-borrow-shared-overlap.zry",
+      "entrypoint": "tests/m3-fixtures/projected-borrow-shared-overlap.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/projected-borrow-shared-overlap.zry",
+          "origin": "tests/m3-fixtures/projected-borrow-shared-overlap.zry",
+          "sha256": "e4c21898cfd467be58f264f3f2e866beb81e613cb1fce23a01bb04e29bd9efec",
+          "bytes": 326
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "91e3fb230832f4d091cb31ea86de92b7f26696c12d4af6a6001eba5c67dc6eee",
+      "context_snapshot_sha256": "9dfdacd7fdde66b44fdd6c8f9dcb736e94ce292a7474c4f8fbe13a9dc8bd0d3e",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "91e3fb230832f4d091cb31ea86de92b7f26696c12d4af6a6001eba5c67dc6eee",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:projected-borrow.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/projected-borrow.zry",
+      "entrypoint": "tests/m3-fixtures/projected-borrow.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/projected-borrow.zry",
+          "origin": "tests/m3-fixtures/projected-borrow.zry",
+          "sha256": "795f534d8da977635cb54eb8579cca3fbbcd67f558779cc670034610fcee3ec6",
+          "bytes": 893
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "380d28f4bce177384b4df31265fd1b99c3bf094a3a5ec41a0af3c3f6f279bfa0",
+      "context_snapshot_sha256": "1c9d9095880f57156d2dfe8300804f5c34a2f523b2d5e4bff46f86c903e3ce76",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "380d28f4bce177384b4df31265fd1b99c3bf094a3a5ec41a0af3c3f6f279bfa0",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:projected-subobject-assignment.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/projected-subobject-assignment.zry",
+      "entrypoint": "tests/m3-fixtures/projected-subobject-assignment.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/projected-subobject-assignment.zry",
+          "origin": "tests/m3-fixtures/projected-subobject-assignment.zry",
+          "sha256": "2a9ba3ec8267979e8fd77cee31c8f506a97556aea014d1df6857a5e0beaf6a65",
+          "bytes": 332
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "67c283bca40433c4bac63fa74ed11719f1773675d42be9c532093619f66b5557",
+      "context_snapshot_sha256": "49bfb2ab4c95416cba9c721fc4c316fe308c692bcde0f9825f0d93470bee7baa",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "67c283bca40433c4bac63fa74ed11719f1773675d42be9c532093619f66b5557",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:projected-subobject-clone-assignment.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/projected-subobject-clone-assignment.zry",
+      "entrypoint": "tests/m3-fixtures/projected-subobject-clone-assignment.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/projected-subobject-clone-assignment.zry",
+          "origin": "tests/m3-fixtures/projected-subobject-clone-assignment.zry",
+          "sha256": "64a915d3b3fab2c0db0151fe71658fffad6fddfbc967dab4d64154b0d314f1b5",
+          "bytes": 339
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "0b5d9922290d6004934a42b7f5d0109b73831e78b08db05c6a0b73a5e29a1e45",
+      "context_snapshot_sha256": "12e09f6c2cd138f346fa169b0ec22ded5aa280d6b3647cf0ee434d2bd62e3e3f",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "0b5d9922290d6004934a42b7f5d0109b73831e78b08db05c6a0b73a5e29a1e45",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:shared-root-borrow-bool.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/shared-root-borrow-bool.zry",
+      "entrypoint": "tests/m3-fixtures/shared-root-borrow-bool.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/shared-root-borrow-bool.zry",
+          "origin": "tests/m3-fixtures/shared-root-borrow-bool.zry",
+          "sha256": "03604f08db36192d9bed0c3d75cd728cac4e9d7ef36973ef3d08d0845efceed3",
+          "bytes": 152
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "f2f0d5d8dba4e14f5dc7f0448fd7fff8fc779848fcf65ba8d02fd2c885a9280c",
+      "context_snapshot_sha256": "d75ca008ecd79c0f116beef1c27cff5633253c5231dea11cefd4b691a56a68e6",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "f2f0d5d8dba4e14f5dc7f0448fd7fff8fc779848fcf65ba8d02fd2c885a9280c",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:shared-root-borrow.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/shared-root-borrow.zry",
+      "entrypoint": "tests/m3-fixtures/shared-root-borrow.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/shared-root-borrow.zry",
+          "origin": "tests/m3-fixtures/shared-root-borrow.zry",
+          "sha256": "df54692ff0bb21724fc2f8e8fba2e1cc916ed7899b98f98e8e7eea0503c92042",
+          "bytes": 215
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e6d69c6a29706f8a6abfd18f992c39e45e755d90d661c442b0d8e24204f5a32c",
+      "context_snapshot_sha256": "1e41cca422ca92ad8e3acad758ed93dfc4c0adabfb89234acc5f9c66aba6e561",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "e6d69c6a29706f8a6abfd18f992c39e45e755d90d661c442b0d8e24204f5a32c",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:shared-root-owner-read.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/shared-root-owner-read.zry",
+      "entrypoint": "tests/m3-fixtures/shared-root-owner-read.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/shared-root-owner-read.zry",
+          "origin": "tests/m3-fixtures/shared-root-owner-read.zry",
+          "sha256": "30a09d9e79376ced339422cc36b49a20e7a52a3f18de0b0edf2ba100f7beeb31",
+          "bytes": 178
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "6c7f67a489ecea04202a12ef3aa8d0ce9d513359398a50c6ade69f2219ead067",
+      "context_snapshot_sha256": "d1175368407d7882c8db4974525c47762a3d6827f4deb611cdb69c82aef9c22e",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "6c7f67a489ecea04202a12ef3aa8d0ce9d513359398a50c6ade69f2219ead067",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:shared-root-reborrow.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/shared-root-reborrow.zry",
+      "entrypoint": "tests/m3-fixtures/shared-root-reborrow.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/shared-root-reborrow.zry",
+          "origin": "tests/m3-fixtures/shared-root-reborrow.zry",
+          "sha256": "9920e84afc262440b2e7d77b3cef0d5ad00e3e48f031c2b681aa80a87e169884",
+          "bytes": 217
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e4a236beb802270454eb24e885d3e805f610924b403eeedbb2718690ba279502",
+      "context_snapshot_sha256": "2dc2ed55146afa02f92e1b95f0561df19b908b98e69fc353862a8671e1b25796",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "e4a236beb802270454eb24e885d3e805f610924b403eeedbb2718690ba279502",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-source:syntax-v4-shorthand.zry",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/syntax-v4-shorthand.zry",
+      "entrypoint": "tests/m3-fixtures/syntax-v4-shorthand.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "tests/m3-fixtures/syntax-v4-shorthand.zry",
+          "origin": "tests/m3-fixtures/syntax-v4-shorthand.zry",
+          "sha256": "8d1267de4decff8b9c21c65413562f3fd31fe5445f796b1a97c5bef348fbbfdf",
+          "bytes": 108
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "ca81d3901ca50840b911c754c16f7845471310b000e3f0f4aa06e2695cde47aa",
+      "context_snapshot_sha256": "6e2e1ceacefd665382281a78927f508ba0e47005fd37597cbfc3b5b8f1c97ede",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "ca81d3901ca50840b911c754c16f7845471310b000e3f0f4aa06e2695cde47aa",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:pair",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/pair.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/pair.zry",
+          "sha256": "c746b889df39e9679a3117ec88dd6511f73338987f416e31db6746d5a9cd103f",
+          "bytes": 194
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e7b74d71664ef88ed7dc17cf91dfae866bc47e9df9cc582807dce197ec8ab9f3",
+      "context_snapshot_sha256": "e7b89f699b219708d54a93c3e4a109d6746ebf869cf358deaba0f6dfdd3dc6a9",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "e7b74d71664ef88ed7dc17cf91dfae866bc47e9df9cc582807dce197ec8ab9f3",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:array",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/array.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/array.zry",
+          "sha256": "7fcdf511e1f6b40a9e8c0b8053f5218b08b146c6eb06e734ac1ce83821deacd0",
+          "bytes": 154
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "cf0b4524365831f3514fdb722f106b3dddefbfeb55e2649f23b8a8b20e0dbe6e",
+      "context_snapshot_sha256": "1f7ac8969f50699df73753eb95762584d6daa304f646de1bdbab78ba156c439d",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "cf0b4524365831f3514fdb722f106b3dddefbfeb55e2649f23b8a8b20e0dbe6e",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:borrow",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/borrow.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/borrow.zry",
+          "sha256": "1c02973b59be2f575fad73738d08deb717cc0e1d65053bb0081811634c05ec2f",
+          "bytes": 247
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "372e093094e0bc4c5c120c699b729f0b83ad36ec81f3d2ed27e6b647e38c64e0",
+      "context_snapshot_sha256": "aec045e196494734733639958a6be0436809ebc0b51eaf482329f74bb6137c3d",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "372e093094e0bc4c5c120c699b729f0b83ad36ec81f3d2ed27e6b647e38c64e0",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:vec",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/vec.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/vec.zry",
+          "sha256": "69f54f0870b70e0818538141e4b89ef44e24424fbade6adef02b389ff86f7917",
+          "bytes": 191
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "73f127745c4e591fe894c0ff9957ca3099841650e9fb8a915a61574236688e23",
+      "context_snapshot_sha256": "3daa405b73cd3d213575027274174ebde7d61a58aa269e70273a3df7a6c70293",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "73f127745c4e591fe894c0ff9957ca3099841650e9fb8a915a61574236688e23",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:string",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/string.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/string.zry",
+          "sha256": "16d10babf51903110aaee0c8ef327e29b5a70a3be9071eb255f75b3106f51b50",
+          "bytes": 83
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/string-body.zry",
+          "sha256": "2600d157a71237d3ab8641761b57392a7edb954ef79397e33c784b584dc2ec94",
+          "bytes": 196
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "text",
+          "local": "text",
+          "declaration": [
+            0,
+            0,
+            34
+          ],
+          "specifier_span": [
+            0,
+            21,
+            33
+          ],
+          "imported_span": [
+            0,
+            9,
+            13
+          ],
+          "local_span": [
+            0,
+            9,
+            13
+          ]
+        }
+      ],
+      "graph_sha256": "24d139a26cfe4e6d539832ec0fce834db5b2f44dfb236c27f2b0d8f9f0740fec",
+      "context_snapshot_sha256": "2e2eeb32d083701ce6c055bd8295c87d00ba2aae2bcde4bb6b77630c238eafae",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "24d139a26cfe4e6d539832ec0fce834db5b2f44dfb236c27f2b0d8f9f0740fec",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:handles",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/handles.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/handles.zry",
+          "sha256": "3367e2543514e4f73d862556b27c4691082acee78aba9e576b7e4168f8397495",
+          "bytes": 89
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/handles-body.zry",
+          "sha256": "aace98260d527614117b7ad7b40b0da402ee2e9aed72f1889c202113682fa968",
+          "bytes": 206
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "handles",
+          "local": "handles",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "335caf467b3bb1f4f2a7915f9c9273859be663c4794b36a37bcff11bf5bacd02",
+      "context_snapshot_sha256": "5a0a58ec153861929054bfcccc5de48f097582ff812067208298b816b09f5080",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "335caf467b3bb1f4f2a7915f9c9273859be663c4794b36a37bcff11bf5bacd02",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:owned-aggregate",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/owned-aggregate.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-aggregate.zry",
+          "sha256": "ca02b53a2edb217c4e7c0b333fe33d2c4a900bcd78713eb7f1d8fde26012d675",
+          "bytes": 93
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-aggregate-body.zry",
+          "sha256": "5e72890982471583db622bcfd43c2e126dcccefc3b368a7b517336f9740682d6",
+          "bytes": 257
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "aggregate",
+          "local": "aggregate",
+          "declaration": [
+            0,
+            0,
+            39
+          ],
+          "specifier_span": [
+            0,
+            26,
+            38
+          ],
+          "imported_span": [
+            0,
+            9,
+            18
+          ],
+          "local_span": [
+            0,
+            9,
+            18
+          ]
+        }
+      ],
+      "graph_sha256": "b05d70e56f5d592a04dc0759aadd9a24d0806673e5ad0647070d962cd726c919",
+      "context_snapshot_sha256": "18484f391ea92c6359eec315c1602807d0830cdc699e01e714c5a8327e3fad1d",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "b05d70e56f5d592a04dc0759aadd9a24d0806673e5ad0647070d962cd726c919",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:abi",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/abi.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/abi.zry",
+          "sha256": "cafc15d865a5e5e015a598f29e5aeb966c6143ea64050b37d306571ad68f804f",
+          "bytes": 57
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "b26ced6f2254f5853a53367e8d3e9100ed146e582e95ae220afeb34c9d04f868",
+      "context_snapshot_sha256": "4cda7b775030684bbfde2b8d2551d7600016c38824775bdabb20dbbdac3540f2",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "b26ced6f2254f5853a53367e8d3e9100ed146e582e95ae220afeb34c9d04f868",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:bounds",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/bounds.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/bounds.zry",
+          "sha256": "34a2b3210f2fa03eb990fbae3cd881b7cf182abdc6ec651dc8bf85c16bd414d9",
+          "bytes": 165
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e5e9bd5ac9d598f6746cea469923de686fc52a9552998cade539fce4d6f70791",
+      "context_snapshot_sha256": "11c0d5b6a93b74c87f53a0c506af27b49796f6175747f7b28f6ead454c93a2dc",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "e5e9bd5ac9d598f6746cea469923de686fc52a9552998cade539fce4d6f70791",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:enum",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/enum.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/enum.zry",
+          "sha256": "5052c0754d74a8b2ad1d3d20496ef4b09fe428f7af1591be1712052b1d6426f2",
+          "bytes": 117
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/enum-body.zry",
+          "sha256": "7d65eeacbcad853fe9470679d714cf08c1796d1d0375bbf2df05a713cf54bdc0",
+          "bytes": 245
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "score",
+          "local": "enumScore",
+          "declaration": [
+            0,
+            0,
+            48
+          ],
+          "specifier_span": [
+            0,
+            35,
+            47
+          ],
+          "imported_span": [
+            0,
+            9,
+            14
+          ],
+          "local_span": [
+            0,
+            18,
+            27
+          ]
+        }
+      ],
+      "graph_sha256": "b1a2ae3462673e09fe54af19e2b677772d92e99f5eed0f61d18a15978224a442",
+      "context_snapshot_sha256": "aed7106387588860c8b808d7c9717e9bd86a2e2ad445068a16f662d9ce488dba",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "b1a2ae3462673e09fe54af19e2b677772d92e99f5eed0f61d18a15978224a442",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:weak-live",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/weak-live.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-live.zry",
+          "sha256": "a4ed2aa2b621b69a16c0365a8eb5fdd7db9ca9dddc4cae495f045157c8e92cb1",
+          "bytes": 85
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-live-body.zry",
+          "sha256": "77e3f2ee548371a30ab057eb43dc8e486a8fd032ddda8e53ae58aecac5bdd53c",
+          "bytes": 181
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "check",
+          "local": "check",
+          "declaration": [
+            0,
+            0,
+            35
+          ],
+          "specifier_span": [
+            0,
+            22,
+            34
+          ],
+          "imported_span": [
+            0,
+            9,
+            14
+          ],
+          "local_span": [
+            0,
+            9,
+            14
+          ]
+        }
+      ],
+      "graph_sha256": "1faa44ddc9744d88eec5c72671d78eda9086f01e09eb27bfcb5cf9b82102f19c",
+      "context_snapshot_sha256": "946bc4b658bef59658a26848a3e731ea55f247f8f54b1aa37d3d8eea7a7f5714",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "1faa44ddc9744d88eec5c72671d78eda9086f01e09eb27bfcb5cf9b82102f19c",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:weak-expired",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/weak-expired.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-expired.zry",
+          "sha256": "a4ed2aa2b621b69a16c0365a8eb5fdd7db9ca9dddc4cae495f045157c8e92cb1",
+          "bytes": 85
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-expired-body.zry",
+          "sha256": "7f149fe308e1e75761721371ead063c072a7643dae7f7454643ba8c199247225",
+          "bytes": 233
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "check",
+          "local": "check",
+          "declaration": [
+            0,
+            0,
+            35
+          ],
+          "specifier_span": [
+            0,
+            22,
+            34
+          ],
+          "imported_span": [
+            0,
+            9,
+            14
+          ],
+          "local_span": [
+            0,
+            9,
+            14
+          ]
+        }
+      ],
+      "graph_sha256": "e8a78f7d6864d5116b8f6bae6410ea5c1763e3fc3209ccb4e78f88ddbbcead70",
+      "context_snapshot_sha256": "850a1e81bb481289bc99fecc882a54c00e0cbcb8c04ed990ae70635a07b284de",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "e8a78f7d6864d5116b8f6bae6410ea5c1763e3fc3209ccb4e78f88ddbbcead70",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:owned-vec",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/owned-vec.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-vec.zry",
+          "sha256": "ca02b53a2edb217c4e7c0b333fe33d2c4a900bcd78713eb7f1d8fde26012d675",
+          "bytes": 93
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-vec-body.zry",
+          "sha256": "8cbc1323b239a280945199d62aa33385bbe653e67f36473b7038de7e47e37b65",
+          "bytes": 151
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "aggregate",
+          "local": "aggregate",
+          "declaration": [
+            0,
+            0,
+            39
+          ],
+          "specifier_span": [
+            0,
+            26,
+            38
+          ],
+          "imported_span": [
+            0,
+            9,
+            18
+          ],
+          "local_span": [
+            0,
+            9,
+            18
+          ]
+        }
+      ],
+      "graph_sha256": "25705d3526ad4d50560345d7412d0435c5af87f51235756f5cab7636aed0bd40",
+      "context_snapshot_sha256": "3dbff99bd0462dfde61b931f0c4e567e9c4537409848ddfa03ca591ad3544ae4",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "25705d3526ad4d50560345d7412d0435c5af87f51235756f5cab7636aed0bd40",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-context:owned-shared",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/owned-shared.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-shared.zry",
+          "sha256": "ca02b53a2edb217c4e7c0b333fe33d2c4a900bcd78713eb7f1d8fde26012d675",
+          "bytes": 93
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-shared-body.zry",
+          "sha256": "d2c9057d40a558eefb680c23387662ad76a639d33cfc8cb75c737958ba96606c",
+          "bytes": 142
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "aggregate",
+          "local": "aggregate",
+          "declaration": [
+            0,
+            0,
+            39
+          ],
+          "specifier_span": [
+            0,
+            26,
+            38
+          ],
+          "imported_span": [
+            0,
+            9,
+            18
+          ],
+          "local_span": [
+            0,
+            9,
+            18
+          ]
+        }
+      ],
+      "graph_sha256": "899e676cd3083c1653f01ad38c849552797402682559693534ed1f1ae3778063",
+      "context_snapshot_sha256": "24802d2eda267d81125e7fb13fa257aab0870fe7b9729956775e34b7182bbfe9",
+      "baseline_graph_observation": {
+        "status": "observed-in-unchanged-H4",
+        "sha256": "899e676cd3083c1653f01ad38c849552797402682559693534ed1f1ae3778063",
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:pair-positive",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/pair.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/pair.zry",
+          "sha256": "c746b889df39e9679a3117ec88dd6511f73338987f416e31db6746d5a9cd103f",
+          "bytes": 194
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e7b74d71664ef88ed7dc17cf91dfae866bc47e9df9cc582807dce197ec8ab9f3",
+      "context_snapshot_sha256": "e7b89f699b219708d54a93c3e4a109d6746ebf869cf358deaba0f6dfdd3dc6a9",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:pair-negative",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/pair.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/pair.zry",
+          "sha256": "c746b889df39e9679a3117ec88dd6511f73338987f416e31db6746d5a9cd103f",
+          "bytes": 194
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e7b74d71664ef88ed7dc17cf91dfae866bc47e9df9cc582807dce197ec8ab9f3",
+      "context_snapshot_sha256": "e7b89f699b219708d54a93c3e4a109d6746ebf869cf358deaba0f6dfdd3dc6a9",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:pair-wrap",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/pair.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/pair.zry",
+          "sha256": "c746b889df39e9679a3117ec88dd6511f73338987f416e31db6746d5a9cd103f",
+          "bytes": 194
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e7b74d71664ef88ed7dc17cf91dfae866bc47e9df9cc582807dce197ec8ab9f3",
+      "context_snapshot_sha256": "e7b89f699b219708d54a93c3e4a109d6746ebf869cf358deaba0f6dfdd3dc6a9",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:array",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/array.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/array.zry",
+          "sha256": "7fcdf511e1f6b40a9e8c0b8053f5218b08b146c6eb06e734ac1ce83821deacd0",
+          "bytes": 154
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "cf0b4524365831f3514fdb722f106b3dddefbfeb55e2649f23b8a8b20e0dbe6e",
+      "context_snapshot_sha256": "1f7ac8969f50699df73753eb95762584d6daa304f646de1bdbab78ba156c439d",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:borrow",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/borrow.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/borrow.zry",
+          "sha256": "1c02973b59be2f575fad73738d08deb717cc0e1d65053bb0081811634c05ec2f",
+          "bytes": 247
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "372e093094e0bc4c5c120c699b729f0b83ad36ec81f3d2ed27e6b647e38c64e0",
+      "context_snapshot_sha256": "aec045e196494734733639958a6be0436809ebc0b51eaf482329f74bb6137c3d",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:vec",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/vec.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/vec.zry",
+          "sha256": "69f54f0870b70e0818538141e4b89ef44e24424fbade6adef02b389ff86f7917",
+          "bytes": 191
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "73f127745c4e591fe894c0ff9957ca3099841650e9fb8a915a61574236688e23",
+      "context_snapshot_sha256": "3daa405b73cd3d213575027274174ebde7d61a58aa269e70273a3df7a6c70293",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:string",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/string.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/string.zry",
+          "sha256": "16d10babf51903110aaee0c8ef327e29b5a70a3be9071eb255f75b3106f51b50",
+          "bytes": 83
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/string-body.zry",
+          "sha256": "2600d157a71237d3ab8641761b57392a7edb954ef79397e33c784b584dc2ec94",
+          "bytes": 196
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "text",
+          "local": "text",
+          "declaration": [
+            0,
+            0,
+            34
+          ],
+          "specifier_span": [
+            0,
+            21,
+            33
+          ],
+          "imported_span": [
+            0,
+            9,
+            13
+          ],
+          "local_span": [
+            0,
+            9,
+            13
+          ]
+        }
+      ],
+      "graph_sha256": "24d139a26cfe4e6d539832ec0fce834db5b2f44dfb236c27f2b0d8f9f0740fec",
+      "context_snapshot_sha256": "2e2eeb32d083701ce6c055bd8295c87d00ba2aae2bcde4bb6b77630c238eafae",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:handles",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/handles.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/handles.zry",
+          "sha256": "3367e2543514e4f73d862556b27c4691082acee78aba9e576b7e4168f8397495",
+          "bytes": 89
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/handles-body.zry",
+          "sha256": "aace98260d527614117b7ad7b40b0da402ee2e9aed72f1889c202113682fa968",
+          "bytes": 206
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "handles",
+          "local": "handles",
+          "declaration": [
+            0,
+            0,
+            37
+          ],
+          "specifier_span": [
+            0,
+            24,
+            36
+          ],
+          "imported_span": [
+            0,
+            9,
+            16
+          ],
+          "local_span": [
+            0,
+            9,
+            16
+          ]
+        }
+      ],
+      "graph_sha256": "335caf467b3bb1f4f2a7915f9c9273859be663c4794b36a37bcff11bf5bacd02",
+      "context_snapshot_sha256": "5a0a58ec153861929054bfcccc5de48f097582ff812067208298b816b09f5080",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:owned-aggregate",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/owned-aggregate.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-aggregate.zry",
+          "sha256": "ca02b53a2edb217c4e7c0b333fe33d2c4a900bcd78713eb7f1d8fde26012d675",
+          "bytes": 93
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-aggregate-body.zry",
+          "sha256": "5e72890982471583db622bcfd43c2e126dcccefc3b368a7b517336f9740682d6",
+          "bytes": 257
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "aggregate",
+          "local": "aggregate",
+          "declaration": [
+            0,
+            0,
+            39
+          ],
+          "specifier_span": [
+            0,
+            26,
+            38
+          ],
+          "imported_span": [
+            0,
+            9,
+            18
+          ],
+          "local_span": [
+            0,
+            9,
+            18
+          ]
+        }
+      ],
+      "graph_sha256": "b05d70e56f5d592a04dc0759aadd9a24d0806673e5ad0647070d962cd726c919",
+      "context_snapshot_sha256": "18484f391ea92c6359eec315c1602807d0830cdc699e01e714c5a8327e3fad1d",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:bounds-last",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/bounds.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/bounds.zry",
+          "sha256": "34a2b3210f2fa03eb990fbae3cd881b7cf182abdc6ec651dc8bf85c16bd414d9",
+          "bytes": 165
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e5e9bd5ac9d598f6746cea469923de686fc52a9552998cade539fce4d6f70791",
+      "context_snapshot_sha256": "11c0d5b6a93b74c87f53a0c506af27b49796f6175747f7b28f6ead454c93a2dc",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:enum-match",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/enum.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/enum.zry",
+          "sha256": "5052c0754d74a8b2ad1d3d20496ef4b09fe428f7af1591be1712052b1d6426f2",
+          "bytes": 117
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/enum-body.zry",
+          "sha256": "7d65eeacbcad853fe9470679d714cf08c1796d1d0375bbf2df05a713cf54bdc0",
+          "bytes": 245
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "score",
+          "local": "enumScore",
+          "declaration": [
+            0,
+            0,
+            48
+          ],
+          "specifier_span": [
+            0,
+            35,
+            47
+          ],
+          "imported_span": [
+            0,
+            9,
+            14
+          ],
+          "local_span": [
+            0,
+            18,
+            27
+          ]
+        }
+      ],
+      "graph_sha256": "b1a2ae3462673e09fe54af19e2b677772d92e99f5eed0f61d18a15978224a442",
+      "context_snapshot_sha256": "aed7106387588860c8b808d7c9717e9bd86a2e2ad445068a16f662d9ce488dba",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:weak-live",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/weak-live.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-live.zry",
+          "sha256": "a4ed2aa2b621b69a16c0365a8eb5fdd7db9ca9dddc4cae495f045157c8e92cb1",
+          "bytes": 85
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-live-body.zry",
+          "sha256": "77e3f2ee548371a30ab057eb43dc8e486a8fd032ddda8e53ae58aecac5bdd53c",
+          "bytes": 181
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "check",
+          "local": "check",
+          "declaration": [
+            0,
+            0,
+            35
+          ],
+          "specifier_span": [
+            0,
+            22,
+            34
+          ],
+          "imported_span": [
+            0,
+            9,
+            14
+          ],
+          "local_span": [
+            0,
+            9,
+            14
+          ]
+        }
+      ],
+      "graph_sha256": "1faa44ddc9744d88eec5c72671d78eda9086f01e09eb27bfcb5cf9b82102f19c",
+      "context_snapshot_sha256": "946bc4b658bef59658a26848a3e731ea55f247f8f54b1aa37d3d8eea7a7f5714",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:weak-expired",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/weak-expired.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-expired.zry",
+          "sha256": "a4ed2aa2b621b69a16c0365a8eb5fdd7db9ca9dddc4cae495f045157c8e92cb1",
+          "bytes": 85
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/weak-expired-body.zry",
+          "sha256": "7f149fe308e1e75761721371ead063c072a7643dae7f7454643ba8c199247225",
+          "bytes": 233
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "check",
+          "local": "check",
+          "declaration": [
+            0,
+            0,
+            35
+          ],
+          "specifier_span": [
+            0,
+            22,
+            34
+          ],
+          "imported_span": [
+            0,
+            9,
+            14
+          ],
+          "local_span": [
+            0,
+            9,
+            14
+          ]
+        }
+      ],
+      "graph_sha256": "e8a78f7d6864d5116b8f6bae6410ea5c1763e3fc3209ccb4e78f88ddbbcead70",
+      "context_snapshot_sha256": "850a1e81bb481289bc99fecc882a54c00e0cbcb8c04ed990ae70635a07b284de",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:owned-vec",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/owned-vec.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-vec.zry",
+          "sha256": "ca02b53a2edb217c4e7c0b333fe33d2c4a900bcd78713eb7f1d8fde26012d675",
+          "bytes": 93
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-vec-body.zry",
+          "sha256": "8cbc1323b239a280945199d62aa33385bbe653e67f36473b7038de7e47e37b65",
+          "bytes": 151
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "aggregate",
+          "local": "aggregate",
+          "declaration": [
+            0,
+            0,
+            39
+          ],
+          "specifier_span": [
+            0,
+            26,
+            38
+          ],
+          "imported_span": [
+            0,
+            9,
+            18
+          ],
+          "local_span": [
+            0,
+            9,
+            18
+          ]
+        }
+      ],
+      "graph_sha256": "25705d3526ad4d50560345d7412d0435c5af87f51235756f5cab7636aed0bd40",
+      "context_snapshot_sha256": "3dbff99bd0462dfde61b931f0c4e567e9c4537409848ddfa03ca591ad3544ae4",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-run:owned-shared",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/owned-shared.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-shared.zry",
+          "sha256": "ca02b53a2edb217c4e7c0b333fe33d2c4a900bcd78713eb7f1d8fde26012d675",
+          "bytes": 93
+        },
+        {
+          "file_id": 1,
+          "path": "src/math.zry",
+          "origin": "tests/m3-fixtures/conformance/owned-shared-body.zry",
+          "sha256": "d2c9057d40a558eefb680c23387662ad76a639d33cfc8cb75c737958ba96606c",
+          "bytes": 142
+        }
+      ],
+      "edges": [
+        {
+          "importer": "src/main.zry",
+          "target": "src/math.zry",
+          "specifier": "./math.zry",
+          "imported": "aggregate",
+          "local": "aggregate",
+          "declaration": [
+            0,
+            0,
+            39
+          ],
+          "specifier_span": [
+            0,
+            26,
+            38
+          ],
+          "imported_span": [
+            0,
+            9,
+            18
+          ],
+          "local_span": [
+            0,
+            9,
+            18
+          ]
+        }
+      ],
+      "graph_sha256": "899e676cd3083c1653f01ad38c849552797402682559693534ed1f1ae3778063",
+      "context_snapshot_sha256": "24802d2eda267d81125e7fb13fa257aab0870fe7b9729956775e34b7182bbfe9",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-runtime-invalid:bounds-first-extra",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/bounds.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/bounds.zry",
+          "sha256": "34a2b3210f2fa03eb990fbae3cd881b7cf182abdc6ec651dc8bf85c16bd414d9",
+          "bytes": 165
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e5e9bd5ac9d598f6746cea469923de686fc52a9552998cade539fce4d6f70791",
+      "context_snapshot_sha256": "11c0d5b6a93b74c87f53a0c506af27b49796f6175747f7b28f6ead454c93a2dc",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-runtime-invalid:bounds-negative",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/bounds.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/bounds.zry",
+          "sha256": "34a2b3210f2fa03eb990fbae3cd881b7cf182abdc6ec651dc8bf85c16bd414d9",
+          "bytes": 165
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "e5e9bd5ac9d598f6746cea469923de686fc52a9552998cade539fce4d6f70791",
+      "context_snapshot_sha256": "11c0d5b6a93b74c87f53a0c506af27b49796f6175747f7b28f6ead454c93a2dc",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    },
+    {
+      "id": "m3-invalid:abi-mismatch",
+      "profile": "m3",
+      "source": "tests/m3-fixtures/conformance/abi.zry",
+      "entrypoint": "src/main.zry",
+      "sources": [
+        {
+          "file_id": 0,
+          "path": "src/main.zry",
+          "origin": "tests/m3-fixtures/conformance/abi.zry",
+          "sha256": "cafc15d865a5e5e015a598f29e5aeb966c6143ea64050b37d306571ad68f804f",
+          "bytes": 57
+        }
+      ],
+      "edges": [],
+      "graph_sha256": "b26ced6f2254f5853a53367e8d3e9100ed146e582e95ae220afeb34c9d04f868",
+      "context_snapshot_sha256": "4cda7b775030684bbfde2b8d2551d7600016c38824775bdabb20dbbdac3540f2",
+      "baseline_graph_observation": {
+        "status": "derived-only-no-H4-graph-observation",
+        "sha256": null,
+        "baseline_raw_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430"
+      }
+    }
+  ]
+}
