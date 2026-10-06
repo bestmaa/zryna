@@ -258,6 +258,10 @@ mod loop_tests;
 #[cfg(test)]
 #[path = "plan/scalar_phi.rs"]
 mod scalar_phi_tests;
+
+#[cfg(test)]
+#[path = "plan/copy_enum_phi.rs"]
+mod copy_enum_phi_tests;
 #[cfg(test)]
 #[path = "plan/tests.rs"]
 mod tests;
