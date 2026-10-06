@@ -57,6 +57,10 @@ Boundaries and outstanding evidence:
 - The original full M2 main fixture is 1997 bytes and is expected to be rejected by that
   package limit. A separately frozen 293-byte import fixture and its 47-byte dependency
   exercise the bounded v3 route; this is not full M2 corpus discharge.
+  The frozen original `real-native-v3-import-package` positive remains blocked;
+  `real-native-v3-bounded-import-package` is its explicitly separate successor, using
+  `crates/zryna-frontend/tests/native_parser_v3_calls`. Assertions must remain enabled;
+  Python optimization is rejected before any proof output can be emitted.
 - Private files use initial creation modes 0600/0700 under the environment's existing umask.
   The harness changes no permission settings, umask, credentials or deployed settings.
   Windows retains the existing declared-mode policy; no Windows ACL proof is inferred.

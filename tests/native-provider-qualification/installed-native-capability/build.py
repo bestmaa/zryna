@@ -10,6 +10,9 @@ import tomllib
 
 from independent_cases import COMPILE_BINDINGS, MARKER_PREFIX, TARGETS, canonical_bytes, descriptor
 
+if not __debug__:
+    raise RuntimeError('private proof requires Python assertions; optimization is unsupported')
+
 
 def sha(raw):
     return hashlib.sha256(raw).hexdigest()
