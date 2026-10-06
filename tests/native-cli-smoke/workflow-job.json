@@ -68,6 +68,10 @@
       "run": "python -B tests/native-provider-qualification/production-manifests/verify_test.py"
     },
     {
+      "name": "Verify independent production archive controls",
+      "run": "python -B tests/native-provider-qualification/production-manifests/archive_test.py"
+    },
+    {
       "name": "Run seven accepted production manifest pairs",
       "shell": "pwsh",
       "run": "python -B tests/native-provider-qualification/production-manifests/run.py --root \"$env:GITHUB_WORKSPACE\" --head \"$env:CLI_SOURCE_SHA\" --cli-proof \"$env:RUNNER_TEMP/private-cli-proof\" --output \"$env:RUNNER_TEMP/private-production-manifests\"\nif ($LASTEXITCODE -ne 0) { throw 'Production manifest pairs failed' }\n"
@@ -78,12 +82,17 @@
       "run": "$platform = if ($IsWindows) { 'win32' } else { 'linux' }\npython -B tests/native-provider-qualification/production-manifests/verify.py --root \"$env:GITHUB_WORKSPACE\" --head \"$env:CLI_SOURCE_SHA\" --platform \"$platform\" --output \"$env:RUNNER_TEMP/private-production-manifests\" --live\nif ($LASTEXITCODE -ne 0) { throw 'Production manifest admission failed' }\n"
     },
     {
+      "name": "Package complete production manifest archive",
+      "shell": "pwsh",
+      "run": "$platform = if ($IsWindows) { 'win32' } else { 'linux' }\npython -B tests/native-provider-qualification/production-manifests/archive.py pack --root \"$env:GITHUB_WORKSPACE\" --head \"$env:CLI_SOURCE_SHA\" --platform \"$platform\" --proof \"$env:RUNNER_TEMP/private-production-manifests\" --archive \"$env:RUNNER_TEMP/private-production-manifests.zip\"\nif ($LASTEXITCODE -ne 0) { throw 'Production manifest archive failed' }\n"
+    },
+    {
       "name": "Preserve seven accepted production manifest pairs",
       "if": "always()",
       "uses": "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
       "with": {
         "name": "private-production-manifests-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}",
-        "path": "${{ runner.temp }}/private-production-manifests",
+        "path": "${{ runner.temp }}/private-production-manifests.zip",
         "if-no-files-found": "error",
         "retention-days": 7
       }

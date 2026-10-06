@@ -34,6 +34,15 @@ actual commands retain stdout/stderr and failed receipts; timeout cleanup is unc
 never qualify. The archive keeps build logs and receipt metadata; hosted executable byte recovery
 requires the existing separate binary artifact and is not claimed by this archive alone.
 
+`archive.py pack` first requires live admission, then creates a proof ZIP containing exactly the
+113 regular proof files and one explicit empty `empty-runtime-path/` directory entry. The private
+workflow uploads this ZIP as a single file because directory uploads omit empty directories.
+`archive.py admit` validates the complete archive before extracting into a fresh real destination
+and applying the unchanged manifest reader. Missing directory entries fail; recovery never
+reconstructs them. `archive_test.py` checks positive round trips and hostile archive mutations
+without executing a compiler or provider. The existing 19 manifest-control test methods remain
+separate and include positive controls as well as hostile cases.
+
 The cumulative 12/12 Linux physical allocation qualification and previous seals remain separate.
 Installed no-Node/no-pnpm/no-Cargo acceptance, exhaustive corpus closure, public activation and
 full #414 acceptance remain open.
