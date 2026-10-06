@@ -426,3 +426,35 @@ test('physical allocation proof is Linux-only with independent execution, admiss
     ['physical admission omitted', (w) => { w.jobs['private-cli'].steps.splice(index + 2, 1); }],
   ]);
 });
+test('complete source corpus freezes 33 BUILD and 36 diagnostic pairs on both hosts', () => {
+  const steps = workflow.jobs['private-cli'].steps;
+  const index = steps.findIndex((s) => s.name === 'Verify independent complete source corpus controls');
+  assert.ok(index > 0);
+  const base = 'tests/native-provider-qualification/production-corpus/';
+  assert.equal(steps[index].run, 'python -B ' + base + 'verify_test.py');
+  assert.equal(steps[index + 1].name, 'Verify independent complete corpus archive controls');
+  assert.equal(steps[index + 1].run, 'python -B ' + base + 'archive_test.py');
+  assert.equal(steps[index + 2].name, 'Run 33 BUILD and 36 rejection corpus pairs');
+  assert.match(steps[index + 2].run, /production-corpus\/run\.py/u);
+  assert.match(steps[index + 2].run, /--cli-proof "\$env:RUNNER_TEMP\/private-cli-proof"/u);
+  assert.equal(steps[index + 3].name, 'Require independent complete source corpus admission');
+  assert.match(steps[index + 3].run, /production-corpus\/verify\.py/u);
+  assert.match(steps[index + 3].run, /--live/u);
+  assert.equal(steps[index + 4].name, 'Package complete source corpus archive');
+  assert.match(steps[index + 4].run, /production-corpus\/archive\.py pack/u);
+  assert.equal(steps[index + 5].name, 'Preserve complete source corpus pairs');
+  assert.equal(steps[index + 5].with.path, expression('runner.temp') + '/private-production-corpus.zip');
+  assert.equal(steps[index + 5].with.name, 'private-production-corpus-'
+    + expression('matrix.os') + '-' + expression('env.CLI_SOURCE_SHA') + '-' + expression('github.run_id')
+    + '-' + expression('github.run_attempt'));
+  for (const step of steps.slice(index, index + 5)) assert.equal(step.if, undefined);
+  rejectMutations([
+    ['Windows corpus skipped', (w) => { w.jobs['private-cli'].steps[index + 2].if = "matrix.os == 'ubuntu-latest'"; }],
+    ['controls omitted', (w) => { w.jobs['private-cli'].steps.splice(index, 1); }],
+    ['admission omitted', (w) => { w.jobs['private-cli'].steps.splice(index + 3, 1); }],
+    ['archive failure masked', (w) => { w.jobs['private-cli'].steps[index + 4].run += ' || true'; }],
+    ['unreviewed loose archive', (w) => {
+      w.jobs['private-cli'].steps[index + 5].with.path = expression('runner.temp') + '/private-production-corpus';
+    }],
+  ]);
+});
