@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import './native-provider-qualification/verified-ir/workflow.test.mjs';
+import { toolProvenanceJob } from './native-provider-qualification/verified-ir/tool-provenance-workflow.test.mjs';
 import { parseDocument } from 'yaml';
 
 const CONSUMER_SHA = '6c0f3f64a1278a53a61e2d732ef5e43246ab826f';
@@ -121,6 +122,7 @@ const expected = {
       steps: expectedSteps,
     },
     'private-cli': privateCliJob,
+    'tool-provenance': toolProvenanceJob,
   },
 };
 

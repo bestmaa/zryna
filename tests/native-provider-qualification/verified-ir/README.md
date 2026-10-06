@@ -112,3 +112,18 @@ output, preserves every original member byte, rejects links/aliases/extra or mis
 admits the recovered proof against the exact current source. Limits are 32MiB per ordinary member,
 128MiB for the retained binary, 256MiB aggregate and 32MiB for the compressed ZIP. These archive
 controls include Windows path and file-handle behavior; modeled controls do not claim a Windows run.
+
+The separate `tool_provenance.py` diagnostic records the tool-selection paths used by the IR
+runner, every original path component's link/reparse metadata, the unchanged strict guard's
+original outcome, and stable canonical regular-tool bytes. It only queries pinned versions and
+`rustup which`; it does not build a collector, execute a provider or admit IR. Its JSON is explicitly
+`UNQUALIFIED` and retained in a separately named diagnostic artifact, outside the closed 393-file
+acceptance archive. Modeled link/reparse controls do not establish a hosted path observation.
+
+H6's Linux live admission failed while rereading a tool capability after its 107-case collector and
+28 admission controls passed. The original error omitted the offending row, and packaging did not
+run. The original IR receipt is identified by its hash in the authenticated log but was not uploaded;
+that hash cannot recover its bytes or establish the offending path. A successor diagnostic can
+establish a reproduced path/component on its own authenticated host. It cannot reconstruct the
+departed original VM or promote the failed H6 admission to a pass. The link/reparse guard remains
+intact, and every acceptance obligation still applies after any reviewed correction.
