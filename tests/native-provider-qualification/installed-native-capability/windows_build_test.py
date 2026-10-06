@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """Host-independent closed-profile controls; fixtures are never tool authority."""
 import copy
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
 import unittest
 
+from toolchain import retain_original
 from windows_build import environment, validate
 
 
@@ -77,6 +83,37 @@ class ClosedProfileControls(unittest.TestCase):
             mutate(profile)
             with self.subTest(mutate=mutate), self.assertRaises((AssertionError, KeyError)):
                 validate(profile)
+
+
+class OriginalToolRetentionControls(unittest.TestCase):
+    def test_real_sys_executable_string_and_path_retain_exact_bytes(self):
+        interpreter = Path(sys.executable).resolve()
+        expected = interpreter.read_bytes()
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            direct = retain_original(output / 'path-input', 'python', interpreter)
+            program = ('import json, sys\nfrom pathlib import Path\n'
+                       'from toolchain import retain_original\n'
+                       'assert type(sys.executable) is str\n'
+                       'print(json.dumps(retain_original(Path(sys.argv[1]), "python", sys.executable)))\n')
+            process = subprocess.run([str(interpreter), '-B', '-c', program, str(output / 'actual-sys-executable')],
+                                     cwd=Path(__file__).resolve().parent, stdin=subprocess.DEVNULL,
+                                     capture_output=True, text=True, timeout=30, check=True)
+            self.assertEqual(process.stderr, '')
+            actual = json.loads(process.stdout)
+            self.assertEqual(actual, direct)
+            self.assertEqual(actual['path'], str(interpreter))
+            for label in ('path-input', 'actual-sys-executable'):
+                self.assertEqual((output / label / actual['raw_relative_path']).read_bytes(), expected)
+            with self.assertRaises(FileExistsError):
+                retain_original(output / 'path-input', 'python', str(interpreter))
+
+    def test_unknown_retention_role_rejects_before_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / 'not-created'
+            with self.assertRaises(AssertionError):
+                retain_original(output, '../outside', str(Path(sys.executable).resolve()))
+            self.assertFalse(output.exists())
 
 
 if __name__ == '__main__':

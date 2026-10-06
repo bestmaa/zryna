@@ -7,6 +7,17 @@ from build import command, sha, write
 from windows_build import PYTHON, SDK_INPUTS, TARGET, TOOLS, identity, validate, verify_profile
 
 
+def retain_original(output, role, path):
+    assert role in (*TOOLS, 'python', *SDK_INPUTS)
+    path = Path(path)
+    row = identity(path)
+    relative = 'tool-originals/' + role.replace('.', '-') + ('.exe' if role in (*TOOLS, 'python') else '.bin')
+    raw = path.read_bytes()
+    assert sha(raw) == row['sha256']
+    write(output / relative, raw)
+    return {**row, 'raw_relative_path': relative}
+
+
 def capture(source, output, cargo, rustc, rustup):
     assert sys.platform == 'win32' and sys.version.split()[0] == PYTHON
     output.mkdir(mode=0o700)
@@ -22,12 +33,7 @@ def capture(source, output, cargo, rustc, rustup):
                  'vcruntime.lib': vc / 'lib/x64/vcruntime.lib', 'libcmt.lib': vc / 'lib/x64/libcmt.lib'}
 
     def original(role, path):
-        row = identity(path)
-        relative = 'tool-originals/' + role.replace('.', '-') + ('.exe' if role in (*TOOLS, 'python') else '.bin')
-        raw = path.read_bytes()
-        assert sha(raw) == row['sha256']
-        write(output / relative, raw)
-        return {**row, 'raw_relative_path': relative}
+        return retain_original(output, role, path)
 
     lib = [str(vc / 'lib/x64'), str(sdk / 'Lib' / sdk_version / 'um/x64'), str(sdk / 'Lib' / sdk_version / 'ucrt/x64')]
     host = {'SystemRoot': os.environ['SystemRoot'],
