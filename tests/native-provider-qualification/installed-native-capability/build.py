@@ -121,6 +121,7 @@ def build(source, output, target, cargo, platform):
            'CARGO_HOME': str(tool_root / 'cargo'), 'RUSTUP_HOME': str(tool_root / 'rustup'),
            'RUSTUP_TOOLCHAIN': '1.97.1', 'CARGO_TARGET_DIR': str(target),
            'CARGO_PROFILE_DEV_DEBUG': '0', 'CARGO_PROFILE_DEV_CODEGEN_UNITS': '16',
+           'CARGO_PROFILE_DEV_OPT_LEVEL': '1',
            'CARGO_INCREMENTAL': '0', 'CARGO_BUILD_JOBS': '2',
            'LANG': 'C', 'LC_ALL': 'C', 'HOME': str(output), 'TMPDIR': str(output)}
     # The caller supplies a pinned toolchain root; Windows keeps only documented OS variables.

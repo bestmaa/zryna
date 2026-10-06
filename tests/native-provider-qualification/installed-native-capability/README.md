@@ -43,6 +43,8 @@ python3 -B tests/native-provider-qualification/installed-native-capability/run.p
 This builder explicitly supports only that Linux GNU layout and records actual pinned
 Cargo/Rust versions, resolved tool paths and byte identities. A Windows/MSVC installation
 execution proof is blocked until an independently pinned runner exists on that host.
+The private probe uses optimization level 1, debug information off and 16 codegen units;
+the original build receipts retain that actual configuration. Public build profiles are unchanged.
 
 The installed consumer runs with an empty PATH and without Node, npm, pnpm, Cargo or Rust
 runtime hooks. Building the probe requires the pinned Rust toolchain and source; consuming

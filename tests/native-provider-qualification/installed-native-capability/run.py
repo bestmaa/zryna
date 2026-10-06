@@ -73,6 +73,7 @@ def proof(source, output, built, platform):
     original = (built / 'prepared-image').read_bytes()
     assert sha(original) == receipt['prepared_image']['sha256']
     before = snapshot(source)
+    assert receipt['source'] == before, 'proof image build must bind this exact committed source'
     output.mkdir(mode=0o700)
     results = []
 

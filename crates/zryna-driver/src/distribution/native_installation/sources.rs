@@ -179,7 +179,13 @@ impl InstalledNativeSyntax<'_> {
 }
 
 fn hex(bytes: &[u8; 32]) -> String {
-    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+    const DIGITS: &[u8; 16] = b"0123456789abcdef";
+    let mut digest = String::with_capacity(64);
+    for byte in bytes {
+        digest.push(char::from(DIGITS[usize::from(byte >> 4)]));
+        digest.push(char::from(DIGITS[usize::from(byte & 0x0f)]));
+    }
+    digest
 }
 
 fn source_missing() -> ModuleClosureError {
