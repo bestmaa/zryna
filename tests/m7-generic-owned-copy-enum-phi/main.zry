@@ -1,0 +1,54 @@
+// UNVALIDATED DRAFT. All executable exports have scalar signatures only.
+export function optionSingle(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Option<i32> =optionSingleSelect<String>(flag,original);
+  return match(result,{"Option.none":()=>0,"Option.some":(payload)=>payload});
+}
+export function optionVariants(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Option<i32> =optionVariantsSelect<String>(flag,original);
+  return match(result,{"Option.none":()=>19,"Option.some":(payload)=>payload});
+}
+export function resultSingle(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Result<i32,bool> =resultSingleSelect<String>(flag,original);
+  return match(result,{"Result.ok":(payload)=>payload,"Result.err":(tag)=>truthCode<i32>(tag)});
+}
+export function resultVariants(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Result<i32,bool> =resultVariantsSelect<String>(flag,original);
+  return match(result,{"Result.ok":(payload)=>payload,"Result.err":(tag)=>truthCode<i32>(tag)});
+}
+export function optionEarly(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Option<i32> =optionEarlySelect<String>(flag,original);
+  return match(result,{"Option.none":()=>49,"Option.some":(payload)=>payload});
+}
+export function optionNested(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Option<i32> =optionNestedSelect<String>(flag,original);
+  return match(result,{"Option.none":()=>61,"Option.some":(payload)=>payload});
+}
+export function resultRepeated(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Result<i32,bool> =resultRepeatedSelect<String>(flag,original);
+  return match(result,{"Result.ok":(payload)=>payload,"Result.err":(tag)=>truthCode<i32>(tag)});
+}
+export function parallel(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  return parallelSelect<String>(flag,original);
+}
+export function bothReturn(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Option<i32> =bothReturnSelect<String>(flag,original);
+  return match(result,{"Option.none":()=>97,"Option.some":(payload)=>payload});
+}

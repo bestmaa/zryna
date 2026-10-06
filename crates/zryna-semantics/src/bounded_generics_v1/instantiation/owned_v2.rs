@@ -7,6 +7,12 @@ mod clone_attacks;
 #[cfg(test)]
 mod clones;
 #[cfg(test)]
+mod copy_enum_phi;
+#[cfg(test)]
+mod copy_enum_phi_frozen;
+#[cfg(test)]
+mod copy_enum_resources;
+#[cfg(test)]
 mod loops;
 #[cfg(test)]
 mod mixed_attacks;

@@ -64,7 +64,8 @@ Only scalar signatures may be public exports. Opaque generic parameters remain a
 specializing to a Copy type cannot legalize repeated moves or add a Clone capability.
 
 Nominal declaration bodies, other containers, projections/partial initialization, mutable
-loan bindings and branch-dependent owner/aggregate replacement/phi state remain rejected.
+loan bindings and branch-dependent non-Copy owner or other aggregate replacement/phi state
+remain rejected; the two finite concrete Copy enum joins below are admitted.
 Borrowed payloads can pass to appropriately typed private callees; further borrowed
 observation/mutation operations are not implemented. These are acceptance gaps, not restrictions
 added to the accepted full contract.
@@ -75,17 +76,28 @@ must have exact original bool type. Both returning arms have direct Return termi
 join block. Each fallthrough arm closes its local scope before its join edge. Continuing arms
 carry changed mutable concrete `bool` or `i32` bindings through typed join parameters;
 an unchanged arm passes its incoming value. Returning arms contribute no join edge.
-Branches with no changed scalar binding retain empty edges and no join parameters.
+The same transport admits only original concrete `Option<i32>` and `Result<i32,bool>`
+whole-place replacements, using their complete canonical keys and existing Copy capability.
+Branches with no changed admitted Copy binding retain empty edges and no join parameters.
 Retained owner identities and complete availability/loan/parent states must agree exactly.
 Moving an opaque owner on only one continuing path rejects before specialization, including
 in unused templates. Moving it on both paths leaves it unavailable after the join. Retained
 loans must remain identical across continuing edges; no loan is transferred as an edge argument.
-Owned, opaque and aggregate replacement joins remain excluded even when both replacements
-have the same type. Copy specialization cannot admit an opaque original to these scalar joins.
+Non-Copy owned, opaque and other aggregate replacement joins remain excluded even when both
+replacements have the same type. Copy specialization cannot admit an opaque original to these
+joins, including original `Option<T>` or `Result<i32,T>` specialized to Copy payloads.
 The [scalar branch proof](../tests/m7-generic-owned-scalar-phi/README.md) covers the concrete
 bool/i32 successor in single-module and imported generic Option/Result programs. No implicit
 drop or owner repair is inserted to reconcile unequal incoming states. A returning path does
 not constrain the state of the remaining continuing path.
+The [finite Copy enum branch proof](../tests/m7-generic-owned-copy-enum-phi/README.md) covers
+Some/None, Ok/Err, nested/repeated and early-return replacements, plus four simultaneous
+position-sensitive transports. Capture credits are `3+L` per changed place and join credits
+are `m+2+2L`, with complete key length `L` and continuing arm count `m`; every reserve and
+key clone follows its charge. Full snapshots retain their complete-key, availability, loan
+and parent charges. The unchanged ceilings are 1,048,576 aggregate state units and 256 join
+parameters, including the changed union split across arms. Scalar one-byte keys retain their
+previous costs. This finite lane does not admit additional Copy enum forms or an owner phi.
 
 ## Loop-plan prerequisite
 
@@ -110,7 +122,7 @@ shadowing use the same replay. Opaque originals are checked before substitution,
 functions; Copy specialization cannot hide an owner move. Concrete bool/i32 branch joins also
 compose inside these scalar loops, retaining exact owner and loan state at joins and backedges.
 Borrowed mutable scalar roots, owner or aggregate header replacement, branch-dependent
-owner/aggregate replacement, break/continue and unstructured CFG
+non-Copy owner or other aggregate replacement, break/continue and unstructured CFG
 remain excluded. Existing wire, layout, runtime, backend and public-profile contracts are unchanged.
 
 ## Target execution

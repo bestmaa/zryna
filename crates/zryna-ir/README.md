@@ -258,11 +258,15 @@ the two earlier validation entrypoints retain their original partial-contract be
 
 The separate private `generic_v1::owned_v2` lane authenticates original source,
 closed typed CFGs and independently replayed owner/loan/cleanup plans. Its structured
-source builder joins continuing mutable concrete bool/i32 replacements through
+source builder joins continuing mutable original concrete bool/i32, Option<i32> and
+Result<i32,bool> replacements through
 existing block parameters and edge operands. Every continuing arm still agrees on
 the exact incoming owner and loan state; opaque and owned replacement joins remain
-excluded. Sparse scalar changes, copied type keys, parameters and edge operands
+excluded. Sparse admitted Copy changes, complete copied type keys, parameters and edge operands
 are charged before allocation against the unchanged source-state and parameter
 ceilings. The [fixed scalar branch proof](../../tests/m7-generic-owned-scalar-phi/README.md)
 covers source replay separately from a hand-authored typed graph and fault cleanup.
+The [finite Copy enum proof](../../tests/m7-generic-owned-copy-enum-phi/README.md) adds
+position-sensitive parallel transports, complete-key resource boundaries and independent
+source/IR/target attacks; other aggregates and Copy-specialized opaque originals stay excluded.
 No public profile or new wire/opcode/runtime authority is selected by this lane.

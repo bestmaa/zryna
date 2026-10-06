@@ -60,11 +60,23 @@ parents freeze while payload subloans exist. Arm subloans end before their paren
 Loans cannot return or be transferred as ordinary CFG edge arguments. Retained loans require
 identical incoming state. Joined owner state must match exactly.
 
-Structured source branches use existing bool Branch and empty Jump edges. No wire opcode or
-type carrier changes. Continuing arms close their lexical locals; incoming binding identities
-and complete availability/loan states must agree without implicit repair. Both returning arms
-return directly, with no join parameter or unreachable join. Branch-dependent replacements
-and loan-carrying edge arguments remain outside this source slice.
+Structured source branches use existing bool Branch and Jump edges with ordinary typed
+block parameters for changed mutable original concrete bool/i32, Option<i32> or Result<i32,bool>
+places. An unchanged continuing arm passes its incoming value; a returning arm contributes no
+join edge. Both returning arms return directly without an unreachable join. Arms close lexical
+locals before transport; complete retained owner identities, availability, loans and parents
+must agree exactly. No wire opcode or type carrier changes and no owner phi repair is inserted.
+Original opaque types, including Option<T> and Result<i32,T>, gain no join capability from Copy
+specialization. Non-Copy owners, other aggregate replacements and loan-carrying edge arguments
+remain excluded. Borrowed roots reject at the assignment target before replacement evaluation.
+
+Sparse captures charge 3+L units per changed place; the stable changed union charges m+2+2L
+per join parameter, where L is the complete canonical key length and m the continuing arm count.
+Charges precede reserves, cloned values, complete type-key copies and edge inventories. Full
+snapshots retain all original complete-key, availability, loan and parent charges. The unchanged
+limits are 1,048,576 aggregate source-state units and 256 join parameters, including split-arm
+unions. One-byte scalar keys retain their exact prior costs. This private finite admission does
+not select a public profile, expand scalar loop headers or complete #416.
 
 The independent internal plan replay supports reducible natural-loop topology as a prerequisite.
 Only a target that independently dominates its predecessor is treated as a backedge. The

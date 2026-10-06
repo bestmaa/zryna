@@ -1,5 +1,5 @@
 //! Independent hand-authored CFGs, independent of owned source production.
-//! These tests issue no VerifiedOwnedProgram and make no target-execution claim.
+//! These tests issue no `VerifiedOwnedProgram` and make no target-execution claim.
 use super::*;
 use zryna_layout::{StorageTarget, generic_v1 as layout};
 use zryna_source::{SourceFileInput, SourceMap, UntrustedSpan};
@@ -113,15 +113,27 @@ pub(super) fn authorities() -> (VerifiedLayouts, VerifiedLayouts, SourceMap) {
         assert_eq!(views[4].drop_kind(), 0);
         assert_ne!(views[2].drop_kind(), 0);
         assert_eq!(
-            views[3].variants().map(|(n, p)| (n, p.map(|p| p.index()))).collect::<Vec<_>>(),
+            views[3]
+                .variants()
+                .map(|(n, p)| (n, p.map(zryna_layout::generic_v1::TypeId::index)))
+                .collect::<Vec<_>>(),
             [(0, None), (1, Some(1))]
         );
         assert_eq!(
-            views[4].variants().map(|(n, p)| (n, p.map(|p| p.index()))).collect::<Vec<_>>(),
+            views[4]
+                .variants()
+                .map(|(n, p)| (n, p.map(zryna_layout::generic_v1::TypeId::index)))
+                .collect::<Vec<_>>(),
             [(0, Some(1)), (1, Some(0))]
         );
-        assert_eq!(views[3].arguments().map(|p| p.index()).collect::<Vec<_>>(), [1]);
-        assert_eq!(views[4].arguments().map(|p| p.index()).collect::<Vec<_>>(), [1, 0]);
+        assert_eq!(
+            views[3].arguments().map(zryna_layout::generic_v1::TypeId::index).collect::<Vec<_>>(),
+            [1]
+        );
+        assert_eq!(
+            views[4].arguments().map(zryna_layout::generic_v1::TypeId::index).collect::<Vec<_>>(),
+            [1, 0]
+        );
     }
     (linear, linux, sources)
 }

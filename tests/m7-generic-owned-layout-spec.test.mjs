@@ -90,7 +90,7 @@ test('owned layout review schema rejects unknown fields, wrong family and malfor
   }
 });
 
-test('private owned execution documentation distinguishes scalar joins from owner replacement', async () => {
+test('private owned documentation distinguishes finite Copy joins from owner replacement', async () => {
   const document = await readFile(new URL('../docs/M7_GENERIC_OWNED_EXECUTION.md', import.meta.url), 'utf8');
   const source = document.split('## Source and authority')[1].split('## Loop-plan prerequisite')[0]
     .replace(/\s+/g, ' ');
@@ -101,8 +101,15 @@ test('private owned execution documentation distinguishes scalar joins from owne
   assert.match(source, /Returning arms contribute no join edge/);
   assert.match(source, /Retained owner identities and complete availability\/loan\/parent states must agree exactly/);
   assert.match(source, /no loan is transferred as an edge argument/);
-  assert.match(source, /Owned, opaque and aggregate replacement joins remain excluded/);
+  assert.match(source, /Non-Copy owned, opaque and other aggregate replacement joins remain excluded/);
   assert.match(source, /currently borrowed root.*before evaluating the replacement/);
+  assert.match(source, /only original concrete `Option<i32>` and `Result<i32,bool>`/);
+  assert.match(source, /original `Option<T>` or `Result<i32,T>` specialized to Copy payloads/);
+  assert.match(source, /Capture credits are `3\+L`.*join credits are `m\+2\+2L`/);
+  assert.match(source, /1,048,576 aggregate state units and 256 join parameters/);
+  assert.match(source, /including the changed union split across arms/);
+  assert.match(source, /does not admit additional Copy enum forms or an owner phi/);
+  assert.match(document, /tests\/m7-generic-owned-copy-enum-phi\/README\.md/);
   assert.match(loop, /Concrete bool\/i32 branch joins also compose inside these scalar loops/);
   assert.match(loop, /Borrowed mutable scalar roots, owner or aggregate header replacement/);
   assert.doesNotMatch(source, /empty edge to a no-phi join/);

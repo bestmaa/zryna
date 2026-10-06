@@ -1,4 +1,4 @@
-//! Structured scalar joins: original opaque ownership must agree without owner repair.
+//! Structured finite Copy joins: original opaque ownership agrees without owner repair.
 use super::phi::Output;
 use super::{Builder, Closed, Failure, raw, reject, reserve};
 use zryna_source::UntrustedSpan;
@@ -44,7 +44,7 @@ impl Builder<'_, '_> {
                 false
             };
             if !returned {
-                let changes = self.scalar_changes(&saved, span)?;
+                let changes = self.copy_changes(&saved, span)?;
                 self.charge_branch_state()?;
                 outputs.push(Output {
                     block: self.block,
@@ -88,7 +88,7 @@ impl Builder<'_, '_> {
                 arguments: Vec::new(),
             });
         }
-        self.scalar_join(&outputs)?;
+        self.copy_join(&outputs)?;
         Ok(false)
     }
 
