@@ -23,6 +23,35 @@ REGISTRATION = {
     'tests/native-cli-smoke/workflow-job.json',
     'tests/native-provider-activation-workflow.test.mjs',
 }
+# Independently reviewed installation preparation; exact Git modes and blobs only.
+# This grants no runtime authority and leaves the original H4/H5 checks intact.
+INSTALLATION_PREPARATION = {
+    'crates/zryna-driver/src/distribution/mod.rs': {'mode': '100644', 'blob': '083baf3b0c7ce8e96121ead001f88dc41441f45c'},
+    'crates/zryna-driver/src/distribution/native_installation/descriptor.rs': {'mode': '100644', 'blob': 'fd1b65fda0133dd51c4724199ba2bbd4f0327515'},
+    'crates/zryna-driver/src/distribution/native_installation/descriptor_tests.rs': {'mode': '100644', 'blob': 'f9a0fb1d144b42aa91ffecf2854bc0186eb77bd5'},
+    'crates/zryna-driver/src/distribution/native_installation/identity.rs': {'mode': '100644', 'blob': '768f2c8d3242eadca0032f88115950905150a5d8'},
+    'crates/zryna-driver/src/distribution/native_installation/mod.rs': {'mode': '100644', 'blob': '3227e6ea1d6ebf86a957028228524b5309c2ead0'},
+    'crates/zryna-driver/src/distribution/native_installation/sources.rs': {'mode': '100644', 'blob': '3804280125d5dc76564f3dab14a2fbc369b04ffe'},
+    'tests/native-provider-qualification/installed-native-capability/README.md': {'mode': '100644', 'blob': '71e04cabbee99b137c04d5eec6de27c6ea719e67'},
+    'tests/native-provider-qualification/installed-native-capability/build.py': {'mode': '100644', 'blob': '4ff41ea8d0d0e47afd53f86f6500aa9023b7b073'},
+    'tests/native-provider-qualification/installed-native-capability/cases.py': {'mode': '100644', 'blob': '8958f78e29a1b740d3d8a4d5aece2ea38c96157c'},
+    'tests/native-provider-qualification/installed-native-capability/independent_cases.py': {'mode': '100644', 'blob': 'fc9c9f5fd9d1b37cabdf73f2225a1ceb9a0308a1'},
+    'tests/native-provider-qualification/installed-native-capability/mutations.rs': {'mode': '100644', 'blob': '5708883c984d345d41bcc2dabef38423e01b870d'},
+    'tests/native-provider-qualification/installed-native-capability/probe.rs': {'mode': '100644', 'blob': '3dd76530320a52bd73af9ffec77ea8e297909308'},
+    'tests/native-provider-qualification/installed-native-capability/run.py': {'mode': '100644', 'blob': '3cd094ee2ef784f74c5f41c7ecf89388f02ef72c'},
+    'tests/native-provider-qualification/installed-native-capability/source_registration_test.py': {'mode': '100644', 'blob': 'da94ae29ab840780f70a4ea5149012c32ad80026'},
+}
+
+def qualified_change(path):
+    if path.startswith(RESERVATION) or path in REGISTRATION:
+        return True
+    expected = INSTALLATION_PREPARATION.get(path)
+    if expected is None:
+        return False
+    actual = SUPPORT.git('ls-tree', 'HEAD', '--', path)
+    fields = actual.split('\t')
+    return len(fields) == 2 and fields[1] == path and fields[0].split() == [expected['mode'], 'blob', expected['blob']]
+
 PROVIDER = 'zryna-verified-ir-proof'
 ENVIRONMENT = (
     'RUSTUP_TOOLCHAIN','CARGO_TARGET_DIR','CARGO_INCREMENTAL','CARGO_BUILD_JOBS',
@@ -48,8 +77,8 @@ LEGACY.PROVIDER = PROVIDER
 def authority():
     subprocess.run(['git','merge-base','--is-ancestor',INTEGRATION_BASE,'HEAD'],cwd=ROOT,check=True)
     changed = SUPPORT.git('diff','--name-only',INTEGRATION_BASE,'HEAD').splitlines()
-    verify.require(all(path.startswith(RESERVATION) or path in REGISTRATION for path in changed),
-                   'exact qualified H5 base plus reserved IR proof and explicit CI registration only')
+    verify.require(all(qualified_change(path) for path in changed),
+                   'exact qualified H5 base, reserved IR proof, explicit CI registration and reviewed installation blobs only')
     paths = set(LEGACY.inventory(ROOT))
     paths.update(('Cargo.toml','Cargo.lock','rust-toolchain.toml','rustfmt.toml',
                   'scripts/run-native-provider-corpus.py','scripts/run-native-provider-activation.py'))
