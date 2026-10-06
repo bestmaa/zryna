@@ -12,6 +12,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[path = "boundary_tests.rs"]
+mod boundaries;
 #[path = "negative_tests.rs"]
 mod negative;
 #[path = "publication_tests.rs"]

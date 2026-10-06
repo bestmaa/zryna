@@ -33,6 +33,15 @@ bytes cannot create another request because the connection closes after this sin
 is no shared proxy hop, keepalive, streaming body, HTTP/2 or TLS support. Unknown bounded headers
 are discarded and do not supply guest authority.
 
+Exact-boundary loopback tests send a 65536-byte opaque body, a complete 8192-byte header
+(including its final CRLFCRLF), and 32 fields through the authenticated production frontend and
+real guest Store. Separate attempts add the first extra body byte, header byte or field while
+holding the other dimensions at their maxima. Each rejection creates no Store and is followed
+by a valid maximum-size recovery request. Cumulative owned-input bytes, Store/resource creation
+and destruction, zero live socket handles and transport reservations, and final listener closure
+prove admission and cleanup. Terminal TCP resets are allowed for early rejection; timeouts are
+failures. These cases retain the existing request, service and attempt limits.
+
 Transport reserves `header_bytes + body_bytes + 1024` bytes before framing. Header-name slots
 borrow the bounded header buffer, with no copied-name map. The extra 1024 bytes cover 32 borrowed
 name slots, bounded routing copies and the fixed response. The raw header is dropped before body
@@ -61,7 +70,7 @@ allows its existing 30s session plus 2s cleanup budget to finish before terminat
 Readiness is emitted after normal frontend cleanup. Graceful receipts inspect actual listener/socket/buffer/Store
 destruction. Forced termination proves OS descriptor/connection reclamation only, not guest Drop.
 
-Run the production-provider, loopback, malformed-frame, cancellation, deadline, publication,
+Run the production-provider, loopback, exact-boundary, malformed-frame, cancellation, deadline, publication,
 repeated-start and child-process corpus with:
 
 ```sh
