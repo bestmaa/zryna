@@ -154,11 +154,13 @@ def image(raw, binding, platform):
     return file_binding(raw)
 
 
-def captured(folder, label, source, previous=None, *, linker_help=False):
+def captured(folder, label, source, previous=None, *, linker_help=False, dumpbin_help=False):
     require(type(linker_help) is bool and (not linker_help or label == 'observed-linker-version'), 'linker help scope')
+    require(type(dumpbin_help) is bool and (not dumpbin_help or label == 'observed-dumpbin-version')
+            and not (linker_help and dumpbin_help), 'dumpbin help scope')
     row = document(folder / (label + '-execution.json'))
     require(exact(row['source_before'], source) and exact(row['source_after'], source) and row['source_unchanged'] is True
-            and type(row['exit']) is int and row['exit'] == (1100 if linker_help else 0)
+            and type(row['exit']) is int and row['exit'] == (1100 if linker_help or dumpbin_help else 0)
             and row['direct_child_reaped'] is True, 'build execution')
     start = dt.datetime.fromisoformat(row['started_at']); end = dt.datetime.fromisoformat(row['completed_at'])
     require(start.tzinfo and end.tzinfo and start <= end and (previous is None or previous <= start), 'build order')
@@ -186,6 +188,25 @@ def observed_linker_help(p, row, stdout, stderr):
             (b'      /ALIGN:', b'      /OUT:', b'      /VERSION:')) and not any(line.startswith(b'LINK :') for line in lines), 'linker help options')
 
 
+def observed_dumpbin_help(p, row, stdout, stderr):
+    """Independently admit observed DUMPBIN help, without trusting exit declarations."""
+    require(type(row['exit']) is int and row['exit'] == 1100 and row['direct_child_reaped'] is True
+            and row['source_unchanged'] is True and exact(row['source_before'], row['source_after']), 'dumpbin help execution')
+    require(row['argv'] == [p['tools']['dumpbin']['path'], '/?']
+            and exact(row['selected_environment'], p['host_environment'])
+            and ntpath.basename(row['cwd']) == 'toolchain', 'dumpbin help query')
+    require(exact(file_binding(stdout), row['stdout']) and exact(file_binding(stderr), row['stderr'])
+            and not stderr and 0 < len(stdout) <= 65536, 'dumpbin help streams')
+    lines = stdout.replace(b'\r\n', b'\n').split(b'\n')
+    require(len(lines) > 7, 'dumpbin help lines')
+    match = re.fullmatch(rb'Microsoft \(R\) COFF/PE Dumper Version (14\.\d+\.\d+\.\d+)', lines[0])
+    require(match is not None and match.group(1).decode().split('.')[:2] == p['msvc']['version'].split('.')[:2], 'dumpbin help version')
+    require(lines[1:7] == [b'Copyright (C) Microsoft Corporation.  All rights reserved.', b'',
+            b'usage: DUMPBIN [options] [files]', b'', b'   options:', b''], 'dumpbin help header')
+    require(all(option in lines[7:] for option in (b'      /DEPENDENTS', b'      /HEADERS', b'      /SYMBOLS'))
+            and not any(line.startswith((b'DUMPBIN :', b'LINK :')) for line in lines), 'dumpbin help options')
+
+
 def windows_observations(proof, p, src, live):
     profile_contract(p)
     folder = proof / 'toolchain'
@@ -199,13 +220,17 @@ def windows_observations(proof, p, src, live):
             require(sys.platform == 'win32' and file_binding(read(row['path'], MAX)) == file_binding(raw), 'live tool bytes')
     last = None
     for role in ('python', 'cargo', 'rustc', 'linker', 'dumpbin'):
-        row, last = captured(folder, 'observed-' + role + '-version', src, last, linker_help=role == 'linker')
+        row, last = captured(folder, 'observed-' + role + '-version', src, last,
+                             linker_help=role == 'linker', dumpbin_help=role == 'dumpbin')
         tool = p['python'] if role == 'python' else p['tools'][role]
         require(row['argv'] == [tool['path'], {'python': '--version', 'cargo': '-V', 'rustc': '-vV', 'linker': '/?', 'dumpbin': '/?'}[role]]
                 and row['selected_environment'] == p['host_environment'] and ntpath.basename(row['cwd']) == 'toolchain', 'observed tool query')
         if role == 'linker':
             observed_linker_help(p, row, read(folder / 'observed-linker-version.stdout'),
                                  read(folder / 'observed-linker-version.stderr'))
+        if role == 'dumpbin':
+            observed_dumpbin_help(p, row, read(folder / 'observed-dumpbin-version.stdout'),
+                                  read(folder / 'observed-dumpbin-version.stderr'))
     require(read(folder / 'observed-python-version.stdout').decode().strip() == 'Python 3.12.10', 'actual Python version')
     require(read(folder / 'observed-cargo-version.stdout').decode().startswith('cargo 1.97.1 '), 'actual Cargo version')
     rust = read(folder / 'observed-rustc-version.stdout').decode().replace('\r\n', '\n')

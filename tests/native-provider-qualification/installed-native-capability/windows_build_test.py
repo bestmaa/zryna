@@ -9,9 +9,9 @@ import sys
 import tempfile
 import unittest
 
-from admission_build import captured, observed_linker_help
+from admission_build import captured, observed_linker_help, observed_dumpbin_help
 from build import command, sha
-from toolchain import retain_original, verify_linker_help
+from toolchain import retain_original, verify_linker_help, verify_dumpbin_help
 from windows_build import environment, validate
 
 
@@ -225,6 +225,97 @@ class LinkerHelpControls(unittest.TestCase):
             self.assertIs(rejected['direct_child_reaped'], True)
             self.assertEqual(rejected['source_before'], rejected['source_after'])
             self.assertIs(rejected['source_unchanged'], True)
+
+
+class DumpbinHelpControls(unittest.TestCase):
+    """Modeled controls do not grant installed Windows execution credit."""
+    @staticmethod
+    def observation():
+        row, _, stderr = LinkerHelpControls.observation()
+        stdout = (b'Microsoft (R) COFF/PE Dumper Version 14.44.35229.0\r\n'
+                  b'Copyright (C) Microsoft Corporation.  All rights reserved.\r\n\r\n'
+                  b'usage: DUMPBIN [options] [files]\r\n\r\n   options:\r\n\r\n'
+                  b'      /DEPENDENTS\r\n      /HEADERS\r\n      /SYMBOLS\r\n')
+        row['argv'] = [fixture()['tools']['dumpbin']['path'], '/?']
+        row['stdout'] = {'bytes': len(stdout), 'sha256': sha(stdout)}
+        return row, stdout, stderr
+
+    def test_bound_dumpbin_help_has_independent_checks(self):
+        row, stdout, stderr = self.observation()
+        verify_dumpbin_help(fixture(), row, stdout, stderr)
+        observed_dumpbin_help(fixture(), row, stdout, stderr)
+
+    def test_coherently_rebound_wrong_dumpbin_queries_and_streams_reject(self):
+        mutations = [
+            lambda r: r.update(exit=0), lambda r: r.update(exit=True),
+            lambda r: r.update(exit=1099), lambda r: r.update(exit=1101),
+            lambda r: r.update(direct_child_reaped=False), lambda r: r.update(source_unchanged=False),
+            lambda r: r['source_after'].update(scope='changed'),
+            lambda r: r.update(argv=[fixture()['tools']['linker']['path'], '/?']),
+            lambda r: r.update(argv=[fixture()['tools']['dumpbin']['path'], '/HEADERS']),
+            lambda r: r.update(cwd=r'C:\owned\elsewhere'),
+            lambda r: r['selected_environment'].update(NODE_OPTIONS='--require foreign'),
+        ]
+        for mutate in mutations:
+            row, stdout, stderr = self.observation()
+            mutate(row)
+            with self.subTest(mutate=mutate):
+                with self.assertRaises(AssertionError):
+                    verify_dumpbin_help(fixture(), row, stdout, stderr)
+                with self.assertRaises(ValueError):
+                    observed_dumpbin_help(fixture(), row, stdout, stderr)
+        _, original, _ = self.observation()
+        for stdout, stderr in [(original, b'warning'), (b'', b''),
+                               (original.replace(b'14.44.', b'14.45.'), b''),
+                               (original.replace(b'DUMPBIN [options]', b'LINK [options]'), b''),
+                               (original.replace(b'/HEADERS', b'/FOREIGN'), b''),
+                               (original + b'DUMPBIN : fatal error LNK1100: foreign\r\n', b''),
+                               (original + b'LINK : fatal error LNK1100: foreign\r\n', b''),
+                               (original + b'x' * 65536, b'')]:
+            row, _, _ = self.observation()
+            row['stdout'] = {'bytes': len(stdout), 'sha256': sha(stdout)}
+            row['stderr'] = {'bytes': len(stderr), 'sha256': sha(stderr)}
+            with self.subTest(stream=sha(stdout), stderr=stderr):
+                with self.assertRaises(AssertionError):
+                    verify_dumpbin_help(fixture(), row, stdout, stderr)
+                with self.assertRaises(ValueError):
+                    observed_dumpbin_help(fixture(), row, stdout, stderr)
+
+    def test_reader_dumpbin_exception_has_fixed_label_and_exit(self):
+        row, stdout, stderr = self.observation()
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            label = 'observed-dumpbin-version'
+            (folder / (label + '.stdout')).write_bytes(stdout)
+            (folder / (label + '.stderr')).write_bytes(stderr)
+            record = folder / (label + '-execution.json')
+            record.write_text(json.dumps(row))
+            self.assertEqual(captured(folder, label, row['source_before'], dumpbin_help=True)[0], row)
+            for flags in ({}, {'linker_help': True}, {'dumpbin_help': 1},
+                          {'linker_help': True, 'dumpbin_help': True}):
+                with self.subTest(flags=flags), self.assertRaises(ValueError):
+                    captured(folder, label, row['source_before'], **flags)
+            for other in ('observed-linker-version', 'build-prepared-private-image', 'descriptor-unit-tests'):
+                with self.subTest(label=other), self.assertRaises(ValueError):
+                    captured(folder, other, row['source_before'], dumpbin_help=True)
+            row.update(exit=0, expected_exit=1100)
+            record.write_text(json.dumps(row))
+            with self.assertRaises(ValueError):
+                captured(folder, label, row['source_before'], dumpbin_help=True)
+
+    def test_command_dumpbin_scope_rejects_before_other_execution(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            for label, argv, flags in [
+                    ('build-prepared-private-image', ['dumpbin.exe', '/?'], {}),
+                    ('observed-linker-version', ['link.exe', '/?'], {}),
+                    ('observed-dumpbin-version', ['dumpbin.exe', '/HEADERS'], {}),
+                    ('observed-dumpbin-version', [sys.executable, '/?'], {}),
+                    ('observed-dumpbin-version', ['dumpbin.exe', '/?'], {'linker_help': True}),
+                    ('observed-dumpbin-version', ['dumpbin.exe', '/?'], {'dumpbin_help': 1})]:
+                with self.subTest(label=label, argv=argv, flags=flags), self.assertRaises(AssertionError):
+                    command(folder, label, argv, folder, {}, folder, **({'dumpbin_help': True} | flags))
+            self.assertEqual(list(folder.iterdir()), [])
 
 
 if __name__ == '__main__':

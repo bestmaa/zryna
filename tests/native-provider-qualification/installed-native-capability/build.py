@@ -53,11 +53,14 @@ def snapshot(root):
     return {'head': git(root, 'rev-parse', 'HEAD'), 'tree': git(root, 'rev-parse', 'HEAD^{tree}'), 'files': files}
 
 
-def command(output, label, argv, cwd, env, source, timeout=1800, *, linker_help=False):
-    assert type(linker_help) is bool
+def command(output, label, argv, cwd, env, source, timeout=1800, *, linker_help=False, dumpbin_help=False):
+    assert type(linker_help) is bool and type(dumpbin_help) is bool and not (linker_help and dumpbin_help)
     if linker_help:
         assert label == 'observed-linker-version' and type(argv) is list and len(argv) == 2
         assert pathlib.PureWindowsPath(argv[0]).name == 'link.exe' and argv[1] == '/?'
+    if dumpbin_help:
+        assert label == 'observed-dumpbin-version' and type(argv) is list and len(argv) == 2
+        assert pathlib.PureWindowsPath(argv[0]).name == 'dumpbin.exe' and argv[1] == '/?'
     before = snapshot(source)
     start = datetime.datetime.now(datetime.timezone.utc).isoformat()
     with (output / (label + '.stdout')).open('xb') as stdout, (output / (label + '.stderr')).open('xb') as stderr:
@@ -79,7 +82,7 @@ def command(output, label, argv, cwd, env, source, timeout=1800, *, linker_help=
               'stderr': {'bytes': (output / (label + '.stderr')).stat().st_size,
                          'sha256': sha((output / (label + '.stderr')).read_bytes())}}
     write(output / (label + '-execution.json'), json.dumps(record, indent=2).encode() + b'\n')
-    assert type(result) is int and result == (1100 if linker_help else 0) and before == after, label
+    assert type(result) is int and result == (1100 if linker_help or dumpbin_help else 0) and before == after, label
     return record
 
 
