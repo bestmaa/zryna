@@ -3,9 +3,11 @@
 import argparse
 import copy
 import json
+import os
 from pathlib import Path
 import shutil
 import tempfile
+import subprocess
 import verify
 
 
@@ -127,10 +129,18 @@ def main():
         verify.verify(original_inventory,original_receipt,output)
         child.rename(held)
         try:
-            child.symlink_to(held,target_is_directory=True)
+            if os.name == 'nt':
+                subprocess.run(['cmd.exe','/d','/c','mklink','/J',str(child),str(held)],
+                               check=True,capture_output=True)
+            else:
+                child.symlink_to(held,target_is_directory=True)
             receipt_mutation('linked-parent-artifact',lambda r:None,baseline_verified=True)
         finally:
-            child.unlink()
+            if child.exists() or child.is_symlink():
+                if os.name == 'nt':
+                    child.rmdir()
+                else:
+                    child.unlink()
             held.rename(child)
         verify.verify(original_inventory,original_receipt,output)
     print(json.dumps({'hostile_controls_passed':len(passed),'controls':passed,'runtime_evidence':False}))
