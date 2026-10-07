@@ -1,5 +1,6 @@
 //! Reviewed fixture process helper; not a production admission API or OS-isolation proof.
 
+use super::super::super::linked_output;
 use super::*;
 use crate::native::{self, ArtifactOutputRoot, NativeProcessLimits, NativeStage, ProcessPhase};
 use std::{
@@ -12,6 +13,37 @@ use std::{
 static NEXT: AtomicUsize = AtomicUsize::new(0);
 pub(super) struct Fixture(PathBuf);
 impl Fixture {
+    pub(super) fn observation_root(&self) -> Result<ArtifactOutputRoot, Diagnostic> {
+        ArtifactOutputRoot::for_workspace(&self.0)
+    }
+    pub(super) fn compile_observed(
+        &self,
+        source: &str,
+    ) -> Result<linked_output::CompiledObject, linked_output::Failure> {
+        let tools = native::discover_linux_native_toolchain(NativeProcessLimits::default())?;
+        linked_output::compile_object(&self.observation_root()?, source.as_bytes(), &tools)
+    }
+    pub(super) fn observe_link(
+        &self,
+        requirements: &HandleLinkRequirements,
+        library: &CapturedForeignLibrary,
+        foreign: &linked_output::CompiledObject,
+        client: &str,
+    ) -> Result<linked_output::Observation, linked_output::Failure> {
+        let source = format!(
+            "{}\n#include <assert.h>\n#include <stdlib.h>\n#include <limits.h>\n{client}",
+            requirements.object().header()
+        );
+        linked_output::observe(
+            &self.observation_root()?,
+            requirements,
+            library,
+            foreign,
+            source.as_bytes(),
+            None,
+            false,
+        )
+    }
     pub(super) fn new() -> Self {
         let path = std::env::temp_dir().join(format!(
             "zryna-foreign-object-{}-{}",
@@ -214,4 +246,105 @@ impl Drop for Fixture {
     fn drop(&mut self) {
         fs::remove_dir_all(&self.0).expect("independent fixture prerequisite");
     }
+}
+
+#[test]
+fn linked_observation_retains_real_scalar_objects_and_never_runs_client() {
+    let fixture = Fixture::new();
+    let requirements = linked_requirements(&capture::reference(), "imported");
+    let foreign = fixture.compile_observed(&library_source()).expect("real observed C compilation");
+    let library = accept(&requirements, foreign.bytes(), &["free", "malloc"]);
+    let marker = fixture.acquired_path();
+    let client = format!(
+        "#include <stdio.h>\nint main(void) {{ FILE *f=fopen(\"{}\",\"w\"); if(f)fclose(f); abort(); }}",
+        marker.display()
+    );
+    let observation = fixture
+        .observe_link(&requirements, &library, &foreign, &client)
+        .expect("compile/link only");
+    fixture.empty();
+    assert!(!marker.exists(), "client side effect proves the observer did not run it");
+    observation.check_elf_rejection_controls();
+    foreign.check_failure_retention_controls(
+        &fixture.observation_root().expect("independent observed fixture prerequisite"),
+    );
+    fixture.empty();
+    let report = observation.report();
+    assert_eq!(report["execution_authorized"], false);
+    assert_eq!(report["target_executed"], false);
+    assert_eq!(
+        report["missing_prerequisites"]
+            .as_array()
+            .expect("independent observed fixture prerequisite")
+            .len(),
+        3
+    );
+    assert!(
+        report["observed_linker_order"]
+            .as_array()
+            .expect("independent observed fixture prerequisite")
+            .len()
+            > 3
+    );
+    let directory = std::env::var_os("ZRYNA_LINKED_OUTPUT_EVIDENCE_DIR").map_or_else(
+        || fixture.0.join("observed-scalar"),
+        |root| PathBuf::from(root).join("scalar"),
+    );
+    observation.export(&directory).expect("create-only actual artifacts after stage cleanup");
+    assert!(observation.export(&directory).is_err(), "no evidence overwrite");
+    eprintln!("417-linked-output-observation {report}");
+}
+
+#[test]
+fn linked_observation_reissued_authority_rejects_before_new_compile_or_link() {
+    let fixture = Fixture::new();
+    let requirements = linked_requirements(&capture::reference(), "imported");
+    let foreign = fixture
+        .compile_observed(&library_source())
+        .expect("independent observed fixture prerequisite");
+    let library = accept(&requirements, foreign.bytes(), &["free", "malloc"]);
+    let other = linked_requirements(&capture::reference(), "imported");
+    assert_eq!(requirements.object_sha256(), other.object_sha256());
+    let failure = fixture
+        .observe_link(&other, &library, &foreign, "int main(void){return 0;}")
+        .expect_err("expected observational rejection");
+    assert!(failure.invocations.is_empty());
+    assert_eq!(failure.diagnostics[0].code(), "ZRYNA-C4102");
+    fixture.empty();
+}
+
+#[test]
+fn linked_observation_real_compile_and_link_failures_cleanup_then_retry() {
+    let fixture = Fixture::new();
+    let failure =
+        fixture.compile_observed("not valid C").expect_err("expected observational rejection");
+    assert_eq!(failure.invocations.len(), 1);
+    fixture.empty();
+    let requirements = linked_requirements(&capture::reference(), "imported");
+    let foreign = fixture
+        .compile_observed(&library_source())
+        .expect("independent observed fixture prerequisite");
+    let library = accept(&requirements, foreign.bytes(), &["free", "malloc"]);
+    let failure = fixture
+        .observe_link(
+            &requirements,
+            &library,
+            &foreign,
+            "extern void missing(void); int main(void){missing();return 0;}",
+        )
+        .expect_err("expected observational rejection");
+    let report = failure.report();
+    assert_eq!(report["invocations"][0]["success"], false);
+    assert!(
+        !report["invocations"][0]["stderr_bytes"]
+            .as_array()
+            .expect("independent observed fixture prerequisite")
+            .is_empty()
+    );
+    fixture.empty();
+    fixture
+        .observe_link(&requirements, &library, &foreign, "int main(void){return 0;}")
+        .expect("independent observed fixture prerequisite");
+    fixture.empty();
+    eprintln!("417-linked-output-failure {report}");
 }

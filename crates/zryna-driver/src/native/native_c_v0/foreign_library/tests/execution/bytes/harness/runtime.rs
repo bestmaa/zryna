@@ -3,6 +3,18 @@ use super::*;
 use crate::native::NativeStage;
 use std::fs;
 
+pub(super) fn compile_observed(
+    fixture: &Fixture,
+    requirements: &HandleLinkRequirements,
+    tools: &native::LinuxX8664LinkToolchain,
+) -> Result<linked_output::CompiledObject, linked_output::Failure> {
+    let source = requirements.private_runtime_source().ok_or_else(linked_output::rejected)?;
+    if Some(&sha(source)) != requirements.private_runtime_source_sha256() {
+        return Err(linked_output::rejected().into());
+    }
+    linked_output::compile_object(&fixture.observation_root()?, source, tools)
+}
+
 pub(super) fn compile(
     fixture: &Fixture,
     requirements: &HandleLinkRequirements,

@@ -58,6 +58,30 @@ raw boundary and reviewed library-specific ownership policy before those proofs.
 
 ## Full-feature acceptance still open
 
+`linked_output/` is a Linux x86-64 test-only compile/link observation producer. Its two
+fixture consumers retain genuine original requirements and captured-library capabilities,
+actual foreign/client/private-runtime objects and sources, the originating GCC/linker
+capability for every invocation, exact arguments and outputs, final ELF bytes, and the
+linker's observed input order including repeated archive occurrences. The private runtime
+producer preserves the original rendered-source/header binding. Client objects are compiled
+separately using the existing fixture client warning policy; foreign/runtime compilation
+retains strict warnings. No shared staging allowlist or production recipe guard changes.
+
+The observer returns before driver executable permissions or target execution and grants no
+execution, cache or publication capability. GCC itself may create executable file modes.
+After stage cleanup, a create-only private evidence export can retain the actual artifacts;
+`ZRYNA_LINKED_OUTPUT_EVIDENCE_DIR` selects an existing external parent for the scalar/byte
+test exports. Without it, each test uses its disposable fixture root. Failure records retain
+actual invocation status/stdout/stderr; existing execution and sanitizer paths remain separate.
+
+Observed PT_INTERP, DT_NEEDED, RPATH/RUNPATH, all dynamic entries and raw GNU version sections
+are requirements, never an approved provider inventory. Trace output is not complete input-use
+attestation. The unchanged limited executable audit still applies, but no full dependency or
+loader audit is claimed. Independently issued ordered tool/sysroot/startup/runtime expectations,
+authoritative loader/provider/version/load-search policy and production recipe/host admission
+remain explicitly missing. Source or output hashes cannot issue those authorities. No other
+PR's toolchain or sanitizer runtime policy is borrowed.
+
 The normative acceptance owner remains
 [`NATIVE_C_INTEROP_V0_ACCEPTANCE.md`](../../../../../../spec/abi/NATIVE_C_INTEROP_V0_ACCEPTANCE.md).
 Draft #534 is the cumulative review route toward main for the source,

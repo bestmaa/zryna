@@ -1,9 +1,41 @@
 //! Three separately compiled inputs; sanitizer observations carry no production ELF seal.
 
+use super::super::super::super::linked_output;
 use super::*;
 use crate::native::{self, NativeStage, ProcessPhase};
 use std::{ffi::OsString, path::PathBuf};
 mod runtime;
+
+pub(super) fn observe_link(
+    fixture: &Fixture,
+    requirements: &HandleLinkRequirements,
+    library: &CapturedForeignLibrary,
+    foreign: &linked_output::CompiledObject,
+    client: &str,
+) -> Result<linked_output::Observation, linked_output::Failure> {
+    linked_output::check_foreign(requirements, library, foreign)?;
+    let runtime = runtime::compile_observed(fixture, requirements, foreign.tools())?;
+    let private_header =
+        requirements.object().program().source().runtime_abi().native_linux_x86_64_header();
+    if Some(&sha(private_header)) != requirements.private_runtime_header_sha256() {
+        return Err(linked_output::rejected().into());
+    }
+    let source = format!(
+        "{}\n{}\n#include <assert.h>\n#include <stdlib.h>\n#include <string.h>\n{}\n{client}",
+        std::str::from_utf8(private_header).map_err(|_| linked_output::rejected())?,
+        requirements.object().header(),
+        include_str!("oracle.c")
+    );
+    linked_output::observe(
+        &fixture.observation_root()?,
+        requirements,
+        library,
+        foreign,
+        source.as_bytes(),
+        Some(&runtime),
+        true,
+    )
+}
 
 const SANITIZERS: [&str; 3] =
     ["-fsanitize=address,undefined", "-fno-sanitize-recover=all", "-fno-omit-frame-pointer"];
@@ -176,4 +208,44 @@ fn link_arguments(stage: &NativeStage, runtime_object: PathBuf, sanitized: bool)
         runtime_object.into_os_string(),
     ]);
     args
+}
+
+#[test]
+fn linked_observation_retains_original_byte_runtime_without_executing_it() {
+    let fixture = Fixture::new();
+    let requirements = requirements(&capture::reference(), "copied");
+    let foreign = fixture.compile_observed(&library_source()).expect("real foreign fixture object");
+    let library = accept(&requirements, foreign.bytes(), &["free", "malloc"]);
+    let observation =
+        observe_link(&fixture, &requirements, &library, &foreign, "int main(void){abort();}")
+            .expect("ordinary byte compile/link-only observation");
+    fixture.empty();
+    let report = observation.report();
+    assert_eq!(report["target_executed"], false);
+    assert!(report["private_runtime_object_sha256"].is_string());
+    assert_eq!(report["runtime_compile"]["tools"], report["foreign_compile"]["tools"]);
+    let directory = std::env::var_os("ZRYNA_LINKED_OUTPUT_EVIDENCE_DIR").map_or_else(
+        || fixture.acquired_path().with_file_name("observed-byte"),
+        |root| PathBuf::from(root).join("byte"),
+    );
+    observation.export(&directory).expect("actual retained runtime and final ELF evidence");
+    eprintln!("417-linked-output-observation {report}");
+}
+
+#[test]
+fn linked_observation_byte_mismatched_object_rejects_before_runtime_compilation() {
+    let fixture = Fixture::new();
+    let requirements = requirements(&capture::reference(), "copied");
+    let foreign = fixture
+        .compile_observed(&library_source())
+        .expect("independent observed fixture prerequisite");
+    let library = accept(&requirements, foreign.bytes(), &["free", "malloc"]);
+    let other = fixture
+        .compile_observed("int unrelated(void){return 1;}")
+        .expect("independent observed fixture prerequisite");
+    let failure =
+        observe_link(&fixture, &requirements, &library, &other, "int main(void){abort();}")
+            .expect_err("expected observational rejection");
+    assert!(failure.invocations.is_empty());
+    fixture.empty();
 }
