@@ -513,6 +513,40 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
+      - name: Preserve original installation tools in a bounded transport group
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: unadmitted-installed-tools-windows-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-installed-capability/toolchain
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve original installation builds in a bounded transport group
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: unadmitted-installed-builds-windows-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-installed-capability/build
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve original installation cases and units in a bounded transport group
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: unadmitted-installed-cases-units-windows-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/private-installed-capability/cases
+            ${{ runner.temp }}/private-installed-capability/ci-receipt.json
+            ${{ runner.temp }}/private-installed-capability/private-descriptor-units-execution.json
+            ${{ runner.temp }}/private-installed-capability/private-descriptor-units.stdout
+            ${{ runner.temp }}/private-installed-capability/private-descriptor-units.stderr
+            ${{ runner.temp }}/private-installed-capability/private-descriptor-unit-image-binding.json
+            ${{ runner.temp }}/private-installed-capability/private-descriptor-unit-image.exe
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
 
   tool-provenance:
     name: unqualified tool path diagnostic (${{ matrix.os }})

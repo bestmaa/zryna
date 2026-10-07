@@ -49,7 +49,7 @@ INSTALLATION_PREPARATION = {
     'tests/native-provider-qualification/installed-native-capability/admission_test.py': {'mode': '100644', 'blob': 'ac001ac3faabdbb6131019431991e7284d72f3d3'},
     'tests/native-provider-qualification/installed-native-capability/admission_original_controls.py': {'mode': '100644', 'blob': 'ba8bb00ab8a42fde77064c5004fbc69706247511'},
     'tests/native-provider-qualification/installed-native-capability/windows-workflow.test.mjs': {'mode': '100644', 'blob': '7c1551dea3fc832e581c611317d32756de4ef674'},
-    'tests/native-provider-qualification/installed-native-capability/windows-workflow-job.json': {'mode': '100644', 'blob': 'b8b2b5c50fa4241128305e7bcc374dc2075332b2'},
+    'tests/native-provider-qualification/installed-native-capability/windows-workflow-job.json': {'mode': '100644', 'blob': '7ce51cf72e3fcc8eed6ab9d4cc54c81a84157a75'},
 }
 
 def qualified_change(path):
