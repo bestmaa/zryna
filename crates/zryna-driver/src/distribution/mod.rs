@@ -8,6 +8,8 @@ mod filesystem;
 mod identity;
 mod integrity;
 mod manifest;
+#[cfg(feature = "native-provider-internal")]
+pub mod native_installation;
 mod provider;
 mod request;
 mod source;

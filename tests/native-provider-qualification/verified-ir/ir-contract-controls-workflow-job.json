@@ -1,0 +1,54 @@
+{
+  "name": "independent complete IR contracts (${{ matrix.os }})",
+  "timeout-minutes": "${{ matrix.os == 'windows-latest' && 60 || 40 }}",
+  "strategy": {
+    "fail-fast": false,
+    "matrix": {
+      "os": [
+        "ubuntu-latest",
+        "windows-latest"
+      ]
+    }
+  },
+  "runs-on": "${{ matrix.os }}",
+  "env": {
+    "CLI_SOURCE_SHA": "${{ github.event.pull_request.head.sha || github.sha }}"
+  },
+  "steps": [
+    {
+      "name": "Checkout exact current IR source",
+      "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "with": {
+        "fetch-depth": 0,
+        "ref": "${{ env.CLI_SOURCE_SHA }}"
+      }
+    },
+    {
+      "uses": "dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c",
+      "with": {
+        "toolchain": "1.97.1",
+        "components": "rustfmt, clippy"
+      }
+    },
+    {
+      "uses": "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+      "with": {
+        "node-version": "22.22.1"
+      }
+    },
+    {
+      "uses": "pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86",
+      "with": {
+        "version": "11.18.0"
+      }
+    },
+    {
+      "run": "pnpm install --frozen-lockfile"
+    },
+    {
+      "name": "Verify complete IR workflow and archive controls",
+      "shell": "pwsh",
+      "run": "node --test tests/native-provider-activation-workflow.test.mjs\nif ($LASTEXITCODE -ne 0) { throw 'Complete IR workflow contract failed' }\npython -B tests/native-provider-qualification/verified-ir/archive_test.py\nif ($LASTEXITCODE -ne 0) { throw 'Complete IR archive controls failed' }\n"
+    }
+  ]
+}

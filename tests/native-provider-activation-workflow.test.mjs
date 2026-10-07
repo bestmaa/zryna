@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { currentIrJob } from './native-provider-qualification/verified-ir/workflow.test.mjs';
+import { currentIrJob, currentIrControlsJob } from './native-provider-qualification/verified-ir/workflow.test.mjs';
+import { privateWindowsJob } from './native-provider-qualification/installed-native-capability/windows-workflow.test.mjs';
 import { toolProvenanceJob } from './native-provider-qualification/verified-ir/tool-provenance-workflow.test.mjs';
 import { parseDocument } from 'yaml';
 
@@ -122,7 +123,9 @@ const expected = {
       steps: expectedSteps,
     },
     'private-cli': privateCliJob,
+    'private-ir-contract-controls': currentIrControlsJob,
     'private-ir': currentIrJob,
+    'private-installed-windows': privateWindowsJob,
     'tool-provenance': toolProvenanceJob,
   },
 };

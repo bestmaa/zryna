@@ -23,6 +23,45 @@ REGISTRATION = {
     'tests/native-cli-smoke/workflow-job.json',
     'tests/native-provider-activation-workflow.test.mjs',
 }
+# Independently reviewed installation preparation; exact Git modes and blobs only.
+# This grants no runtime authority and leaves the original H4/H5 checks intact.
+INSTALLATION_PREPARATION = {
+    'crates/zryna-driver/src/distribution/mod.rs': {'mode': '100644', 'blob': '083baf3b0c7ce8e96121ead001f88dc41441f45c'},
+    'crates/zryna-driver/src/distribution/native_installation/descriptor.rs': {'mode': '100644', 'blob': 'fd1b65fda0133dd51c4724199ba2bbd4f0327515'},
+    'crates/zryna-driver/src/distribution/native_installation/descriptor_tests.rs': {'mode': '100644', 'blob': 'f9a0fb1d144b42aa91ffecf2854bc0186eb77bd5'},
+    'crates/zryna-driver/src/distribution/native_installation/identity.rs': {'mode': '100644', 'blob': '768f2c8d3242eadca0032f88115950905150a5d8'},
+    'crates/zryna-driver/src/distribution/native_installation/mod.rs': {'mode': '100644', 'blob': '3227e6ea1d6ebf86a957028228524b5309c2ead0'},
+    'crates/zryna-driver/src/distribution/native_installation/sources.rs': {'mode': '100644', 'blob': '3804280125d5dc76564f3dab14a2fbc369b04ffe'},
+    'tests/native-provider-qualification/installed-native-capability/README.md': {'mode': '100644', 'blob': '681fbebd107e2e1d3ef82f7f323a3e940e1d1401'},
+    'tests/native-provider-qualification/installed-native-capability/build.py': {'mode': '100644', 'blob': '4008c64326c9c7d3b2dc07b98fdcebd54dce7f5b'},
+    'tests/native-provider-qualification/installed-native-capability/cases.py': {'mode': '100644', 'blob': '8958f78e29a1b740d3d8a4d5aece2ea38c96157c'},
+    'tests/native-provider-qualification/installed-native-capability/independent_cases.py': {'mode': '100644', 'blob': 'fc9c9f5fd9d1b37cabdf73f2225a1ceb9a0308a1'},
+    'tests/native-provider-qualification/installed-native-capability/mutations.rs': {'mode': '100644', 'blob': '5708883c984d345d41bcc2dabef38423e01b870d'},
+    'tests/native-provider-qualification/installed-native-capability/probe.rs': {'mode': '100644', 'blob': '3dd76530320a52bd73af9ffec77ea8e297909308'},
+    'tests/native-provider-qualification/installed-native-capability/run.py': {'mode': '100644', 'blob': '4dd6e850f5dc4400e0822c84770e646aba54e344'},
+    'tests/native-provider-qualification/installed-native-capability/source_registration_test.py': {'mode': '100644', 'blob': '451d4bbab56e8cf544a340e9be4aadcf3820327e'},
+    'tests/native-provider-qualification/installed-native-capability/windows_build.py': {'mode': '100644', 'blob': 'eab324d70c3161397250dfdcbb2e1ddb4c6f3cd2'},
+    'tests/native-provider-qualification/installed-native-capability/windows_build_test.py': {'mode': '100644', 'blob': 'fa502ed490cabd8dcff9e52c23e4f7b2f33c7420'},
+    'tests/native-provider-qualification/installed-native-capability/toolchain.py': {'mode': '100644', 'blob': 'ce8f6272570d9422f92bf612505cc6148dd6d68f'},
+    'tests/native-provider-qualification/installed-native-capability/ci.py': {'mode': '100644', 'blob': '839e7d8f119a613b71268864e3ecb5dcd33139b5'},
+    'tests/native-provider-qualification/installed-native-capability/admission.py': {'mode': '100644', 'blob': 'b60608cc8d72ae0ebb4645ab47dc456035076ead'},
+    'tests/native-provider-qualification/installed-native-capability/admission_build.py': {'mode': '100644', 'blob': '6b7003f5afd0128dbac200b37c6a84940560bd60'},
+    'tests/native-provider-qualification/installed-native-capability/admission_test.py': {'mode': '100644', 'blob': 'ac001ac3faabdbb6131019431991e7284d72f3d3'},
+    'tests/native-provider-qualification/installed-native-capability/admission_original_controls.py': {'mode': '100644', 'blob': 'ba8bb00ab8a42fde77064c5004fbc69706247511'},
+    'tests/native-provider-qualification/installed-native-capability/windows-workflow.test.mjs': {'mode': '100644', 'blob': '7c1551dea3fc832e581c611317d32756de4ef674'},
+    'tests/native-provider-qualification/installed-native-capability/windows-workflow-job.json': {'mode': '100644', 'blob': '7ce51cf72e3fcc8eed6ab9d4cc54c81a84157a75'},
+}
+
+def qualified_change(path):
+    if path.startswith(RESERVATION) or path in REGISTRATION:
+        return True
+    expected = INSTALLATION_PREPARATION.get(path)
+    if expected is None:
+        return False
+    actual = SUPPORT.git('ls-tree', 'HEAD', '--', path)
+    fields = actual.split('\t')
+    return len(fields) == 2 and fields[1] == path and fields[0].split() == [expected['mode'], 'blob', expected['blob']]
+
 PROVIDER = 'zryna-verified-ir-proof'
 ENVIRONMENT = (
     'RUSTUP_TOOLCHAIN','CARGO_TARGET_DIR','CARGO_INCREMENTAL','CARGO_BUILD_JOBS',
@@ -48,8 +87,8 @@ LEGACY.PROVIDER = PROVIDER
 def authority():
     subprocess.run(['git','merge-base','--is-ancestor',INTEGRATION_BASE,'HEAD'],cwd=ROOT,check=True)
     changed = SUPPORT.git('diff','--name-only',INTEGRATION_BASE,'HEAD').splitlines()
-    verify.require(all(path.startswith(RESERVATION) or path in REGISTRATION for path in changed),
-                   'exact qualified H5 base plus reserved IR proof and explicit CI registration only')
+    verify.require(all(qualified_change(path) for path in changed),
+                   'exact qualified H5 base, reserved IR proof, explicit CI registration and reviewed installation blobs only')
     paths = set(LEGACY.inventory(ROOT))
     paths.update(('Cargo.toml','Cargo.lock','rust-toolchain.toml','rustfmt.toml',
                   'scripts/run-native-provider-corpus.py','scripts/run-native-provider-activation.py'))

@@ -342,8 +342,46 @@ jobs:
             ${{ runner.temp }}/private-cli-proof/feature-cli*
           if-no-files-found: error
           retention-days: 7
+  private-ir-contract-controls:
+    name: independent complete IR contracts (${{ matrix.os }})
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 60 || 40 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    env:
+      CLI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact current IR source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CLI_SOURCE_SHA }}
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
+          components: rustfmt, clippy
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 22.22.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+        with:
+          version: 11.18.0
+      - run: pnpm install --frozen-lockfile
+      - name: Verify complete IR workflow and archive controls
+        shell: pwsh
+        run: |
+          node --test tests/native-provider-activation-workflow.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Complete IR workflow contract failed' }
+          python -B tests/native-provider-qualification/verified-ir/archive_test.py
+          if ($LASTEXITCODE -ne 0) { throw 'Complete IR archive controls failed' }
+
   private-ir:
     name: private complete IR (${{ matrix.os }})
+    needs: private-ir-contract-controls
     timeout-minutes: ${{ matrix.os == 'windows-latest' && 60 || 40 }}
     strategy:
       fail-fast: false
@@ -375,13 +413,6 @@ jobs:
         run: cargo fetch --locked
       - name: Verify current tool capability controls
         run: python -B tests/native-provider-qualification/verified-ir/tool_capability_test.py
-      - name: Verify complete IR workflow and archive controls
-        shell: pwsh
-        run: |
-          node --test tests/native-provider-activation-workflow.test.mjs
-          if ($LASTEXITCODE -ne 0) { throw 'Complete IR workflow contract failed' }
-          python -B tests/native-provider-qualification/verified-ir/archive_test.py
-          if ($LASTEXITCODE -ne 0) { throw 'Complete IR archive controls failed' }
       - name: Run complete sealed IR observations
         shell: pwsh
         run: |
@@ -420,6 +451,100 @@ jobs:
         with:
           name: private-verified-ir-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/private-verified-ir-proof.zip
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Preserve original unadmitted IR diagnostic bytes
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: unadmitted-original-ir-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-verified-ir-proof
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+  private-installed-windows:
+    name: private installed capability (windows-2022)
+    timeout-minutes: 60
+    runs-on: windows-2022
+    env:
+      CLI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact installation source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CLI_SOURCE_SHA }}
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
+          components: rustfmt, clippy
+      - name: Fetch locked installation dependencies
+        run: cargo fetch --locked
+      - name: Capture exact installed MSVC tools and execute private installation proof
+        shell: pwsh
+        run: |
+          $vsRoot = 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise'
+          & "$vsRoot\Common7\Tools\Launch-VsDevShell.ps1" -SkipAutomaticLocation -Arch amd64 -HostArch amd64
+          if (-not $env:VCToolsInstallDir -or -not $env:WindowsSdkDir) { throw 'MSVC developer environment failed' }
+          $python = 'C:\hostedtoolcache\windows\Python\3.12.10\x64\python.exe'
+          $cargo = (rustup which --toolchain 1.97.1 cargo).Trim()
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned Cargo resolution failed' }
+          $rustc = (rustup which --toolchain 1.97.1 rustc).Trim()
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned Rustc resolution failed' }
+          $rustup = (Get-Command rustup).Source
+          & $python -B tests/native-provider-qualification/installed-native-capability/ci.py --source "$env:GITHUB_WORKSPACE" --output "$env:RUNNER_TEMP/private-installed-capability" --target "$env:RUNNER_TEMP/private-installed-target" --head "$env:CLI_SOURCE_SHA" --run-id "$env:GITHUB_RUN_ID" --run-attempt "$env:GITHUB_RUN_ATTEMPT" --cargo "$cargo" --rustc "$rustc" --rustup "$rustup"
+          if ($LASTEXITCODE -ne 0) { throw 'Private Windows installation producer failed' }
+      - name: Require independent original installation admission and controls
+        shell: pwsh
+        run: |
+          $python = 'C:\hostedtoolcache\windows\Python\3.12.10\x64\python.exe'
+          & $python -B tests/native-provider-qualification/installed-native-capability/admission_test.py --root "$env:GITHUB_WORKSPACE" --proof "$env:RUNNER_TEMP/private-installed-capability" --head "$env:CLI_SOURCE_SHA" --platform win32 --run-id "$env:GITHUB_RUN_ID" --run-attempt "$env:GITHUB_RUN_ATTEMPT"
+          if ($LASTEXITCODE -ne 0) { throw 'Private installation admission controls failed' }
+          & $python -B tests/native-provider-qualification/installed-native-capability/admission.py --root "$env:GITHUB_WORKSPACE" --proof "$env:RUNNER_TEMP/private-installed-capability" --head "$env:CLI_SOURCE_SHA" --platform win32 --live --run-id "$env:GITHUB_RUN_ID" --run-attempt "$env:GITHUB_RUN_ATTEMPT"
+          if ($LASTEXITCODE -ne 0) { throw 'Private installation qualification remains incomplete' }
+      - name: Preserve original unadmitted installation evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: unadmitted-installed-windows-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-installed-capability
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve original installation tools in a bounded transport group
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: unadmitted-installed-tools-windows-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-installed-capability/toolchain
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve original installation builds in a bounded transport group
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: unadmitted-installed-builds-windows-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-installed-capability/build
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve original installation cases and units in a bounded transport group
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: unadmitted-installed-cases-units-windows-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/private-installed-capability/cases
+            ${{ runner.temp }}/private-installed-capability/ci-receipt.json
+            ${{ runner.temp }}/private-installed-capability/private-descriptor-units-execution.json
+            ${{ runner.temp }}/private-installed-capability/private-descriptor-units.stdout
+            ${{ runner.temp }}/private-installed-capability/private-descriptor-units.stderr
+            ${{ runner.temp }}/private-installed-capability/private-descriptor-unit-image-binding.json
+            ${{ runner.temp }}/private-installed-capability/private-descriptor-unit-image.exe
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
 
