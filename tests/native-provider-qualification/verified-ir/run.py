@@ -47,7 +47,7 @@ INSTALLATION_PREPARATION = {
     'tests/native-provider-qualification/installed-native-capability/admission.py': {'mode': '100644', 'blob': 'b60608cc8d72ae0ebb4645ab47dc456035076ead'},
     'tests/native-provider-qualification/installed-native-capability/admission_build.py': {'mode': '100644', 'blob': '6b7003f5afd0128dbac200b37c6a84940560bd60'},
     'tests/native-provider-qualification/installed-native-capability/admission_test.py': {'mode': '100644', 'blob': 'ac001ac3faabdbb6131019431991e7284d72f3d3'},
-    'tests/native-provider-qualification/installed-native-capability/admission_original_controls.py': {'mode': '100644', 'blob': 'cd3c8d9bf28bf68b45eb85cf55268ecbe1f74ab0'},
+    'tests/native-provider-qualification/installed-native-capability/admission_original_controls.py': {'mode': '100644', 'blob': 'ba8bb00ab8a42fde77064c5004fbc69706247511'},
     'tests/native-provider-qualification/installed-native-capability/windows-workflow.test.mjs': {'mode': '100644', 'blob': '7c1551dea3fc832e581c611317d32756de4ef674'},
     'tests/native-provider-qualification/installed-native-capability/windows-workflow-job.json': {'mode': '100644', 'blob': 'b8b2b5c50fa4241128305e7bcc374dc2075332b2'},
 }
