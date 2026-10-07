@@ -216,3 +216,57 @@ allocators, and executable M3 profiles remain unavailable.
 
 The exact authority tuple, raw vocabulary, limits, diagnostics, and verified-view contract are
 documented in [`M3_DATA_OWNERSHIP_IR.md`](../../docs/M3_DATA_OWNERSHIP_IR.md).
+
+## Staged closed-generic IR validation
+
+The separate `generic_v1` module supplies independent validation checks for the
+[accepted generic IR contract](../../spec/ir/GENERIC_INSTANTIATION_V1.md). Its two validation
+entrypoints return `()` and grant no executable authority.
+
+`validate_closed_graph` checks the complete claimed function/type inventory, whole canonical
+keys, both successor layout authorities, dense IDs, typed operations, dominance, reducible
+loops and inherited budgets. Its enum constructors and exhaustive value/shared/exclusive
+match edges bind only the selected variant's exact payload type. Generic IDs follow unsigned
+complete-key order; nongeneric roots retain their original source identities. The independent
+hostile tests include exact/first-extra key bytes, type depth, generic function count, values,
+blocks, static call depth and loop nesting, with pristine replay after rejection.
+
+`validate_source_graph` first rejects foreign immutable syntax authority, then independently
+resolves original declarations and exported import aliases. It checks original ranges and
+arities, the call graph including unused templates, exact closed parameter/result substitution,
+claimed call targets and explicit caller type arguments at their exact source expressions, and
+source-ordered nominal fields/variants against sealed layouts. Complete layout metadata,
+including unused original declarations, is read through immutable successor views and checked
+against exact syntax. This uses the approved IR-to-syntax dependency and retains pinned tools.
+
+These stages do not yet establish complete source body/demand coverage, opaque-template body
+constraints, entry-module scalar ABI selection, places, ownership transitions, arm-loan ends,
+active-only reverse cleanup, runtime ABI authority or the successor wire protocol. Typed graph
+acceptance does not prove source semantics, and source signature/layout acceptance does not
+prove execution. Option/Result errors remain ordinary enum values in this vocabulary; no error
+variant is converted to a trap. The remaining obligations and all JS/Wasm/native execution
+acceptance stay open under #416. Existing executable profiles are unchanged.
+
+
+The additive `generic_v1::copy_v1` lane seals immutable Copy programs only after the
+[separate wire gate](../../spec/ir/GENERIC_COPY_WIRE_V1.md), complete original symbolic body and
+closed operation replay, demand equality, exact entry closure, retained generic runtime issuer,
+layout-derived empty owned/loan/drop effects and unchanged scalar ABI verification. Its opaque
+program has an internal JavaScript consumer. It rejects owned values, loans, mutable control flow
+and nominal original declarations. These remaining obligations still prevent full #416 acceptance;
+the two earlier validation entrypoints retain their original partial-contract behavior.
+
+The separate private `generic_v1::owned_v2` lane authenticates original source,
+closed typed CFGs and independently replayed owner/loan/cleanup plans. Its structured
+source builder joins continuing mutable original concrete bool/i32, Option<i32> and
+Result<i32,bool> replacements through
+existing block parameters and edge operands. Every continuing arm still agrees on
+the exact incoming owner and loan state; opaque and owned replacement joins remain
+excluded. Sparse admitted Copy changes, complete copied type keys, parameters and edge operands
+are charged before allocation against the unchanged source-state and parameter
+ceilings. The [fixed scalar branch proof](../../tests/m7-generic-owned-scalar-phi/README.md)
+covers source replay separately from a hand-authored typed graph and fault cleanup.
+The [finite Copy enum proof](../../tests/m7-generic-owned-copy-enum-phi/README.md) adds
+position-sensitive parallel transports, complete-key resource boundaries and independent
+source/IR/target attacks; other aggregates and Copy-specialized opaque originals stay excluded.
+No public profile or new wire/opcode/runtime authority is selected by this lane.

@@ -1,0 +1,1872 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zryna.com/schemas/zryna-syntax-v5.schema.json",
+  "title": "Zryna untrusted bounded-generics syntax protocol v5",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "files",
+    "diagnostics"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 5
+    },
+    "files": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "$ref": "#/$defs/sourceUnit"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    }
+  },
+  "$defs": {
+    "u32": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "span": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "file": {
+          "$ref": "#/$defs/u32"
+        },
+        "start": {
+          "$ref": "#/$defs/u32"
+        },
+        "end": {
+          "$ref": "#/$defs/u32"
+        }
+      }
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "identifierText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "not": {
+        "enum": [
+          "__proto__",
+          "prototype",
+          "constructor"
+        ]
+      }
+    },
+    "identifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "span"
+      ],
+      "properties": {
+        "text": {
+          "$ref": "#/$defs/identifierText"
+        },
+        "span": {
+          "$ref": "#/$defs/span"
+        }
+      }
+    },
+    "nullableSpan": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/span"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullableU32": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/u32"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "typeKind": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "missing"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "name"
+          ],
+          "properties": {
+            "kind": {
+              "const": "named"
+            },
+            "name": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "keyword_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "string"
+            },
+            "keyword_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/singleArgumentTypeKind"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "keyword_span",
+            "less_than_span",
+            "element",
+            "comma_span",
+            "length_span",
+            "length_spelling",
+            "length",
+            "greater_than_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "fixed-array"
+            },
+            "keyword_span": {
+              "$ref": "#/$defs/span"
+            },
+            "less_than_span": {
+              "$ref": "#/$defs/span"
+            },
+            "element": {
+              "$ref": "#/$defs/u32"
+            },
+            "comma_span": {
+              "$ref": "#/$defs/span"
+            },
+            "length_span": {
+              "$ref": "#/$defs/span"
+            },
+            "length_spelling": {
+              "type": "string",
+              "maxLength": 10,
+              "pattern": "^(?:0|[1-9][0-9]{0,9})$"
+            },
+            "length": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1048576
+            },
+            "greater_than_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "name",
+            "type_arguments"
+          ],
+          "properties": {
+            "kind": {
+              "const": "application"
+            },
+            "name": {
+              "$ref": "#/$defs/identifier"
+            },
+            "type_arguments": {
+              "$ref": "#/$defs/typeArgumentList"
+            }
+          }
+        }
+      ]
+    },
+    "singleArgumentTypeKind": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "keyword_span",
+        "less_than_span",
+        "argument",
+        "greater_than_span"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "vec",
+            "shared",
+            "weak",
+            "borrow",
+            "borrow-mut"
+          ]
+        },
+        "keyword_span": {
+          "$ref": "#/$defs/span"
+        },
+        "less_than_span": {
+          "$ref": "#/$defs/span"
+        },
+        "argument": {
+          "$ref": "#/$defs/u32"
+        },
+        "greater_than_span": {
+          "$ref": "#/$defs/span"
+        }
+      }
+    },
+    "typeSyntax": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "kind"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "kind": {
+          "$ref": "#/$defs/typeKind"
+        }
+      }
+    },
+    "dataField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "name",
+        "colon_span",
+        "type_syntax",
+        "semicolon_span"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "colon_span": {
+          "$ref": "#/$defs/span"
+        },
+        "type_syntax": {
+          "$ref": "#/$defs/u32"
+        },
+        "semicolon_span": {
+          "$ref": "#/$defs/span"
+        }
+      }
+    },
+    "enumVariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "name",
+        "colon_span",
+        "payload_type",
+        "none_span",
+        "semicolon_span"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "colon_span": {
+          "$ref": "#/$defs/span"
+        },
+        "payload_type": {
+          "$ref": "#/$defs/nullableU32"
+        },
+        "none_span": {
+          "$ref": "#/$defs/nullableSpan"
+        },
+        "semicolon_span": {
+          "$ref": "#/$defs/span"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "payload_type": {
+              "$ref": "#/$defs/u32"
+            },
+            "none_span": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "payload_type": {
+              "type": "null"
+            },
+            "none_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        }
+      ]
+    },
+    "dataDeclarationKind": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "interface_span",
+            "name",
+            "extends_span",
+            "marker_span",
+            "open_brace_span",
+            "fields",
+            "close_brace_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "struct"
+            },
+            "interface_span": {
+              "$ref": "#/$defs/span"
+            },
+            "name": {
+              "$ref": "#/$defs/identifier"
+            },
+            "extends_span": {
+              "$ref": "#/$defs/span"
+            },
+            "marker_span": {
+              "$ref": "#/$defs/span"
+            },
+            "open_brace_span": {
+              "$ref": "#/$defs/span"
+            },
+            "fields": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 1024,
+              "items": {
+                "$ref": "#/$defs/dataField"
+              }
+            },
+            "close_brace_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "interface_span",
+            "name",
+            "extends_span",
+            "marker_span",
+            "open_brace_span",
+            "variants",
+            "close_brace_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "enum"
+            },
+            "interface_span": {
+              "$ref": "#/$defs/span"
+            },
+            "name": {
+              "$ref": "#/$defs/identifier"
+            },
+            "extends_span": {
+              "$ref": "#/$defs/span"
+            },
+            "marker_span": {
+              "$ref": "#/$defs/span"
+            },
+            "open_brace_span": {
+              "$ref": "#/$defs/span"
+            },
+            "variants": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 1024,
+              "items": {
+                "$ref": "#/$defs/enumVariant"
+              }
+            },
+            "close_brace_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        }
+      ]
+    },
+    "dataDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "export_span",
+        "kind",
+        "type_parameters"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "export_span": {
+          "$ref": "#/$defs/nullableSpan"
+        },
+        "kind": {
+          "$ref": "#/$defs/dataDeclarationKind"
+        },
+        "type_parameters": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/typeParameterList"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "importBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "imported",
+        "local",
+        "as_span"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "imported": {
+          "$ref": "#/$defs/identifier"
+        },
+        "local": {
+          "$ref": "#/$defs/identifier"
+        },
+        "as_span": {
+          "$ref": "#/$defs/nullableSpan"
+        }
+      }
+    },
+    "specifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "token_span",
+        "value_span"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?:\\./|\\.\\./)(?![\\s\\S]*//)(?![\\s\\S]*[\\\\?#])(?![\\s\\S]*://)[\\u0001-\\u007F]*\\.zry$"
+        },
+        "token_span": {
+          "$ref": "#/$defs/span"
+        },
+        "value_span": {
+          "$ref": "#/$defs/span"
+        }
+      }
+    },
+    "import": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "import_span",
+        "bindings",
+        "from_span",
+        "specifier",
+        "semicolon_span"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "import_span": {
+          "$ref": "#/$defs/span"
+        },
+        "bindings": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/importBinding"
+          }
+        },
+        "from_span": {
+          "$ref": "#/$defs/span"
+        },
+        "specifier": {
+          "$ref": "#/$defs/specifier"
+        },
+        "semicolon_span": {
+          "$ref": "#/$defs/span"
+        }
+      }
+    },
+    "fieldInitializerKind": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "name",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "shorthand"
+            },
+            "name": {
+              "$ref": "#/$defs/identifier"
+            },
+            "value": {
+              "$ref": "#/$defs/u32"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "name",
+            "colon_span",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "explicit"
+            },
+            "name": {
+              "$ref": "#/$defs/identifier"
+            },
+            "colon_span": {
+              "$ref": "#/$defs/span"
+            },
+            "value": {
+              "$ref": "#/$defs/u32"
+            }
+          }
+        }
+      ]
+    },
+    "fieldInitializer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "kind"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "kind": {
+          "$ref": "#/$defs/fieldInitializerKind"
+        }
+      }
+    },
+    "matchArm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "type_name",
+        "dot_span",
+        "variant",
+        "binding",
+        "arrow_span",
+        "value"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "type_name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "dot_span": {
+          "$ref": "#/$defs/span"
+        },
+        "variant": {
+          "$ref": "#/$defs/identifier"
+        },
+        "binding": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "arrow_span": {
+          "$ref": "#/$defs/span"
+        },
+        "value": {
+          "$ref": "#/$defs/u32"
+        }
+      }
+    },
+    "binaryKind": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "operator_span",
+        "lhs",
+        "rhs"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "addition",
+            "subtraction",
+            "multiplication",
+            "equal",
+            "not-equal",
+            "less-than",
+            "less-equal",
+            "greater-than",
+            "greater-equal"
+          ]
+        },
+        "operator_span": {
+          "$ref": "#/$defs/span"
+        },
+        "lhs": {
+          "$ref": "#/$defs/u32"
+        },
+        "rhs": {
+          "$ref": "#/$defs/u32"
+        }
+      }
+    },
+    "unaryReservedExpression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "keyword_span",
+        "open_paren_span",
+        "value",
+        "close_paren_span"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "clone",
+            "shared",
+            "downgrade",
+            "borrow",
+            "borrow-mut"
+          ]
+        },
+        "keyword_span": {
+          "$ref": "#/$defs/span"
+        },
+        "open_paren_span": {
+          "$ref": "#/$defs/span"
+        },
+        "value": {
+          "$ref": "#/$defs/u32"
+        },
+        "close_paren_span": {
+          "$ref": "#/$defs/span"
+        }
+      }
+    },
+    "expressionKind": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "name"
+          ],
+          "properties": {
+            "kind": {
+              "const": "reference"
+            },
+            "name": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "bool-literal"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "spelling"
+          ],
+          "properties": {
+            "kind": {
+              "const": "i32-literal"
+            },
+            "spelling": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^(?:0|-?[1-9][0-9]*)$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "spelling"
+          ],
+          "properties": {
+            "kind": {
+              "const": "string-literal"
+            },
+            "spelling": {
+              "type": "string",
+              "maxLength": 8388608,
+              "oneOf": [
+                {
+                  "pattern": "^\"[^\"\\\\\\r\\n]*\"$"
+                },
+                {
+                  "pattern": "^'[^'\\\\\\r\\n]*'$"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "operator_span",
+            "operand"
+          ],
+          "properties": {
+            "kind": {
+              "const": "negation"
+            },
+            "operator_span": {
+              "$ref": "#/$defs/span"
+            },
+            "operand": {
+              "$ref": "#/$defs/u32"
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/binaryKind"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "callee",
+            "open_paren_span",
+            "arguments",
+            "close_paren_span",
+            "type_arguments"
+          ],
+          "properties": {
+            "kind": {
+              "const": "call"
+            },
+            "callee": {
+              "$ref": "#/$defs/identifier"
+            },
+            "open_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "arguments": {
+              "type": "array",
+              "maxItems": 256,
+              "items": {
+                "$ref": "#/$defs/u32"
+              }
+            },
+            "close_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "type_arguments": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/typeArgumentList"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "type_name",
+            "open_paren_span",
+            "open_brace_span",
+            "fields",
+            "close_brace_span",
+            "close_paren_span",
+            "type_arguments"
+          ],
+          "properties": {
+            "kind": {
+              "const": "struct-construction"
+            },
+            "type_name": {
+              "$ref": "#/$defs/identifier"
+            },
+            "open_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "open_brace_span": {
+              "$ref": "#/$defs/span"
+            },
+            "fields": {
+              "type": "array",
+              "maxItems": 1024,
+              "items": {
+                "$ref": "#/$defs/fieldInitializer"
+              }
+            },
+            "close_brace_span": {
+              "$ref": "#/$defs/span"
+            },
+            "close_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "type_arguments": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/typeArgumentList"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "type_name",
+            "dot_span",
+            "variant",
+            "open_paren_span",
+            "payload",
+            "close_paren_span",
+            "type_arguments"
+          ],
+          "properties": {
+            "kind": {
+              "const": "enum-construction"
+            },
+            "type_name": {
+              "$ref": "#/$defs/identifier"
+            },
+            "dot_span": {
+              "$ref": "#/$defs/span"
+            },
+            "variant": {
+              "$ref": "#/$defs/identifier"
+            },
+            "open_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "payload": {
+              "$ref": "#/$defs/nullableU32"
+            },
+            "close_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "type_arguments": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/typeArgumentList"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "type_syntax",
+            "open_paren_span",
+            "open_bracket_span",
+            "elements",
+            "close_bracket_span",
+            "close_paren_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "fixed-array-construction"
+            },
+            "type_syntax": {
+              "$ref": "#/$defs/u32"
+            },
+            "open_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "open_bracket_span": {
+              "$ref": "#/$defs/span"
+            },
+            "elements": {
+              "type": "array",
+              "maxItems": 4096,
+              "items": {
+                "$ref": "#/$defs/u32"
+              }
+            },
+            "close_bracket_span": {
+              "$ref": "#/$defs/span"
+            },
+            "close_paren_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "type_syntax",
+            "open_paren_span",
+            "open_bracket_span",
+            "elements",
+            "close_bracket_span",
+            "close_paren_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "vec-construction"
+            },
+            "type_syntax": {
+              "$ref": "#/$defs/u32"
+            },
+            "open_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "open_bracket_span": {
+              "$ref": "#/$defs/span"
+            },
+            "elements": {
+              "type": "array",
+              "maxItems": 4096,
+              "items": {
+                "$ref": "#/$defs/u32"
+              }
+            },
+            "close_bracket_span": {
+              "$ref": "#/$defs/span"
+            },
+            "close_paren_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "base",
+            "dot_span",
+            "field"
+          ],
+          "properties": {
+            "kind": {
+              "const": "field-access"
+            },
+            "base": {
+              "$ref": "#/$defs/u32"
+            },
+            "dot_span": {
+              "$ref": "#/$defs/span"
+            },
+            "field": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "base",
+            "open_bracket_span",
+            "index",
+            "close_bracket_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "index"
+            },
+            "base": {
+              "$ref": "#/$defs/u32"
+            },
+            "open_bracket_span": {
+              "$ref": "#/$defs/span"
+            },
+            "index": {
+              "$ref": "#/$defs/u32"
+            },
+            "close_bracket_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/unaryReservedExpression"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "keyword_span",
+            "open_paren_span",
+            "vector",
+            "comma_span",
+            "value",
+            "close_paren_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "vec-push"
+            },
+            "keyword_span": {
+              "$ref": "#/$defs/span"
+            },
+            "open_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "vector": {
+              "$ref": "#/$defs/u32"
+            },
+            "comma_span": {
+              "$ref": "#/$defs/span"
+            },
+            "value": {
+              "$ref": "#/$defs/u32"
+            },
+            "close_paren_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "keyword_span",
+            "open_paren_span",
+            "scrutinee",
+            "close_paren_span",
+            "open_brace_span",
+            "arms",
+            "close_brace_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "match"
+            },
+            "keyword_span": {
+              "$ref": "#/$defs/span"
+            },
+            "open_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "scrutinee": {
+              "$ref": "#/$defs/u32"
+            },
+            "close_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "open_brace_span": {
+              "$ref": "#/$defs/span"
+            },
+            "arms": {
+              "type": "array",
+              "maxItems": 1024,
+              "items": {
+                "$ref": "#/$defs/matchArm"
+              }
+            },
+            "close_brace_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        }
+      ]
+    },
+    "expression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "kind"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "kind": {
+          "$ref": "#/$defs/expressionKind"
+        }
+      }
+    },
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "open_brace_span",
+        "statements",
+        "close_brace_span"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "open_brace_span": {
+          "$ref": "#/$defs/span"
+        },
+        "statements": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/u32"
+          }
+        },
+        "close_brace_span": {
+          "$ref": "#/$defs/span"
+        }
+      }
+    },
+    "elseClause": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "keyword_span",
+        "block"
+      ],
+      "properties": {
+        "keyword_span": {
+          "$ref": "#/$defs/span"
+        },
+        "block": {
+          "$ref": "#/$defs/u32"
+        }
+      }
+    },
+    "statementKind": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "keyword_span",
+            "mutable",
+            "name",
+            "type_syntax",
+            "equals_span",
+            "initializer",
+            "semicolon_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "local-declaration"
+            },
+            "keyword_span": {
+              "$ref": "#/$defs/span"
+            },
+            "mutable": {
+              "type": "boolean"
+            },
+            "name": {
+              "$ref": "#/$defs/identifier"
+            },
+            "type_syntax": {
+              "$ref": "#/$defs/u32"
+            },
+            "equals_span": {
+              "$ref": "#/$defs/span"
+            },
+            "initializer": {
+              "$ref": "#/$defs/u32"
+            },
+            "semicolon_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "target",
+            "equals_span",
+            "value",
+            "semicolon_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "assignment"
+            },
+            "target": {
+              "$ref": "#/$defs/u32"
+            },
+            "equals_span": {
+              "$ref": "#/$defs/span"
+            },
+            "value": {
+              "$ref": "#/$defs/u32"
+            },
+            "semicolon_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "keyword_span",
+            "value",
+            "semicolon_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "return"
+            },
+            "keyword_span": {
+              "$ref": "#/$defs/span"
+            },
+            "value": {
+              "$ref": "#/$defs/u32"
+            },
+            "semicolon_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "block"
+          ],
+          "properties": {
+            "kind": {
+              "const": "block"
+            },
+            "block": {
+              "$ref": "#/$defs/u32"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "keyword_span",
+            "open_paren_span",
+            "condition",
+            "close_paren_span",
+            "then_block",
+            "else_clause"
+          ],
+          "properties": {
+            "kind": {
+              "const": "if"
+            },
+            "keyword_span": {
+              "$ref": "#/$defs/span"
+            },
+            "open_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "condition": {
+              "$ref": "#/$defs/u32"
+            },
+            "close_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "then_block": {
+              "$ref": "#/$defs/u32"
+            },
+            "else_clause": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/elseClause"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "keyword_span",
+            "open_paren_span",
+            "condition",
+            "close_paren_span",
+            "body_block"
+          ],
+          "properties": {
+            "kind": {
+              "const": "while"
+            },
+            "keyword_span": {
+              "$ref": "#/$defs/span"
+            },
+            "open_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "condition": {
+              "$ref": "#/$defs/u32"
+            },
+            "close_paren_span": {
+              "$ref": "#/$defs/span"
+            },
+            "body_block": {
+              "$ref": "#/$defs/u32"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "expression",
+            "semicolon_span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "expression-statement"
+            },
+            "expression": {
+              "$ref": "#/$defs/u32"
+            },
+            "semicolon_span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "keyword_span",
+            "weak",
+            "as_span",
+            "binding",
+            "success_block",
+            "else_span",
+            "failure_block"
+          ],
+          "properties": {
+            "kind": {
+              "const": "weak-upgrade"
+            },
+            "keyword_span": {
+              "$ref": "#/$defs/span"
+            },
+            "weak": {
+              "$ref": "#/$defs/u32"
+            },
+            "as_span": {
+              "$ref": "#/$defs/span"
+            },
+            "binding": {
+              "$ref": "#/$defs/identifier"
+            },
+            "success_block": {
+              "$ref": "#/$defs/u32"
+            },
+            "else_span": {
+              "$ref": "#/$defs/span"
+            },
+            "failure_block": {
+              "$ref": "#/$defs/u32"
+            }
+          }
+        }
+      ]
+    },
+    "statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "kind"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "kind": {
+          "$ref": "#/$defs/statementKind"
+        }
+      }
+    },
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "root_block",
+        "blocks",
+        "statements",
+        "expressions"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "root_block": {
+          "$ref": "#/$defs/u32"
+        },
+        "blocks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/block"
+          }
+        },
+        "statements": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/statement"
+          }
+        },
+        "expressions": {
+          "type": "array",
+          "maxItems": 16384,
+          "items": {
+            "$ref": "#/$defs/expression"
+          }
+        }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "name",
+        "type_syntax"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "type_syntax": {
+          "$ref": "#/$defs/u32"
+        }
+      }
+    },
+    "function": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "export_span",
+        "function_span",
+        "name",
+        "parameters",
+        "result_type",
+        "body",
+        "type_parameters"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "export_span": {
+          "$ref": "#/$defs/nullableSpan"
+        },
+        "function_span": {
+          "$ref": "#/$defs/span"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "parameters": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/parameter"
+          }
+        },
+        "result_type": {
+          "$ref": "#/$defs/u32"
+        },
+        "body": {
+          "$ref": "#/$defs/body"
+        },
+        "type_parameters": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/typeParameterList"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "portablePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "allOf": [
+        {
+          "pattern": "^(?!/)(?!(?:[^/]*/){32})(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[. ](?:/|$))(?!.*[\\\\<>:\"|?*])[\\x20-\\x7E]+$"
+        },
+        {
+          "pattern": "^(?![^/]{256})(?!.*\\/[^/]{256}).*$"
+        },
+        {
+          "pattern": "^(?!.*(?:^|/)(?:[cC][oO][nN]|[pP][rR][nN]|[aA][uU][xX]|[nN][uU][lL]|[cC][oO][mM][1-9]|[lL][pP][tT][1-9])(?:\\.[^/]*)?(?:/|$)).*$"
+        }
+      ]
+    },
+    "sourceUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path",
+        "imports",
+        "type_syntax",
+        "data_declarations",
+        "functions"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/u32"
+        },
+        "path": {
+          "$ref": "#/$defs/portablePath"
+        },
+        "imports": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/import"
+          }
+        },
+        "type_syntax": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {
+            "$ref": "#/$defs/typeSyntax"
+          }
+        },
+        "data_declarations": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/dataDeclaration"
+          }
+        },
+        "functions": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/function"
+          }
+        }
+      }
+    },
+    "diagnosticLocation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "global"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "span"
+          ],
+          "properties": {
+            "kind": {
+              "const": "source"
+            },
+            "span": {
+              "$ref": "#/$defs/span"
+            }
+          }
+        }
+      ]
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "severity",
+        "location",
+        "message",
+        "guidance"
+      ],
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/text"
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warning"
+          ]
+        },
+        "location": {
+          "$ref": "#/$defs/diagnosticLocation"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "guidance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      }
+    },
+    "typeParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "name",
+        "extends_span",
+        "bound"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "extends_span": {
+          "$ref": "#/$defs/span"
+        },
+        "bound": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "typeParameterList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "less_than_span",
+        "parameters",
+        "comma_spans",
+        "greater_than_span"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "less_than_span": {
+          "$ref": "#/$defs/span"
+        },
+        "parameters": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/typeParameter"
+          }
+        },
+        "comma_spans": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/span"
+          }
+        },
+        "greater_than_span": {
+          "$ref": "#/$defs/span"
+        }
+      }
+    },
+    "typeArgumentList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "less_than_span",
+        "arguments",
+        "comma_spans",
+        "greater_than_span"
+      ],
+      "properties": {
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "less_than_span": {
+          "$ref": "#/$defs/span"
+        },
+        "arguments": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/u32"
+          }
+        },
+        "comma_spans": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/span"
+          }
+        },
+        "greater_than_span": {
+          "$ref": "#/$defs/span"
+        }
+      }
+    }
+  }
+}

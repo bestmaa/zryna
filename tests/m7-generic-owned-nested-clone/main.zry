@@ -1,0 +1,7 @@
+export function optionNone(flag:bool):i32 { const value:Option<Option<String>> =Option.none<Option<String>>(); return discardOption<i32>(option<i32>(value)); }
+export function optionInnerNone(flag:bool):i32 { const value:Option<Option<String>> =Option.some<Option<String>>(Option.none<String>()); return discardOption<i32>(option<i32>(value)); }
+export function optionInnerSome(flag:bool):i32 { const outer:String="outer"; const value:Option<Option<String>> =makeOption<i32>(flag); return discardOption<i32>(option<i32>(value)); }
+export function resultOkNone(flag:bool):i32 { const value:Result<Option<String>,Option<String>> =Result.ok<Option<String>,Option<String>>(Option.none<String>()); return discardResult<i32>(result<i32>(value)); }
+export function resultOkSome(flag:bool):i32 { const outer:String="outer"; const value:Result<Option<String>,Option<String>> =makeOk<i32>(flag); return discardResult<i32>(result<i32>(value)); }
+export function resultErrNone(flag:bool):i32 { const value:Result<Option<String>,Option<String>> =Result.err<Option<String>,Option<String>>(Option.none<String>()); return discardResult<i32>(result<i32>(value)); }
+export function resultErrSome(flag:bool):i32 { const outer:String="outer"; const value:Result<Option<String>,Option<String>> =makeErr<i32>(flag); return discardResult<i32>(result<i32>(value)); }

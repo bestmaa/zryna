@@ -1,0 +1,6 @@
+export function leftNone(flag:bool):i32 { const value:Result<Option<String>,String> =Result.ok<Option<String>,String>(Option.none<String>()); return discardLeft<i32>(left<i32>(value)); }
+export function leftSome(flag:bool):i32 { const outer:String="outer"; const value:Result<Option<String>,String> =makeLeftSome<i32>(flag); return discardLeft<i32>(left<i32>(value)); }
+export function leftString(flag:bool):i32 { const outer:String="outer"; const value:Result<Option<String>,String> =makeLeftString<i32>(flag); return discardLeft<i32>(left<i32>(value)); }
+export function rightString(flag:bool):i32 { const outer:String="outer"; const value:Result<String,Option<String>> =makeRightString<i32>(flag); return discardRight<i32>(right<i32>(value)); }
+export function rightNone(flag:bool):i32 { const value:Result<String,Option<String>> =Result.err<String,Option<String>>(Option.none<String>()); return discardRight<i32>(right<i32>(value)); }
+export function rightSome(flag:bool):i32 { const outer:String="outer"; const value:Result<String,Option<String>> =makeRightSome<i32>(flag); return discardRight<i32>(right<i32>(value)); }

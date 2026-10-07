@@ -1,0 +1,47 @@
+export function discard<T extends ZrynaValue>(value:T):i32 { return 0; }
+export function singleSelect<T extends ZrynaValue>(flag:bool,value:T):Result<T,i32> {
+  let code:i32=13;
+  if
+  (flag) { const local:String="一"; code=11; }
+  return Result.err<T,i32>(code);
+}
+export function doubleSelect<T extends ZrynaValue>(flag:bool,value:T):Result<T,i32> {
+  let code:i32=3;
+  if(flag) { const local:String="左"; code=7; }
+  else { const local:String=""; code=9; }
+  return Result.err<T,i32>(code);
+}
+export function earlySelect<T extends ZrynaValue>(flag:bool,value:T):Result<T,i32> {
+  let code:i32=15;
+  if(flag) { return Result.err<T,i32>(17); }
+  else { const local:String="右"; code=19; }
+  return Result.err<T,i32>(code);
+}
+export function nestedSelect<T extends ZrynaValue>(flag:bool,value:T):Result<T,i32> {
+  let code:i32=1;
+  let route:bool=false;
+  if(flag) { const local:String="左"; code=23; route=true; }
+  else { const local:String=""; code=29; }
+  if(route) { code=code+1; }
+  return Result.err<T,i32>(code);
+}
+export function loopSelect<T extends ZrynaValue>(flag:bool,value:T):Result<T,i32> {
+  let ready:bool=true;
+  let phase:bool=true;
+  let code:i32=0;
+  while(ready) {
+    if(flag) { const local:String="左"; code=code+1; ready=false; }
+    else {
+      if(phase) { const local:String="初"; code=code+2; phase=false; }
+      else { const local:String="終"; code=code+3; ready=false; }
+    }
+  }
+  return Result.err<T,i32>(code);
+}
+export function optionSelect<T extends ZrynaValue>(flag:bool,value:T):Option<i32> {
+  let code:i32=3;
+  if(flag) { const local:String="選"; code=31; }
+  else { const local:String=""; code=37; }
+  if(flag) { return Option.some<i32>(code); }
+  else { return Option.none<i32>(); }
+}

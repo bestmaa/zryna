@@ -1,0 +1,180 @@
+{
+  "schema_version": 5,
+  "files": [
+    {
+      "id": 0,
+      "path": "keyword-strict-target.zry",
+      "imports": [],
+      "type_syntax": [
+        {
+          "span": {
+            "file": 0,
+            "start": 25,
+            "end": 28
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "i32",
+              "span": {
+                "file": 0,
+                "start": 25,
+                "end": 28
+              }
+            }
+          }
+        }
+      ],
+      "data_declarations": [],
+      "functions": [
+        {
+          "span": {
+            "file": 0,
+            "start": 0,
+            "end": 56
+          },
+          "export_span": {
+            "file": 0,
+            "start": 0,
+            "end": 6
+          },
+          "function_span": {
+            "file": 0,
+            "start": 7,
+            "end": 15
+          },
+          "name": {
+            "text": "score",
+            "span": {
+              "file": 0,
+              "start": 16,
+              "end": 21
+            }
+          },
+          "type_parameters": null,
+          "parameters": [],
+          "result_type": 0,
+          "body": {
+            "span": {
+              "file": 0,
+              "start": 29,
+              "end": 56
+            },
+            "root_block": 0,
+            "blocks": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 29,
+                  "end": 56
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 29,
+                  "end": 30
+                },
+                "statements": [
+                  0,
+                  1
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 55,
+                  "end": 56
+                }
+              }
+            ],
+            "statements": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 33,
+                  "end": 42
+                },
+                "kind": {
+                  "kind": "assignment",
+                  "target": 0,
+                  "equals_span": {
+                    "file": 0,
+                    "start": 38,
+                    "end": 39
+                  },
+                  "value": 1,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 41,
+                    "end": 42
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 45,
+                  "end": 54
+                },
+                "kind": {
+                  "kind": "return",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 45,
+                    "end": 51
+                  },
+                  "value": 2,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 53,
+                    "end": 54
+                  }
+                }
+              }
+            ],
+            "expressions": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 33,
+                  "end": 37
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "eval",
+                    "span": {
+                      "file": 0,
+                      "start": 33,
+                      "end": 37
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 40,
+                  "end": 41
+                },
+                "kind": {
+                  "kind": "i32-literal",
+                  "spelling": "7"
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 52,
+                  "end": 53
+                },
+                "kind": {
+                  "kind": "i32-literal",
+                  "spelling": "0"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

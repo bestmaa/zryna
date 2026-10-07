@@ -1,0 +1,44 @@
+[
+  {
+    "id": "self-type-edge",
+    "pointer": "/files/0/type_syntax/2/kind/type_arguments/arguments/0",
+    "value": 2,
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "foreign-path",
+    "pointer": "/files/0/path",
+    "value": "foreign.zry",
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "split-utf8-prefix",
+    "pointer": "/files/1/data_declarations/0/span/start",
+    "value": 4,
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "source-inexact-bound",
+    "pointer": "/files/1/data_declarations/0/type_parameters/parameters/0/bound/text",
+    "value": "OtherValue",
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "foreign-bound-span",
+    "pointer": "/files/1/data_declarations/0/type_parameters/parameters/0/bound/span/file",
+    "value": 0,
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "import-token-start-overflow",
+    "pointer": "/files/0/imports/0/specifier/token_span/start",
+    "value": 4294967295,
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "import-token-end-overflow",
+    "pointer": "/files/0/imports/0/specifier/token_span/end",
+    "value": 4294967295,
+    "code": "ZRYNA-Y5001"
+  }
+]

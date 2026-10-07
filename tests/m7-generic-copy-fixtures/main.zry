@@ -1,0 +1,25 @@
+// π: source authority
+function identity<T extends ZrynaValue>(value: T): T { return value; }
+function forward<U extends ZrynaValue>(value: U): U { return identity<U>(value); }
+export function score(value: i32): i32 {
+  const found: Option<i32> = Option.some<i32>(forward<i32>(value));
+  return match(found, { "Option.none": () => 0, "Option.some": (item) => item });
+}
+export function flag(value: bool): bool {
+  const okay: Result<bool, i32> = Result.ok<bool, i32>(identity<bool>(value));
+  return match(okay, { "Result.ok": (item) => item, "Result.err": (error) => false });
+}
+export function fallback(): i32 {
+  const absent: Option<i32> = Option.none<i32>();
+  return match(absent, { "Option.none": () => 11, "Option.some": (item) => item });
+}
+export function error(): i32 {
+  const failed: Result<bool, i32> = Result.err<bool, i32>(23);
+  return match(failed, { "Result.ok": (item) => 0, "Result.err": (error) => error });
+}
+function wrap<T extends ZrynaValue>(value: T): Option<T> { return Option.some<T>(value); }
+export function unwrap(value: i32): i32 {
+  const found: Option<i32> = identity<Option<i32>>(wrap<i32>(value));
+  return match(found, { "Option.none": () => 0, "Option.some": (value) => value });
+}
+export function add(value: i32): i32 { return identity<i32>(value + 1); }

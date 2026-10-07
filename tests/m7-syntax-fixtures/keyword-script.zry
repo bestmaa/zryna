@@ -1,0 +1,8 @@
+function from(value: type, eval: i32, arguments: i32, let: i32): i32 {
+  const as: i32 = eval;
+  return arguments;
+}
+
+function as(): i32 {
+  return 1;
+}

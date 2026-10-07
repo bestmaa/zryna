@@ -1,0 +1,23 @@
+export function terminal(flag:bool):i32 {
+  return discard<String>(select<String>(flag,"α","β"));
+}
+export function flow(flag:bool):i32 {
+  const outer:String="outer";
+  const view:Borrow<String> =borrow(outer);
+  if(flag) {
+    const local:String="yes";
+    if(flag) {
+      const nested:Option<Result<String,String>> =Option.some<Result<String,String>>(Result.ok<String,String>("入"));
+    }
+  } else { const local:String="no"; }
+  if(flag) { const outer:String="repeat"; }
+  if(flag) { return 11; }
+  const tail:String="tail";
+  return 13;
+}
+export function consumed(flag:bool):i32 {
+  const item:String="item";
+  if(flag) { discard<String>(item); } else { discard<String>(item); }
+  const after:String="after";
+  return 7;
+}

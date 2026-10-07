@@ -47,3 +47,13 @@ backend. The public driver activates these sealed boundaries only under explicit
 `--profile control-flow-v1`, publishes manifest v2 atomically, and is covered by the independent
 [fixed-oracle three-target gate](../../docs/M2_CONFORMANCE.md). Default M1 behavior is unchanged;
 authenticated public website and live-deployment closure remain Issue #57.
+
+
+`generic_copy_v1::emit` accepts only the independently sealed successor immutable Copy program.
+The [internal wire/source contract](../../spec/ir/GENERIC_COPY_WIRE_V1.md) documents admission,
+private enum records, exact active payload transfers, scalar entry exports and remaining #416
+obligations. Its complete-source fixture executes generic forwarding and both Option/Result
+variants under pinned Node, including canonical i32/bool and exact-arity boundary rejection.
+Its formatter rejects the first byte beyond 32 MiB with `ZRYNA-J2003` and preserves the bounded
+buffer; a separate formatter test checks the exact byte ceiling without claiming source admission.
+No existing backend entrypoint, driver route, runtime allocation helper or public profile changes.

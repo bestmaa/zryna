@@ -1,0 +1,5 @@
+export
+function score(): i32 {
+  eval = 7;
+  return 0;
+}

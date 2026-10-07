@@ -1,0 +1,4 @@
+export function optionNone(flag:bool):i32 { const value:Option<String> =Option.none<String>(); return discardOption<i32>(option<i32>(value)); }
+export function optionSome(flag:bool):i32 { const outer:String="outer"; const value:Option<String> =makeOption<i32>(flag); return discardOption<i32>(option<i32>(value)); }
+export function resultOk(flag:bool):i32 { const outer:String="outer"; const value:Result<String,String> =makeOk<i32>(flag); return discardResult<i32>(result<i32>(value)); }
+export function resultErr(flag:bool):i32 { const outer:String="outer"; const value:Result<String,String> =makeErr<i32>(flag); return discardResult<i32>(result<i32>(value)); }

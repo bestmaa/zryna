@@ -1,0 +1,11 @@
+import { Box, Choice, identity } from "./values.zry";
+export function score(): i32 {
+  const boxed: Box<i32> = Box<i32>({ value: identity<i32>(7) });
+  const owned: Box<String> = Box<String>({ value: identity<String>("x") });
+  const absent: Option<i32> = Option.none<i32>();
+  const found: Option<i32> = Option.some<i32>(7);
+  const okay: Result<i32, String> = Result.ok<i32, String>(7);
+  const failed: Result<i32, String> = Result.err<i32, String>("e");
+  const choice: Choice<i32, String> = Choice.none<i32, String>();
+  return match(found, { "Option.none": () => 0, "Option.some": (item) => item });
+}

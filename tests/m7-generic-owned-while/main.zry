@@ -1,0 +1,36 @@
+export function looped(flag:bool):i32 {
+  const outer:String="outer";
+  const view:Borrow<String> =borrow(outer);
+  let go:bool=flag;
+  let phase:bool=false;
+  let count:i32=0;
+  while(match(Option.some<bool>(probe<i32>(go)), {"Option.some":(value)=>value,"Option.none":()=>false})) {
+    const local:Option<Result<String,String>> =Option.some<Result<String,String>>(Result.ok<String,String>("入"));
+    const loan:Borrow<Option<Result<String,String>>> =borrow(local);
+    count=count+1;
+    go=flip<i32>(phase);
+    phase=true;
+  }
+  return count;
+}
+export function early(flag:bool):i32 {
+  const outer:String="outer";
+  let go:bool=true;
+  while(probe<i32>(go)) { const local:String="early"; if(flag) { return 11; } go=false; }
+  const tail:String="tail";
+  return 13;
+}
+export function nested(flag:bool):i32 {
+  let go:bool=flag;
+  let count:i32=0;
+  while(go) {
+    let inner:bool=true;
+    while(inner) { const local:String="nested"; count=count+1; inner=false; }
+    { const count:i32=99; }
+    go=false;
+  }
+  let again:bool=flag;
+  while(again) { const local:String="repeat"; count=count+10; again=false; }
+  return count;
+}
+export function generic(flag:bool):i32 { return discard<String>(keep<String>(flag,"token")); }

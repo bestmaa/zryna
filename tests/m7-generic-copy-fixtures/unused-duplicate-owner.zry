@@ -1,0 +1,6 @@
+function identity<T extends ZrynaValue>(value: T): T { return value; }
+function duplicate<T extends ZrynaValue>(value: T): T {
+  identity<T>(value);
+  return value;
+}
+export function run(value: i32): i32 { return value; }

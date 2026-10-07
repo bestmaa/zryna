@@ -1,0 +1,1 @@
+function identity<T extends ZrynaValue>(value:T):T { return value; } export function score(identity:i32):i32 { return identity<i32>(identity); }

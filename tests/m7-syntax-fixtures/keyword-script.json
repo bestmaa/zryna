@@ -1,0 +1,449 @@
+{
+  "schema_version": 5,
+  "files": [
+    {
+      "id": 0,
+      "path": "keyword-script.zry",
+      "imports": [],
+      "type_syntax": [
+        {
+          "span": {
+            "file": 0,
+            "start": 21,
+            "end": 25
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "type",
+              "span": {
+                "file": 0,
+                "start": 21,
+                "end": 25
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 33,
+            "end": 36
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "i32",
+              "span": {
+                "file": 0,
+                "start": 33,
+                "end": 36
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 49,
+            "end": 52
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "i32",
+              "span": {
+                "file": 0,
+                "start": 49,
+                "end": 52
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 59,
+            "end": 62
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "i32",
+              "span": {
+                "file": 0,
+                "start": 59,
+                "end": 62
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 65,
+            "end": 68
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "i32",
+              "span": {
+                "file": 0,
+                "start": 65,
+                "end": 68
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 83,
+            "end": 86
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "i32",
+              "span": {
+                "file": 0,
+                "start": 83,
+                "end": 86
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 133,
+            "end": 136
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "i32",
+              "span": {
+                "file": 0,
+                "start": 133,
+                "end": 136
+              }
+            }
+          }
+        }
+      ],
+      "data_declarations": [],
+      "functions": [
+        {
+          "span": {
+            "file": 0,
+            "start": 0,
+            "end": 116
+          },
+          "export_span": null,
+          "function_span": {
+            "file": 0,
+            "start": 0,
+            "end": 8
+          },
+          "name": {
+            "text": "from",
+            "span": {
+              "file": 0,
+              "start": 9,
+              "end": 13
+            }
+          },
+          "type_parameters": null,
+          "parameters": [
+            {
+              "span": {
+                "file": 0,
+                "start": 14,
+                "end": 25
+              },
+              "name": {
+                "text": "value",
+                "span": {
+                  "file": 0,
+                  "start": 14,
+                  "end": 19
+                }
+              },
+              "type_syntax": 0
+            },
+            {
+              "span": {
+                "file": 0,
+                "start": 27,
+                "end": 36
+              },
+              "name": {
+                "text": "eval",
+                "span": {
+                  "file": 0,
+                  "start": 27,
+                  "end": 31
+                }
+              },
+              "type_syntax": 1
+            },
+            {
+              "span": {
+                "file": 0,
+                "start": 38,
+                "end": 52
+              },
+              "name": {
+                "text": "arguments",
+                "span": {
+                  "file": 0,
+                  "start": 38,
+                  "end": 47
+                }
+              },
+              "type_syntax": 2
+            },
+            {
+              "span": {
+                "file": 0,
+                "start": 54,
+                "end": 62
+              },
+              "name": {
+                "text": "let",
+                "span": {
+                  "file": 0,
+                  "start": 54,
+                  "end": 57
+                }
+              },
+              "type_syntax": 3
+            }
+          ],
+          "result_type": 4,
+          "body": {
+            "span": {
+              "file": 0,
+              "start": 69,
+              "end": 116
+            },
+            "root_block": 0,
+            "blocks": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 69,
+                  "end": 116
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 69,
+                  "end": 70
+                },
+                "statements": [
+                  0,
+                  1
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 115,
+                  "end": 116
+                }
+              }
+            ],
+            "statements": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 73,
+                  "end": 94
+                },
+                "kind": {
+                  "kind": "local-declaration",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 73,
+                    "end": 78
+                  },
+                  "mutable": false,
+                  "name": {
+                    "text": "as",
+                    "span": {
+                      "file": 0,
+                      "start": 79,
+                      "end": 81
+                    }
+                  },
+                  "type_syntax": 5,
+                  "equals_span": {
+                    "file": 0,
+                    "start": 87,
+                    "end": 88
+                  },
+                  "initializer": 0,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 93,
+                    "end": 94
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 97,
+                  "end": 114
+                },
+                "kind": {
+                  "kind": "return",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 97,
+                    "end": 103
+                  },
+                  "value": 1,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 113,
+                    "end": 114
+                  }
+                }
+              }
+            ],
+            "expressions": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 89,
+                  "end": 93
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "eval",
+                    "span": {
+                      "file": 0,
+                      "start": 89,
+                      "end": 93
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 104,
+                  "end": 113
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "arguments",
+                    "span": {
+                      "file": 0,
+                      "start": 104,
+                      "end": 113
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 118,
+            "end": 152
+          },
+          "export_span": null,
+          "function_span": {
+            "file": 0,
+            "start": 118,
+            "end": 126
+          },
+          "name": {
+            "text": "as",
+            "span": {
+              "file": 0,
+              "start": 127,
+              "end": 129
+            }
+          },
+          "type_parameters": null,
+          "parameters": [],
+          "result_type": 6,
+          "body": {
+            "span": {
+              "file": 0,
+              "start": 137,
+              "end": 152
+            },
+            "root_block": 0,
+            "blocks": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 137,
+                  "end": 152
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 137,
+                  "end": 138
+                },
+                "statements": [
+                  0
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 151,
+                  "end": 152
+                }
+              }
+            ],
+            "statements": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 141,
+                  "end": 150
+                },
+                "kind": {
+                  "kind": "return",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 141,
+                    "end": 147
+                  },
+                  "value": 0,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 149,
+                    "end": 150
+                  }
+                }
+              }
+            ],
+            "expressions": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 148,
+                  "end": 149
+                },
+                "kind": {
+                  "kind": "i32-literal",
+                  "spelling": "1"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

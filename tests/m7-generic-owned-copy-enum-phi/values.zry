@@ -1,0 +1,95 @@
+// Private concrete Copy Option/Result branch proof with retained String owners.
+export function truthCode<T extends ZrynaValue>(flag:bool):i32 {
+  if(flag) { return 41; }
+  return 43;
+}
+export function optionSingleSelect<T extends ZrynaValue>(flag:bool,value:T):Option<i32> {
+  const retained:String="保持";
+  let item:Option<i32> =Option.some<i32>(13);
+  if
+  (flag) { const local:String="一"; item=Option.some<i32>(11); }
+  return item;
+}
+export function optionVariantsSelect<T extends ZrynaValue>(flag:bool,value:T):Option<i32> {
+  const retained:String="保持";
+  let item:Option<i32> =Option.some<i32>(17);
+  if(flag) { const local:String="左"; item=Option.none<i32>(); }
+  else { const local:String=""; item=Option.some<i32>(23); }
+  return item;
+}
+export function resultSingleSelect<T extends ZrynaValue>(flag:bool,value:T):Result<i32,bool> {
+  const retained:String="保持";
+  let item:Result<i32,bool> =Result.ok<i32,bool>(29);
+  if(flag) { const local:String="選"; item=Result.err<i32,bool>(true); }
+  return item;
+}
+export function resultVariantsSelect<T extends ZrynaValue>(flag:bool,value:T):Result<i32,bool> {
+  const retained:String="保持";
+  let item:Result<i32,bool> =Result.err<i32,bool>(true);
+  if(flag) { const local:String="左"; item=Result.ok<i32,bool>(31); }
+  else { const local:String="右"; item=Result.err<i32,bool>(false); }
+  return item;
+}
+export function optionEarlySelect<T extends ZrynaValue>(flag:bool,value:T):Option<i32> {
+  const retained:String="保持";
+  let item:Option<i32> =Option.some<i32>(45);
+  if(flag) { return Option.some<i32>(47); }
+  else { const local:String="右"; item=Option.none<i32>(); }
+  return item;
+}
+export function optionNestedSelect<T extends ZrynaValue>(flag:bool,value:T):Option<i32> {
+  const retained:String="保持";
+  let item:Option<i32> =Option.some<i32>(51);
+  if(flag) {
+    const local:String="外";
+    if(false) { item=Option.some<i32>(52); }
+    else { const inner:String="内"; item=Option.some<i32>(53); }
+  } else { const local:String=""; item=Option.none<i32>(); }
+  if(flag) {
+    const again:String="再";
+    item=Option.some<i32>(match(item,{"Option.none":()=>0,"Option.some":(payload)=>payload})+6);
+  }
+  return item;
+}
+export function resultRepeatedSelect<T extends ZrynaValue>(flag:bool,value:T):Result<i32,bool> {
+  const retained:String="保持";
+  let item:Result<i32,bool> =Result.err<i32,bool>(false);
+  if(flag) { const local:String="初"; item=Result.ok<i32,bool>(67); }
+  else { const local:String=""; item=Result.err<i32,bool>(true); }
+  if(flag) {
+    const again:String="再";
+    item=Result.ok<i32,bool>(match(item,{"Result.ok":(payload)=>payload,"Result.err":(tag)=>truthCode<i32>(tag)})+2);
+  }
+  return item;
+}
+export function parallelSelect<T extends ZrynaValue>(flag:bool,value:T):i32 {
+  const retained:String="保持";
+  let left:Option<i32> =Option.some<i32>(71);
+  let right:Option<i32> =Option.some<i32>(73);
+  let first:Result<i32,bool> =Result.ok<i32,bool>(79);
+  let second:Result<i32,bool> =Result.err<i32,bool>(false);
+  if(flag) {
+    const local:String="交";
+    const savedOption:Option<i32> =left;
+    left=right;
+    right=savedOption;
+    const savedResult:Result<i32,bool> =first;
+    first=second;
+    second=savedResult;
+  } else {
+    const local:String="";
+    left=Option.none<i32>();
+    second=Result.err<i32,bool>(true);
+  }
+  const a:i32=match(left,{"Option.none":()=>101,"Option.some":(payload)=>payload});
+  const b:i32=match(right,{"Option.none":()=>103,"Option.some":(payload)=>payload});
+  const c:i32=match(first,{"Result.ok":(payload)=>payload,"Result.err":(tag)=>truthCode<i32>(tag)});
+  const d:i32=match(second,{"Result.ok":(payload)=>payload,"Result.err":(tag)=>truthCode<i32>(tag)});
+  return a+b+b+c+c+c+d+d+d+d;
+}
+export function bothReturnSelect<T extends ZrynaValue>(flag:bool,value:T):Option<i32> {
+  const retained:String="保持";
+  let item:Option<i32> =Option.some<i32>(87);
+  if(flag) { const local:String="左"; item=Option.some<i32>(89); return item; }
+  else { const local:String="右"; item=Option.none<i32>(); return item; }
+}

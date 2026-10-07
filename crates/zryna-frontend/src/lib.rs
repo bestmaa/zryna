@@ -1,16 +1,12 @@
 //! Replaceable frontend-provider contracts.
-
 #![forbid(unsafe_code)]
-
-use std::collections::BTreeSet;
-
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 use thiserror::Error;
 use zryna_diagnostics::{Diagnostic, Severity};
 use zryna_source::{
     FileId, MAX_SOURCE_FILES, NormalizedSourcePath, SourceMap, Span, UntrustedSpan,
 };
-
 pub mod native_lexer;
 pub mod native_parser;
 mod worker;
@@ -24,13 +20,18 @@ pub use worker::{
     WorkerFrontendV4, WorkerLimits, WorkerLimitsV3, WorkerLimitsV4, WorkerSpec, WorkerSpecV3,
     WorkerSpecV4,
 };
+pub use worker::{
+    FrontendCapabilitiesV5, MAX_WORKER_STDOUT_BYTES_V5, ProviderExpectationV5, ProviderInfoV5,
+    VerifiedFrontendProviderV5, WorkerFrontendV5, WorkerLimitsV5, WorkerSpecV5,
+};
 /// Provider-neutral executable syntax contract spoken by protocol-v2 providers.
 pub use zryna_syntax::v2 as syntax_v2;
 /// Provider-neutral M2 syntax contract spoken only by exact protocol-v3 providers.
 pub use zryna_syntax::v3 as syntax_v3;
 /// Provider-neutral M3 ownership syntax spoken only by exact protocol-v4 providers.
 pub use zryna_syntax::v4 as syntax_v4;
-
+/// Source-bound bounded generic syntax; separate from the executable v4 contract.
+pub use zryna_syntax::v5 as syntax_v5;
 /// Current wire contract understood by the compiler.
 pub const FRONTEND_PROTOCOL_VERSION: u32 = 1;
 /// Maximum provider diagnostics accepted in one snapshot.
@@ -51,7 +52,6 @@ pub const MAX_PROVIDER_DIAGNOSTIC_TEXT_BYTES: usize = 4_096;
 pub const MAX_SNAPSHOT_VALIDATION_ERRORS: usize = 256;
 /// Maximum serialized bytes accepted from one provider response.
 pub const MAX_PROVIDER_RESPONSE_BYTES: usize = 16 * 1_024 * 1_024;
-
 /// Capabilities advertised by a frontend provider.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]

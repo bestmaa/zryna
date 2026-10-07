@@ -11,6 +11,8 @@ use zryna_source::{SourceMap, Span};
 pub mod control_flow_v1;
 /// Separately verified data, ownership, and cleanup IR for the planned M3 profile.
 pub mod data_ownership_v1;
+/// Independent bounded closed IR checks; executable source sealing remains separate.
+pub mod generic_v1;
 
 pub use zryna_abi::{LogicalExportName, VerifiedScalarExport};
 
@@ -31,17 +33,8 @@ pub const MAX_IR_EXPORT_NAME_BYTES: usize = zryna_abi::MAX_LOGICAL_EXPORT_NAME_B
 /// Maximum retained verifier diagnostics, including the terminal budget diagnostic.
 pub const MAX_IR_DIAGNOSTICS: usize = 256;
 
-/// Exact scalar types represented by the initial Zryna IR.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum Type {
-    /// No value, reserved until every universal backend implements it.
-    Unit,
-    /// Boolean value, reserved until the scalar ABI enables it for every backend.
-    Bool,
-    /// Signed 32-bit integer.
-    I32,
-}
+mod scalar_type;
+pub use scalar_type::Type;
 
 /// Expression identifier within one function.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]

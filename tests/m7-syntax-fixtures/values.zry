@@ -1,0 +1,5 @@
+// π: exact UTF-8 spans
+export interface Box<T extends ZrynaValue> extends ZrynaStruct { value: T; }
+export interface Choice<T extends ZrynaValue, E extends ZrynaValue> extends ZrynaEnum { ok: T; err: E; none: ZrynaNone; }
+export function identity<T extends ZrynaValue>(value: T): T { return value; }
+export function select<T extends ZrynaValue, E extends ZrynaValue>(value: T, error: E): T { return value; }

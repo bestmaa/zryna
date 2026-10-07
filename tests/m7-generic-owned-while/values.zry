@@ -1,0 +1,8 @@
+export function probe<T extends ZrynaValue>(flag:bool):bool { const mark:String="condition"; return flag; }
+export function flip<T extends ZrynaValue>(flag:bool):bool { if(flag) { return false; } else { return true; } }
+export function keep<T extends ZrynaValue>(flag:bool,value:T):T {
+  let go:bool=flag;
+  while(probe<i32>(go)) { const local:String="generic"; go=false; }
+  return value;
+}
+export function discard<T extends ZrynaValue>(value:T):i32 { return 7; }

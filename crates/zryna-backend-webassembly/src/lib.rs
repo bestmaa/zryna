@@ -26,7 +26,8 @@ mod component_command;
 pub use component_command::{ValidatedCommandComponent, emit_command_self_check};
 mod scalar_component;
 pub use scalar_component::{ScalarExport, ValidatedScalarComponent, emit_scalar_component};
-const MAX_CONTROL_FLOW_WEBASSEMBLY_BYTES: usize = 32 * 1024 * 1024;
+pub mod generic_copy_v1;
+pub mod generic_owned_v2;
 /// Emits deterministic, import-free core WebAssembly from the current `I32V1` profile.
 /// Raw Universal IR cannot enter this boundary:
 ///
@@ -54,7 +55,6 @@ pub fn emit(program: &VerifiedProgram) -> Result<ValidatedWebAssemblyArtifact, D
     if functions.is_empty() {
         return seal(Module::new().finish());
     }
-
     let mut types = TypeSection::new();
     let mut type_indices = BTreeMap::<usize, u32>::new();
     let mut next_type_index = 0_u32;
@@ -119,7 +119,7 @@ pub fn emit(program: &VerifiedProgram) -> Result<ValidatedWebAssemblyArtifact, D
 pub fn emit_control_flow(
     program: &VerifiedControlFlowProgram,
 ) -> Result<ValidatedWebAssemblyArtifact, Diagnostic> {
-    emit_control_flow_with_budget(program, MAX_CONTROL_FLOW_WEBASSEMBLY_BYTES)
+    emit_control_flow_with_budget(program, artifact::MAX_CONTROL_FLOW_WEBASSEMBLY_BYTES)
 }
 
 fn emit_control_flow_with_budget(

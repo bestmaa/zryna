@@ -80,3 +80,24 @@ snapshot containing only the supported siblings.
 Run `pnpm test:v2` to verify the immutable v2 adapter, `pnpm test:v3` for the new boundary, or
 `pnpm test` for both. The v3 request/response limits are 72 MiB/64 MiB and its aggregate source
 limit is 8 MiB; finer syntax limits match the `ControlFlowV1` contract.
+
+## Isolated protocol v5 bootstrap worker
+
+`src/worker-v5.mjs` emits the separately versioned bounded generic success grammar using
+the pinned TypeScript 6.0.3 parser. Its exact syntax-only handshake adds
+`bounded_generics_syntax_v1: true` to the v4 capabilities. The package's default registration
+remains v2. New private modules own types, declarations, statement/expression arenas,
+constructions and request framing without changing the older entrypoints.
+
+The independently authored frozen corpus in `tests/provider-conformance-v5/corpus.json`
+contains complete syntax and previously qualified executable reference sources; the worker
+never supplies expected DTOs. Run `pnpm test:v5` for exact raw equality, fresh-process
+determinism, UTF-8 spans, malformed requests, exclusions and resource boundaries.
+The typed Rust transport independently source-verifies every reply before yielding a
+`VerifiedProjectSyntaxV5`; see [v5 syntax](../../docs/SYNTAX_PROTOCOL_V5.md). Native v5 is
+reserved for a separate later implementation against the same corpus.
+
+Unsupported source rejects the whole request with F2002. Missing type arguments and unknown
+bound identifiers remain syntax for Zryna-owned phases. Complete diagnostic-only source
+context for unrepresentable exclusions remains a documented gap; the worker cannot assign
+M7001/M7004/M7006. No driver registration, public profile or executable capability is added.

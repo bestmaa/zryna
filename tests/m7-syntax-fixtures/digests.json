@@ -1,0 +1,50 @@
+[
+  {
+    "path": "schemas/zryna-syntax-v5.schema.json",
+    "sha256": "922bb3fed447cc730cce2054e440b80bef158f07b052c75161a56b54ffe08736"
+  },
+  {
+    "path": "tests/m7-syntax-fixtures/main.zry",
+    "sha256": "fad257c4be2a10c63e55eaaf9e559721a11a8dff82f8385d4738b852c5b03b47"
+  },
+  {
+    "path": "tests/m7-syntax-fixtures/values.zry",
+    "sha256": "a991a5355745f3317ea27837e2595df9789f3f68d37967388ea51bf8f0ad131b"
+  },
+  {
+    "path": "tests/m7-syntax-fixtures/reference.json",
+    "sha256": "28045142a28c9384e6192b8362a76ee2ca24b7dd4712e3c5f7df0e5b63dc6905"
+  },
+  {
+    "path": "schemas/zryna-syntax-v2.schema.json",
+    "sha256": "6dd4a62bb9921d684aa5042ed26305710676a258f31f777eb4a41ec36ac94658"
+  },
+  {
+    "path": "schemas/zryna-syntax-v3.schema.json",
+    "sha256": "09225657ade85bd144a1d86c63495cd0809812f1654e3c0bef27785dcd15cf45"
+  },
+  {
+    "path": "schemas/zryna-syntax-v4.schema.json",
+    "sha256": "ce7d9a8e8b820a58349b1dcd5af281e4b7983bc0f4d9afe24d319b7a8edcbaad"
+  },
+  {
+    "path": "crates/zryna-syntax/src/v2.rs",
+    "sha256": "7430c705cfe055b06eadf6e3e13606874d849291d3624a2a95e4cd2a3394d6d1"
+  },
+  {
+    "path": "crates/zryna-syntax/src/v3.rs",
+    "sha256": "13b4cff135ecd1c8d590b9ce8fc07a34a0435fad9be3fd5f858f27ea4b18a07f"
+  },
+  {
+    "path": "crates/zryna-syntax/src/v4.rs",
+    "sha256": "f5870a3ac091140bd44b293e4a78da72583e461a5776ccc93e07b1ddf47beff5"
+  },
+  {
+    "path": "tests/m7-syntax-fixtures/hostile-wire.json",
+    "sha256": "997606b210acc44811f5b697680dd6bdbb1e85173b18d2ddec5fcc862069c342"
+  },
+  {
+    "path": "tests/m7-syntax-fixtures/hostile-declarations.json",
+    "sha256": "134915ac02aa3bec47e7665e38db06cbc54712ff25ce2287367bcc256ce0550c"
+  }
+]

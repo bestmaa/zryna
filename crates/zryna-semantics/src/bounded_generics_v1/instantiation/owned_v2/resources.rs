@@ -1,0 +1,101 @@
+//! Genuine bounded source witnesses for materialization ceilings, without unbounded allocation.
+use super::tests::claim;
+use std::fmt::Write;
+use zryna_ir::generic_v1::Failure;
+
+#[test]
+fn executable_literal_ceiling_is_checked_before_copying_and_unused_templates_keep_no_bytes() {
+    for size in [65_536, 65_537] {
+        let literal = "x".repeat(size);
+        let source = format!(
+            "export function root(input:i32):i32 {{ const owner:String=\"{literal}\"; return input; }}"
+        );
+        let result = claim(&[("main.zry", &source)]);
+        if size == 65_536 {
+            let owned = result.expect("exact admitted executable literal");
+            assert!(owned.extensions.iter().flatten().any(|e| matches!(
+                &e.operation,
+                zryna_ir::generic_v1::owned_v2::raw::Operation::StringLiteral(bytes)
+                    if bytes.len() == size
+            )));
+        } else {
+            let Failure::Diagnostics(errors) = result.expect_err("first excess literal") else {
+                panic!("budget diagnostic")
+            };
+            assert!(errors[0].message.contains("owned String literal ceiling"));
+        }
+    }
+    let literal = "x".repeat(65_537);
+    let source = format!(
+        "function unused<T extends ZrynaValue>(input:T):T {{ const owner:String=\"{literal}\"; return input; }} export function root(input:i32):i32 {{ return input; }}"
+    );
+    let owned = claim(&[("main.zry", &source)]).expect("symbolic template has no executable bytes");
+    assert!(owned.extensions.iter().flatten().all(|e| !matches!(
+        e.operation,
+        zryna_ir::generic_v1::owned_v2::raw::Operation::StringLiteral(_)
+    )));
+}
+
+#[test]
+fn small_source_cannot_replicate_literals_past_aggregate_wire_credit() {
+    let literal = "x".repeat(65_536);
+    // Keep source-position scans bounded to individual lines while retaining identical literals.
+    let mut source = "function specialized<T extends ZrynaValue>(input:i32):i32 {\n".to_owned();
+    for index in 0..8 {
+        writeln!(source, "const owner{index}:String=\"{literal}\";").expect("fixture source");
+    }
+    source.push_str("return input; }\nexport function root(input:i32):i32 {\n");
+    // 64 distinct instances retain exactly 32MiB; instance 65 must stop before its first copy.
+    for index in 0..65 {
+        let lhs = index / 9;
+        let rhs = index % 9;
+        let ty = format!(
+            "{}Result<i32,{}bool{}>{}",
+            "Option<".repeat(lhs),
+            "Option<".repeat(rhs),
+            ">".repeat(rhs),
+            ">".repeat(lhs),
+        );
+        writeln!(source, "const v{index}:i32=specialized<{ty}>(input);").expect("fixture source");
+    }
+    source.push_str("return input; }");
+    assert!(source.len() < 800_000);
+    let Failure::Diagnostics(errors) =
+        aggregate_claim(&source).expect_err("replication stops before literal 513")
+    else {
+        panic!("bounded specialization diagnostic")
+    };
+    assert!(errors[0].message.contains("owned source specialization aggregate ceiling"));
+}
+
+fn aggregate_claim(source: &str) -> Result<zryna_ir::generic_v1::owned_v2::raw::Program, Failure> {
+    use crate::bounded_generics_v1::{
+        SemanticInput, body_types::check_body_types, instantiation::layouts::verify_layouts,
+        resolve_declarations, tests::body_fixtures::snapshot,
+    };
+    use zryna_layout::StorageTarget;
+    let start = std::time::Instant::now();
+    eprintln!("owned-resource: verify complete source");
+    let sources = zryna_source::SourceMap::build(vec![zryna_source::SourceFileInput {
+        path: "main.zry".into(),
+        text: source.into(),
+    }])
+    .expect("source");
+    eprintln!("owned-resource: source map {:?}", start.elapsed());
+    let raw = snapshot(&[("main.zry", source)]);
+    eprintln!("owned-resource: raw snapshot {:?}", start.elapsed());
+    let syntax = zryna_syntax::v5::verify_snapshot(raw, &sources).expect("source syntax");
+    eprintln!("owned-resource: declarations {:?}", start.elapsed());
+    let entry = sources.verify_file_id(0).expect("entry");
+    let d = resolve_declarations(SemanticInput::try_new(&syntax, &sources, entry).expect("input"))
+        .expect("declarations");
+    eprintln!("owned-resource: original body types {:?}", start.elapsed());
+    let b = check_body_types(&d).expect("well-typed bounded source");
+    eprintln!("owned-resource: discovery {:?}", start.elapsed());
+    let i = super::discover(&b)?;
+    eprintln!("owned-resource: layout {:?}", start.elapsed());
+    let linear = verify_layouts(i.instances(), StorageTarget::Linear32V1).expect("linear");
+    let linux = verify_layouts(i.instances(), StorageTarget::LinuxX8664V1).expect("linux");
+    eprintln!("owned-resource: materialization {:?}", start.elapsed());
+    super::produce_claim(&i, &linear, &linux)
+}

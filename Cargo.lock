@@ -1948,7 +1948,9 @@ dependencies = [
  "zryna-abi",
  "zryna-diagnostics",
  "zryna-layout",
+ "zryna-ownership-runtime-abi",
  "zryna-source",
+ "zryna-syntax",
 ]
 
 [[package]]

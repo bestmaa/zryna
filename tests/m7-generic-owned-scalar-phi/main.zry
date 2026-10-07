@@ -1,0 +1,36 @@
+export function single(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Result<String,i32> =singleSelect<String>(flag,original);
+  return match(result,{"Result.ok":(value)=>discard<String>(value),"Result.err":(code)=>code});
+}
+export function double(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Result<String,i32> =doubleSelect<String>(flag,original);
+  return match(result,{"Result.ok":(value)=>discard<String>(value),"Result.err":(code)=>code});
+}
+export function early(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Result<String,i32> =earlySelect<String>(flag,original);
+  return match(result,{"Result.ok":(value)=>discard<String>(value),"Result.err":(code)=>code});
+}
+export function nested(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Result<String,i32> =nestedSelect<String>(flag,original);
+  return match(result,{"Result.ok":(value)=>discard<String>(value),"Result.err":(code)=>code});
+}
+export function looped(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Result<String,i32> =loopSelect<String>(flag,original);
+  return match(result,{"Result.ok":(value)=>discard<String>(value),"Result.err":(code)=>code});
+}
+export function optional(flag:bool):i32 {
+  const outer:String="outer";
+  const original:String="入";
+  const result:Option<i32> =optionSelect<String>(flag,original);
+  return match(result,{"Option.none":()=>41,"Option.some":(code)=>code});
+}

@@ -1,0 +1,370 @@
+{
+  "version": 1,
+  "authority": "Independently authored existing raw DTOs; never refreshed from a producer.",
+  "native_v5": "reserved-later; no native v5 implementation or parity claim",
+  "cases": [
+    {
+      "id": "reference",
+      "reference": "tests/m7-syntax-fixtures/reference.json",
+      "files": [
+        {
+          "path": "main.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-syntax-fixtures/main.zry"
+            }
+          ]
+        },
+        {
+          "path": "values.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-syntax-fixtures/values.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "precedence",
+      "reference": "tests/m7-syntax-fixtures/precedence.json",
+      "files": [
+        {
+          "path": "precedence.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-syntax-fixtures/precedence.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "control",
+      "reference": "tests/m7-syntax-fixtures/control.json",
+      "files": [
+        {
+          "path": "control.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-syntax-fixtures/control.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "operations",
+      "reference": "tests/m7-syntax-fixtures/operations.json",
+      "files": [
+        {
+          "path": "operations.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-syntax-fixtures/operations.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keyword-script",
+      "reference": "tests/m7-syntax-fixtures/keyword-script.json",
+      "files": [
+        {
+          "path": "keyword-script.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-syntax-fixtures/keyword-script.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keyword-module",
+      "reference": "tests/m7-syntax-fixtures/keyword-module.json",
+      "files": [
+        {
+          "path": "keyword-module.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-syntax-fixtures/keyword-module.zry"
+            }
+          ]
+        },
+        {
+          "path": "keyword-values.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-syntax-fixtures/keyword-values.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "copy",
+      "reference": "tests/m7-generic-copy-fixtures/reference.json",
+      "files": [
+        {
+          "path": "main.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-generic-copy-fixtures/main.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "copy-cross",
+      "reference": "tests/m7-generic-copy-fixtures/cross-reference.json",
+      "files": [
+        {
+          "path": "main.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-generic-copy-fixtures/cross-main.zry"
+            }
+          ]
+        },
+        {
+          "path": "values.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-generic-copy-fixtures/cross-values.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m7-generic-owned-fixtures-local",
+      "reference": "tests/m7-generic-owned-fixtures/1-reference.json",
+      "files": [
+        {
+          "path": "main.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-generic-owned-fixtures/values.zry"
+            },
+            {
+              "text": "\n"
+            },
+            {
+              "source": "tests/m7-generic-owned-fixtures/main.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m7-generic-owned-fixtures-cross",
+      "reference": "tests/m7-generic-owned-fixtures/2-reference.json",
+      "files": [
+        {
+          "path": "main.zry",
+          "fragments": [
+            {
+              "text": "import {identity,keep,make,discard,inspect,inspectMut} from \"./values.zry\";\n"
+            },
+            {
+              "source": "tests/m7-generic-owned-fixtures/main.zry"
+            }
+          ]
+        },
+        {
+          "path": "values.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-generic-owned-fixtures/values.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m7-generic-owned-cfg-local",
+      "reference": "tests/m7-generic-owned-cfg/1-reference.json",
+      "files": [
+        {
+          "path": "main.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-generic-owned-cfg/values.zry"
+            },
+            {
+              "text": "\n"
+            },
+            {
+              "source": "tests/m7-generic-owned-cfg/main.zry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m7-generic-owned-cfg-cross",
+      "reference": "tests/m7-generic-owned-cfg/2-reference.json",
+      "files": [
+        {
+          "path": "main.zry",
+          "fragments": [
+            {
+              "text": "import {discard,reinitialize,earlyIdentity} from \"./values.zry\";\n"
+            },
+            {
+              "source": "tests/m7-generic-owned-cfg/main.zry"
+            }
+          ]
+        },
+        {
+          "path": "values.zry",
+          "fragments": [
+            {
+              "source": "tests/m7-generic-owned-cfg/values.zry"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "tests/m7-generic-copy-fixtures/cross-main.zry",
+      "bytes": 1083,
+      "sha256": "b9522ac8b3d1d0f8c5632970596ee1290d9b8b980fcc089c2bdb4a0f7f6b7e57"
+    },
+    {
+      "path": "tests/m7-generic-copy-fixtures/cross-reference.json",
+      "bytes": 102456,
+      "sha256": "f423e01c92adef2664557cd0e5e91c32ce3844bfde82f1ec749d381767520683"
+    },
+    {
+      "path": "tests/m7-generic-copy-fixtures/cross-values.zry",
+      "bytes": 266,
+      "sha256": "766f02d4dda8c3d172d966c555d33ba27fe6014646503b82c1bfc2f0e3b949ee"
+    },
+    {
+      "path": "tests/m7-generic-copy-fixtures/main.zry",
+      "bytes": 1296,
+      "sha256": "c78cae924bc6fecfe4ca17d3f319377d2fda95bbd89ddbfff6c26cbcedfd1542"
+    },
+    {
+      "path": "tests/m7-generic-copy-fixtures/reference.json",
+      "bytes": 99653,
+      "sha256": "a5c6855aca7fa10d4cdcf40453fb7ebb294015b874c538a8a5bf3cea398ea015"
+    },
+    {
+      "path": "tests/m7-generic-owned-cfg/1-reference.json",
+      "bytes": 107081,
+      "sha256": "4057bda637661474eec14d852feeac83119a932b91f4f8ca0bc956bdb0f7c9fd"
+    },
+    {
+      "path": "tests/m7-generic-owned-cfg/2-reference.json",
+      "bytes": 109628,
+      "sha256": "2dca40d2efebec7a9c0b5580748927deeccdc5f89664d2c00fab567a9a92fa04"
+    },
+    {
+      "path": "tests/m7-generic-owned-cfg/main.zry",
+      "bytes": 1007,
+      "sha256": "8f5373af2a05888808e43dd704eced551aae0cb63cc7d453ad2daff4c10c96f1"
+    },
+    {
+      "path": "tests/m7-generic-owned-cfg/values.zry",
+      "bytes": 377,
+      "sha256": "4d5bb0b5ac71cffcd195c0204f7082d91c2ed564b057140f75588fc17e7ad006"
+    },
+    {
+      "path": "tests/m7-generic-owned-fixtures/1-reference.json",
+      "bytes": 214997,
+      "sha256": "3543e840a0971aca0832b414d0dd79a15f78dd47fd2488f963cdc55581f69f58"
+    },
+    {
+      "path": "tests/m7-generic-owned-fixtures/2-reference.json",
+      "bytes": 219218,
+      "sha256": "7135a51d019cfc9edf7f4daad8f25db7d66025995b23f0d6c4a05ea04c707e69"
+    },
+    {
+      "path": "tests/m7-generic-owned-fixtures/main.zry",
+      "bytes": 2334,
+      "sha256": "037b37a9f0689434a06ce97d7906493e97c9c81c21450b16d64c015006b9bc9e"
+    },
+    {
+      "path": "tests/m7-generic-owned-fixtures/values.zry",
+      "bytes": 508,
+      "sha256": "64efd78a1e6aa708aa7e5a40bb383c1174b92be32a7a7fa7791326da88ccf1fd"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/control.json",
+      "bytes": 19464,
+      "sha256": "35bf9ec1568fe803d5f927de5e516c6d4d3414bb17498cc8eaae3e1f124268f1"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/control.zry",
+      "bytes": 188,
+      "sha256": "9996f71a03fc71532ab427db37713e3f775d1772df596961d06965a022aeecae"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/keyword-module.json",
+      "bytes": 44083,
+      "sha256": "f51ef3cc187dbae4df67c35e2219bb8ceb063cd73c613204e87e156b2b99129c"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/keyword-module.zry",
+      "bytes": 688,
+      "sha256": "943245c7cf957a750abca370810d0d8bb80e89c56523e0149fcf8b594c2309d7"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/keyword-script.json",
+      "bytes": 10640,
+      "sha256": "12a8739884fc1b75f32133b426a4ef8db1662cc5c8e6c20c8d8066ebc7e23e12"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/keyword-script.zry",
+      "bytes": 153,
+      "sha256": "7171512635e617052e7cc6c63e3b5a0ca24df48d4866f411341a1562f1f7697e"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/keyword-values.zry",
+      "bytes": 59,
+      "sha256": "68fa68660be534d3fc717c1adbfe16ac63dc34930cefc2bccfd4c29a793d0d75"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/main.zry",
+      "bytes": 607,
+      "sha256": "fad257c4be2a10c63e55eaaf9e559721a11a8dff82f8385d4738b852c5b03b47"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/operations.json",
+      "bytes": 68385,
+      "sha256": "20f10afbe3b057eb1b81987ee6f192fdc1c30cdf2902f112f8951f069fc77f3e"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/operations.zry",
+      "bytes": 895,
+      "sha256": "68a41e895dfa16f5037d685f94ab63a9c4080cd0f5074093e47ea7a16138b48b"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/precedence.json",
+      "bytes": 14198,
+      "sha256": "c3db9b704e734a128efa86e5fd41f15ed5150e0e6353f9ce4d56cff4fa24d9bd"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/precedence.zry",
+      "bytes": 150,
+      "sha256": "3abdaf2c9d87fc6d71fc8166d472cf147a7f5a263e4f6520a05ff943f5e0eab7"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/reference.json",
+      "bytes": 73870,
+      "sha256": "28045142a28c9384e6192b8362a76ee2ca24b7dd4712e3c5f7df0e5b63dc6905"
+    },
+    {
+      "path": "tests/m7-syntax-fixtures/values.zry",
+      "bytes": 410,
+      "sha256": "a991a5355745f3317ea27837e2595df9789f3f68d37967388ea51bf8f0ad131b"
+    }
+  ]
+}

@@ -12,11 +12,12 @@
     "worker": "src/worker.mjs"
   },
   "scripts": {
-    "check": "node --check src/worker.mjs && node --check src/limits-v3.mjs && node --check src/worker-v3.mjs && node --check src/limits-v4.mjs && node --check src/worker-v4.mjs && node --check test/worker.test.mjs && node --check test/worker-v3.test.mjs && node --check test/worker-v4.test.mjs",
-    "test": "node --test test/worker.test.mjs test/worker-v3.test.mjs test/worker-v4.test.mjs",
+    "check": "node --check src/worker.mjs && node --check src/limits-v3.mjs && node --check src/worker-v3.mjs && node --check src/limits-v4.mjs && node --check src/worker-v4.mjs && node --check test/worker.test.mjs && node --check test/worker-v3.test.mjs && node --check test/worker-v4.test.mjs && node --check src/worker-v5.mjs && node --check src/limits-v5.mjs && node --check src/v5/common.mjs && node --check src/v5/request.mjs && node --check src/v5/types.mjs && node --check src/v5/construction.mjs && node --check src/v5/expressions.mjs && node --check src/v5/statements.mjs && node --check src/v5/declarations.mjs",
+    "test": "node --test test/worker.test.mjs test/worker-v3.test.mjs test/worker-v4.test.mjs test/worker-v5.test.mjs",
     "test:v2": "node --test test/worker.test.mjs",
     "test:v3": "node --test test/worker-v3.test.mjs",
-    "test:v4": "node --test test/worker-v4.test.mjs"
+    "test:v4": "node --test test/worker-v4.test.mjs",
+    "test:v5": "node --test test/worker-v5.test.mjs"
   },
   "dependencies": {
     "@typescript/typescript6": "6.0.2"

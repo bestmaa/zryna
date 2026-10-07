@@ -1,0 +1,44 @@
+[
+  {
+    "id": "foreign-body-file",
+    "pointer": "/files/0/functions/0/body/expressions/0/span/file",
+    "value": 1,
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "self-construction-edge",
+    "pointer": "/files/0/functions/0/body/expressions/2/kind/fields/0/kind/value",
+    "value": 2,
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "shared-generic-type-root",
+    "pointer": "/files/0/functions/0/body/expressions/1/kind/type_arguments/arguments/0",
+    "value": 1,
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "erased-return-expression",
+    "pointer": "/files/0/functions/0/body/expressions/17/kind/arms/1/value",
+    "value": 15,
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "wrong-match-arrow",
+    "pointer": "/files/0/functions/0/body/expressions/17/kind/arms/0/arrow_span/end",
+    "value": 568,
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "type-argument-after-member-forgery",
+    "pointer": "/files/0/functions/0/body/expressions/6/kind/dot_span/start",
+    "value": 266,
+    "code": "ZRYNA-Y5001"
+  },
+  {
+    "id": "u32max-expression",
+    "pointer": "/files/0/functions/0/body/expressions/0/span/start",
+    "value": 4294967295,
+    "code": "ZRYNA-Y5001"
+  }
+]

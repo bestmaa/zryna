@@ -3,6 +3,16 @@
 Direct core WebAssembly lowering from the M1 `VerifiedProgram` and the isolated M2
 `control_flow_v1::VerifiedProgram`.
 
+The additive internal `generic_copy_v1::emit` consumes the same opaque immutable
+`generic_v1::copy_v1::VerifiedCopyProgram` as the generic JavaScript emitter. It emits audited,
+import-free core Wasm 1.0 with only type, function, private global, scalar export and code sections.
+Option/Result values use private i32 lanes; aggregate returns use zero-initialized private return
+slots copied immediately into caller locals. No memory, allocator, host callback, Component Model
+or public aggregate ABI is introduced. Original scalar ABI names and Boolean carrier checks remain
+unchanged. See [the internal generic Copy Wasm contract](../../docs/M7_GENERIC_COPY_WASM.md).
+Owned payloads, loans and drop/fault traces remain rejected by the retained Copy seal; this is
+partial #416 execution evidence, not full generic profile or driver admission.
+
 The separate private [command self-check](../../docs/WASI_COMMAND_SELF_CHECK_V1.md) retains
 the exact scalar core inside an independently audited component. Its source and test fixtures
 await the required execution lanes. Public WASI target selection remains unactivated.

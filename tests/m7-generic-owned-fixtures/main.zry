@@ -1,0 +1,46 @@
+export function some(value:i32):i32 {
+  const first:String="α";
+  const extra:String="残";
+  const item:Option<String> =keep<String>(Option.some<String>(make<String>(identity<String>(first))));
+  const seen:i32=match(borrow(item), {"Option.none":()=>0,"Option.some":(payload)=>inspect<String>(payload)});
+  return match(item, {"Option.none":()=>0,"Option.some":(payload)=>discard<String>(payload)});
+}
+export function none(value:i32):i32 {
+  const extra:String="none";
+  const item:Option<String> =Option.none<String>();
+  return match(item, {"Option.none":()=>7,"Option.some":(payload)=>discard<String>(payload)});
+}
+export function ok(value:i32):i32 {
+  const item:Result<String,String> =Result.ok<String,String>("ok");
+  return match(item, {"Result.ok":(payload)=>discard<String>(payload),"Result.err":(payload)=>discard<String>(payload)});
+}
+export function err(value:i32):i32 {
+  const item:Result<String,String> =Result.err<String,String>("err");
+  return match(item, {"Result.ok":(payload)=>discard<String>(payload),"Result.err":(payload)=>discard<String>(payload)});
+}
+export function exclusive(value:i32):i32 {
+  const item:Option<String> =Option.some<String>("exclusive");
+  const seen:i32=match(borrowMut(item), {"Option.none":()=>0,"Option.some":(payload)=>inspectMut<String>(payload)});
+  return match(item, {"Option.none":()=>0,"Option.some":(payload)=>discard<String>(payload)});
+}
+export function clones(value:i32):i32 {
+  const original:String="clone";
+  const duplicate:String=clone(original);
+  return 7;
+}
+export function lexical(value:i32):i32 {
+  const original:String="scope";
+  { const view:Borrow<String> =borrow(original); const seen:i32=inspect<String>(view); }
+  return discard<String>(original);
+}
+export function nested(value:i32):i32 {
+  const extra:String="after";
+  const inner:Result<String,String> =Result.err<String,String>("deep");
+  const item:Option<Result<String,String>> =Option.some<Result<String,String>>(inner);
+  const seen:i32=match(borrowMut(item), {"Option.none":()=>0,"Option.some":(payload)=>match(payload, {"Result.ok":(child)=>inspectMut<String>(child),"Result.err":(child)=>inspectMut<String>(child)})});
+  return 7;
+}
+export function nestednone(value:i32):i32 {
+  const item:Result<String,Option<String>> =Result.err<String,Option<String>>(Option.none<String>());
+  return 7;
+}
