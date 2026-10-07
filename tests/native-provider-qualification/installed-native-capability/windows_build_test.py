@@ -9,10 +9,10 @@ import sys
 import tempfile
 import unittest
 
-from admission_build import captured, observed_linker_help, observed_dumpbin_help
+from admission_build import captured, observed_linker_help, observed_dumpbin_help, unit_contract, windows_environment
 from build import command, sha
 from toolchain import retain_original, verify_linker_help, verify_dumpbin_help
-from windows_build import environment, validate
+from windows_build import environment, prepare_state, validate
 
 
 def fixture():
@@ -54,6 +54,58 @@ class ClosedProfileControls(unittest.TestCase):
         self.assertEqual(env['CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER'], fixture()['tools']['linker']['path'])
         for key in ('NODE_OPTIONS', 'NODE_PATH', 'RUSTFLAGS', 'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER'):
             self.assertNotIn(key, env)
+
+    def test_mutable_windows_state_is_outside_both_retained_outputs(self):
+        target = r'C:\owned\target'
+        expected = {'USERPROFILE': target + r'\private-process-state',
+                    'HOME': target + r'\private-process-state',
+                    'APPDATA': target + r'\private-process-state\AppData\Roaming',
+                    'LOCALAPPDATA': target + r'\private-process-state\AppData\Local',
+                    'TEMP': target + r'\private-process-state\Temp',
+                    'TMP': target + r'\private-process-state\Temp'}
+        for output in (r'C:\owned\proof\build', r'C:\owned\proof'):
+            produced = environment(fixture(), output, target)
+            admitted = windows_environment(fixture(), output, target)
+            self.assertEqual(produced, admitted)
+            self.assertEqual({key: produced.get(key) for key in expected}, expected)
+
+    def test_unit_reader_rejects_each_proof_root_state_substitution(self):
+        profile = fixture(); origin = r'C:\checkout'; output = r'C:\owned\proof'; target = r'C:\owned\target'
+        env = windows_environment(profile, output, target)
+        env.update(CARGO_PROFILE_TEST_DEBUG='0', CARGO_PROFILE_TEST_OPT_LEVEL='1', CARGO_PROFILE_TEST_CODEGEN_UNITS='16')
+        row = {'cwd': origin, 'selected_environment': env,
+               'argv': [profile['tools']['cargo']['path'], 'test', '--locked', '--offline', '-p', 'zryna-driver',
+                        '--features', 'native-provider-internal', '--lib', '--message-format=json',
+                        'distribution::native_installation::descriptor::tests', '--', '--nocapture']}
+        unit_contract(row, profile, origin, output, target)
+        for key in ('HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'TEMP', 'TMP'):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(row); changed['selected_environment'][key] = output
+                with self.assertRaises(ValueError):
+                    unit_contract(changed, profile, origin, output, target)
+
+    def test_state_target_paths_must_be_absolute_and_disjoint(self):
+        for target in ('relative', r'C:\owned\proof\target', r'C:\owned', r'C:\owned\proof', r'C:\owned\..\target'):
+            for reader, error in ((environment, AssertionError), (windows_environment, ValueError)):
+                with self.subTest(target=target, reader=reader.__name__), self.assertRaises(error):
+                    reader(fixture(), r'C:\owned\proof', target)
+
+    def test_mutable_state_directories_are_fresh_before_any_child(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary) / 'target'
+            prepare_state(target)
+            state = target / 'private-process-state'
+            self.assertEqual({path.relative_to(target).as_posix() for path in target.rglob('*')},
+                             {'private-process-state', 'private-process-state/Temp', 'private-process-state/AppData',
+                              'private-process-state/AppData/Roaming', 'private-process-state/AppData/Local'})
+            for path in target.rglob('*'):
+                self.assertTrue(path.is_dir())
+                self.assertFalse(path.is_symlink())
+            marker = state / 'existing-state'
+            marker.write_bytes(b'preserve')
+            with self.assertRaises(FileExistsError):
+                prepare_state(target)
+            self.assertEqual(marker.read_bytes(), b'preserve')
 
     def test_hostile_profile_fields_and_paths_reject(self):
         mutations = [

@@ -105,7 +105,7 @@ def image(raw, binding, platform):
 def build(source, output, target, cargo, platform, windows_profile=None):
     assert platform in TARGETS
     if platform == 'win32':
-        from windows_build import environment, verify_profile
+        from windows_build import environment, prepare_state, verify_profile
         assert os.name == 'nt' and windows_profile is not None
         verify_profile(windows_profile)
     before = snapshot(source)
@@ -139,6 +139,7 @@ def build(source, output, target, cargo, platform, windows_profile=None):
            'LANG': 'C', 'LC_ALL': 'C', 'HOME': str(output), 'TMPDIR': str(output)}
     if platform == 'win32':
         env = environment(windows_profile, output, target)
+        prepare_state(target)
     # The caller supplies a pinned toolchain root; Windows keeps only documented OS variables.
     for key in ['SYSTEMROOT', 'SystemRoot', 'WINDIR', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP', 'INCLUDE', 'LIB', 'LIBPATH']:
         if platform == 'linux' and key in os.environ:

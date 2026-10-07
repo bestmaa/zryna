@@ -89,9 +89,28 @@ def verify_profile(profile):
 
 def environment(profile, output, target):
     validate(profile)
+    retained, build_target = PureWindowsPath(str(output)), PureWindowsPath(str(target))
+    assert retained.is_absolute() and build_target.is_absolute()
+    assert '..' not in retained.parts and '..' not in build_target.parts
+    assert not retained.is_relative_to(build_target) and not build_target.is_relative_to(retained)
+    state = build_target / 'private-process-state'
     return {**profile['host_environment'], 'CARGO_HOME': profile['cargo_home'], 'RUSTUP_HOME': profile['rustup_home'],
             'RUSTUP_TOOLCHAIN': RUST, 'RUSTC': profile['tools']['rustc']['path'],
             'CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER': profile['tools']['linker']['path'],
             'CARGO_TARGET_DIR': str(target), 'CARGO_PROFILE_DEV_DEBUG': '0', 'CARGO_PROFILE_DEV_CODEGEN_UNITS': '16',
             'CARGO_PROFILE_DEV_OPT_LEVEL': '1', 'CARGO_INCREMENTAL': '0', 'CARGO_BUILD_JOBS': '2',
-            'TEMP': str(output), 'TMP': str(output), 'USERPROFILE': str(output), 'LANG': 'C', 'LC_ALL': 'C'}
+            'TEMP': str(state / 'Temp'), 'TMP': str(state / 'Temp'),
+            'USERPROFILE': str(state), 'HOME': str(state),
+            'APPDATA': str(state / 'AppData/Roaming'), 'LOCALAPPDATA': str(state / 'AppData/Local'),
+            'LANG': 'C', 'LC_ALL': 'C'}
+
+
+def prepare_state(target):
+    """Create fresh mutable child state outside the closed retained proof."""
+    target = Path(target)
+    target.mkdir(mode=0o700)
+    state = target / 'private-process-state'
+    state.mkdir(mode=0o700)
+    (state / 'AppData').mkdir(mode=0o700)
+    for path in (state / 'Temp', state / 'AppData/Roaming', state / 'AppData/Local'):
+        path.mkdir(mode=0o700)

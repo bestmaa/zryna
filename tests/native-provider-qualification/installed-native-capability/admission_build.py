@@ -275,12 +275,21 @@ def profile_contract(p):
 
 
 def windows_environment(profile, output, target):
+    retained, build_target = Win(output), Win(target)
+    require(retained.is_absolute() and build_target.is_absolute()
+            and '..' not in retained.parts and '..' not in build_target.parts
+            and not retained.is_relative_to(build_target) and not build_target.is_relative_to(retained),
+            'disjoint absolute Windows proof and target roots')
+    state = build_target / 'private-process-state'
     return {**profile['host_environment'], 'CARGO_HOME': profile['cargo_home'], 'RUSTUP_HOME': profile['rustup_home'],
             'RUSTUP_TOOLCHAIN': '1.97.1', 'RUSTC': profile['tools']['rustc']['path'],
             'CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER': profile['tools']['linker']['path'],
             'CARGO_TARGET_DIR': target, 'CARGO_PROFILE_DEV_DEBUG': '0', 'CARGO_PROFILE_DEV_CODEGEN_UNITS': '16',
             'CARGO_PROFILE_DEV_OPT_LEVEL': '1', 'CARGO_INCREMENTAL': '0', 'CARGO_BUILD_JOBS': '2',
-            'TEMP': output, 'TMP': output, 'USERPROFILE': output, 'LANG': 'C', 'LC_ALL': 'C'}
+            'TEMP': str(state / 'Temp'), 'TMP': str(state / 'Temp'),
+            'USERPROFILE': str(state), 'HOME': str(state),
+            'APPDATA': str(state / 'AppData/Roaming'), 'LOCALAPPDATA': str(state / 'AppData/Local'),
+            'LANG': 'C', 'LC_ALL': 'C'}
 
 
 def verify_build(root, proof, src, platform, live):
