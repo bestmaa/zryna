@@ -15,6 +15,25 @@ import {
   selectPreflightCommands,
   validatePreflightCommands,
 } from '../scripts/run-preflight.mjs';
+import { BUILD_COMMANDS } from '../scripts/run-build.mjs';
+
+test('normal build enforces shared size, format and architecture checks before compilation', () => {
+  assert.deepEqual(BUILD_COMMANDS.map(command => command.id),
+    ['repository-structure', 'rust-format', 'rust-dependency-fetch', 'architecture-check', 'rust-workspace-build']);
+  for (const index of [0, 1, 3]) {
+    assert.equal(BUILD_COMMANDS[index], PREFLIGHT_COMMANDS.find(command => command.id === BUILD_COMMANDS[index].id));
+  }
+  assert.deepEqual(BUILD_COMMANDS[2].args, ['fetch', '--locked']);
+  for (const index of [0, 1, 2, 3]) {
+    const called = [];
+    assert.throws(() => runPreflight(BUILD_COMMANDS, (executable, args) => {
+      called.push([executable, args]);
+      return { status: called.length - 1 === index ? 1 : 0 };
+    }), /failed with exit status 1/);
+    assert.equal(called.length, index + 1);
+    assert.equal(called.some(([, args]) => args[0] === 'build'), false);
+  }
+});
 
 function workflowJob(workflow, jobId) {
   const lines = workflow.split(/\r?\n/);
@@ -31,6 +50,7 @@ test('preflight has one frozen portable command order', () => {
       ['repository-structure', 'node'],
       ['portable-contract-tests', 'node'],
       ['rust-format', 'cargo'],
+      ['architecture-check', 'cargo'],
       ['m2-semantic-driver-tests', 'cargo'],
       ['m3-layout-tests', 'cargo'],
       ['m3-ownership-runtime-abi-tests', 'cargo'],
@@ -44,7 +64,7 @@ test('preflight has one frozen portable command order', () => {
   );
   assert.ok(PREFLIGHT_COMMANDS.every(({ args }) => Object.isFrozen(args)));
   assert.ok(Object.isFrozen(PREFLIGHT_COMMANDS));
-  assert.equal(preflightCommandDigest(), 'b27402c8d6052eaf665be0d01855ee9febabd2167b459881c320833bce662c3b');
+  assert.equal(preflightCommandDigest(), 'c7b4c1d8e1006900a8268eed9f0d853824ce69f8cef4a002adcdab054c2bbeb6');
   assert.doesNotThrow(() => validatePreflightCommands());
 
   for (const mutate of [
@@ -163,6 +183,7 @@ test('independent platform jobs start alongside preflight and aggregates require
 test('package exposes the exact documented preflight entrypoint', async () => {
   const packageDocument = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
   assert.equal(packageDocument.scripts.preflight, 'node scripts/run-preflight.mjs');
+  assert.equal(packageDocument.scripts.build, 'node scripts/run-build.mjs');
   assert.equal(
     packageDocument.scripts['m2:quick'],
     'node scripts/run-m2-quick.mjs',

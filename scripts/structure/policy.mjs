@@ -1,6 +1,10 @@
 export const POLICY_PATH = 'scripts/repository-structure-policy.json';
 export const INITIAL_COMMIT = '885bb4d863ad112566add72fab6d2931587b71b1';
-export const SOURCE_EXTENSIONS = ['.rs', '.mjs', '.js', '.cjs', '.ts', '.sh', '.ps1', '.py'];
+export const MODULE_COMMIT = '0635c19f922f7af61fa1e05b1a632b1013e908e7';
+export const MODULE_LIMIT = 300;
+export const LEGACY_SOURCE_EXTENSIONS = ['.rs', '.mjs', '.js', '.cjs', '.ts', '.sh', '.ps1', '.py'];
+export const SOURCE_EXTENSIONS = [...LEGACY_SOURCE_EXTENSIONS,
+  '.jsx', '.tsx', '.mts', '.cts', '.c', '.h', '.cc', '.cpp', '.hpp'];
 
 export function fail(message) { throw new Error(`structure: ${message}`); }
 
@@ -28,8 +32,14 @@ function text(value, label) {
 }
 
 export function validatePolicy(policy, today) {
-  keys(policy, ['version', 'anchor', 'baseline', 'classifications', 'exceptions'], 'policy');
-  if (policy.version !== 1 || !/^[a-f0-9]{40}$/.test(policy.anchor)) fail('invalid version or anchor commit');
+  keys(policy, ['version', 'anchor', 'baseline', 'classifications', 'exceptions',
+    ...(policy.version === 2 ? ['modules'] : [])], 'policy');
+  if (![1, 2].includes(policy.version) || !/^[a-f0-9]{40}$/.test(policy.anchor)) fail('invalid version or anchor commit');
+  if (policy.version === 2) {
+    keys(policy.modules, ['anchor', 'baseline'], 'module migration');
+    if (!/^[a-f0-9]{40}$/.test(policy.modules.anchor)) fail('invalid module migration anchor');
+    validateInventory(policy.modules.baseline, MODULE_LIMIT, 'module baseline');
+  }
   for (const group of ['baseline', 'classifications', 'exceptions']) {
     if (!Array.isArray(policy[group])) fail(`${group} must be an array`);
     const seen = new Set();
@@ -60,8 +70,24 @@ export function validatePolicy(policy, today) {
   return policy;
 }
 
+function validateInventory(inventory, limit, label) {
+  if (!Array.isArray(inventory)) fail(`${label} must be an array`);
+  const seen = new Set();
+  for (const entry of inventory) {
+    keys(entry, ['path', 'lines', 'production'], label);
+    portablePath(entry.path);
+    if (seen.has(entry.path.toLowerCase())) fail(`duplicate ${label} path: ${entry.path}`);
+    seen.add(entry.path.toLowerCase());
+    if (!Number.isSafeInteger(entry.lines) || entry.lines <= limit) fail(`invalid ${label} count: ${entry.path}`);
+    if (typeof entry.production !== 'boolean') fail(`invalid ${label} production classification: ${entry.path}`);
+  }
+}
+
 export function reviewChanges(previous, current) {
   const messages = [];
+  if (JSON.stringify(previous?.modules) !== JSON.stringify(current.modules)) {
+    messages.push('REVIEW module migration changed: the anchored inventory must be authenticated, never regenerated or raised');
+  }
   for (const group of ['baseline', 'classifications', 'exceptions']) {
     const before = new Map((previous?.[group] ?? []).map(entry => [entry.path, entry]));
     const after = new Map(current[group].map(entry => [entry.path, entry]));

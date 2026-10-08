@@ -1,12 +1,15 @@
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { INITIAL_COMMIT, POLICY_PATH, fail, physicalLines, reviewChanges, validatePolicy } from './structure/policy.mjs';
-import { blobs, commit, git, navigation, readSafe, renames, source, tree, workingPaths } from './structure/repository.mjs';
+import { INITIAL_COMMIT, MODULE_COMMIT, MODULE_LIMIT, POLICY_PATH, fail, physicalLines, reviewChanges, validatePolicy } from './structure/policy.mjs';
+import { blobs, commit, git, legacySource, navigation, readSafe, renames, source, tree, workingPaths } from './structure/repository.mjs';
 import { history } from './structure/history.mjs';
 import { validateUnsafeRustWorkspace } from './structure/unsafe-rust.mjs';
+import { moduleLines } from './structure/module-size.mjs';
+import { moduleHistory } from './structure/module-history.mjs';
 
 export function checkRepository({ root, base = process.env.ZRYNA_STRUCTURE_BASE,
-  today = new Date().toISOString().slice(0, 10), bootstrap = INITIAL_COMMIT } = {}) {
+  today = new Date().toISOString().slice(0, 10), bootstrap = INITIAL_COMMIT,
+  moduleBootstrap = MODULE_COMMIT } = {}) {
   if (!root) fail('repository root is required');
   if (!base && process.env.CI) fail('CI must supply ZRYNA_STRUCTURE_BASE as a full trusted commit SHA');
   const comparison = commit(root, base ?? 'HEAD');
@@ -24,6 +27,7 @@ export function checkRepository({ root, base = process.env.ZRYNA_STRUCTURE_BASE,
   if (policy.anchor !== (trustedPolicy?.anchor ?? bootstrap)) fail('anchor differs from trusted policy/bootstrap commit');
   const { origin, ratchetBase, before, historical, ceilings: baseline } =
     history(root, comparison, head, policy, trustedPolicy);
+  const modules = moduleHistory(root, ratchetBase, head, policy, trustedPolicy, moduleBootstrap);
   const messages = [];
   if (!trustedPolicy || policyText !== blobs(root, [trustedPolicyEntry]).get(trustedPolicyEntry.hash)) {
     messages.push('REVIEW policy changed: classifications, baseline and exceptions require explicit maintainer review; this check does not prove approval');
@@ -31,12 +35,16 @@ export function checkRepository({ root, base = process.env.ZRYNA_STRUCTURE_BASE,
   }
   const paths = workingPaths(root);
   validateUnsafeRustWorkspace(root, paths);
+  const classifications = new Map(policy.classifications.map(entry => [entry.path, entry]));
   const current = new Map();
+  const normalized = new Map();
   for (const path of paths.filter(source)) {
     const text = readSafe(root, path, true);
-    if (text !== undefined) current.set(path, physicalLines(text));
+    if (text !== undefined) {
+      current.set(path, physicalLines(text));
+      if (!classifications.has(path)) normalized.set(path, moduleLines(path, text));
+    }
   }
-  const classifications = new Map(policy.classifications.map(entry => [entry.path, entry]));
   const oldClasses = new Map((trustedPolicy?.classifications ?? policy.classifications).map(entry => [entry.path, entry]));
   const exceptions = new Map(policy.exceptions.map(entry => [entry.path, entry]));
   for (const entry of [...classifications.values(), ...exceptions.values()]) {
@@ -60,8 +68,14 @@ export function checkRepository({ root, base = process.env.ZRYNA_STRUCTURE_BASE,
         ? Math.min(baseline.get(originalPath), previousLines) : 500);
     if (exceptions.has(path) && lines <= ordinaryCeiling) fail(`stale unnecessary exception: ${path}`);
     const ceiling = exceptions.get(path)?.ceiling ?? ordinaryCeiling;
-    if (lines > ceiling) errors.push(`ERROR ${path}: ${lines} lines exceeds ${ceiling}; split by cohesive responsibility or obtain an exact reviewed exception`);
-    else if (lines >= 350 && lines <= 500) messages.push(`WARN ${path}: ${lines} lines; review cohesion before further growth`);
+    if (legacySource(path) && lines > ceiling) errors.push(`ERROR ${path}: ${lines} lines exceeds ${ceiling}; split by cohesive responsibility into modules of at most ${MODULE_LIMIT} lines`);
+    const modulePath = modules.renames.get(previousPath) ?? previousPath;
+    const previousSize = previous && historical.has(previous.hash)
+      ? moduleLines(previousPath, historical.get(previous.hash)) : undefined;
+    const moduleCeiling = modules.ceilings.has(modulePath) && previousSize > MODULE_LIMIT && !oldClasses.has(previousPath)
+      ? Math.min(modules.ceilings.get(modulePath), previousSize) : MODULE_LIMIT;
+    const actual = normalized.get(path);
+    if (actual > moduleCeiling) errors.push(`ERROR ${path}: ${actual} module lines (${lines} physical) exceeds ${moduleCeiling}; split by cohesive responsibility into private modules of at most ${MODULE_LIMIT} lines`);
   }
   navigation(root);
   messages.push(...errors);
