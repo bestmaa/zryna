@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const WORKSPACE_ROOT = resolve(dirname(SCRIPT_PATH), '..');
-const EXPECTED_COMMANDS_SHA256 = 'b27402c8d6052eaf665be0d01855ee9febabd2167b459881c320833bce662c3b';
+const EXPECTED_COMMANDS_SHA256 = 'c7b4c1d8e1006900a8268eed9f0d853824ce69f8cef4a002adcdab054c2bbeb6';
 const FAST_CONTRACT_IDS = Object.freeze(['repository-structure', 'portable-contract-tests']);
 
 export const PREFLIGHT_COMMANDS = Object.freeze([
@@ -39,6 +39,11 @@ export const PREFLIGHT_COMMANDS = Object.freeze([
     id: 'rust-format',
     executable: 'cargo',
     args: Object.freeze(['fmt', '--all', '--', '--check']),
+  }),
+  Object.freeze({
+    id: 'architecture-check',
+    executable: 'cargo',
+    args: Object.freeze(['run', '--locked', '-p', 'zryna', '--', 'architecture', 'check']),
   }),
   Object.freeze({
     id: 'm2-semantic-driver-tests',

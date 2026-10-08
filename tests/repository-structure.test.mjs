@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { checkRepository } from '../scripts/check-repository-structure.mjs';
+import { moduleLines } from '../scripts/structure/module-size.mjs';
+import { moduleInventory } from '../scripts/structure/module-history.mjs';
 import { physicalLines, POLICY_PATH, validatePolicy } from '../scripts/structure/policy.mjs';
 import { git } from '../scripts/structure/repository.mjs';
 import { validateUnsafeRustDocuments } from '../scripts/structure/unsafe-rust.mjs';
@@ -134,38 +136,142 @@ function fixture(t, count = 600, testOnly = false) {
   write('src/main.rs', lines(count));
   write('docs/CODE_NAVIGATION.md', '[source](../src/main.rs)\n');
   const anchor = save();
-  const policy = { version: 1, anchor, baseline: count > 500 ? [{ path: 'src/main.rs', lines: count, production: !testOnly }] : [], classifications: testOnly ? [{ path: 'src/main.rs', kind: 'test', ...metadata }] : [], exceptions: [] };
+  const policy = { version: 2, modules: { anchor, baseline: count > 300 ? [{ path: 'src/main.rs', lines: count, production: !testOnly }] : [] }, anchor, baseline: count > 500 ? [{ path: 'src/main.rs', lines: count, production: !testOnly }] : [], classifications: testOnly ? [{ path: 'src/main.rs', kind: 'test', ...metadata }] : [], exceptions: [] };
   const savePolicy = () => write(POLICY_PATH, `${JSON.stringify(policy, null, 2)}\n`);
   savePolicy();
   const initial = save();
-  const check = options => checkRepository({ root, today, bootstrap: anchor, base: 'HEAD', ...options });
+  const check = options => checkRepository({ root, today, bootstrap: anchor, moduleBootstrap: anchor, base: 'HEAD', ...options });
   return { root, write, save, policy, savePolicy, check, anchor, initial };
 }
 
-test('physical counts are portable at exact warning and hard boundaries', () => {
+test('physical counts are portable at exact hard boundaries', () => {
   assert.equal(physicalLines(''), 0);
   assert.equal(physicalLines('text'), 1);
   assert.equal(physicalLines('\r\n'), 1);
-  for (const count of [349, 350, 500, 501]) {
+  for (const count of [299, 300, 301]) {
     assert.equal(physicalLines(lines(count)), count);
     assert.equal(physicalLines(lines(count).replaceAll('\n', '\r\n')), count);
     assert.equal(physicalLines(lines(count).slice(0, -1)), count);
   }
 });
 
-test('new files warn at 350 through 500 and reject 501, including fixture disguises', t => {
+test('new files accept 300 and reject 301, including nested fixture disguises', t => {
   const f = fixture(t);
-  for (const count of [349, 350, 500, 501]) {
+  for (const count of [299, 300, 301]) {
     f.write('src/fixtures/production.rs', lines(count));
     const result = f.check();
-    assert.equal(result.ok, count <= 500);
-    assert.equal(result.messages.some(message => message.startsWith('WARN')), count >= 350 && count <= 500);
+    assert.equal(result.ok, count <= 300);
+    if (count > 300) assert.match(result.messages.join('\n'), /src\/fixtures\/production.rs: 301 module lines \(301 physical\) exceeds 300; split by cohesive responsibility/);
   }
   f.write('src/fixtures/production.rs', lines(100));
   assert.equal(f.check().ok, true);
   f.write('.gitignore', 'ignored.rs\n');
-  f.write('ignored.rs', lines(501));
+  f.write('ignored.rs', lines(301));
   assert.equal(f.check().ok, false);
+});
+
+test('compressed JS/TS cannot hide 301 printed statements behind one physical line', t => {
+  const f = fixture(t, 100);
+  for (const extension of ['mjs', 'cjs', 'js', 'ts', 'jsx', 'tsx', 'mts', 'cts']) {
+    const path = `src/nested/production.${extension}`;
+    const content = count => Array.from({ length: count }, (_, i) => `const value${i} = ${i};`).join('');
+    f.write(path, content(300));
+    assert.equal(moduleLines(path, content(300)), 300);
+    assert.equal(f.check().ok, true);
+    f.write(path, content(301));
+    assert.match(f.check().messages.join('\n'), /301 module lines \(1 physical\) exceeds 300/);
+    rmSync(join(f.root, path));
+  }
+  assert.throws(() => moduleLines('invalid.mjs', 'export {'), /cannot normalize invalid.mjs/);
+  assert.equal(moduleLines('blank.mjs', '\n'.repeat(301)), 301);
+  f.write('program.zry', lines(1000));
+  assert.equal(f.check().ok, true);
+});
+
+test('comma-separated bindings and calls obey meaningful 300/301 boundaries', t => {
+  const f = fixture(t, 100);
+  for (const content of [
+    count => `const ${Array.from({ length: count }, (_, i) => `value${i}=${i}`).join(',')};`,
+    count => `${Array.from({ length: count }, (_, i) => `run(${i})`).join(',')};`,
+    count => `const {${Array.from({ length: count }, (_, i) => `property${i}:value${i}`).join(',')}}=input;`,
+  ]) {
+    f.write('src/compressed.mjs', content(300));
+    assert.equal(moduleLines('src/compressed.mjs', content(300)), 300);
+    assert.equal(f.check().ok, true);
+    f.write('src/compressed.mjs', content(301));
+    assert.match(f.check().messages.join('\n'), /301 module lines.*exceeds 300/);
+  }
+});
+
+test('C/C++ production and header files are included at 300/301', t => {
+  const f = fixture(t, 100);
+  for (const extension of ['c', 'h', 'cc', 'cpp', 'hpp']) {
+    const path = `runtime/nested/production.${extension}`;
+    f.write(path, lines(300));
+    assert.equal(f.check().ok, true);
+    f.write(path, lines(301));
+    assert.match(f.check().messages.join('\n'), /301 module lines.*exceeds 300/);
+    rmSync(join(f.root, path));
+  }
+});
+
+test('301–500 legacy modules have fixed ceilings, ratchet to 300 and never cover copies', t => {
+  const f = fixture(t, 400);
+  assert.equal(f.check().ok, true);
+  f.write('src/main.rs', lines(401));
+  assert.match(f.check().messages.join('\n'), /exceeds 400/);
+  f.write('src/main.rs', lines(350));
+  f.save();
+  f.write('src/main.rs', lines(351));
+  assert.match(f.check().messages.join('\n'), /exceeds 350/);
+  f.write('src/main.rs', lines(350));
+  git(f.root, ['mv', 'src/main.rs', 'src/moved.rs']);
+  f.write('docs/CODE_NAVIGATION.md', '[source](../src/moved.rs)\n');
+  assert.equal(f.check().ok, true);
+  f.write('src/copied.rs', lines(350));
+  assert.match(f.check().messages.join('\n'), /src\/copied.rs: 350 module lines.*exceeds 300/);
+  rmSync(join(f.root, 'src/copied.rs'));
+  f.write('src/moved.rs', lines(300));
+  f.save();
+  f.write('src/moved.rs', lines(301));
+  assert.match(f.check().messages.join('\n'), /exceeds 300/);
+});
+
+test('module inventories reject raised ceilings, changed eligibility, omissions and substituted anchors', t => {
+  for (const mutate of [
+    p => { p.modules.baseline[0].lines = 401; },
+    p => { p.modules.baseline[0].production = false; },
+    p => { p.modules.baseline = []; },
+    p => { p.modules.anchor = 'a'.repeat(40); },
+  ]) {
+    const f = fixture(t, 400);
+    mutate(f.policy);
+    f.savePolicy();
+    assert.throws(() => f.check(), /module baseline or anchor differs/);
+    f.save();
+    assert.throws(() => f.check(), /original trusted module adoption/);
+  }
+});
+
+test('v1 to v2 migration reproduces the exact inventory from the pinned Git object', t => {
+  const f = fixture(t, 400);
+  const old = structuredClone(f.policy);
+  old.version = 1;
+  delete old.modules;
+  f.write(POLICY_PATH, JSON.stringify(old));
+  const migration = f.save();
+  f.policy.modules = { anchor: migration, baseline: moduleInventory(f.root, migration, old.classifications) };
+  f.savePolicy();
+  const check = () => f.check({ moduleBootstrap: migration });
+  assert.equal(check().ok, true);
+  f.policy.modules.baseline[0].lines = 401;
+  f.savePolicy();
+  assert.throws(check, /exact anchored inventory/);
+  f.policy.modules.baseline[0].lines = 400;
+  f.policy.version = 1;
+  delete f.policy.modules;
+  f.savePolicy();
+  assert.throws(check, /hard 300-line module contract/);
 });
 
 test('trusted reductions ratchet; working tree, index and committed base cannot raise the ceiling', t => {
@@ -180,10 +286,10 @@ test('trusted reductions ratchet; working tree, index and committed base cannot 
   f.save();
   f.write('src/main.rs', lines(551));
   assert.match(f.check().messages.join('\n'), /exceeds 550/);
-  f.write('src/main.rs', lines(500));
+  f.write('src/main.rs', lines(300));
   f.save();
-  f.write('src/main.rs', lines(501));
-  assert.match(f.check().messages.join('\n'), /exceeds 500/);
+  f.write('src/main.rs', lines(301));
+  assert.match(f.check().messages.join('\n'), /exceeds 300/);
   f.policy.baseline[0].lines = 700;
   f.savePolicy();
   assert.throws(() => f.check(), /baseline differs/);
@@ -203,12 +309,13 @@ test('renames preserve grandfathering and reductions; deletion keeps historical 
   assert.equal(f.check().ok, true);
 });
 
-test('exceptions require exact complete metadata, ceiling and exclusive UTC expiry', t => {
+test('physical exceptions require exact metadata and cannot bypass the hard module limit', t => {
   const f = fixture(t, 100);
   f.write('src/main.rs', lines(501));
   f.policy.exceptions.push({ path: 'src/main.rs', ...metadata, ceiling: 501, expires: '2026-09-07' });
   f.savePolicy();
-  assert.equal(f.check().ok, true);
+  assert.equal(f.check().ok, false);
+  assert.match(f.check().messages.join('\n'), /exceeds 300/);
   assert.match(f.check().messages.join('\n'), /explicit maintainer review/);
   f.write('src/main.rs', lines(502));
   assert.equal(f.check().ok, false);
