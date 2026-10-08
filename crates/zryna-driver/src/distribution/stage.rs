@@ -1,4 +1,4 @@
-//! Private stage for exactly the authenticated nine provider files.
+//! Private stage for the exact authenticated source-ref-selected provider files.
 
 use std::{
     collections::BTreeMap,
@@ -14,7 +14,6 @@ use zryna_diagnostics::Diagnostic;
 use super::{
     InstalledCompiler, admission_error,
     filesystem::{InstallationTree, capture_absolute_directory},
-    manifest::PROVIDERS,
 };
 
 #[cfg(test)]
@@ -62,13 +61,13 @@ impl ProviderStage {
             files: Vec::new(),
             tree: None,
         };
-        for path in PROVIDERS {
+        for &path in compiler.distribution.provider_paths()? {
             let relative = path.strip_prefix("lib/zryna/bootstrap/").ok_or_else(stage_error)?;
             let data = compiler.tree.bytes(path)?;
             stage.write(relative, data)?;
         }
         let mut tree = InstallationTree::capture(&stage.path)?;
-        for path in PROVIDERS {
+        for &path in compiler.distribution.provider_paths()? {
             let relative = path.strip_prefix("lib/zryna/bootstrap/").ok_or_else(stage_error)?;
             let record = compiler
                 .distribution
