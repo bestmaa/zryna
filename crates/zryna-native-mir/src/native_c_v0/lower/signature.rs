@@ -1,4 +1,4 @@
-//! SysV INTEGER lane assignment and checked outgoing stack sizing.
+//! `SysV` INTEGER lane assignment and checked outgoing stack sizing.
 
 use super::{MirError, align, overflow};
 use crate::native_c_v0::abi::{Lane, Location, Register, ResultLane, Signature};
