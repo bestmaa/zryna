@@ -8,7 +8,10 @@ use zryna_source::{NormalizedSourcePath, SourceFileInput, SourceMap};
 
 use crate::diagnostic_sessions::{DiagnosticSession, ToolingCompiler};
 
-use super::{capture::CapturedToolingClosure, stage::ToolingStage};
+use super::{
+    capture::{CapturedToolingClosure, V4_MODULES},
+    stage::ToolingStage,
+};
 
 static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
@@ -31,6 +34,9 @@ impl CompilerFixture {
         copy(&repository, &fixture.root, "adapters/typescript-6/src/limits-v3.mjs");
         copy(&repository, &fixture.root, "adapters/typescript-6/src/worker-v4.mjs");
         copy(&repository, &fixture.root, "adapters/typescript-6/src/limits-v4.mjs");
+        for module in &V4_MODULES {
+            copy(&repository, &fixture.root, &format!("adapters/typescript-6/src/{}", module.path));
+        }
         for relative in [
             "node_modules/.pnpm/@typescript+typescript6@6.0.2/node_modules/@typescript/typescript6/package.json",
             "node_modules/.pnpm/@typescript+typescript6@6.0.2/node_modules/@typescript/typescript6/lib/typescript.js",
@@ -198,6 +204,13 @@ fn post_capture_substitute_and_deleted_dependency_never_execute() {
     .expect("replace original v4 worker after capture");
     fs::write(fixture.root.join("adapters/typescript-6/src/limits-v4.mjs"), "throw 1;\n")
         .expect("replace original v4 limits after capture");
+    for module in &V4_MODULES {
+        fs::write(
+            fixture.root.join("adapters/typescript-6/src").join(module.path),
+            "throw new Error('module replacement must never execute');\n",
+        )
+        .expect("replace original v4 module after capture");
+    }
     let sources = SourceMap::build(vec![SourceFileInput {
         path: "src/main.zry".to_owned(),
         text: "export function identity(value: i32): i32 { return value; }\n".to_owned(),
@@ -264,4 +277,61 @@ fn changed_stage_and_foreign_cleanup_entry_fail_closed() {
     drop(stage);
     assert!(foreign.exists(), "unknown cleanup entries must be retained");
     fs::remove_dir_all(path).expect("test-owned retained stage cleanup");
+}
+
+#[test]
+fn capture_rejects_each_missing_or_changed_v4_module() {
+    let fixture = CompilerFixture::create();
+    for module in &V4_MODULES {
+        let path = fixture.root.join("adapters/typescript-6/src").join(module.path);
+        let original = fs::read(&path).expect("original module bytes");
+        fs::write(&path, b"untrusted module substitute").expect("change module");
+        assert!(CapturedToolingClosure::capture(&fixture.root).is_err(), "{}", module.path);
+        fs::remove_file(&path).expect("remove module");
+        assert!(CapturedToolingClosure::capture(&fixture.root).is_err(), "{}", module.path);
+        fs::write(&path, original).expect("restore module");
+    }
+    CapturedToolingClosure::capture(&fixture.root).expect("restored complete closure");
+}
+
+#[test]
+fn source_capture_never_selects_the_historical_installed_form() {
+    let fixture = CompilerFixture::create();
+    fs::write(
+        fixture.root.join("adapters/typescript-6/src/worker-v4.mjs"),
+        super::installed_tests::legacy_worker(),
+    )
+    .expect("historical source fixture");
+    assert!(CapturedToolingClosure::capture(&fixture.root).is_err());
+}
+
+#[test]
+fn staged_v4_module_mutation_and_unknown_directory_entries_fail_closed() {
+    let fixture = CompilerFixture::create();
+    let captured = CapturedToolingClosure::capture(&fixture.root).expect("captured closure");
+    for module in &V4_MODULES {
+        let stage = ToolingStage::create(&captured).expect("private stage");
+        let path = stage.physical_path().to_path_buf();
+        if fs::write(path.join(module.path), "throw new Error('substitute');\n").is_ok() {
+            assert!(stage.revalidate().is_err(), "{}", module.path);
+            drop(stage);
+            if path.exists() {
+                fs::remove_dir_all(path).expect("test-owned changed stage cleanup");
+            }
+        } else {
+            stage.revalidate().expect("denied replacement preserves stage");
+            drop(stage);
+            assert!(!path.exists(), "unchanged nested stage must clean up");
+        }
+    }
+    for directory in ["v4", "v4/boundary", "v4/syntax"] {
+        let stage = ToolingStage::create(&captured).expect("private stage");
+        let path = stage.physical_path().to_path_buf();
+        let foreign = path.join(directory).join("foreign-entry");
+        fs::write(&foreign, "retain").expect("foreign nested entry");
+        assert!(stage.revalidate().is_err(), "{directory}");
+        drop(stage);
+        assert!(foreign.exists(), "unknown nested entries must be retained");
+        fs::remove_dir_all(path).expect("test-owned retained nested cleanup");
+    }
 }
