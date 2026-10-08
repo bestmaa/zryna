@@ -81,7 +81,7 @@ export async function runReleaseQualification({
   const archiveCapability = createQualificationArchiveCapability({ target,
     nativeTools: tools.nativeTools, workingRoot: sourceRoot, spawn });
   const acquired = await acquireQualificationMaterials({ sourceRoot,
-    sourceCommit: source.source.commit, target, archiveCapability, spawn });
+    sourceCommit: source.source.commit, sourceRef: source.source.ref, target, archiveCapability, spawn });
   const compileHome = seedQualificationCompileCargoHome({
     bootstrapCargoHome: provisioned.cargoHome, workRoot, rustCaptures: acquired.rustCaptures,
   });
