@@ -310,7 +310,7 @@
       "additionalProperties": false,
       "required": ["status", "target", "abi", "acquisition", "compilation", "linking"],
       "properties": {
-        "status": { "const": "provisional-pending-364" },
+        "status": { "enum": ["provisional-pending-364", "proposed-specified-native-c-interop-v0", "specified-native-c-interop-v0"] },
         "target": { "$ref": "#/$defs/targetId" },
         "abi": {
           "type": "object",
@@ -357,6 +357,30 @@
             "output": { "$ref": "#/$defs/portablePath" }
           }
         }
+      },
+      "allOf": [{
+        "if": {
+          "properties": { "status": { "enum": ["proposed-specified-native-c-interop-v0", "specified-native-c-interop-v0"] } },
+          "required": ["status"]
+        },
+        "then": {
+          "properties": {
+            "target": { "const": "native-linux-x86_64" },
+            "abi": { "$ref": "#/$defs/nativeCInteropV0Abi" }
+          }
+        }
+      }]
+    },
+    "nativeCInteropV0Abi": {
+      "type": "object",
+      "properties": {
+        "identity": { "const": "zryna-native-c-interop-v0" },
+        "version": { "const": "0" },
+        "targetTriple": { "const": "x86_64-unknown-linux-gnu" },
+        "callingConvention": { "const": "sysv-amd64-c-v0" },
+        "carrierModel": { "const": "native-c-interop-v0-carriers" },
+        "ownershipModel": { "const": "native-c-interop-v0-resources" },
+        "decisionIssue": { "const": 364 }
       }
     },
     "linkInvocation": {
