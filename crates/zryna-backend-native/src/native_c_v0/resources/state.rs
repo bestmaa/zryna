@@ -43,7 +43,7 @@ pub(super) struct State<'a, 'b> {
     pub(super) cursor: usize,
     pub(super) terminated: bool,
 }
-impl<'a, 'b> State<'a, 'b> {
+impl State<'_, '_> {
     pub(super) fn constant(&mut self, value: usize) -> Result<Value, Diagnostic> {
         Ok(self
             .builder
