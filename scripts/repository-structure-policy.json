@@ -2165,6 +2165,132 @@
       "owner": "compiler maintainers",
       "reason": "Independent temporary-repository policy tests",
       "review": "https://github.com/zryna/zryna/issues/314"
+    },
+    {
+      "path": "adapters/typescript-6/test/fixtures/v4-compatibility-cases.mjs",
+      "kind": "fixture",
+      "owner": "adapter and driver maintainers",
+      "reason": "Frozen original-main wire inputs and digests imported only by the protocol-v4 compatibility test",
+      "review": "https://github.com/zryna/zryna/pull/542"
+    },
+    {
+      "path": "adapters/typescript-6/test/worker-v4-compatibility.test.mjs",
+      "kind": "test",
+      "owner": "adapter and driver maintainers",
+      "reason": "Node test runner checks original-main protocol-v4 wire compatibility; no production imports",
+      "review": "https://github.com/zryna/zryna/pull/542"
+    },
+    {
+      "path": "crates/zryna-architecture/src/tests/cargo_graph.rs",
+      "kind": "test",
+      "owner": "architecture maintainers",
+      "reason": "Test-only architecture checks and fixture support reachable solely through src/lib.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/541"
+    },
+    {
+      "path": "crates/zryna-architecture/src/tests/cargo_process.rs",
+      "kind": "test",
+      "owner": "architecture maintainers",
+      "reason": "Test-only architecture checks and fixture support reachable solely through src/lib.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/541"
+    },
+    {
+      "path": "crates/zryna-architecture/src/tests/controlled_read.rs",
+      "kind": "test",
+      "owner": "architecture maintainers",
+      "reason": "Test-only architecture checks and fixture support reachable solely through src/lib.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/541"
+    },
+    {
+      "path": "crates/zryna-architecture/src/tests/fixtures.rs",
+      "kind": "test",
+      "owner": "architecture maintainers",
+      "reason": "Test-only architecture checks and fixture support reachable solely through src/lib.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/541"
+    },
+    {
+      "path": "crates/zryna-architecture/src/tests/graph_fixtures.rs",
+      "kind": "test",
+      "owner": "architecture maintainers",
+      "reason": "Test-only architecture checks and fixture support reachable solely through src/lib.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/541"
+    },
+    {
+      "path": "crates/zryna-architecture/src/tests/mod.rs",
+      "kind": "test",
+      "owner": "architecture maintainers",
+      "reason": "Test-only architecture checks and fixture support reachable solely through src/lib.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/541"
+    },
+    {
+      "path": "crates/zryna-architecture/src/tests/paths.rs",
+      "kind": "test",
+      "owner": "architecture maintainers",
+      "reason": "Test-only architecture checks and fixture support reachable solely through src/lib.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/541"
+    },
+    {
+      "path": "crates/zryna-architecture/src/tests/scan.rs",
+      "kind": "test",
+      "owner": "architecture maintainers",
+      "reason": "Test-only architecture checks and fixture support reachable solely through src/lib.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/541"
+    },
+    {
+      "path": "crates/zryna-driver/src/diagnostic_sessions/tooling_execution/tests.rs",
+      "kind": "test",
+      "owner": "adapter and driver maintainers",
+      "reason": "Tooling closure tests and fixture support reachable solely through tooling_execution.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/542"
+    },
+    {
+      "path": "crates/zryna-driver/src/distribution/manifest/providers/tests.rs",
+      "kind": "test",
+      "owner": "adapter and driver maintainers",
+      "reason": "Exact provider inventory tests and fixture support reachable solely through providers.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/542"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/arenas.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/diagnostics.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/mod.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/resources.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/source.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/wire.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
     }
   ],
   "exceptions": [],
