@@ -16,7 +16,7 @@ use super::execution_error;
 mod pins;
 mod v4;
 
-pub(super) use v4::V4_MODULES;
+pub(super) use v4::{CapturedV4, V4_MODULES, V4Layout};
 
 use pins::{require_digest, validate_graph};
 
@@ -79,7 +79,7 @@ pub(super) struct CapturedToolingClosure {
     pub(super) limits_v3: CapturedFile,
     pub(super) worker_v4: CapturedFile,
     pub(super) limits_v4: CapturedFile,
-    pub(super) v4_modules: Vec<CapturedFile>,
+    pub(super) v4: CapturedV4,
     pub(super) wrapper_manifest: CapturedFile,
     pub(super) wrapper: CapturedFile,
     pub(super) typescript_manifest: CapturedFile,
@@ -103,7 +103,7 @@ impl CapturedToolingClosure {
         verify_v3_workers(&worker_v3, &limits_v3)?;
         let worker_v4 = capture_file(&bootstrap, &["worker-v4.mjs"], MAX_WORKER_BYTES)?;
         let limits_v4 = capture_file(&bootstrap, &["limits-v4.mjs"], MAX_WORKER_BYTES)?;
-        let v4_modules = v4::capture(&bootstrap, &[], &worker_v4, &limits_v4)?;
+        let v4 = v4::capture_installed(&bootstrap, &worker_v4, &limits_v4)?;
         let wrapper_manifest = capture_file(
             &bootstrap,
             &["node_modules", "@typescript", "typescript6", "package.json"],
@@ -139,7 +139,7 @@ impl CapturedToolingClosure {
             limits_v3,
             worker_v4,
             limits_v4,
-            v4_modules,
+            v4,
             wrapper_manifest,
             wrapper,
             typescript_manifest,
@@ -160,8 +160,7 @@ impl CapturedToolingClosure {
         verify_v3_workers(&worker_v3, &limits_v3)?;
         let worker_v4 = capture_file(&root, WORKER_V4, MAX_WORKER_BYTES)?;
         let limits_v4 = capture_file(&root, LIMITS_V4, MAX_WORKER_BYTES)?;
-        let v4_modules =
-            v4::capture(&root, &WORKER_V4[..WORKER_V4.len() - 1], &worker_v4, &limits_v4)?;
+        let v4 = v4::capture(&root, &WORKER_V4[..WORKER_V4.len() - 1], &worker_v4, &limits_v4)?;
         let wrapper_manifest = capture_file(&root, WRAPPER_MANIFEST, MAX_MANIFEST_BYTES)?;
         let wrapper = capture_file(&root, WRAPPER, MAX_WRAPPER_BYTES)?;
         let typescript_manifest = capture_file(&root, TYPESCRIPT_MANIFEST, MAX_MANIFEST_BYTES)?;
@@ -178,7 +177,7 @@ impl CapturedToolingClosure {
             &typescript,
         ]
         .into_iter()
-        .chain(&v4_modules)
+        .chain(v4.modules())
         .try_fold(0_usize, |total, file| total.checked_add(file.bytes.len()))
         .ok_or_else(|| execution_error("tooling executable closure byte count overflowed"))?;
         if total > MAX_CLOSURE_BYTES {
@@ -203,7 +202,7 @@ impl CapturedToolingClosure {
             limits_v3,
             worker_v4,
             limits_v4,
-            v4_modules,
+            v4,
             wrapper_manifest,
             wrapper,
             typescript_manifest,

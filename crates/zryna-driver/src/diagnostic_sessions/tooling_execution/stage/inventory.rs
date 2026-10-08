@@ -3,10 +3,13 @@ use std::collections::BTreeSet;
 use cap_std::fs::Dir;
 use zryna_diagnostics::Diagnostic;
 
-use super::{super::capture::V4_MODULES, v4};
+use super::{
+    super::capture::{V4_MODULES, V4Layout},
+    v4,
+};
 use super::{MODULES, OLD, OLD_LIB, ROOT, SCOPE, WRAPPER, WRAPPER_LIB, stage_changed};
 
-pub(super) fn cleanup_keys() -> impl Iterator<Item = &'static str> {
+pub(super) fn cleanup_keys(layout: V4Layout) -> impl Iterator<Item = &'static str> {
     [
         "old-runtime",
         "old-manifest",
@@ -19,7 +22,7 @@ pub(super) fn cleanup_keys() -> impl Iterator<Item = &'static str> {
         "worker",
     ]
     .into_iter()
-    .chain(V4_MODULES.iter().map(|module| module.path))
+    .chain(V4_MODULES.iter().filter(move |_| layout == V4Layout::Modular).map(|module| module.path))
 }
 
 pub(super) fn file_key(parent: &str, name: &str) -> Result<&'static str, Diagnostic> {
@@ -57,7 +60,11 @@ pub(super) fn file_name(key: &str) -> &'static str {
     }
 }
 
-pub(super) fn validate_inventory(key: &str, directory: &Dir) -> Result<(), Diagnostic> {
+pub(super) fn validate_inventory(
+    key: &str,
+    directory: &Dir,
+    layout: V4Layout,
+) -> Result<(), Diagnostic> {
     let expected: BTreeSet<String> = match key {
         ROOT => [
             "node_modules",
@@ -66,17 +73,19 @@ pub(super) fn validate_inventory(key: &str, directory: &Dir) -> Result<(), Diagn
             "limits-v3.mjs",
             "worker-v4.mjs",
             "limits-v4.mjs",
-            "v4",
         ]
         .map(str::to_owned)
         .into_iter()
+        .chain((layout == V4Layout::Modular).then(|| "v4".to_owned()))
         .collect(),
         MODULES => ["@typescript"].map(str::to_owned).into_iter().collect(),
         SCOPE => ["old", "typescript6"].map(str::to_owned).into_iter().collect(),
         WRAPPER | OLD => ["lib", "package.json"].map(str::to_owned).into_iter().collect(),
         WRAPPER_LIB | OLD_LIB => ["typescript.js"].map(str::to_owned).into_iter().collect(),
-        v4::V4 => ["boundary", "syntax"].map(str::to_owned).into_iter().collect(),
-        v4::BOUNDARY | v4::SYNTAX => V4_MODULES
+        v4::V4 if layout == V4Layout::Modular => {
+            ["boundary", "syntax"].map(str::to_owned).into_iter().collect()
+        }
+        v4::BOUNDARY | v4::SYNTAX if layout == V4Layout::Modular => V4_MODULES
             .iter()
             .filter(|module| module.directory == key)
             .map(|module| module.name.to_owned())
