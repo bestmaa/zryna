@@ -7,17 +7,7 @@ use zryna_diagnostics::Diagnostic;
 
 use super::{admission_error, wire};
 
-pub(super) const PROVIDERS: [&str; 9] = [
-    "lib/zryna/bootstrap/limits-v3.mjs",
-    "lib/zryna/bootstrap/limits-v4.mjs",
-    "lib/zryna/bootstrap/node_modules/@typescript/old/lib/typescript.js",
-    "lib/zryna/bootstrap/node_modules/@typescript/old/package.json",
-    "lib/zryna/bootstrap/node_modules/@typescript/typescript6/lib/typescript.js",
-    "lib/zryna/bootstrap/node_modules/@typescript/typescript6/package.json",
-    "lib/zryna/bootstrap/worker-v3.mjs",
-    "lib/zryna/bootstrap/worker-v4.mjs",
-    "lib/zryna/bootstrap/worker.mjs",
-];
+pub(super) mod providers;
 
 pub(super) const TEXT: [&str; 9] = [
     "LICENSE",
@@ -118,7 +108,7 @@ impl Distribution {
             return Err(admission_error("complete archive would exceed 512 regular files"));
         }
         let paths = self.files.iter().map(|file| file.path.as_str()).collect::<BTreeSet<_>>();
-        for path in PROVIDERS.into_iter().chain(TEXT).chain([
+        for path in self.provider_paths()?.iter().copied().chain(TEXT).chain([
             self.node_path(),
             "metadata/materials.json",
             "metadata/architecture-receipt.json",
@@ -281,7 +271,7 @@ fn role(path: &str, distribution: &Distribution) -> Result<&'static str, Diagnos
     if path == distribution.node_path() {
         return Ok("runtime");
     }
-    if PROVIDERS.contains(&path) {
+    if distribution.provider_paths()?.contains(&path) {
         return Ok("provider");
     }
     if [
