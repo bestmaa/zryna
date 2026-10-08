@@ -4,8 +4,11 @@ import { runPreflight, validatePreflightCommands } from './run-preflight.mjs';
 
 // Reuse the same size, formatting and boundary authorities before compilation.
 export const BUILD_COMMANDS = Object.freeze([
-  ...['repository-structure', 'rust-format', 'architecture-check'].map(id =>
+  ...['repository-structure', 'rust-format'].map(id =>
     validatePreflightCommands().find(command => command.id === id)),
+  Object.freeze({ id: 'rust-dependency-fetch', executable: 'cargo',
+    args: Object.freeze(['fetch', '--locked']) }),
+  validatePreflightCommands().find(command => command.id === 'architecture-check'),
   Object.freeze({ id: 'rust-workspace-build', executable: 'cargo',
     args: Object.freeze(['build', '--locked', '--workspace']) }),
 ]);

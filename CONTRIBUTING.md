@@ -63,8 +63,8 @@ source files have a hard 300-module-line limit. Physical blank and comment lines
 also counts pinned printer output and meaningful statements/bindings so compression cannot hide size. Existing larger files are recorded at authenticated, frozen migration ceilings and must
 not grow; reductions in the trusted base lower the ceiling. Run `pnpm structure:check` during
 development. Mixed production/test files count in full. This does not limit user-authored `.zry`
-programs. Use `pnpm build` for normal repository compilation: it enforces source size, Rust formatting
-and registered architecture boundaries before the locked workspace build. Bare `cargo build` does
+programs. Use `pnpm build` for normal repository compilation: it checks source size and Rust formatting,
+fetches locked dependencies, then enforces architecture boundaries before the locked workspace build. Bare `cargo build` does
 not run the repository-wide enforcement pipeline.
 The exact coverage, trusted-base selection and exception schema are documented in
 [Strict workspace](docs/STRICT_WORKSPACE.md#source-size-and-navigation-policy).
@@ -107,6 +107,7 @@ Run every required check before submitting a change:
 
 ```bash
 pnpm install --frozen-lockfile
+cargo fetch --locked
 pnpm preflight
 pnpm m0:check
 ```
