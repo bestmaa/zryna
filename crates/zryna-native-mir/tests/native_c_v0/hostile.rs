@@ -2,7 +2,9 @@
 
 use super::capture;
 use zryna_native_c_ir::{contract::*, raw::ValueKind};
-use zryna_native_mir::native_c_v0::{abi::*, lower_unverified, raw::*, verify};
+use zryna_native_mir::native_c_v0::{lower_unverified, raw::*, verify};
+
+mod abi_storage;
 
 fn reject(mutate: impl FnOnce(&mut Program), code: &str) {
     let (_, source) = capture::reference();
@@ -60,59 +62,6 @@ fn altered_values_arguments_and_status_provenance_are_source_rejected() {
     reject(|program| program.functions[0].values[0].kind = ValueKind::I32(999), "ZRYNA-C4106");
     reject(|program| program.functions[0].values[0].status_call = Some(999), "ZRYNA-C4106");
     reject(|program| program.functions[0].values[0].id = 999, "ZRYNA-C4106");
-}
-#[test]
-fn changed_argument_register_width_and_c_spelling_are_abi_rejected() {
-    reject(
-        |program| {
-            program.operations[0].signature.parameters[0].location =
-                Location::Register(Register::R9);
-        },
-        "ZRYNA-C4104",
-    );
-    reject(|program| program.operations[0].signature.parameters[0].bits = 64, "ZRYNA-C4104");
-    reject(
-        |program| program.operations[0].signature.parameters[0].abi = AbiType::CInt,
-        "ZRYNA-C4104",
-    );
-}
-#[test]
-fn incorrect_outgoing_alignment_and_result_lane_are_abi_rejected() {
-    reject(|program| program.operations[0].signature.stack_alignment = 8, "ZRYNA-C4104");
-    reject(|program| program.operations[0].signature.outgoing_bytes = 16, "ZRYNA-C4104");
-    reject(|program| program.operations[0].signature.result = None, "ZRYNA-C4104");
-}
-#[test]
-fn overlapping_or_misaligned_output_slots_and_wrong_frame_size_are_rejected() {
-    reject(
-        |program| {
-            let copied = program
-                .functions
-                .iter_mut()
-                .find(|function| function.name == "copied")
-                .expect("copied");
-            copied.slots[1].offset = 0;
-        },
-        "ZRYNA-C4105",
-    );
-    reject(|program| program.functions[0].slots[0].alignment = 1, "ZRYNA-C4105");
-    reject(|program| program.functions[0].output_frame_bytes = 0, "ZRYNA-C4105");
-}
-#[test]
-fn unzeroed_or_early_initialized_slots_and_missing_zero_actions_are_rejected() {
-    reject(|program| program.functions[0].slots[0].zeroed = false, "ZRYNA-C4105");
-    reject(|program| program.functions[0].slots[0].initialized_at_entry = true, "ZRYNA-C4105");
-    reject(
-        |program| {
-            let effect = program.functions[0]
-                .effects
-                .iter_mut()
-                .find(|effect| matches!(effect.operation, FlowStep::OutputSlot { .. }))
-                .expect("slot");
-            effect.instructions.remove(0);
-        },
-        "ZRYNA-C4106",
-    );
 }
 #[test]
 fn machine_call_operand_order_and_entry_condition_cannot_be_substituted() {

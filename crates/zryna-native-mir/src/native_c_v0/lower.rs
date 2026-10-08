@@ -1,17 +1,16 @@
 //! Machine candidate production. Independent admission never calls this module.
 
-use super::{
-    MirError, VerifiedMirProgram,
-    abi::{Lane, Location, OutputSlot, Register, ResultLane, Signature},
-    raw, require,
-};
+use super::{MirError, VerifiedMirProgram, abi::OutputSlot, raw, require};
 use std::collections::BTreeMap;
 use zryna_native_c_ir::contract::{Binding, Statement};
 use zryna_native_c_ir::{
     VerifiedNativeCProgram,
-    contract::{AbiType, BoundaryCheck, FlowStep, Mode, Operation, PrivatePreparation, ValueType},
+    contract::{AbiType, BoundaryCheck, FlowStep, Mode, PrivatePreparation, ValueType},
     raw::ValueKind,
 };
+
+mod signature;
+use signature::signature;
 
 /// Produces machine claims and invokes mandatory independent verification.
 /// # Errors
@@ -91,58 +90,6 @@ fn overflow() -> MirError {
 fn align(size: u32, alignment: u32) -> Result<u32, MirError> {
     size.checked_add(alignment - 1).map(|size| size / alignment * alignment).ok_or_else(overflow)
 }
-fn signature(operation: &Operation) -> Result<Signature, MirError> {
-    let registers =
-        [Register::Rdi, Register::Rsi, Register::Rdx, Register::Rcx, Register::R8, Register::R9];
-    let mut parameters = Vec::new();
-    for (index, parameter) in operation.parameters.iter().enumerate() {
-        let location = if let Some(register) = registers.get(index) {
-            Location::Register(*register)
-        } else {
-            Location::Stack(
-                u32::try_from(index - 6)
-                    .map_err(|_| overflow())?
-                    .checked_mul(8)
-                    .ok_or_else(overflow)?,
-            )
-        };
-        parameters.push(Lane {
-            abi: parameter.abi,
-            bits: bits(parameter.abi)?,
-            location,
-            canonical_bool: parameter.abi == AbiType::Bool32,
-        });
-    }
-    let result = if operation.result == AbiType::Unit {
-        None
-    } else {
-        Some(ResultLane {
-            abi: operation.result,
-            bits: bits(operation.result)?,
-            canonical_bool: operation.result == AbiType::Bool32,
-        })
-    };
-    let stack = u32::try_from(parameters.len().saturating_sub(6))
-        .map_err(|_| overflow())?
-        .checked_mul(8)
-        .ok_or_else(overflow)?;
-    Ok(Signature { parameters, result, outgoing_bytes: align(stack, 16)?, stack_alignment: 16 })
-}
-fn bits(ty: AbiType) -> Result<u8, MirError> {
-    match ty {
-        AbiType::CI32 | AbiType::CInt | AbiType::Bool32 => Ok(32),
-        AbiType::Count
-        | AbiType::BytesIn
-        | AbiType::BytesOwnedOut
-        | AbiType::CountOut
-        | AbiType::I32Out
-        | AbiType::HandleIn
-        | AbiType::HandleOut
-        | AbiType::BytesRelease => Ok(64),
-        AbiType::Unit => Err(MirError::new("ZRYNA-C4104", "mir-unit-argument")),
-    }
-}
-
 fn lower_function(
     source_function: zryna_native_c_ir::VerifiedFunction<'_>,
     bindings: &[Binding],

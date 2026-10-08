@@ -9,7 +9,9 @@ use super::super::{
 use super::capture;
 
 mod cleanup;
+mod conditional;
 mod hostile;
+mod limits;
 mod storage;
 
 fn reference() -> (capture::Capture, VerifiedForeignBodies, Candidate) {
