@@ -4,6 +4,7 @@ use super::capture;
 use zryna_native_c_ir::{contract::*, raw::ValueKind};
 use zryna_native_mir::native_c_v0::{lower_unverified, raw::*, verify};
 
+#[path = "hostile/abi_storage.rs"]
 mod abi_storage;
 
 fn reject(mutate: impl FnOnce(&mut Program), code: &str) {
