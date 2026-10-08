@@ -219,6 +219,7 @@ export function createProductionProvisioner(injected = {}) {
     const acquired = await implementation.acquireMaterials({
       sourceRoot,
       sourceCommit: source.commit,
+      sourceRef: source.ref,
       target: target.triple,
       archiveCapability,
       spawn,

@@ -15,8 +15,9 @@ use zryna_diagnostics::Diagnostic;
 use super::{capture::CapturedToolingClosure, execution_error};
 
 mod inventory;
+mod v4;
 
-use inventory::{file_name, validate_inventory};
+use inventory::{cleanup_keys, file_key, file_name, validate_inventory};
 
 const MAX_STAGE_NAME_ATTEMPTS: u64 = 64;
 static NEXT_STAGE: AtomicU64 = AtomicU64::new(0);
@@ -47,7 +48,7 @@ struct RetainedFile {
     sha256: [u8; 32],
 }
 
-/// Fixed nine-file stage. Unix owner permissions and Windows inherited private ACLs are trusted.
+/// Fixed authenticated worker/dependency stage. Unix owner permissions and Windows inherited private ACLs are trusted.
 #[derive(Debug)]
 pub(super) struct ToolingStage {
     path: PathBuf,
@@ -140,6 +141,7 @@ impl ToolingStage {
                 "typescript.js",
                 &captured.typescript,
             )?;
+            v4::stage(&mut stage, captured)?;
             seal_directory_states(&mut stage.directories)?;
             #[cfg(target_os = "linux")]
             {
@@ -213,17 +215,7 @@ impl ToolingStage {
     }
 
     fn cleanup(&mut self) {
-        for key in [
-            "old-runtime",
-            "old-manifest",
-            "wrapper-runtime",
-            "wrapper-manifest",
-            "worker-v3",
-            "limits-v3",
-            "worker-v4",
-            "limits-v4",
-            "worker",
-        ] {
+        for key in cleanup_keys() {
             let Some(file) = self.files.remove(key) else { continue };
             let Some(parent) = self.directories.get(file.parent) else { return };
             let Ok(current) = open_regular(&parent.dir, file.name) else { return };
@@ -236,7 +228,9 @@ impl ToolingStage {
                 return;
             }
         }
-        for key in [OLD_LIB, OLD, WRAPPER_LIB, WRAPPER, SCOPE, MODULES] {
+        for key in
+            [v4::SYNTAX, v4::BOUNDARY, v4::V4, OLD_LIB, OLD, WRAPPER_LIB, WRAPPER, SCOPE, MODULES]
+        {
             let Some(directory) = self.directories.remove(key) else { continue };
             let Some(parent_key) = directory.parent else { return };
             let Some(parent) = self.directories.get(parent_key) else { return };
@@ -355,18 +349,7 @@ fn stage_file(
     if state.len() != u64::try_from(captured.bytes.len()).unwrap_or(u64::MAX) {
         return Err(stage_changed());
     }
-    let key = match (parent_key, name) {
-        (ROOT, "worker.mjs") => "worker",
-        (ROOT, "worker-v3.mjs") => "worker-v3",
-        (ROOT, "limits-v3.mjs") => "limits-v3",
-        (ROOT, "worker-v4.mjs") => "worker-v4",
-        (ROOT, "limits-v4.mjs") => "limits-v4",
-        (WRAPPER, "package.json") => "wrapper-manifest",
-        (WRAPPER_LIB, "typescript.js") => "wrapper-runtime",
-        (OLD, "package.json") => "old-manifest",
-        (OLD_LIB, "typescript.js") => "old-runtime",
-        _ => return Err(stage_changed()),
-    };
+    let key = file_key(parent_key, name)?;
     files.insert(
         key,
         RetainedFile { parent: parent_key, name, identity, state, sha256: captured.sha256 },
