@@ -59,14 +59,18 @@ expanding that set. Preserve unrelated work and avoid repository-wide formatting
 rewrites or dependency updates in a behavioral fix.
 
 Prefer small, cohesive modules with explicit ownership and private interfaces. New production
-source files have a hard 500-physical-line limit; 350–500 lines produce a non-blocking cohesion
-review warning. Existing larger files are grandfathered at an authenticated baseline and must
+source files have a hard 300-module-line limit. Physical blank and comment lines count; JS/TS
+also counts pinned printer output and meaningful statements/bindings so compression cannot hide size. Existing larger files are recorded at authenticated, frozen migration ceilings and must
 not grow; reductions in the trusted base lower the ceiling. Run `pnpm structure:check` during
-development. Blank lines and comments count. Mixed production/test files count in full.
+development. Mixed production/test files count in full. This does not limit user-authored `.zry`
+programs. Use `pnpm build` for normal repository compilation: it enforces source size, Rust formatting
+and registered architecture boundaries before the locked workspace build. Bare `cargo build` does
+not run the repository-wide enforcement pipeline.
 The exact coverage, trusted-base selection and exception schema are documented in
 [Strict workspace](docs/STRICT_WORKSPACE.md#source-size-and-navigation-policy).
 
-An exception requires an exact path, responsible owner/team, concrete reason, numeric ceiling,
+Historical physical-size exceptions cannot override the 300-line module limit or raise frozen
+migration ceilings. Their records require an exact path, responsible owner/team, concrete reason, numeric ceiling,
 review reference and UTC expiry date in `scripts/repository-structure-policy.json`. Classifications,
 baseline and exceptions require explicit maintainer review; checker notices do not prove that
 approval occurred. Do not use minification, compressed formatting, arbitrary splitting, duplicated
@@ -116,7 +120,7 @@ main-branch publication supersedes the preceding candidate; release artifacts fo
 separate release retention policy.
 
 Run `pnpm preflight` during the edit loop. It stops at the first portable contract, formatting,
-workspace-check, frontend, or syntax failure and normally reuses warm local build state. It is a
+architecture, workspace-check, frontend, or syntax failure and normally reuses warm local build state. It is a
 fast diagnostic gate, not a substitute for the complete Linux and Windows `pnpm m0:check` proof
 required before merge.
 

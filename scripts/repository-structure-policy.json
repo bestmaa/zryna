@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "anchor": "885bb4d863ad112566add72fab6d2931587b71b1",
   "baseline": [
     {
@@ -2167,5 +2167,1435 @@
       "review": "https://github.com/zryna/zryna/issues/314"
     }
   ],
-  "exceptions": []
+  "exceptions": [],
+  "modules": {
+    "anchor": "0635c19f922f7af61fa1e05b1a632b1013e908e7",
+    "baseline": [
+      {
+        "path": "adapters/typescript-6/src/worker-v3.mjs",
+        "lines": 859,
+        "production": true
+      },
+      {
+        "path": "adapters/typescript-6/src/worker-v4.mjs",
+        "lines": 1489,
+        "production": true
+      },
+      {
+        "path": "adapters/typescript-6/src/worker.mjs",
+        "lines": 1024,
+        "production": true
+      },
+      {
+        "path": "adapters/typescript-6/test/worker-v3.test.mjs",
+        "lines": 729,
+        "production": false
+      },
+      {
+        "path": "adapters/typescript-6/test/worker-v4.test.mjs",
+        "lines": 520,
+        "production": false
+      },
+      {
+        "path": "adapters/typescript-6/test/worker.test.mjs",
+        "lines": 511,
+        "production": false
+      },
+      {
+        "path": "apps/zryna-language-server/src/server.rs",
+        "lines": 500,
+        "production": true
+      },
+      {
+        "path": "apps/zryna-language-server/tests/protocol.rs",
+        "lines": 720,
+        "production": false
+      },
+      {
+        "path": "apps/zryna/src/main.rs",
+        "lines": 465,
+        "production": true
+      },
+      {
+        "path": "apps/zryna/src/project_filesystem.rs",
+        "lines": 475,
+        "production": true
+      },
+      {
+        "path": "apps/zryna/tests/cli.rs",
+        "lines": 2036,
+        "production": false
+      },
+      {
+        "path": "apps/zryna/tests/m2_conformance.rs",
+        "lines": 375,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-abi/src/lib.rs",
+        "lines": 1438,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-architecture/src/lib.rs",
+        "lines": 4136,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-javascript/src/data_ownership_v1/instructions.rs",
+        "lines": 466,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-javascript/src/lib.rs",
+        "lines": 1180,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-native/src/control_flow_v1.rs",
+        "lines": 1253,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-native/src/data_ownership_v1/clone.rs",
+        "lines": 335,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-native/src/data_ownership_v1/lower.rs",
+        "lines": 449,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-native/src/data_ownership_v1/mod.rs",
+        "lines": 444,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-native/src/data_ownership_v1/runtime.rs",
+        "lines": 306,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-native/src/data_ownership_v1/storage.rs",
+        "lines": 415,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-native/src/lib.rs",
+        "lines": 394,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-webassembly/src/component_command/audit.rs",
+        "lines": 329,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-webassembly/src/data_ownership_v1/encode.rs",
+        "lines": 413,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-webassembly/src/data_ownership_v1/encode/operations.rs",
+        "lines": 366,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-webassembly/src/data_ownership_v1/encode/values.rs",
+        "lines": 490,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-webassembly/src/lib.rs",
+        "lines": 1706,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-webassembly/src/scalar_component/mod.rs",
+        "lines": 301,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-webassembly/src/wit_world_audit.rs",
+        "lines": 337,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-backend-webassembly/src/wit_world_audit/pins.rs",
+        "lines": 409,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-diagnostics/src/lib.rs",
+        "lines": 527,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/command_runtime/tests/probe_audit.rs",
+        "lines": 349,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/diagnostic_sessions.rs",
+        "lines": 499,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/diagnostic_sessions/tests/definition.rs",
+        "lines": 378,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/diagnostic_sessions/tooling_compiler.rs",
+        "lines": 386,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/diagnostic_sessions/tooling_execution/capture.rs",
+        "lines": 465,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/diagnostic_sessions/tooling_execution/stage.rs",
+        "lines": 485,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/distribution/manifest.rs",
+        "lines": 338,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/javascript.rs",
+        "lines": 666,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/module_closure.rs",
+        "lines": 996,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/module_closure/entry/native_tests.rs",
+        "lines": 398,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/module_closure_tests.rs",
+        "lines": 649,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/native.rs",
+        "lines": 2696,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/native/ownership.rs",
+        "lines": 459,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/native/ownership/tests.rs",
+        "lines": 401,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/native_activation_parity.rs",
+        "lines": 362,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/ownership_closure.rs",
+        "lines": 384,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/ownership_closure/support.rs",
+        "lines": 316,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/ownership_commands/allocation_core.rs",
+        "lines": 302,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/ownership_commands/conformance.rs",
+        "lines": 346,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/ownership_manifest.rs",
+        "lines": 459,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/ownership_pipeline.rs",
+        "lines": 364,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/ownership_publication.rs",
+        "lines": 321,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/ownership_runtime_v1.rs",
+        "lines": 360,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/package_build/cache.rs",
+        "lines": 500,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/package_build/plan.rs",
+        "lines": 365,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/package_build/publication.rs",
+        "lines": 393,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/package_build/staging.rs",
+        "lines": 458,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/package_build/tests.rs",
+        "lines": 522,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-driver/src/package_build/tests/hostile.rs",
+        "lines": 654,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-driver/src/package_resolution.rs",
+        "lines": 468,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/package_resolution_tests.rs",
+        "lines": 427,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/pipeline.rs",
+        "lines": 2991,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/runtime.rs",
+        "lines": 1043,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/scalar_adapter_interface.rs",
+        "lines": 397,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/server_lifecycle/harness.rs",
+        "lines": 427,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-driver/src/tests.rs",
+        "lines": 1137,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-driver/src/workspace_source.rs",
+        "lines": 953,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/lib.rs",
+        "lines": 846,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_lexer.rs",
+        "lines": 395,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser.rs",
+        "lines": 379,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser/depth/shapes.rs",
+        "lines": 308,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser/expression.rs",
+        "lines": 409,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser/rejection.rs",
+        "lines": 365,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser/v2_recovery.rs",
+        "lines": 304,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser/v3/straight_line.rs",
+        "lines": 434,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser/v3/straight_line/blocks.rs",
+        "lines": 348,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser/v4.rs",
+        "lines": 465,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser/v4/functions.rs",
+        "lines": 463,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser/v4/functions/constructions.rs",
+        "lines": 393,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/native_parser/v4/functions/expression.rs",
+        "lines": 441,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/src/worker.rs",
+        "lines": 2212,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/tests/native_lexer.rs",
+        "lines": 485,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/tests/native_parser_parity.rs",
+        "lines": 387,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/tests/native_parser_v2.rs",
+        "lines": 393,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/tests/native_parser_v4_data.rs",
+        "lines": 326,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-frontend/tests/worker_process.rs",
+        "lines": 761,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-ir/src/control_flow_v1.rs",
+        "lines": 2163,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ir/src/control_flow_v1/tests.rs",
+        "lines": 1438,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1.rs",
+        "lines": 6210,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/generic_clone.rs",
+        "lines": 313,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/handle_aware_clone.rs",
+        "lines": 403,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests.rs",
+        "lines": 11321,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/generic_recursive_composition.rs",
+        "lines": 317,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/indexed_borrow_copy_refinement.rs",
+        "lines": 308,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/indexed_borrow_fixture.rs",
+        "lines": 380,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/indexed_borrow_owned.rs",
+        "lines": 322,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/mixed_constructor_authority.rs",
+        "lines": 345,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/mixed_enum_authority.rs",
+        "lines": 307,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/named_import_function_ids.rs",
+        "lines": 308,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/named_import_function_ids/owned_call_closure.rs",
+        "lines": 336,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/nonindexed_projection_call_scope.rs",
+        "lines": 414,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/shared_weak_authority.rs",
+        "lines": 383,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ir/src/data_ownership_v1/tests/shared_weak_authority/fixtures.rs",
+        "lines": 369,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ir/src/lib.rs",
+        "lines": 1186,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-layout/src/lib.rs",
+        "lines": 2091,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-layout/src/tests.rs",
+        "lines": 1177,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-native-mir/src/control_flow_v1.rs",
+        "lines": 2973,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-native-mir/src/data_ownership_v1/lower.rs",
+        "lines": 488,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-native-mir/src/data_ownership_v1/mod.rs",
+        "lines": 418,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-native-mir/src/data_ownership_v1/verify.rs",
+        "lines": 470,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-native-mir/src/data_ownership_v1/verify/operation/types.rs",
+        "lines": 334,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-native-mir/src/lib.rs",
+        "lines": 1353,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ownership-runtime-abi/src/control_model/tests.rs",
+        "lines": 341,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ownership-runtime-abi/src/lib.rs",
+        "lines": 2509,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-ownership-runtime-abi/src/tests.rs",
+        "lines": 1853,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-package/src/resolver.rs",
+        "lines": 422,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-package/tests/resolution.rs",
+        "lines": 332,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/control_flow_v1.rs",
+        "lines": 2779,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1.rs",
+        "lines": 386,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/borrow_call_preflight.rs",
+        "lines": 449,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/borrow_call_resources.rs",
+        "lines": 375,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/copy_enum_match.rs",
+        "lines": 338,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/function_dispatch.rs",
+        "lines": 482,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/global_resource_limits.rs",
+        "lines": 416,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/layout_graph.rs",
+        "lines": 454,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/assignment_planning/source.rs",
+        "lines": 306,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/constructor_preparation.rs",
+        "lines": 497,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/driver.rs",
+        "lines": 372,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/indexed_vec_preparation.rs",
+        "lines": 382,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/partial_transfers.rs",
+        "lines": 347,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/preparation_call_consumption.rs",
+        "lines": 314,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/preparation_call_scope.rs",
+        "lines": 304,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/preparation_execution.rs",
+        "lines": 369,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/preparation_operations.rs",
+        "lines": 370,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/preparation_value.rs",
+        "lines": 321,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/shape.rs",
+        "lines": 301,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/statements.rs",
+        "lines": 484,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_aggregate_lowering/structured_cfg.rs",
+        "lines": 357,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_cfg_state.rs",
+        "lines": 480,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_control_flow_resources.rs",
+        "lines": 364,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_enum_payload_move.rs",
+        "lines": 477,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_lowering_resources.rs",
+        "lines": 353,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_root_borrow_planning.rs",
+        "lines": 349,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_string_lowering/assignments.rs",
+        "lines": 313,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_string_lowering/branches.rs",
+        "lines": 338,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_string_lowering/driver.rs",
+        "lines": 335,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_string_lowering/expressions_and_calls.rs",
+        "lines": 317,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_string_lowering/loops.rs",
+        "lines": 353,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_vec_lowering/assignments_and_effects.rs",
+        "lines": 371,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_vec_lowering/branches.rs",
+        "lines": 314,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_vec_lowering/driver.rs",
+        "lines": 393,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_vec_lowering/expressions_and_calls.rs",
+        "lines": 386,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/owned_vec_lowering/preparation.rs",
+        "lines": 361,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/root_borrow_arm_planning.rs",
+        "lines": 492,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/root_borrow_function_lowering.rs",
+        "lines": 331,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/root_borrow_shape_planning.rs",
+        "lines": 346,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/root_borrow_straight_planning.rs",
+        "lines": 308,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/root_borrow_value_planning.rs",
+        "lines": 407,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/string_vec_resource_estimates.rs",
+        "lines": 347,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests.rs",
+        "lines": 522,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/active_enum_payload_borrow_fixture.rs",
+        "lines": 328,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/aggregate_constructor_envelope.rs",
+        "lines": 355,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/aggregate_projection_budgets.rs",
+        "lines": 377,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/aggregate_resource_decisions.rs",
+        "lines": 359,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/aggregate_root_assignment.rs",
+        "lines": 365,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/aggregate_root_assignment_fixture_support.rs",
+        "lines": 455,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/borrow_forwarding_calls.rs",
+        "lines": 316,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/borrow_parameter_calls.rs",
+        "lines": 422,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/cfg_validation.rs",
+        "lines": 408,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/conditional_root_borrows.rs",
+        "lines": 458,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/constructor_plans.rs",
+        "lines": 441,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/constructor_preparation_consumption.rs",
+        "lines": 367,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/continued_indexed_source.rs",
+        "lines": 397,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/copy_calls.rs",
+        "lines": 355,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/copy_match_expression_fixture.rs",
+        "lines": 351,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/derived_value_budgets.rs",
+        "lines": 485,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/explicit_indexed_builder.rs",
+        "lines": 348,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/explicit_indexed_effect_fixture.rs",
+        "lines": 329,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/expression_preflight.rs",
+        "lines": 492,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/fault_oracle_support.rs",
+        "lines": 440,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/fixed_array_partial_fixture_support.rs",
+        "lines": 489,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/fixed_arrays.rs",
+        "lines": 436,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/fresh_indexed_match_fixture.rs",
+        "lines": 315,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/function_catalog.rs",
+        "lines": 324,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/generic_static_fixture.rs",
+        "lines": 421,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/generic_vec_fixture.rs",
+        "lines": 465,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/generic_vec_resources.rs",
+        "lines": 317,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/imported_owned_signatures.rs",
+        "lines": 448,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/lexical_borrow_calls.rs",
+        "lines": 337,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/loop_fixture_support.rs",
+        "lines": 440,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/mixed_local_construction.rs",
+        "lines": 324,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/mixed_root_replacement_builder.rs",
+        "lines": 322,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/mixed_unknown_projected.rs",
+        "lines": 382,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/mixed_zero_array_vec.rs",
+        "lines": 366,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/named_import_boundaries.rs",
+        "lines": 469,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/named_import_calls.rs",
+        "lines": 464,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/nested_mixed_construction.rs",
+        "lines": 382,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/nested_partial_transfer_fixture_support.rs",
+        "lines": 369,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/nonindexed_owned_borrow.rs",
+        "lines": 366,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/nonindexed_static_owned_borrow.rs",
+        "lines": 439,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/operand_projection_tests.rs",
+        "lines": 374,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/owned_cleanup_recipes.rs",
+        "lines": 366,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/owned_fault_oracles.rs",
+        "lines": 455,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/owned_root_borrow_boundary_fixture_support.rs",
+        "lines": 480,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/owned_root_borrow_reads.rs",
+        "lines": 452,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/partial_assignment_fixture_support.rs",
+        "lines": 452,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/partial_struct_transfers.rs",
+        "lines": 459,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/private_aggregate_lowering.rs",
+        "lines": 531,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/private_loop_cleanup_budgets.rs",
+        "lines": 336,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/private_loop_core.rs",
+        "lines": 386,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/private_string_if.rs",
+        "lines": 497,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/private_string_mutation_loop.rs",
+        "lines": 393,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/private_vec_if.rs",
+        "lines": 391,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/projected_aggregate_assignments.rs",
+        "lines": 430,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/projected_aggregate_fixture_support.rs",
+        "lines": 415,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/projected_string_assignment.rs",
+        "lines": 331,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/projected_string_assignment_fixture_support.rs",
+        "lines": 339,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/recursive_cleanup_witness.rs",
+        "lines": 308,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/shared_weak_composition_fixture.rs",
+        "lines": 474,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/shared_weak_fixture.rs",
+        "lines": 325,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/shared_weak_source.rs",
+        "lines": 380,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/straight_root_borrows.rs",
+        "lines": 507,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/string_assignment.rs",
+        "lines": 382,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/string_call_fixture_support.rs",
+        "lines": 445,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/string_call_validation.rs",
+        "lines": 351,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/structured_cfg_resources.rs",
+        "lines": 490,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/structured_match_complete_fixture.rs",
+        "lines": 496,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/structured_match_complete_source.rs",
+        "lines": 313,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/structured_match_fixture.rs",
+        "lines": 406,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/structured_match_source.rs",
+        "lines": 334,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/structured_owned_fixture.rs",
+        "lines": 400,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/structured_payload_cfg.rs",
+        "lines": 368,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/structured_payload_cfg_fixture.rs",
+        "lines": 342,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/terminal_owned_if.rs",
+        "lines": 475,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/vec_call_fixture_support.rs",
+        "lines": 445,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/vec_calls.rs",
+        "lines": 376,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/vec_clone_budgets.rs",
+        "lines": 359,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/vec_clone_core.rs",
+        "lines": 302,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/vec_fixture_support.rs",
+        "lines": 305,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/vec_nested_preflight.rs",
+        "lines": 347,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/vec_order_controls.rs",
+        "lines": 457,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/vec_validation.rs",
+        "lines": 398,
+        "production": false
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/weak_upgrade_composition_fixture.rs",
+        "lines": 394,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/tests/weak_upgrade_fixture.rs",
+        "lines": 324,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/data_ownership_v1/type_model.rs",
+        "lines": 415,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-semantics/src/lib.rs",
+        "lines": 507,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-source/src/lib.rs",
+        "lines": 964,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-syntax/src/v2.rs",
+        "lines": 2203,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-syntax/src/v3.rs",
+        "lines": 3464,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-syntax/src/v4.rs",
+        "lines": 3807,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-windows-filesystem/src/windows.rs",
+        "lines": 350,
+        "production": true
+      },
+      {
+        "path": "crates/zryna-windows-filesystem/tests/windows.rs",
+        "lines": 302,
+        "production": true
+      },
+      {
+        "path": "editors/vscode-zryna/src/extension.cjs",
+        "lines": 306,
+        "production": true
+      },
+      {
+        "path": "editors/vscode-zryna/test/extension.test.cjs",
+        "lines": 370,
+        "production": true
+      },
+      {
+        "path": "runtime/native/ownership_runtime_v1.c",
+        "lines": 590,
+        "production": true
+      },
+      {
+        "path": "scripts/build-plan/validate.mjs",
+        "lines": 376,
+        "production": true
+      },
+      {
+        "path": "scripts/check-m2-conformance.mjs",
+        "lines": 475,
+        "production": true
+      },
+      {
+        "path": "scripts/check-m3-contract.mjs",
+        "lines": 672,
+        "production": true
+      },
+      {
+        "path": "scripts/check-provider-conformance-v4.mjs",
+        "lines": 367,
+        "production": true
+      },
+      {
+        "path": "scripts/distribution-release/create-source-build-receipt.mjs",
+        "lines": 311,
+        "production": true
+      },
+      {
+        "path": "scripts/distribution-release/prepare-release-evidence.mjs",
+        "lines": 403,
+        "production": true
+      },
+      {
+        "path": "scripts/distribution-release/publish-draft-release.mjs",
+        "lines": 394,
+        "production": true
+      },
+      {
+        "path": "scripts/distribution-release/run-protected-build.mjs",
+        "lines": 333,
+        "production": true
+      },
+      {
+        "path": "scripts/distribution/npm-materials.mjs",
+        "lines": 338,
+        "production": true
+      },
+      {
+        "path": "scripts/distribution/provision-release.mjs",
+        "lines": 369,
+        "production": true
+      },
+      {
+        "path": "scripts/docs/bundle.mjs",
+        "lines": 372,
+        "production": true
+      },
+      {
+        "path": "scripts/lib/check-m3-borrow-call-conformance.mjs",
+        "lines": 422,
+        "production": true
+      },
+      {
+        "path": "scripts/run-m0-conformance.mjs",
+        "lines": 381,
+        "production": true
+      },
+      {
+        "path": "scripts/structure/unsafe-rust.mjs",
+        "lines": 359,
+        "production": true
+      },
+      {
+        "path": "tests/ci-gate-cases.mjs",
+        "lines": 500,
+        "production": false
+      },
+      {
+        "path": "tests/distribution-release-producers.test.mjs",
+        "lines": 377,
+        "production": true
+      },
+      {
+        "path": "tests/distribution-release-v1.test.mjs",
+        "lines": 323,
+        "production": true
+      },
+      {
+        "path": "tests/docs-bundle.test.mjs",
+        "lines": 489,
+        "production": false
+      },
+      {
+        "path": "tests/m3-contract.test.mjs",
+        "lines": 836,
+        "production": false
+      },
+      {
+        "path": "tests/m3-issue-graph-cases.mjs",
+        "lines": 471,
+        "production": false
+      },
+      {
+        "path": "tests/package-release-v1/validation.test.mjs",
+        "lines": 320,
+        "production": true
+      },
+      {
+        "path": "tests/package-source-trust.test.mjs",
+        "lines": 316,
+        "production": true
+      },
+      {
+        "path": "tests/release-evidence.test.mjs",
+        "lines": 497,
+        "production": true
+      },
+      {
+        "path": "tests/release-production-candidate.test.mjs",
+        "lines": 302,
+        "production": true
+      },
+      {
+        "path": "tests/release-workflow.test.mjs",
+        "lines": 330,
+        "production": true
+      },
+      {
+        "path": "tests/repository-structure.test.mjs",
+        "lines": 381,
+        "production": false
+      },
+      {
+        "path": "tests/resolved-build-plan-v0.test.mjs",
+        "lines": 439,
+        "production": true
+      },
+      {
+        "path": "tests/workflow-routing.test.mjs",
+        "lines": 360,
+        "production": true
+      }
+    ]
+  }
 }
