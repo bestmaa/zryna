@@ -2249,6 +2249,48 @@
       "owner": "adapter and driver maintainers",
       "reason": "Exact provider inventory tests and fixture support reachable solely through providers.rs #[cfg(test)] mod tests",
       "review": "https://github.com/zryna/zryna/pull/542"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/arenas.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/diagnostics.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/mod.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/resources.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/source.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-syntax/src/v4/tests/wire.rs",
+      "kind": "test",
+      "owner": "syntax maintainers",
+      "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
+      "review": "https://github.com/zryna/zryna/pull/544"
     }
   ],
   "exceptions": [],
