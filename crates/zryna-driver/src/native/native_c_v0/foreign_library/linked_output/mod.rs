@@ -9,6 +9,7 @@ mod elf;
 mod export;
 mod process;
 mod producer;
+mod runtime_object;
 mod staging;
 #[cfg(test)]
 mod tests;

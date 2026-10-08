@@ -88,6 +88,9 @@ pub(crate) fn observe(
     {
         return Err(rejected().into());
     }
+    if let Some(runtime) = runtime {
+        runtime_object::check(requirements, &runtime.bytes)?;
+    }
     // Match the existing fixture client policy; oracle helpers need not all be referenced.
     // Foreign and private-runtime compilation retain their strict warning policy.
     let mut completed = vec![foreign.invocation.clone()];
