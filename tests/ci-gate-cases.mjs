@@ -446,15 +446,17 @@ test('routing preserves all other pinned workflow authority', () => {
   bootstrapOrder(workflow, packageDocument);
   const original = withoutWindowsProviderBudget(withoutWindowsRustBudget(workflow));
   const editorIndex = original.jobs.rust.steps.findIndex(step => step.name === "Verify and package editor client");
+  const packageSteps = original.jobs['package-release-contract'].steps;
+  const buildPlanIndex = packageSteps.findIndex(step => step.run === 'pnpm package:contract') + 1;
+  assert.deepEqual(packageSteps[buildPlanIndex], { run: 'pnpm build-plan:contract' });
+  packageSteps.splice(buildPlanIndex, 1);
   assert(editorIndex >= 0);
   assert.deepEqual(original.jobs.rust.steps[editorIndex], {
     name: "Verify and package editor client", run: "pnpm editor:check\npnpm editor:package\n",
   });
   assert.equal(original.jobs.rust.steps[editorIndex + 1].run, "node scripts/run-m0-conformance.mjs");
   original.jobs.rust.steps.splice(editorIndex, 1);
-  assert.deepEqual(original.env, {
-    ZRYNA_STRUCTURE_BASE: "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || inputs.structure_base }}",
-  });
+  assert.deepEqual(original.env, { ZRYNA_STRUCTURE_BASE: "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || inputs.structure_base }}" });
   delete original.env;
   for (const job of Object.values(original.jobs)) {
     for (const step of job.steps) {
@@ -490,9 +492,7 @@ test('routing preserves all other pinned workflow authority', () => {
   original.jobs.adapter.steps[0].run = 'test "$PLATFORM_RESULT" = success';
   function canonical(value) {
     if (Array.isArray(value)) return value.map(canonical);
-    if (value !== null && typeof value === 'object') return Object.fromEntries(
-      Object.keys(value).sort().map(key => [key, canonical(value[key])]),
-    );
+    if (value !== null && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])]));
     return value;
   }
   const digest = createHash('sha256').update(JSON.stringify(canonical(original))).digest('hex');

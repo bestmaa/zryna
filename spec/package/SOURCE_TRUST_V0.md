@@ -29,10 +29,22 @@ tools, compiles, links, verifies cache outputs and performs create-only atomic p
 Do not add fields to #168's closed v1 records to carry this draft. Any policy evidence extension
 needs its own reviewed version under that serialization authority. Native recipes remain
 unavailable until the optional #361 appendix and relevant #364 decisions are accepted; they do
-not block source-only acceptance. That appendix is provisional-pending-364: only its relevant
-ABI, calling-convention, carrier, ownership and runtime decisions plus this policy are required
+not block source-only acceptance. The historical appendix is provisional-pending-364; only
+its relevant ABI, calling-convention, carrier, ownership and runtime decisions plus this policy are required
 before native acquisition/execution, not completion of all M7 work. M6 playground consumers refer
 to this policy without moving playground implementation into M5.
+
+The subsequently specified #364 tuple does not retroactively accept #361's native appendix.
+The [prospective D2 successor](RESOLVED_BUILD_PLAN_V0.md#proposed-d2-native-c-v0-alignment) retains
+`proposed-specified-native-c-interop-v0` with `denied-proposed` admission and defines the explicit
+specification-only `specified-native-c-interop-v0` state with `denied-specified` admission. Its
+independent approval and integration remain pending in the separate factual decision record.
+No legacy or proposed row automatically upgrades. Neither receipt, status text, matching runtime
+tuple nor the synthetic fixture's digest authenticates artifact bytes or grants acquisition,
+execution, cache reuse, linking, publication or trust exceptions. Runtime contract compatibility
+and retained artifact bytes require separate authentic evidence; exact operator approval, #417
+conformance, isolation and #168 evidence remain additional requirements. Default recipe execution
+stays denied. Source-only identity and cache behavior are unchanged.
 
 ### Identity mapping
 

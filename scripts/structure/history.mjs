@@ -1,5 +1,5 @@
 import { POLICY_PATH, fail, physicalLines, validatePolicy } from './policy.mjs';
-import { blobs, commit, git, source, tree } from './repository.mjs';
+import { blobs, commit, git, legacySource, source, tree } from './repository.mjs';
 
 // Once adopted, the policy in the independently selected trusted base authenticates
 // its immutable inventory. A squash need not retain the original bootstrap objects.
@@ -39,7 +39,7 @@ export function history(root, comparison, head, policy, trustedPolicy) {
     .map(([, entry]) => entry));
   if (!trustedPolicy) {
     const excluded = new Set(policy.classifications.map(entry => entry.path));
-    const inventory = [...original.entries()].filter(([path, entry]) => source(path)
+    const inventory = [...original.entries()].filter(([path, entry]) => legacySource(path)
       && historical.has(entry.hash) && physicalLines(historical.get(entry.hash)) > 500)
       .map(([path, entry]) => ({ path, lines: physicalLines(historical.get(entry.hash)), production: !excluded.has(path) }));
     if (JSON.stringify(policy.baseline) !== JSON.stringify(inventory)) {
