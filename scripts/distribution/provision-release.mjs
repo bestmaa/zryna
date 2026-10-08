@@ -5,7 +5,7 @@ import {
 import { isAbsolute, join, resolve } from 'node:path';
 import { canonicalBounded, sha256 } from '../distribution-release/canonical.mjs';
 import { recipeTarget, replaceTokens } from './provision/recipe.mjs';
-import { validateSourceBuildReceiptText } from '../distribution-release/validate-source-build-receipt.mjs';
+import { productionArchitecture, toolchains } from './provision/evidence.mjs';
 
 const MAX_BINARY = 256 * 1024 * 1024;
 const MAX_OUTPUT = 16 * 1024 * 1024;
@@ -23,41 +23,6 @@ function samePath(left, right, platform) {
 
 function cloneFiles(files) {
   return files.map(({ path, mode, data }) => ({ path, mode, data: Buffer.from(data) }));
-}
-
-function productionArchitecture(bytes, source) {
-  if (!Buffer.isBuffer(bytes)) reject('source architecture receipt bytes are missing');
-  const receipt = validateSourceBuildReceiptText(bytes.toString('utf8'));
-  if (receipt.source.repository !== source.repository || receipt.source.commit !== source.commit
-    || receipt.source.tree !== source.tree) reject('source architecture identity differs');
-  const observation = {
-    command: receipt.command,
-    inputs: receipt.inputs,
-    report: receipt.report,
-    toolchain: receipt.toolchain,
-  };
-  return {
-    receipt,
-    qualificationBytes: Buffer.from(`${canonicalBounded({
-      format: 'zryna.release-qualification-architecture.v1',
-      status: 'provisional-candidate',
-      productionAdmission: 'forbidden',
-      source: { ...receipt.source, ref: 'refs/heads/main' },
-      ...observation,
-    })}\n`),
-  };
-}
-
-function toolchains(observed, architectureBytes) {
-  const evidence = sha256(architectureBytes);
-  return observed.toolchains.map((record) => ({
-    name: record.name,
-    version: record.version,
-    origin: record.origin,
-    sha256: record.sha256,
-    signatureEvidenceSha256: record.name === 'node'
-      ? record.observationEvidenceSha256 : evidence,
-  }));
 }
 
 function directTool(path, record, system) {
