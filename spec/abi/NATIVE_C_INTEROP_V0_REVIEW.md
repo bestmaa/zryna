@@ -164,10 +164,10 @@ IR/MIR implementation, policy admission, linking, FFI conformance and public sup
 
 ### Prospective D2 native-appendix-contract decision
 
-This is a pending repository decision record, not a maintainer sign-off or executed-conformance
-receipt. The parent reports an independent read-only review of the exact predecessor below found
-no substantive contract defect. That report does not approve this successor. Unknown reviewer
-identity and missing approval/integration outcomes remain pending until genuine results exist.
+This records the genuine user authorization and parent-reported independent review below, not
+executed conformance or a completed repository integration. The earlier predecessor review and
+the reviewed successor remain distinct. Reviewer identity was not supplied and is not inferred.
+Current-main requalification, changed-layout review and the actual merge revision remain pending.
 
 | Decision input or outcome | Recorded fact or pending requirement |
 | --- | --- |
@@ -176,12 +176,12 @@ identity and missing approval/integration outcomes remain pending until genuine 
 | Predecessor source tree | `d7afa01f528d9d6ecf3bec13cf380823041fe477` |
 | Locally checked predecessor before app publication | `2edb601eff7670606058532600d0ce5d127ab884`, identical source tree; not the published revision |
 | Accepted #364 specification reference | [PR #504](https://github.com/zryna/zryna/pull/504), reviewed head `bb92f44e1c1de2637163f7deb25a8c157cad6d29`, normal integration `65be51f6e1916ee8677d1cbf536ce2a8caf774a4` |
-| Successor revision under review | Pending; exact immutable candidate head/tree must be recorded in its independent review and PR evidence |
-| Independent successor reviewer identity and disposition | Pending; do not infer identity or approval from authorship, tests or predecessor review |
-| Linux/Windows build-plan contract receipts | Pending genuine exact-revision runs, including both D2 states and negative cases |
-| Repository approval decision | Pending real independent outcome; no retroactive PR #393 native approval |
+| Independently reviewed successor | Parent reports no substantive contract/guard defect at head `be289c2793e4e42ec30831937861cdb8d533c3e3`, tree `6f70a527de95ea2d8f573867f3f0e200686a98ea`; [factual handoff](https://github.com/zryna/zryna/issues/417#issuecomment-5993791999). Current-main integration and necessary private extractions require their own exact-head receipts and delta review |
+| Independent successor reviewer identity and disposition | Identity not supplied; parent-reported disposition above is no substantive defect. No identity or formal repository review submission is inferred from authorship or passing tests |
+| Historical Linux/Windows build-plan receipts | Both hosts executed all 16 cases, including both D2 states and negatives, for workflow head `be289c2793e4e42ec30831937861cdb8d533c3e3` at test merge `d20f00c171536da2f334619bc885a4adf1387300`, whose complete tree equals the reviewed successor tree. [CI run](https://github.com/zryna/zryna/actions/runs/37297956313). These historical receipts do not qualify a new integration head |
+| Repository approval decision | User explicitly authorized Ready and normal merge in the parent conversation on 2026-10-08; parent Ready action was confirmed at 17:41 UTC. Approval is for this specification-only prerequisite, subject to current-base tests and review; no retroactive PR #393 native approval or execution admission |
 | Normal integration revision | Pending actual integration; no merge or issue closure recorded here |
-| Effective specification disposition | Pending approval and normal integration; this candidate remains prospective |
+| Effective specification disposition | Normal integration and final candidate qualification remain pending; user authorization and Ready status do not themselves complete integration |
 
 The successor review must check the identical fixed ABI tuple and closed constraints in both new
 states, string/numeric wire-type boundaries, unchanged source-only canonical bytes/key/receipt,
