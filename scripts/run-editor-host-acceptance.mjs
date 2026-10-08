@@ -9,7 +9,10 @@ import { downloadAndUnzipVSCode } from '@vscode/test-electron';
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const extension = join(root, 'editors', 'vscode-zryna');
 const runner = join(extension, 'test', 'host-runner');
-const [setupArg, digest, ...rest] = process.argv.slice(2);
+const args = process.argv.slice(2);
+// pnpm forwards the documented argument separator to the script.
+if (args[0] === '--') args.shift();
+const [setupArg, digest, ...rest] = args;
 const prepareTrust = rest.includes('--prepare-trust');
 const executables = rest.filter(item => item !== '--prepare-trust');
 if (!setupArg || !/^[a-f0-9]{64}$/.test(digest ?? '') || executables.length > 1) {
