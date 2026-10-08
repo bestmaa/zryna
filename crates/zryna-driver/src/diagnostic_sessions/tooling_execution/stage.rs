@@ -12,7 +12,10 @@ use same_file::Handle;
 use sha2::{Digest, Sha256};
 use zryna_diagnostics::Diagnostic;
 
-use super::{capture::CapturedToolingClosure, execution_error};
+use super::{
+    capture::{CapturedToolingClosure, V4Layout},
+    execution_error,
+};
 
 mod inventory;
 mod v4;
@@ -51,6 +54,7 @@ struct RetainedFile {
 /// Fixed authenticated worker/dependency stage. Unix owner permissions and Windows inherited private ACLs are trusted.
 #[derive(Debug)]
 pub(super) struct ToolingStage {
+    v4_layout: V4Layout,
     path: PathBuf,
     worker: PathBuf,
     working_directory: PathBuf,
@@ -60,6 +64,7 @@ pub(super) struct ToolingStage {
 
 impl ToolingStage {
     pub(super) fn create(captured: &CapturedToolingClosure) -> Result<Self, Diagnostic> {
+        let v4_layout = v4::layout(&captured.v4)?;
         let (path, root) = create_root()?;
         let mut directories = BTreeMap::new();
         let retained = match retained_root(root) {
@@ -71,6 +76,7 @@ impl ToolingStage {
         };
         directories.insert(ROOT, retained);
         let mut stage = Self {
+            v4_layout,
             working_directory: path.clone(),
             worker: path.join("worker.mjs"),
             path,
@@ -198,7 +204,7 @@ impl ToolingStage {
             {
                 return Err(stage_changed());
             }
-            validate_inventory(key, &directory.dir)?;
+            validate_inventory(key, &directory.dir, self.v4_layout)?;
         }
         for file in self.files.values() {
             let parent = self.directories.get(file.parent).ok_or_else(stage_changed)?;
@@ -215,7 +221,7 @@ impl ToolingStage {
     }
 
     fn cleanup(&mut self) {
-        for key in cleanup_keys() {
+        for key in cleanup_keys(self.v4_layout) {
             let Some(file) = self.files.remove(key) else { continue };
             let Some(parent) = self.directories.get(file.parent) else { return };
             let Ok(current) = open_regular(&parent.dir, file.name) else { return };

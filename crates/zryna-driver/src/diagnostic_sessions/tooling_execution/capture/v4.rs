@@ -5,6 +5,55 @@ use zryna_diagnostics::Diagnostic;
 
 use super::{CapturedFile, MAX_WORKER_BYTES, capture_file, execution_error, open_dir};
 
+// Exact worker previously pinned by this build and shipped in v0.2.3; installed only.
+const LEGACY_WORKER_SHA256: [u8; 32] = [
+    0x80, 0xce, 0xea, 0x20, 0xee, 0x79, 0x53, 0xa1, 0xeb, 0x8f, 0x85, 0xa4, 0x72, 0x40, 0x75, 0xa6,
+    0xec, 0x80, 0x19, 0x83, 0xce, 0xb1, 0x6e, 0xe8, 0x37, 0x52, 0x31, 0x3b, 0xb3, 0x74, 0x0a, 0x8a,
+];
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in super::super) enum V4Layout {
+    Legacy,
+    Modular,
+}
+
+pub(in super::super) enum CapturedV4 {
+    Legacy,
+    Modular(Vec<CapturedFile>),
+}
+
+impl CapturedV4 {
+    pub(in super::super) fn modules(&self) -> &[CapturedFile] {
+        match self {
+            Self::Legacy => &[],
+            Self::Modular(modules) => modules,
+        }
+    }
+}
+
+pub(super) fn capture_installed(
+    bootstrap: &Dir,
+    worker: &CapturedFile,
+    limits: &CapturedFile,
+) -> Result<CapturedV4, Diagnostic> {
+    verify_limits(limits)?;
+    if worker.sha256 == LEGACY_WORKER_SHA256 {
+        // A legacy worker never imports a module tree. Reject mixed forms, even empty trees.
+        return match bootstrap.symlink_metadata("v4") {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(CapturedV4::Legacy),
+            _ => Err(execution_error("protocol-v4 installed tooling closure mixes worker forms")),
+        };
+    }
+    capture(bootstrap, &[], worker, limits)
+}
+
+fn verify_limits(limits: &CapturedFile) -> Result<(), Diagnostic> {
+    if limits.bytes != include_bytes!("../../../../../../adapters/typescript-6/src/limits-v4.mjs") {
+        return Err(execution_error("protocol-v4 tooling worker differs from this tooling build"));
+    }
+    Ok(())
+}
+
 pub(in super::super) struct V4Module {
     pub(in super::super) path: &'static str,
     pub(in super::super) directory: &'static str,
@@ -56,11 +105,9 @@ pub(super) fn capture(
     prefix: &[&str],
     worker: &CapturedFile,
     limits: &CapturedFile,
-) -> Result<Vec<CapturedFile>, Diagnostic> {
-    if worker.bytes != include_bytes!("../../../../../../adapters/typescript-6/src/worker-v4.mjs")
-        || limits.bytes
-            != include_bytes!("../../../../../../adapters/typescript-6/src/limits-v4.mjs")
-    {
+) -> Result<CapturedV4, Diagnostic> {
+    verify_limits(limits)?;
+    if worker.bytes != include_bytes!("../../../../../../adapters/typescript-6/src/worker-v4.mjs") {
         return Err(execution_error("protocol-v4 tooling worker differs from this tooling build"));
     }
     let source = open_dir(root, prefix)?;
@@ -82,5 +129,5 @@ pub(super) fn capture(
         }
         modules.push(file);
     }
-    Ok(modules)
+    Ok(CapturedV4::Modular(modules))
 }

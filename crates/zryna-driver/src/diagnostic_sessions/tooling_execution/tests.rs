@@ -295,6 +295,17 @@ fn capture_rejects_each_missing_or_changed_v4_module() {
 }
 
 #[test]
+fn source_capture_never_selects_the_historical_installed_form() {
+    let fixture = CompilerFixture::create();
+    fs::write(
+        fixture.root.join("adapters/typescript-6/src/worker-v4.mjs"),
+        super::installed_tests::legacy_worker(),
+    )
+    .expect("historical source fixture");
+    assert!(CapturedToolingClosure::capture(&fixture.root).is_err());
+}
+
+#[test]
 fn staged_v4_module_mutation_and_unknown_directory_entries_fail_closed() {
     let fixture = CompilerFixture::create();
     let captured = CapturedToolingClosure::capture(&fixture.root).expect("captured closure");
