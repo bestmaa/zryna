@@ -209,8 +209,11 @@ It does not require a private-helper inventory or duplicate the component regist
 `tests/repository-structure.test.mjs` suite covers count/ratchet/exception boundaries, renames,
 deletion, worktrees, shallow history, unsafe paths, deterministic rejection and recovery.
 
-`pnpm build` runs the same structure checker, Rust formatting gate and authoritative
-`zryna architecture check` before `cargo build --locked --workspace`. `pnpm preflight` runs the
+`pnpm build` runs the same structure checker and Rust formatting gate, prepares cross-platform
+dependencies with `cargo fetch --locked`, then runs the authoritative `zryna architecture check`
+before `cargo build --locked --workspace`. Dependency preparation neither compiles code nor updates
+the lockfile; architecture metadata remains frozen. Standalone preflight/M0 require the same locked
+dependency preparation, as CI already performs. `pnpm preflight` runs the
 structure checker first and architecture validation before phase tests. CI runs the frozen
 preflight partitions and the same M0 gates on Linux and Windows; it retains all existing dependency,
 security and formatting checks. Bare `cargo build` compiles Rust and does not enforce repository-wide

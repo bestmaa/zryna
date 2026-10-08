@@ -19,9 +19,12 @@ import { BUILD_COMMANDS } from '../scripts/run-build.mjs';
 
 test('normal build enforces shared size, format and architecture checks before compilation', () => {
   assert.deepEqual(BUILD_COMMANDS.map(command => command.id),
-    ['repository-structure', 'rust-format', 'architecture-check', 'rust-workspace-build']);
-  for (const index of [0, 1, 2]) {
+    ['repository-structure', 'rust-format', 'rust-dependency-fetch', 'architecture-check', 'rust-workspace-build']);
+  for (const index of [0, 1, 3]) {
     assert.equal(BUILD_COMMANDS[index], PREFLIGHT_COMMANDS.find(command => command.id === BUILD_COMMANDS[index].id));
+  }
+  assert.deepEqual(BUILD_COMMANDS[2].args, ['fetch', '--locked']);
+  for (const index of [0, 1, 2, 3]) {
     const called = [];
     assert.throws(() => runPreflight(BUILD_COMMANDS, (executable, args) => {
       called.push([executable, args]);
