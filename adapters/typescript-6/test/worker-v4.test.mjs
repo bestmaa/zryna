@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import ts from '@typescript/typescript6';
 import Ajv2020 from 'ajv/dist/2020.js';
+import './worker-v4-compatibility.test.mjs';
 
 const adapterRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const timeoutMs = 30_000;
