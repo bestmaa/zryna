@@ -46,3 +46,34 @@ Each formatting capability accepts only its separately verified profile. See the
 [format contract and editor guide](../../docs/LANGUAGE_SERVER.md). Its publication evidence records
 the separate Linux/Windows portable acceptance and clean registry installations of editor 0.5.0,
 including real Windows extension-host checks against this matching reviewed server.
+
+## Implementation navigation
+
+[src/main.rs](src/main.rs) parses startup options. The public library entries in
+[src/lib.rs](src/lib.rs), including `run_stdio` and `Server`, compose bounded stdio with
+driver-owned query sessions. Inputs are framed JSON-RPC/LSP messages and full document revisions;
+outputs are correlated responses, diagnostics and formatting edits, never applied source writes.
+
+| Private area | Responsibility |
+| --- | --- |
+| [framing.rs](src/framing.rs), [protocol.rs](src/protocol.rs), [params.rs](src/params.rs) | Bounded framing, message shape and parameter decoding |
+| [documents.rs](src/documents.rs), [coordinates.rs](src/coordinates.rs) | Exact document bytes, URI containment and negotiated position encoding |
+| [diagnostics.rs](src/diagnostics.rs) | Inert conversion of compiler reports into LSP diagnostics |
+| [server.rs](src/server.rs), [server/](src/server/) | Lifecycle, profile selection, queued definition/formatting and outgoing correlation |
+
+Dependency direction is language-server application → driver query sessions/source. Provider
+execution, semantic facts, module closure authority and formatting admission remain in the driver.
+Build/run requests, editor UI, direct provider configuration and source-write application do not
+belong in the transport. See the
+[compiler session map](../../crates/zryna-driver/src/diagnostic_sessions/README.md).
+
+Existing focused targets:
+
+```sh
+cargo test --locked -p zryna-language-server --test protocol
+cargo test --locked -p zryna-language-server --test process
+```
+
+[Protocol tests](tests/protocol.rs), including [formatting cases](tests/protocol/formatting.rs),
+exercise framing, revisions, cancellation and profile rejection with fixture compiler authority.
+[Process tests](tests/process.rs) exercise real stdio and need the repository-pinned frontend host.
