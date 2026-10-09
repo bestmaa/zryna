@@ -1,0 +1,11 @@
+function consume(result: EnvLookupV1): bool {
+  return match(result, {
+    "EnvLookupV1.Found": (value) => true,
+    "EnvLookupV1.Missing": () => false,
+  });
+}
+
+export function main(): bool {
+  const ignored: EnvLookupV1 = environmentLookup("MODE");
+  return true;
+}

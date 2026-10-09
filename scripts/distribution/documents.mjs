@@ -45,6 +45,13 @@ lockfile. No additional language syntax or dependency-package imports are enable
 Linux native execution additionally requires the supported external GNU toolchain. Windows native
 execution is unsupported. JavaScript and core WebAssembly are the portable installed targets.
 
+A newly compiled H1 review candidate also supports the one-file command route:
+${command} run pure.zry --project-root command-project --target wasi-command --profile command-h1-v1 --export main
+Use a real source directory outside the installation, no --root/--node overrides, and an explicit
+absolute owner-private --grant-file only for the one-key environment lookup. Existing frozen
+package compatibility does not grant command authority or permit H1 dependency imports.
+H1 remains under acceptance/review; existing published archives are not retroactively changed.
+
 See SUPPORT.md for reporting problems. LICENSE, NOTICE and licenses/ retain the notices for this
 compiler and its bundled materials. metadata/ records exact file, source and material identities.
 `;

@@ -40,7 +40,7 @@ fn lower_owned_aggregate_function_impl<'a>(
         layouts,
     );
     let structured_function = signature.private && super::requires_structured_cfg(function);
-    let generic_surface = generic_function || structured_function;
+    let generic_surface = input.command.is_some() || generic_function || structured_function;
     if !if generic_surface {
         super::mixed_shape::supported(result, layouts)
     } else if super::mixed_shape::requires_summary(result, layouts) {

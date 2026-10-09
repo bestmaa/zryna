@@ -26,6 +26,6 @@ pub(crate) fn sources() -> Vec<(String, String)> {
         }
     }
     files.sort_by(|left, right| left.0.cmp(&right.0));
-    assert_eq!(files.len(), 95, "complete M3 source fixture count");
+    assert_eq!(files.len(), 97, "complete M3 source fixture count");
     files
 }

@@ -42,7 +42,7 @@ pub(super) fn execute(
 }
 
 fn request(options: CompileOptions) -> Result<InstalledBuildRequest, Diagnostic> {
-    if options.profile == Some(CliProfile::BrowserComponentV1) {
+    if matches!(options.profile, Some(CliProfile::BrowserComponentV1 | CliProfile::CommandH1V1)) {
         return Err(Diagnostic::error(
             "ZRYNA-C2001",
             None,
@@ -64,12 +64,12 @@ fn request(options: CompileOptions) -> Result<InstalledBuildRequest, Diagnostic>
         )?,
         artifact_stem: options.name.unwrap_or_else(|| profile::default_stem(&options.entrypoint)),
         entrypoint: options.entrypoint,
-        targets: options.target.into(),
+        targets: options.target.ordinary()?,
         profile: match options.profile {
             None => InstalledProfile::I32,
             Some(CliProfile::ControlFlowV1) => InstalledProfile::ControlFlow,
             Some(CliProfile::DataOwnershipV1) => InstalledProfile::DataOwnership,
-            Some(CliProfile::BrowserComponentV1) => {
+            Some(CliProfile::BrowserComponentV1 | CliProfile::CommandH1V1) => {
                 unreachable!("rejected before request construction")
             }
         },

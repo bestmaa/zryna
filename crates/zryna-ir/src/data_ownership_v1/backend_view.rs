@@ -53,6 +53,7 @@ pub enum VerifiedBackendInstruction<'a> {
     PlaceValue { place: PlaceIdentity, value: ValueIdentity },
     IndexedPlace { place: PlaceIdentity, index: ValueIdentity },
     String(&'a [u8]),
+    EnvironmentLookup(&'a str),
     StringConcat { left: PlaceIdentity, right: PlaceIdentity },
     VecConstruct(Vec<ValueIdentity>),
     VecPush { vector: PlaceIdentity, value: ValueIdentity },
@@ -94,6 +95,7 @@ impl<'a> VerifiedInstruction<'a> {
                 VerifiedBackendInstruction::Binary(value(*lhs), value(*rhs))
             }
             I::I32Neg { operand } => VerifiedBackendInstruction::Unary(value(*operand)),
+            I::EnvironmentLookup { key, .. } => VerifiedBackendInstruction::EnvironmentLookup(key),
             I::DirectCall { callee, arguments, .. } => VerifiedBackendInstruction::DirectCall {
                 callee: FunctionIdentity {
                     owner: self.function.owner.identity,

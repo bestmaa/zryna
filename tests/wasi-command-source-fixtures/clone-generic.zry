@@ -1,0 +1,6 @@
+interface Mixed extends ZrynaStruct { items: Vec<String>; tail: String; }
+export function main(): bool {
+  const source: Mixed = Mixed({ items: Vec<String>(["one", "two",]), tail: "last", });
+  const copied: Mixed = clone(source);
+  return true;
+}

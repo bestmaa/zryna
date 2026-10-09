@@ -14,8 +14,8 @@ mod bridge;
 mod bridge_audit;
 mod graph_budget;
 mod shell;
-mod type_budget;
-mod type_graph;
+pub(crate) mod type_budget;
+pub(crate) mod type_graph;
 mod type_indices;
 
 #[cfg(test)]

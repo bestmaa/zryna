@@ -2,6 +2,12 @@
 
 Current public M3 selection is `--profile data-ownership-v1`, using protocol v4 and manifest v3.
 See [the public M3 surface](docs/M3_PUBLIC_PROFILE.md) and [the beginner guide](docs/M3_GETTING_STARTED.md).
+
+The separate [bounded WASI command candidate](docs/WASI_COMMAND_GETTING_STARTED.md) implements
+one explicit environment lookup and empty-grant controls through checkout and installed
+candidate routes for review. Its five bounded owner decisions are now
+[accepted](docs/WASI_COMMAND_H1_CONTRACT_DRAFT.md#recorded-bounded-owner-acceptance), while required
+independent review and public activation remain pending; this does not change release support claims.
 The component checkpoints below retain their historical implementation boundaries; they do not
 limit or independently expand the integrated public surface. M0–M2 remain unchanged.
 

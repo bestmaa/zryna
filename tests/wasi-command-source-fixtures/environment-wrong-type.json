@@ -1,0 +1,368 @@
+{
+  "schema_version": 4,
+  "files": [
+    {
+      "id": 0,
+      "path": "src/main.zry",
+      "imports": [],
+      "type_syntax": [
+        {
+          "span": {
+            "file": 0,
+            "start": 24,
+            "end": 28
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "bool",
+              "span": {
+                "file": 0,
+                "start": 24,
+                "end": 28
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 47,
+            "end": 51
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "bool",
+              "span": {
+                "file": 0,
+                "start": 47,
+                "end": 51
+              }
+            }
+          }
+        }
+      ],
+      "data_declarations": [],
+      "functions": [
+        {
+          "span": {
+            "file": 0,
+            "start": 0,
+            "end": 195
+          },
+          "export_span": {
+            "file": 0,
+            "start": 0,
+            "end": 6
+          },
+          "function_span": {
+            "file": 0,
+            "start": 7,
+            "end": 15
+          },
+          "name": {
+            "text": "main",
+            "span": {
+              "file": 0,
+              "start": 16,
+              "end": 20
+            }
+          },
+          "parameters": [],
+          "result_type": 0,
+          "body": {
+            "span": {
+              "file": 0,
+              "start": 29,
+              "end": 195
+            },
+            "root_block": 0,
+            "blocks": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 29,
+                  "end": 195
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 29,
+                  "end": 30
+                },
+                "statements": [
+                  0,
+                  1
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 194,
+                  "end": 195
+                }
+              }
+            ],
+            "statements": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 33,
+                  "end": 80
+                },
+                "kind": {
+                  "kind": "local-declaration",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 33,
+                    "end": 38
+                  },
+                  "mutable": false,
+                  "name": {
+                    "text": "result",
+                    "span": {
+                      "file": 0,
+                      "start": 39,
+                      "end": 45
+                    }
+                  },
+                  "type_syntax": 1,
+                  "equals_span": {
+                    "file": 0,
+                    "start": 52,
+                    "end": 53
+                  },
+                  "initializer": 1,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 79,
+                    "end": 80
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 83,
+                  "end": 193
+                },
+                "kind": {
+                  "kind": "return",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 83,
+                    "end": 89
+                  },
+                  "value": 5,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 192,
+                    "end": 193
+                  }
+                }
+              }
+            ],
+            "expressions": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 72,
+                  "end": 78
+                },
+                "kind": {
+                  "kind": "string-literal",
+                  "spelling": "\"MODE\""
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 54,
+                  "end": 79
+                },
+                "kind": {
+                  "kind": "call",
+                  "callee": {
+                    "text": "environmentLookup",
+                    "span": {
+                      "file": 0,
+                      "start": 54,
+                      "end": 71
+                    }
+                  },
+                  "open_paren_span": {
+                    "file": 0,
+                    "start": 71,
+                    "end": 72
+                  },
+                  "arguments": [
+                    0
+                  ],
+                  "close_paren_span": {
+                    "file": 0,
+                    "start": 78,
+                    "end": 79
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 96,
+                  "end": 102
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "result",
+                    "span": {
+                      "file": 0,
+                      "start": 96,
+                      "end": 102
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 142,
+                  "end": 146
+                },
+                "kind": {
+                  "kind": "bool-literal",
+                  "value": true
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 181,
+                  "end": 186
+                },
+                "kind": {
+                  "kind": "bool-literal",
+                  "value": false
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 90,
+                  "end": 192
+                },
+                "kind": {
+                  "kind": "match",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 90,
+                    "end": 95
+                  },
+                  "open_paren_span": {
+                    "file": 0,
+                    "start": 95,
+                    "end": 96
+                  },
+                  "scrutinee": 2,
+                  "close_paren_span": {
+                    "file": 0,
+                    "start": 191,
+                    "end": 192
+                  },
+                  "open_brace_span": {
+                    "file": 0,
+                    "start": 104,
+                    "end": 105
+                  },
+                  "arms": [
+                    {
+                      "span": {
+                        "file": 0,
+                        "start": 110,
+                        "end": 146
+                      },
+                      "type_name": {
+                        "text": "EnvLookupV1",
+                        "span": {
+                          "file": 0,
+                          "start": 111,
+                          "end": 122
+                        }
+                      },
+                      "dot_span": {
+                        "file": 0,
+                        "start": 122,
+                        "end": 123
+                      },
+                      "variant": {
+                        "text": "Found",
+                        "span": {
+                          "file": 0,
+                          "start": 123,
+                          "end": 128
+                        }
+                      },
+                      "binding": {
+                        "text": "value",
+                        "span": {
+                          "file": 0,
+                          "start": 132,
+                          "end": 137
+                        }
+                      },
+                      "arrow_span": {
+                        "file": 0,
+                        "start": 139,
+                        "end": 141
+                      },
+                      "value": 3
+                    },
+                    {
+                      "span": {
+                        "file": 0,
+                        "start": 152,
+                        "end": 186
+                      },
+                      "type_name": {
+                        "text": "EnvLookupV1",
+                        "span": {
+                          "file": 0,
+                          "start": 153,
+                          "end": 164
+                        }
+                      },
+                      "dot_span": {
+                        "file": 0,
+                        "start": 164,
+                        "end": 165
+                      },
+                      "variant": {
+                        "text": "Missing",
+                        "span": {
+                          "file": 0,
+                          "start": 165,
+                          "end": 172
+                        }
+                      },
+                      "binding": null,
+                      "arrow_span": {
+                        "file": 0,
+                        "start": 178,
+                        "end": 180
+                      },
+                      "value": 4
+                    }
+                  ],
+                  "close_brace_span": {
+                    "file": 0,
+                    "start": 190,
+                    "end": 191
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

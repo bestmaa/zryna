@@ -1,0 +1,322 @@
+{
+  "schema_version": 4,
+  "files": [
+    {
+      "id": 0,
+      "path": "src/main.zry",
+      "imports": [],
+      "type_syntax": [
+        {
+          "span": {
+            "file": 0,
+            "start": 24,
+            "end": 28
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "bool",
+              "span": {
+                "file": 0,
+                "start": 24,
+                "end": 28
+              }
+            }
+          }
+        },
+        {
+          "span": {
+            "file": 0,
+            "start": 47,
+            "end": 58
+          },
+          "kind": {
+            "kind": "named",
+            "name": {
+              "text": "EnvLookupV1",
+              "span": {
+                "file": 0,
+                "start": 47,
+                "end": 58
+              }
+            }
+          }
+        }
+      ],
+      "data_declarations": [],
+      "functions": [
+        {
+          "span": {
+            "file": 0,
+            "start": 0,
+            "end": 162
+          },
+          "export_span": {
+            "file": 0,
+            "start": 0,
+            "end": 6
+          },
+          "function_span": {
+            "file": 0,
+            "start": 7,
+            "end": 15
+          },
+          "name": {
+            "text": "main",
+            "span": {
+              "file": 0,
+              "start": 16,
+              "end": 20
+            }
+          },
+          "parameters": [],
+          "result_type": 0,
+          "body": {
+            "span": {
+              "file": 0,
+              "start": 29,
+              "end": 162
+            },
+            "root_block": 0,
+            "blocks": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 29,
+                  "end": 162
+                },
+                "open_brace_span": {
+                  "file": 0,
+                  "start": 29,
+                  "end": 30
+                },
+                "statements": [
+                  0,
+                  1
+                ],
+                "close_brace_span": {
+                  "file": 0,
+                  "start": 161,
+                  "end": 162
+                }
+              }
+            ],
+            "statements": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 33,
+                  "end": 87
+                },
+                "kind": {
+                  "kind": "local-declaration",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 33,
+                    "end": 38
+                  },
+                  "mutable": false,
+                  "name": {
+                    "text": "result",
+                    "span": {
+                      "file": 0,
+                      "start": 39,
+                      "end": 45
+                    }
+                  },
+                  "type_syntax": 1,
+                  "equals_span": {
+                    "file": 0,
+                    "start": 59,
+                    "end": 60
+                  },
+                  "initializer": 1,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 86,
+                    "end": 87
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 90,
+                  "end": 160
+                },
+                "kind": {
+                  "kind": "return",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 90,
+                    "end": 96
+                  },
+                  "value": 4,
+                  "semicolon_span": {
+                    "file": 0,
+                    "start": 159,
+                    "end": 160
+                  }
+                }
+              }
+            ],
+            "expressions": [
+              {
+                "span": {
+                  "file": 0,
+                  "start": 79,
+                  "end": 85
+                },
+                "kind": {
+                  "kind": "string-literal",
+                  "spelling": "\"MODE\""
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 61,
+                  "end": 86
+                },
+                "kind": {
+                  "kind": "call",
+                  "callee": {
+                    "text": "environmentLookup",
+                    "span": {
+                      "file": 0,
+                      "start": 61,
+                      "end": 78
+                    }
+                  },
+                  "open_paren_span": {
+                    "file": 0,
+                    "start": 78,
+                    "end": 79
+                  },
+                  "arguments": [
+                    0
+                  ],
+                  "close_paren_span": {
+                    "file": 0,
+                    "start": 85,
+                    "end": 86
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 103,
+                  "end": 109
+                },
+                "kind": {
+                  "kind": "reference",
+                  "name": {
+                    "text": "result",
+                    "span": {
+                      "file": 0,
+                      "start": 103,
+                      "end": 109
+                    }
+                  }
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 149,
+                  "end": 153
+                },
+                "kind": {
+                  "kind": "bool-literal",
+                  "value": true
+                }
+              },
+              {
+                "span": {
+                  "file": 0,
+                  "start": 97,
+                  "end": 159
+                },
+                "kind": {
+                  "kind": "match",
+                  "keyword_span": {
+                    "file": 0,
+                    "start": 97,
+                    "end": 102
+                  },
+                  "open_paren_span": {
+                    "file": 0,
+                    "start": 102,
+                    "end": 103
+                  },
+                  "scrutinee": 2,
+                  "close_paren_span": {
+                    "file": 0,
+                    "start": 158,
+                    "end": 159
+                  },
+                  "open_brace_span": {
+                    "file": 0,
+                    "start": 111,
+                    "end": 112
+                  },
+                  "arms": [
+                    {
+                      "span": {
+                        "file": 0,
+                        "start": 117,
+                        "end": 153
+                      },
+                      "type_name": {
+                        "text": "EnvLookupV1",
+                        "span": {
+                          "file": 0,
+                          "start": 118,
+                          "end": 129
+                        }
+                      },
+                      "dot_span": {
+                        "file": 0,
+                        "start": 129,
+                        "end": 130
+                      },
+                      "variant": {
+                        "text": "Found",
+                        "span": {
+                          "file": 0,
+                          "start": 130,
+                          "end": 135
+                        }
+                      },
+                      "binding": {
+                        "text": "value",
+                        "span": {
+                          "file": 0,
+                          "start": 139,
+                          "end": 144
+                        }
+                      },
+                      "arrow_span": {
+                        "file": 0,
+                        "start": 146,
+                        "end": 148
+                      },
+                      "value": 3
+                    }
+                  ],
+                  "close_brace_span": {
+                    "file": 0,
+                    "start": 157,
+                    "end": 158
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

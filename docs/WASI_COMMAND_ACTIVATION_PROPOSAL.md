@@ -1,11 +1,20 @@
 # WASI command activation: prerequisite decision proposal
 
-Status: **proposed, unaccepted**. This is a review input for
+Status: **historical prerequisite proposal; five bounded H1 owner decisions now accepted**.
+The [H1 contract acceptance record](WASI_COMMAND_H1_CONTRACT_DRAFT.md#recorded-bounded-owner-acceptance)
+records the 2026-10-09 decision. Required independent review and public activation remain pending.
+This is a review input for
 [#400](https://github.com/zryna/zryna/issues/400), not an executable profile, CLI contract,
 manifest version, or support claim. It changes none of the accepted WIT sources, registry,
 schemas, or existing public M1–M3 behavior.
+This assessment records the original prerequisites and alternatives. The
+[checkout and installed H1 review candidate](WASI_COMMAND_GETTING_STARTED.md) contains a bounded
+H1 review implementation. The bounded owner decisions below were accepted after implementation;
+that decision does not retroactively satisfy the original prerequisite. Candidate execution
+does not establish public support.
 The [bounded H1 contract draft](WASI_COMMAND_H1_CONTRACT_DRAFT.md) develops the recommended
-choice and its unresolved pinned-interface denial transport. Its one-run grant/manifest
+choice with selected pinned-interface host-trap transport A. That selection does not accept
+the remaining source, conversion or public runtime contract. Its one-run grant/manifest
 decision supersedes the value-commitment question below; durable secret-value attestation is
 separate optional scope.
 
@@ -30,7 +39,9 @@ The [#359 adapter contract](../spec/interop/JS_WASM_ADAPTERS_V1.md) and its
 the WASI consumer proof, and public activation separate. In the
 [#358 library contract](../spec/libraries/MINIMAL_CORE_HOST_V0.md), F1 value conversion and
 cleanup and F2 concrete host outcomes must be accepted before an H1–H5 host operation is
-implemented. These missing decisions block a nonempty public #400 grant.
+implemented. Those decisions were missing when this assessment was written; their later bounded
+acceptance is recorded above. The historical prerequisite gap and required independent review
+are not resolved by that later acceptance.
 
 ## Smallest proposed useful slice
 
@@ -45,9 +56,10 @@ implemented. These missing decisions block a nonempty public #400 grant.
 H1 in [#358](../spec/libraries/MINIMAL_CORE_HOST_V0.md) proposes an authorized UTF-8 key of
 1–64 bytes and a found String of 0–1024 bytes or a distinct missing result. It forbids source
 enumeration and ambient process access. This selects an existing candidate for review; the
-source spelling, public result type, and concrete ABI remain **unaccepted**.
+source spelling, result mapping and bounded CLI/manifest behavior received the owner acceptance
+recorded in the H1 contract. This does not publish a public owned ABI or activate support.
 
-## Decisions required before implementation
+## Original decisions required before implementation
 
 1. **Compiler and language owners — source authority.** Accept one exact H1 declaration and
    call form, with a verified `environment` requirement on its exact
@@ -95,8 +107,8 @@ source spelling, public result type, and concrete ABI remain **unaccepted**.
    of a low-entropy secret permits offline guessing. Record no ambient values. Preserve old
    manifest versions and the #399 browser bundle independently.
 
-These are owner decisions, not names or field shapes already approved by #400. The first
-implementation should stay confined to the accepted H1 subset; registry eligibility for
+These original owner decisions are now accepted only for the bounded H1 contract. The review
+implementation must stay confined to that subset; registry eligibility for
 filesystem, network, clock, or randomness does not make those operations available.
 
 ## Proposed conformance before a support claim
@@ -120,5 +132,6 @@ filesystem, network, clock, or randomness does not make those operations availab
   Linux and Windows gates on the exact reviewed revision. Record executed counts and actual
   host results; a source fixture or test listing alone is not execution evidence.
 
-Until those decisions and tests are accepted, #400 remains open and the public WASI command
-profile remains unavailable.
+The owner decisions are recorded. Required exact-revision Linux/Windows gates and independent
+implementation review remain necessary before public support; support is not activated.
+#400 remains open and the public WASI command profile remains unavailable.

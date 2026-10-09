@@ -240,7 +240,7 @@ fn configured_test_frontend_v4(
     configured_frontend_at(&test_support::adapter_root(), node)
 }
 
-fn configured_frontend_at(
+pub(crate) fn configured_frontend_at(
     adapter: &std::path::Path,
     node: &NodeRuntimeCapability,
 ) -> Result<WorkerFrontendV4, CommandFailure> {

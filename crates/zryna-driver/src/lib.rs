@@ -24,6 +24,9 @@
 #![forbid(unsafe_code)]
 
 mod browser_component;
+mod command_h1_runtime;
+mod command_h1_workspace;
+mod command_request;
 mod command_runtime;
 pub mod diagnostic_sessions;
 pub mod distribution;
@@ -63,6 +66,15 @@ use zryna_diagnostics::{Diagnostic, Severity};
 use zryna_ir::VerifiedProgram;
 use zryna_source::SourceMap;
 
+pub use command_h1_runtime::{
+    COMMAND_H1_MANIFEST_NAME, COMMAND_H1_MANIFEST_SCHEMA, CommandH1ExecutionRecord,
+    CommandH1HostPolicy, CommandH1Manifest, CommandH1Outcome, CommandH1RunReturn,
+    CommandH1Teardown, CommandH1TrapCategory, ExecutedCommandH1, MAX_COMMAND_H1_MANIFEST_BYTES,
+    PreparedCommandH1, decode_command_h1_manifest, prepare_command_h1,
+};
+pub use command_h1_workspace::{
+    CommandH1RunRequest, PublishedCommandH1Bundle, run_command_h1_workspace,
+};
 pub use command_runtime::{CommandHostPolicy, PreparedCommand, prepare_command_self_check};
 pub use javascript::{
     ArtifactOutputRoot, JAVASCRIPT_ARTIFACT_EXTENSION, JavaScriptBuildError,

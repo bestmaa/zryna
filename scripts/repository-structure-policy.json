@@ -2291,6 +2291,13 @@
       "owner": "syntax maintainers",
       "reason": "Protocol-v4 verifier tests and fixture support reachable solely through v4.rs #[cfg(test)] mod tests",
       "review": "https://github.com/zryna/zryna/pull/544"
+    },
+    {
+      "path": "crates/zryna-backend-webassembly/src/data_ownership_v1/encode/legacy_frontier_tests.rs",
+      "kind": "test",
+      "owner": "WebAssembly backend maintainers",
+      "reason": "Test-only Wasmtime fixtures registered exclusively by the cfg(test) legacy_frontier_tests module; no production module inclusion",
+      "review": "https://github.com/zryna/zryna/issues/400"
     }
   ],
   "exceptions": [],

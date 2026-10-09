@@ -1,0 +1,5 @@
+export function main(): bool {
+  const owner: Shared<i32> = shared(7);
+  const weak: Weak<i32> = downgrade(owner);
+  upgradeWeak(weak, (value) => { return true; }, () => { return false; });
+}

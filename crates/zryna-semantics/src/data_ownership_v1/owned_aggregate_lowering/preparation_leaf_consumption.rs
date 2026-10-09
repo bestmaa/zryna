@@ -119,6 +119,9 @@ impl PrivateOwnedAggregateLowerer<'_, '_, '_> {
                 at,
                 raw::InstructionKind::StringFromUtf8 { bytes: bytes.to_vec(), cleanup },
             ),
+            Leaf::Environment { key, cleanup } => {
+                self.emit_recorded(ty, at, raw::InstructionKind::EnvironmentLookup { key, cleanup })
+            }
             Leaf::Reference(decision) => self.emit_reference_recorded(decision, ty, at),
             Leaf::Projection { source, operation } => {
                 self.emit_projection_recorded(source, ty, at, &operation)
@@ -240,6 +243,7 @@ pub(super) fn check_cleanup_link(
 ) {
     match leaf {
         Leaf::String { cleanup, .. }
+        | Leaf::Environment { cleanup, .. }
         | Leaf::IndexedCopy { cleanup, .. }
         | Leaf::StringClone { cleanup, .. }
         | Leaf::StringConcat { cleanup, .. } => {

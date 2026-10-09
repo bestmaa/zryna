@@ -143,7 +143,7 @@ UTF-8 and CRLF spans, interleaved declarations, two-file order, nested type cons
 new expression and statement forms. Generated expression mutations are also checked by the
 existing `zryna_syntax::v4::verify_snapshot`, which remains the only syntax authority. The
 `provider:conformance:v4` gate compares native candidates with the pinned TypeScript 6 worker for
-all 95 frozen M3 source fixtures, one four-file composition, and seven rejected forms. It requires
+all 97 frozen M3 source fixtures, one four-file composition, and seven rejected forms. It requires
 identical raw candidates and exact rejection codes, messages, and spans. The entry does not register a provider, perform semantic checks, resolve imports, or
 activate a public profile. Protocol-v3/v4 unsupported source fails atomically, matching the
 bootstrap worker; later-function recovery belongs to protocol v2. The shared parity corpus

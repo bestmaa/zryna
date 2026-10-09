@@ -132,6 +132,9 @@ test('WIT and request resource bounds accept the exact limit and reject the firs
     usage: { environment: { maxEntries: 128, maxTotalBytes: 65536 } },
   };
   assert.deepEqual(validateCapabilityRequest(exact, registry, requestSchema).granted, ['environment']);
+  const extraBytes = structuredClone(exact);
+  extraBytes.usage.environment.maxTotalBytes++;
+  assert.throws(() => validateCapabilityRequest(extraBytes, registry, requestSchema), /ZRYNA-C4003/);
   exact.usage.environment.maxEntries++;
   assert.throws(() => validateCapabilityRequest(exact, registry, requestSchema), /ZRYNA-C4003/);
   const reordered = {

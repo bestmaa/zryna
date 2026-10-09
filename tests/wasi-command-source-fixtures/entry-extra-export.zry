@@ -1,0 +1,2 @@
+export function helper(): bool { return true; }
+export function main(): bool { return true; }

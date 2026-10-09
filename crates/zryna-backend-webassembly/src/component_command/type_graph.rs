@@ -14,7 +14,7 @@ const MAX_TYPES: usize = 4096;
 const MAX_EDGES: usize = 16384;
 const MAX_DEPTH: usize = 32;
 
-pub(super) fn compare(
+pub(crate) fn compare(
     authority: &AuthenticatedCommandWorld,
     actual: &Resolve,
     world: WorldId,
