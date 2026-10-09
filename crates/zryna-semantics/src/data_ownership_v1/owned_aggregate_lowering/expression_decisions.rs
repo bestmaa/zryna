@@ -21,47 +21,10 @@ pub(super) struct ExpressionDecisions<'a, 'f, 'e> {
     pub(super) errors: &'e mut Errors<'a>,
 }
 
-pub(super) struct StructDecision {
-    pub(super) children: Vec<(u32, u32)>,
-}
-
-pub(super) struct ArrayDecision<'f> {
-    pub(super) elements: &'f [u32],
-    pub(super) element: Ty,
-}
-
-pub(super) struct EnumDecision {
-    pub(super) ordinal: usize,
-    pub(super) payload_input: Option<(u32, Ty)>,
-}
-
-pub(super) struct ExpressionDecision<'f> {
-    pub(super) at: Span,
-    pub(super) ty: Option<Ty>,
-    pub(super) kind: ExpressionKind<'f>,
-}
-
-pub(super) enum ExpressionKind<'f> {
-    Scalar { operation: super::super::scalar_operations::ScalarOperation, inputs: Vec<u32> },
-    Bool(bool),
-    I32(i32),
-    String(&'f [u8]),
-    Environment(String),
-    Reference(&'f syntax::RawIdentifierSyntax),
-    Projection(u32),
-    InferredClone(u32),
-    StringClone(u32),
-    StringConcat { arguments: &'f [u32], callee: Span },
-    Call { arguments: &'f [u32], callee: &'f syntax::RawIdentifierSyntax },
-    AggregateClone(u32),
-    HandleClone(u32),
-    Shared(u32),
-    Downgrade(u32),
-    Struct(StructDecision),
-    Array(ArrayDecision<'f>),
-    Vec(ArrayDecision<'f>),
-    Enum(EnumDecision),
-}
+mod kinds;
+pub(super) use kinds::{
+    ArrayDecision, EnumDecision, ExpressionDecision, ExpressionKind, StructDecision,
+};
 
 impl<'f> ExpressionDecisions<'_, 'f, '_> {
     pub(super) fn nonindexed_owned_route(&self) -> bool {

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { bytes, parseCanonical, requireValue, sha256 } from './canonical.mjs';
 
 const INPUT = readFileSync(new URL('./command-h1-rust-binding-v1.json', import.meta.url));
-requireValue(sha256(INPUT) === 'ebb96d19333cbbb457262a6aa435db6649237943880f18e3e9973de26c8cf936',
+requireValue(sha256(INPUT) === '2a539bf0c4b2042a3b731ca9ce1841230c7baf36ec1ce2869b029d22106b179b',
   'command H1 Rust binding identity');
 const BINDING = parseCanonical(INPUT);
 requireValue(BINDING.format === 'zryna.command-h1-rust-material-binding.v1'

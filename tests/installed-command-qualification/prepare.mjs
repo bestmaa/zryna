@@ -7,7 +7,7 @@ import { bytes, sha256 } from '../../scripts/distribution/canonical.mjs';
 import { preparePayload } from '../../scripts/distribution/payload.mjs';
 import { checkQualificationRustClosure, rustMaterials } from '../../scripts/distribution/rust-materials.mjs';
 import { NODE_TARGETS } from '../../scripts/distribution/materials.mjs';
-import { inventoryBytes, checksumBytes, targetPaths } from '../../scripts/distribution/inventory.mjs';
+import { inventoryBytes, checksumBytes, targetPaths, V4_PROVIDER_MODULES } from '../../scripts/distribution/inventory.mjs';
 import { verifyCompiledIdentity } from '../../scripts/distribution/binary-identity.mjs';
 import { decodeTar, encodeTar } from '../../scripts/distribution/archive-tar.mjs';
 import { decodeZip, encodeZip } from '../../scripts/distribution/archive-zip.mjs';
@@ -58,6 +58,9 @@ export async function prepare(source, output) {
   for (const path of ['LICENSE', 'NOTICE']) add(path, join(source, path));
   for (const path of ['limits-v3.mjs', 'limits-v4.mjs', 'worker-v3.mjs', 'worker-v4.mjs', 'worker.mjs']) {
     add(`lib/zryna/bootstrap/${path}`, join(source, 'adapters/typescript-6/src', path));
+  }
+  for (const path of V4_PROVIDER_MODULES) {
+    add(path, join(source, 'adapters/typescript-6/src', path.slice('lib/zryna/bootstrap/'.length)));
   }
   const require = createRequire(join(source, 'adapters/typescript-6/package.json'));
   const wrapper = dirname(require.resolve('@typescript/typescript6/package.json'));

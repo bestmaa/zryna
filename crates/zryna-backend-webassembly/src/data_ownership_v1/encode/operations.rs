@@ -7,6 +7,11 @@ use zryna_layout::{TypeCategory, VerifiedLayouts};
 
 use super::{Context, Locals, index_error, memory};
 
+mod aggregates;
+mod results;
+pub(super) use results::emit_terminator_drops;
+use results::{emit_instruction_drops, sync_result};
+
 pub(super) use super::places::{
     load, place_address, place_storage_address, place_type, place_value, store, store_place_value,
 };
@@ -85,68 +90,8 @@ pub(super) fn instruction(
             }
             super::failure::operation_call(context.function_index(callee)?, body);
         }
-        (
-            K::StructConstruct | K::FixedArrayConstruct | K::EnumConstruct,
-            B::Construct { operands, variant },
-        ) => {
-            let result_type = instruction.result_type().ok_or_else(index_error)?;
-            let layout = context.layouts.type_by_id(result_type).ok_or_else(index_error)?;
-            body.instruction(&Instruction::I32Const(
-                i32::try_from(layout.size().max(1)).map_err(|_| index_error())?,
-            ));
-            super::failure::operation_call(0, body);
-            let result = instruction.result().ok_or_else(index_error)?;
-            body.instruction(&Instruction::LocalSet(result.index()));
-            if layout.category() == TypeCategory::Enum {
-                body.instruction(&Instruction::LocalGet(result.index()));
-                body.instruction(&Instruction::I32Const(
-                    i32::try_from(variant.ok_or_else(index_error)?).map_err(|_| index_error())?,
-                ));
-                store(body);
-                if let Some(value) = operands.first() {
-                    body.instruction(&Instruction::LocalGet(result.index()));
-                    body.instruction(&Instruction::I32Const(
-                        i32::try_from(layout.enum_payload_layout().ok_or_else(index_error)?.0)
-                            .map_err(|_| index_error())?,
-                    ));
-                    body.instruction(&Instruction::I32Add);
-                    body.instruction(&Instruction::LocalGet(value.index()));
-                    let variant = layout
-                        .variants()
-                        .iter()
-                        .find(|candidate| candidate.ordinal() == variant.unwrap_or_default())
-                        .and_then(|candidate| candidate.payload())
-                        .and_then(|ty| context.layouts.type_by_id(ty))
-                        .ok_or_else(index_error)?;
-                    memory::store_value(variant, body);
-                }
-                return sync_result(function, instruction, locals, context.layouts, body);
-            }
-            for (index, value) in operands.iter().enumerate() {
-                body.instruction(&Instruction::LocalGet(result.index()));
-                let offset = if layout.category() == TypeCategory::Struct {
-                    layout.fields()[index].offset()
-                } else {
-                    layout
-                        .array_stride()
-                        .ok_or_else(index_error)?
-                        .checked_mul(u64::try_from(index).map_err(|_| index_error())?)
-                        .ok_or_else(index_error)?
-                };
-                body.instruction(&Instruction::I32Const(
-                    i32::try_from(offset).map_err(|_| index_error())?,
-                ));
-                body.instruction(&Instruction::I32Add);
-                body.instruction(&Instruction::LocalGet(value.index()));
-                let element = if layout.category() == TypeCategory::Struct {
-                    context.layouts.type_by_id(layout.fields()[index].ty())
-                } else {
-                    layout.referenced_type().and_then(|ty| context.layouts.type_by_id(ty))
-                }
-                .ok_or_else(index_error)?;
-                memory::store_value(element, body);
-            }
-            return sync_result(function, instruction, locals, context.layouts, body);
+        (K::StructConstruct | K::FixedArrayConstruct | K::EnumConstruct, B::Construct { .. }) => {
+            return aggregates::construct(function, instruction, locals, context, body);
         }
         (K::CopyFromPlace | K::MoveFromPlace | K::GenericMoveFromPlace, B::Place(place)) => {
             place_value(function, place.index(), locals, context.layouts, body)?;
@@ -326,50 +271,6 @@ pub(super) fn instruction(
     if let Some(result) = instruction.result() {
         body.instruction(&Instruction::LocalSet(result.index()));
         sync_result(function, instruction, locals, context.layouts, body)?;
-    }
-    Ok(())
-}
-
-fn sync_result(
-    function: VerifiedFunction<'_>,
-    instruction: VerifiedInstruction<'_>,
-    locals: Locals,
-    layouts: &VerifiedLayouts,
-    body: &mut Function,
-) -> Result<(), zryna_diagnostics::Diagnostic> {
-    let Some(result) = instruction.result() else { return Ok(()) };
-    if let Some(place) =
-        function.places().find(|place| place.kind() == VerifiedPlaceKind::Temporary(result))
-    {
-        place_address(function, place.id().index(), locals, layouts, body)?;
-        body.instruction(&Instruction::LocalGet(result.index()));
-        store(body);
-    }
-    Ok(())
-}
-
-fn emit_instruction_drops(
-    function: VerifiedFunction<'_>,
-    instruction: VerifiedInstruction<'_>,
-    locals: Locals,
-    context: &Context<'_>,
-    body: &mut Function,
-) -> Result<(), zryna_diagnostics::Diagnostic> {
-    for action in instruction.derived_drop_actions() {
-        super::cleanup::action(function, &action, locals, context, body)?;
-    }
-    Ok(())
-}
-
-pub(super) fn emit_terminator_drops(
-    function: VerifiedFunction<'_>,
-    terminator: zryna_ir::data_ownership_v1::VerifiedTerminator<'_>,
-    locals: Locals,
-    context: &Context<'_>,
-    body: &mut Function,
-) -> Result<(), zryna_diagnostics::Diagnostic> {
-    for action in terminator.derived_drop_actions() {
-        super::cleanup::action(function, &action, locals, context, body)?;
     }
     Ok(())
 }

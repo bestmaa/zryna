@@ -1,8 +1,10 @@
 import './native-provider-activation-workflow.test.mjs';
+import { registerWorkflowInventoryContracts } from './workflow-routing/inventory-contracts.mjs';
+import { registerInstalledCommandContract } from './workflow-routing/installed-command.mjs';
 import { registerPackageContracts } from './workflow-routing/package-contracts.mjs';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import {
   dirname, relative, resolve, sep,
 } from 'node:path';
@@ -285,49 +287,6 @@ test('classification failure runs all optional lanes and each matrix uses its ex
 
 registerPackageContracts(ci);
 
-test('pull-request workflows stay inventoried and every superseded run cancels', () => {
-  const names = readdirSync(resolve(root, '.github/workflows')).sort();
-  assert.deepEqual(names, [
-    'ci.yml', 'documentation.yml', 'installed-command-h1.yml', 'native-provider-activation.yml', 'portable-setup.yml',
-    'release-production-candidate.yml',
-    'release-qualification.yml', 'release.yml',
-  ]);
-  for (const name of names) {
-    const candidate = workflow(name);
-    if (!Object.hasOwn(candidate.on, 'pull_request')) continue;
-    assert.equal(candidate.concurrency['cancel-in-progress'], true, name);
-    assert.match(candidate.concurrency.group, /pull_request\.number/, name);
-  }
-  assert.equal(Object.hasOwn(workflow('portable-setup.yml').on, 'pull_request'), false);
-  assert.equal(ci.jobs['portable-setup'].uses, './.github/workflows/portable-setup.yml');
-  assert.deepEqual(ci.jobs['portable-setup'].needs, ['route-contracts', 'm0']);
-});
+registerInstalledCommandContract(workflow);
 
-test('main runs only documentation validation and publication with short retention', () => {
-  assert.deepEqual(documentation.on, { push: { branches: ['main'] } });
-  assert.deepEqual(Object.keys(documentation.jobs), ['docs-publish']);
-  assert.equal(documentation.concurrency['cancel-in-progress'], true);
-  const publisher = documentation.jobs['docs-publish'];
-  assert.equal(publisher.needs, undefined);
-  assert(publisher.steps.some((step) => step.run === 'pnpm docs:check'));
-  const upload = publisher.steps.at(-1);
-  assert.equal(upload.uses,
-    'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02');
-  assert.equal(upload.with['retention-days'], 7);
-});
-
-
-test('installed H1 qualification uses the exact candidate, pinned tools and read-only authority', () => {
-  const candidate = workflow('installed-command-h1.yml');
-  assert.deepEqual(candidate.permissions, { contents: 'read' });
-  const job = candidate.jobs.qualify;
-  assert.deepEqual(job.strategy.matrix.os, ['ubuntu-24.04', 'windows-2022']);
-  assert.equal(job.env.CARGO_BUILD_JOBS, 2);
-  const checkout = job.steps.find(step => step.name === 'Checkout exact candidate');
-  assert.equal(checkout.with.ref, '${{ github.event.pull_request.head.sha || github.sha }}');
-  assert.equal(checkout.with['persist-credentials'], false);
-  const qualification = job.steps.find(step => step.name === 'Build, verify, relocate and invoke the installed candidate');
-  assert.equal(qualification.env.CARGO_NET_OFFLINE, true);
-  assert.match(qualification.run, /tests\/installed-command-qualification\/run\.mjs/);
-  assert(!job.steps.some(step => /publish|release create|sudo|runas/i.test(step.run ?? '')));
-});
+registerWorkflowInventoryContracts({ workflow, root, ci, documentation });
