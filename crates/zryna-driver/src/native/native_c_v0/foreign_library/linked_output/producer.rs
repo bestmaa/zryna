@@ -6,7 +6,15 @@ pub(crate) fn compile_object(
     source: &[u8],
     tools: &LinuxX8664LinkToolchain,
 ) -> Result<CompiledObject, Failure> {
-    compile(root, source, tools, true)
+    compile(root, source, tools, true, &[])
+}
+
+pub(super) fn compile_stack_protected_object(
+    root: &ArtifactOutputRoot,
+    source: &[u8],
+    tools: &LinuxX8664LinkToolchain,
+) -> Result<CompiledObject, Failure> {
+    compile(root, source, tools, true, &["-fstack-protector-all"])
 }
 
 fn compile(
@@ -14,6 +22,7 @@ fn compile(
     source: &[u8],
     tools: &LinuxX8664LinkToolchain,
     fixture_warnings: bool,
+    control_flags: &[&str],
 ) -> Result<CompiledObject, Failure> {
     if source.len() > zryna_backend_native::MAX_NATIVE_OBJECT_BYTES {
         return Err(rejected().into());
@@ -32,12 +41,14 @@ fn compile(
             "-fno-pie",
             "-fno-pic",
             "-fcf-protection=none",
+            "-fno-stack-protector",
             "-fno-unwind-tables",
             "-fno-asynchronous-unwind-tables",
         ]
         .into_iter()
         .map(OsString::from)
         .collect::<Vec<_>>();
+        args.extend(control_flags.iter().map(OsString::from));
         if fixture_warnings {
             args.extend(["-Wall", "-Wextra", "-Werror", "-pedantic"].map(OsString::from));
         }
@@ -99,7 +110,7 @@ pub(crate) fn observe(
         failure.invocations.extend(completed.iter().cloned());
         failure
     };
-    let client = compile(root, client_source, foreign.tools(), false).map_err(attach)?;
+    let client = compile(root, client_source, foreign.tools(), false, &[]).map_err(attach)?;
     completed.push(client.invocation.clone());
     let stages =
         staging::stages(root, if runtime.is_some() { 3 } else { 2 }).map_err(|mut failure| {

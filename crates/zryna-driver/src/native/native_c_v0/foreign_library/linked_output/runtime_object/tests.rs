@@ -22,6 +22,24 @@ fn runtime_object_genuine_original_abi_source_and_object_pass() {
 }
 
 #[test]
+fn runtime_object_stack_protected_compiler_control_rejects() {
+    use object::{Object as _, ObjectSymbol as _};
+    let fixture = Fixture::new();
+    let protected = super::super::producer::compile_stack_protected_object(
+        &fixture.root,
+        fixture.requirements.private_runtime_source().expect("original rendered source"),
+        fixture.runtime.tools(),
+    )
+    .expect("independently instrumented original runtime");
+    let file = object::File::parse(protected.bytes()).expect("actual compiler ELF");
+    assert!(
+        file.symbols()
+            .any(|symbol| { symbol.is_undefined() && symbol.name() == Ok("__stack_chk_fail") })
+    );
+    rejects(&fixture, protected.bytes());
+}
+
+#[test]
 fn runtime_object_missing_extra_duplicate_and_weak_definitions_reject() {
     let fixture = Fixture::new();
     let original = fixture.runtime.bytes();

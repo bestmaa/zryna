@@ -66,6 +66,10 @@ linker's observed input order including repeated archive occurrences. The privat
 producer preserves the original rendered-source/header binding. Client objects are compiled
 separately using the existing fixture client warning policy; foreign/runtime compilation
 retains strict warnings. No shared staging allowlist or production recipe guard changes.
+The observer's uninstrumented fixture profile explicitly selects `-fno-stack-protector`
+so distribution GCC defaults cannot add an undeclared runtime dependency. An actual
+`-fstack-protector-all` compiler control still rejects `__stack_chk_fail`; the audit's
+exact four-import inventory is unchanged. This selects no production security policy.
 
 The observer returns before driver executable permissions or target execution and grants no
 execution, cache or publication capability. GCC itself may create executable file modes.
