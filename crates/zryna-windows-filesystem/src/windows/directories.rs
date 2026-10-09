@@ -12,9 +12,9 @@ use super::{
 /// current parent-relative name. It is the only public source accepted for rename and removal, so
 /// a regular file or a path-selected replacement cannot be supplied in its place.
 pub struct OwnedDirectory {
-    directory: Dir,
-    parent: Dir,
-    name: Vec<u16>,
+    pub(super) directory: Dir,
+    pub(super) parent: Dir,
+    pub(super) name: Vec<u16>,
 }
 
 impl fmt::Debug for OwnedDirectory {
