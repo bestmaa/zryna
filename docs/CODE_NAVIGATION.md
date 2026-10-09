@@ -1,14 +1,11 @@
 # Code navigation by task
 
 Reviewed against main `9e31e6249aee44c93579c82c2e87fdafdb4b8b7d`. Paths and commands below are navigation pointers, not a second specification or proof of execution. Start with [CONTRIBUTING](../CONTRIBUTING.md), then the selected component's README and scoped guidance.
-[zryna.workspace.json](../zryna.workspace.json) owns registration/dependencies; [ARCHITECTURE](ARCHITECTURE.md) owns phase boundaries and [STRICT_WORKSPACE](STRICT_WORKSPACE.md) owns enforcement.
-Resolve disagreements there, rather than changing this index into another authority.
+[zryna.workspace.json](../zryna.workspace.json) owns registration/dependencies; [ARCHITECTURE](ARCHITECTURE.md) owns phase boundaries and [STRICT_WORKSPACE](STRICT_WORKSPACE.md) owns enforcement; resolve disagreements in those authorities.
 300-line module enforcement: [inventory](../scripts/repository-structure-policy.json), [checker](../scripts/check-repository-structure.mjs), [policy parser](../scripts/structure/policy.mjs), [original history](../scripts/structure/history.mjs), [module history](../scripts/structure/module-history.mjs), and [module size](../scripts/structure/module-size.mjs) own classifications, authentication, diagnostics and physical/JS/TS meaningful counts. Run `pnpm structure:check` and `node --test tests/repository-structure.test.mjs`.
 [Normal build](../scripts/run-build.mjs) and [preflight](../scripts/run-preflight.mjs) compose the same size, formatter and boundary authorities. Start boundary changes with the [architecture README](../crates/zryna-architecture/README.md), parser changes with the [adapter README](../adapters/typescript-6/README.md), and preserve ARCHITECTURE phase direction.
 
-Public execution is default M1 `I32V1`, explicit M2 `--profile control-flow-v1`, or explicit M3 `--profile data-ownership-v1`.
-M3 uses audited target/runtime and atomic manifest-v3 bundles, not a general-purpose allocator or public aggregate ABI.
-Use [GETTING_STARTED](GETTING_STARTED.md) for M1/M2, [M3_GETTING_STARTED](M3_GETTING_STARTED.md) for M3, and [CLI](CLI.md) for exact contracts.
+Public execution selects default M1 `I32V1`, explicit M2 `--profile control-flow-v1`, or explicit M3 `--profile data-ownership-v1`. M3 retains audited target/runtime and atomic manifest-v3 bundles without a general allocator or public aggregate ABI. Follow [GETTING_STARTED](GETTING_STARTED.md) for M1/M2, [M3_GETTING_STARTED](M3_GETTING_STARTED.md) for M3, and [CLI](CLI.md) for exact contracts.
 ## 1. Syntax recognition, source spans, or frontend transport
 
 - Diagnostic transport: [v2 contract](../spec/diagnostics/STRUCTURED_DIAGNOSTICS_V2.md), [schema](../schemas/zryna-diagnostics-v2.schema.json), and [diagnostics component](../crates/zryna-diagnostics/README.md). Run `pnpm diagnostics:contract` and `cargo test --locked -p zryna-diagnostics`; preserve the existing text/JSON-v1 APIs.
