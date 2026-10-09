@@ -1,16 +1,41 @@
-# Proposed bounded WASI command H1 contract
+# Bounded WASI command H1 contract: owner decisions accepted
 
-Status: **draft for review, unaccepted**. This document proposes one concrete resolution of
+Status: **five bounded owner decisions accepted; required independent review pending**.
+Repository owner accepted the five bounded decisions on 2026-10-09.
+This document records the bounded resolution of
 [#400](https://github.com/zryna/zryna/issues/400). It activates nothing, assigns no current
-CLI selector or ABI, and does not revise the pinned
-[#167 WIT registry](../spec/wit/CAPABILITY_PROFILES_V1.md). Its source and host decisions must
-be accepted before implementation. The earlier [readiness assessment](WASI_COMMAND_ACTIVATION_PROPOSAL.md)
-records the alternatives.
+supported CLI selector or ABI, and does not revise the pinned
+[#167 WIT registry](../spec/wit/CAPABILITY_PROFILES_V1.md). Its source and host decisions were
+required to be accepted before implementation. Acceptance was not recorded before the review
+implementation; later acceptance does not retroactively satisfy that historical prerequisite.
+Required independent review remains necessary before public support, which is not activated.
+The [checkout and installed review candidate](WASI_COMMAND_GETTING_STARTED.md) contains a bounded
+H1 review implementation; execution evidence does not constitute independent review. The earlier
+[readiness assessment](WASI_COMMAND_ACTIVATION_PROPOSAL.md) records the original prerequisites
+and alternatives.
 
 The selected denial transport is **A: retain the pinned WASI host trap**. This resolves only
 denial transport. The source gate, F1 allocation/conversion, grant capture, run mapping and
-manifest below remain one complete review candidate; selection of A does not accept them or
-establish execution evidence. The matching narrow #357/#358 reconciliation already exists.
+manifest below received the bounded owner acceptance recorded here. Selection of A alone did
+not accept those decisions or establish execution evidence. The matching narrow #357/#358
+reconciliation already exists; required independent implementation review remains outstanding.
+
+## Recorded bounded owner acceptance
+
+Repository owner accepted the five bounded decisions on 2026-10-09.
+
+| Decision | Accepted initial boundary |
+| --- | --- |
+| Source authority | One authenticated source file, one literal environment key, exhaustive `Found(String)` / `Missing` consumption and sole `main(): bool`; no dependencies or source widening |
+| F1 conversion and F2 mapping | Checked UTF-8 copied once into an owned String, fixed allocation/transfer bounds, initialized-prefix cleanup, fatal invalidation and fresh recovery; present-empty differs from Missing |
+| Grant and mediation | Empty controls or one exact owner-private request, fixed input bounds, same-handle capture, no ambient values and revocation before reading a value |
+| Whole-interface behavior | Complete pinned WIT/import topology, only exact supplied environment authority, empty argv/no cwd, denial of every other capability and rejection of imports outside the admitted world |
+| CLI, manifest and bounded host scope | Existing checkout/installed grammar and examples, distinct WIT return versus trap/denial, fixed limits, privacy, teardown and atomic create-only records; supervised Linux x86-64 / authenticated hosted Ubuntu and hosted Windows x64 evidence |
+
+This accepts the bounded behavior, not implementation correctness or public activation.
+Required independent implementation review remains outstanding. Local Windows execution is unvalidated;
+no full plain-cloud baseline or performance validation is claimed.
+Existing releases and M1–M3 profiles gain no H1 support retroactively.
 
 ## Fixed inputs and proposed compatibility boundary
 
@@ -78,7 +103,8 @@ The built-in name `EnvLookupV1` is reserved, not a user-defined enum. The existi
 expression shape can name its two closed arms as `"EnvLookupV1.Found"` and
 `"EnvLookupV1.Missing"`; the new semantic and IR verifiers must authenticate the arm
 names, active owned payload and reverse cleanup. Other v4 match syntax remains unchanged.
-The proposed source example is intentionally unavailable to the current compiler:
+The following source example is implemented by the review candidate; public support remains
+inactive pending required independent review:
 
 ```ts
 export function main(): bool {
@@ -448,7 +474,7 @@ authority and is outside this initial run-only CLI. Every unsupported profile/ta
 combination rejects before backend dispatch or runtime construction.
 
 Before implementation acceptance, review this document together with the existing #357/#358
-H1 reconciliation and #167 first-extra-byte test. Acceptance would authorize only this bounded
+H1 reconciliation and #167 first-extra-byte test. The recorded owner acceptance covers only this bounded
 one-file H1 command and its necessary pure/negative controls. It does not authorize H2-H5,
 servers, package dependencies, native FFI, public String/layout exports or general Result/Option.
 No runtime/public support state changes until the full acceptance matrix below is executed
@@ -474,11 +500,12 @@ and the required exact-revision Linux/Windows gates and code review are complete
 | malformed component | Changed import/function type, canonical option, realloc, memory, run result, or excess bytes | Reject before instantiation; next valid request recovers |
 | cleanup | Found, missing, source `err`, denied call, canonical failure, fuel/deadline trap | Exact ownership ledger, store invalidation, joined watchdog, fresh recovery |
 
-These rows are design fixtures, not tests that have run. Implementation acceptance also needs
+These rows specify required observations; the table itself is not execution evidence.
+Exact-revision execution receipts remain separate from owner acceptance. Implementation review needs
 the WIT contract, source/IR and independent component audits, focused driver/CLI tests,
 manifest inventory/execution-record checks, fixed examples, and required Linux and Windows gates on
-the reviewed revision. #400 stays open and unsupported until those proofs and the required
-repository contract decisions above are accepted.
+the reviewed revision. #400 stays open and unsupported while required independent review remains
+pending; the five bounded owner decisions above are now accepted.
 
 ## Installed candidate invocation
 

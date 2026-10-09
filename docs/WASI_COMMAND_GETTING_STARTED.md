@@ -1,7 +1,9 @@
 # Bounded WASI command walkthrough
 
-Status: implementation review candidate. The complete Linux and Windows acceptance gates and
-independent final review remain required before this becomes a supported public profile.
+Status: implementation review candidate. The five bounded
+[owner decisions are accepted](WASI_COMMAND_H1_CONTRACT_DRAFT.md#recorded-bounded-owner-acceptance).
+Required exact-revision Linux/Windows gates and independent implementation review remain
+necessary before public support; support is not activated.
 The [H1 contract](WASI_COMMAND_H1_CONTRACT_DRAFT.md) specifies its source, grant, conversion,
 denial and execution-record boundaries. The [activation proposal](WASI_COMMAND_ACTIVATION_PROPOSAL.md)
 records the prerequisite decisions.

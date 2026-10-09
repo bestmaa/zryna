@@ -11,8 +11,9 @@ bundled runtime/provider and one project-relative source file, without dependenc
 Both routes accept no scalar arguments or build-only selection. The [command walkthrough](WASI_COMMAND_GETTING_STARTED.md) covers private
 input creation, the initial grant table, typed WIT results, limits and create-only bundles;
 the [manifest reference](WASI_COMMAND_MANIFEST_V1.md) specifies its distinct execution record.
-This candidate still requires complete acceptance and final review before public support is
-declared. Existing M1–M3 profiles retain their contracts below.
+The five bounded [owner decisions are accepted](WASI_COMMAND_H1_CONTRACT_DRAFT.md#recorded-bounded-owner-acceptance).
+Required independent review remains pending and public support is not activated.
+Existing M1–M3 profiles retain their contracts below.
 
 ## Public M3 profile
 

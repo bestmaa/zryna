@@ -1,7 +1,9 @@
 # Bounded command execution manifest v1
 
-Status: implementation review candidate; complete acceptance and independent final review
-remain pending. This record belongs only to `command-h1-v1` / `wasi-command` and does not
+Status: implementation review candidate; the five bounded
+[owner decisions are accepted](WASI_COMMAND_H1_CONTRACT_DRAFT.md#recorded-bounded-owner-acceptance),
+while required independent review and public activation remain pending.
+This record belongs only to `command-h1-v1` / `wasi-command` and does not
 change scalar or browser manifest versions. The [walkthrough](WASI_COMMAND_GETTING_STARTED.md)
 explains invocation and private inputs; the [H1 contract](WASI_COMMAND_H1_CONTRACT_DRAFT.md)
 specifies the compiler, grant and conversion authorities.

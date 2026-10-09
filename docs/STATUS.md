@@ -344,8 +344,10 @@ remain outside M3.
 
 The [bounded WASI command implementation candidate](WASI_COMMAND_GETTING_STARTED.md) has a
 separate checkout/installed candidate selector, audited component, owner-private one-key input and distinct
-execution manifest. It remains under review until its complete Linux/Windows gates and final
-contract acceptance; the supported profiles in this document do not inherit its host authority.
+execution manifest. Its five bounded [owner decisions are accepted](WASI_COMMAND_H1_CONTRACT_DRAFT.md#recorded-bounded-owner-acceptance).
+Required exact-revision Linux/Windows gates and independent implementation review remain
+necessary before public support; support is not activated.
+The supported profiles here do not inherit its host authority.
 
 Public source-level Boolean execution requires explicit `control-flow-v1` or `data-ownership-v1`; it remains rejected by
 the default M1 path. The compiler-owned M2 gate checks three-target equivalence for one fixed
