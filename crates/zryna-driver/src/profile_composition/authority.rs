@@ -113,21 +113,22 @@ type ProgramBinding = (Language, [u8; 32], [u8; 32]);
 impl Authorities {
     pub(super) fn source_identities(
         &self,
-    ) -> BTreeMap<String, Vec<zryna_source::SourceMapIdentity>> {
-        self.instances
-            .iter()
-            .map(|(id, authority)| {
-                let identities = authority
-                    .programs
-                    .iter()
-                    .map(|program| {
-                        let VerifiedLanguage::I32V1 { sources, .. } = program;
-                        sources.identity()
-                    })
-                    .collect();
-                (id.clone(), identities)
-            })
-            .collect()
+    ) -> Result<BTreeMap<String, Vec<zryna_source::SourceMapIdentity>>, Vec<Diagnostic>> {
+        let mut identities = BTreeMap::new();
+        for (id, authority) in &self.instances {
+            let source_ids = authority
+                .programs
+                .iter()
+                .map(|program| match program {
+                    VerifiedLanguage::I32V1 { sources, .. } => Ok(sources.identity()),
+                    VerifiedLanguage::CommandH1V1(command) => {
+                        command.sources().map(SourceMap::identity)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            identities.insert(id.clone(), source_ids);
+        }
+        Ok(identities)
     }
 
     pub(super) fn binding(&self, expected: &BTreeSet<String>) -> Result<Binding, Vec<Diagnostic>> {

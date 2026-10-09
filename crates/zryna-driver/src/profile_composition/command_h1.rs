@@ -30,7 +30,7 @@ const ENVIRONMENT: &str = "wasi:cli/environment@0.2.12";
 const BINDING_DOMAIN: &[u8] = b"zryna.command-composition-binding.v1\0";
 
 #[cfg(test)]
-mod tests;
+pub(super) mod tests;
 
 fn invalid() -> Vec<Diagnostic> {
     vec![error(INVALID, "command composition source, issuer, approval or requirement changed")]

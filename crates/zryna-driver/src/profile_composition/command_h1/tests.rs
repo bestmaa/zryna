@@ -1,4 +1,5 @@
 mod rejection;
+mod source_identities;
 
 use super::*;
 use zryna_source::SourceFileInput;
@@ -82,6 +83,10 @@ fn claim(input: &Input, authorities: &Authorities, result: &ValidatedComposition
         summaries: result.summaries.clone(),
         witnesses: result.witnesses.clone(),
     }
+}
+
+pub(in crate::profile_composition) fn pure_command_authorities() -> Authorities {
+    Candidate::new("pure-entry").admit().authorities
 }
 
 #[test]

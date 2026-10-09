@@ -138,6 +138,7 @@ fn verify(
     if pure_ids.iter().any(|id| !pure_binding.has_language(id, graph.input.language)) {
         return Err(vec![error(PROFILE, "pure instance lacks the selected sealed language")]);
     }
+    pure_binding.validate_command_requirements(&graph.input)?;
     let native_binding = native
         .iter()
         .map(|(id, issuer)| issuer.binding().map(|binding| (id.clone(), binding)))
@@ -148,7 +149,7 @@ fn verify(
         graph_binding: graph.binding(&pure_binding)?,
         input: graph.input,
         pure: pure_binding,
-        pure_sources: pure.source_identities(),
+        pure_sources: pure.source_identities()?,
         native: native_binding,
         closures,
         witnesses,

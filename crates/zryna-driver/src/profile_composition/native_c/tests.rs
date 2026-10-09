@@ -8,6 +8,7 @@ use zryna_ir::{Expr, ExprId, ExprKind, Function, Program, Type};
 use zryna_semantics::native_c_v0::LibraryMaterial;
 use zryna_source::SourceFileInput;
 
+mod h1_boundary;
 mod replay;
 mod witnesses;
 
