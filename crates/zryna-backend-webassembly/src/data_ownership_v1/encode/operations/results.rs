@@ -1,6 +1,9 @@
 //! Result-place synchronization and derived drop emission.
 
-use super::*;
+use super::{
+    Context, Function, Instruction, Locals, VerifiedFunction, VerifiedInstruction, VerifiedLayouts,
+    VerifiedPlaceKind, place_address, store,
+};
 
 pub(super) fn sync_result(
     function: VerifiedFunction<'_>,

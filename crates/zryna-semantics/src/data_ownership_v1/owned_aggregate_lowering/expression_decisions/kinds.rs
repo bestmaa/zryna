@@ -1,6 +1,6 @@
 //! Prepared expression shapes consumed by the existing lowering decisions.
 
-use super::*;
+use super::{Span, Ty, syntax};
 
 pub(in super::super) struct StructDecision {
     pub(in super::super) children: Vec<(u32, u32)>,

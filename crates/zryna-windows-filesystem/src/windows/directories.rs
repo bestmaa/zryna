@@ -1,6 +1,10 @@
 //! Safe ownership and retained-parent state for exact directory capabilities.
 
-use super::*;
+use super::{
+    AsHandle, DELETE, Dir, FILE_CREATE, FILE_SHARE_READ, FILE_SHARE_WRITE, GENERIC_READ, OsStr,
+    SYNCHRONIZE, confirm_absent, encode_component, fmt, io, mark_for_deletion, open_relative,
+    rename_directory,
+};
 
 /// The exact directory created by [`create_directory`].
 ///

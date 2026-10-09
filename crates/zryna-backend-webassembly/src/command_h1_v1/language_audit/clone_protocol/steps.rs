@@ -1,6 +1,6 @@
 //! Exact instruction-step matching for clone call and failure observations.
 
-use super::*;
+use super::{BlockType, Callsite, Diagnostic, Operator, Shape, Step, invalid};
 
 pub(super) fn audit_helper_calls(steps: &[Step], shape: &Shape) -> Result<(), Diagnostic> {
     for step in steps {

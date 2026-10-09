@@ -1,6 +1,10 @@
 //! Wire observations derived from the retained command run.
 
-use super::*;
+use super::{
+    CommandH1ExecutionRecord, CommandH1Outcome, CommandH1RunReturn, CommandH1TrapCategory,
+    Component, Denial, Diagnostic, ENVIRONMENT, Execution, Grant, HOST_POLICY, Limits, Optional,
+    OutcomeKind, RunReturn, TrapCategory, WORLD, envelope, invalid,
+};
 
 pub(super) fn component(
     authority: &super::super::Authority,

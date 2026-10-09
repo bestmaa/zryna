@@ -1,6 +1,8 @@
 //! Checked UTF-16 byte lengths and ABI-aligned owned rename allocation.
 
-use super::*;
+use super::{
+    AsRawHandle, BorrowedHandle, FILE_RENAME_INFORMATION, HANDLE, align_of, fmt, io, size_of,
+};
 
 pub(super) struct RenameBuffer {
     words: Vec<usize>,

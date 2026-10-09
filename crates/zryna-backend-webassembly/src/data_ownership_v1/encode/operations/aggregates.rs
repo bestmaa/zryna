@@ -1,6 +1,9 @@
 //! Aggregate allocation and field initialization for verified instructions.
 
-use super::*;
+use super::{
+    B, Context, Function, Instruction, Locals, TypeCategory, VerifiedFunction, VerifiedInstruction,
+    index_error, memory, store, sync_result,
+};
 
 pub(super) fn construct(
     function: VerifiedFunction<'_>,
@@ -67,5 +70,5 @@ pub(super) fn construct(
         .ok_or_else(index_error)?;
         memory::store_value(element, body);
     }
-    return sync_result(function, instruction, locals, context.layouts, body);
+    sync_result(function, instruction, locals, context.layouts, body)
 }

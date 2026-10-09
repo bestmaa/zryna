@@ -1,6 +1,6 @@
 //! Exact storage-type interning and semantic type lookup.
 
-use super::*;
+use super::{BTreeMap, Decl, Errors, RawTypeSyntaxKind, Ty, raw_layout, span, syntax};
 
 #[derive(Default)]
 pub(super) struct TypeInterners {
