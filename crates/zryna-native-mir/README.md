@@ -7,6 +7,34 @@ The separate internal `data_ownership_v1` module lowers sealed M3 IR into Linux 
 layout-bound raw MIR and independently verifies types, places, CFG edges, cleanup and the exact
 ownership-runtime symbol inventory. It emits no object and grants no link or process capability.
 
+The separate internal `native_c_v0` module admits complete machine claims against the genuine
+native C extension IR. Its independent verifier never calls the lowering producer. The immutable
+seal retains original source, captured declaration/library materials, dual layouts and the runtime
+issuer. It proves exact System V INTEGER lanes (six registers then distinct eight-byte stack
+slots), low-width Boolean checks, sixteen-byte outgoing alignment and non-overlapping zeroed
+caller output slots whose logical initialization follows the exact status-zero call.
+
+Source values, argument order, safe/raw entry, conditional reservations and non-null registration
+remain complete. Explicit private preparation preserves String byte retention, stride-four i32
+reads/range checks/stride-one packing, distinct stride-four zero-extended foreign copies and
+issuer-specific allocation faults. Every terminal plan ends loans before reverse mixed-owner
+releases, stops immediately on release failure and transfers a result only after cleanup. Process
+failure supplies no cleanup promise. Only total scalar functions have public C signatures.
+
+The machine authority itself emits no native object. The separate backend scalar-export path
+consumes this seal for total public scalar definitions, while imports and private entries remain
+plans. The MIR introduces no execution instance, foreign
+ledger, runtime allocation, linking, support activation or public selector. Those #417 gates and
+the full tiny-C Linux failure/cleanup fixture remain required. SQLite and Rust-through-C-shim
+are later independent library pilots. Focused tests are `cargo test --locked
+-p zryna-native-mir --test native_c_v0`; exact-revision receipts must accompany execution claims.
+Machine bounds derive from existing admitted IR cardinalities. Each effect admits at most 32
+ordinary actions (the admitted 25 boundary checks plus fixed call/status/commit actions); each
+terminal edge adds one action per loan, two per drop and one finish. Production checks the
+complete source-derived sum for overflow before cloning claims. Independent admission checks
+raw counts against those exact retained source bounds before traversing terminal actions.
+No separate complete-program ceiling narrows the accepted source policy.
+
 `raw::Module` and its nested raw types are never backend-authoritative. `verify` consumes those
 claims and is the only constructor of `VerifiedMirModule`; the verified wrapper exposes only
 immutable function/value/operation views and cannot be recovered as raw or mutated. `lower` sees

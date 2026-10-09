@@ -6,6 +6,8 @@ pub mod command_h1_v1;
 pub mod control_flow_v1;
 pub mod data_ownership_v1;
 pub mod definition_queries;
+/// Source-bound native C declarations, without typed body or executable authority.
+pub mod native_c_v0;
 
 use std::collections::BTreeMap;
 mod diagnostic_order;
@@ -20,25 +22,9 @@ use zryna_syntax::v2::{
     ProjectSyntaxSnapshot, StatementKind, TypeSyntax, TypeSyntaxKind,
 };
 
-/// Maximum retained semantic diagnostics, including the terminal budget diagnostic.
-pub const MAX_SEMANTIC_DIAGNOSTICS: usize = 256;
+mod limits;
 
-const _: () = {
-    assert!(zryna_syntax::v2::MAX_FUNCTIONS_PER_PROJECT <= zryna_ir::MAX_IR_FUNCTIONS);
-    assert!(
-        zryna_syntax::v2::MAX_PARAMETERS_PER_FUNCTION <= zryna_ir::MAX_IR_PARAMETERS_PER_FUNCTION
-    );
-    assert!(
-        zryna_syntax::v2::MAX_PARAMETERS_PER_PROJECT <= zryna_ir::MAX_IR_PARAMETERS_PER_PROGRAM
-    );
-    assert!(
-        zryna_syntax::v2::MAX_EXPRESSIONS_PER_FUNCTION <= zryna_ir::MAX_IR_EXPRESSIONS_PER_FUNCTION
-    );
-    assert!(
-        zryna_syntax::v2::MAX_EXPRESSIONS_PER_PROJECT <= zryna_ir::MAX_IR_EXPRESSIONS_PER_PROGRAM
-    );
-    assert!(zryna_syntax::v2::MAX_EXPRESSION_DEPTH <= zryna_ir::MAX_IR_EXPRESSION_DEPTH);
-};
+pub use limits::MAX_SEMANTIC_DIAGNOSTICS;
 
 /// Inputs that a future semantic implementation must consume without frontend authority.
 ///

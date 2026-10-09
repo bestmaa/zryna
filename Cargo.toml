@@ -12,6 +12,7 @@ members = [
   "crates/zryna-driver",
   "crates/zryna-frontend",
   "crates/zryna-ir",
+  "crates/zryna-native-c-ir",
   "crates/zryna-layout",
   "crates/zryna-ownership-runtime-abi",
   "crates/zryna-package",

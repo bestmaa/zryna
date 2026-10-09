@@ -409,6 +409,7 @@ jobs:
           version: 11.18.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm package:contract
+      - run: pnpm build-plan:contract
       - run: cargo test --locked -p zryna-package
 
   distribution-release-contract:

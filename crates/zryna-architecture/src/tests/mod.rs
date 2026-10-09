@@ -1,0 +1,71 @@
+use crate::cargo::capture::BoundedProcessStream;
+use crate::cargo::capture::read_process_stream;
+use crate::cargo::capture::validate_cargo_process_output;
+use crate::cargo::inputs::read_optional_cargo_input_snapshots;
+use crate::cargo::inputs::validate_cargo_inputs_unchanged;
+use crate::cargo::metadata::CargoMetadataDocument;
+use crate::cargo::metadata::CargoMetadataNode;
+use crate::cargo::metadata::CargoMetadataNodeDependency;
+use crate::cargo::metadata::CargoMetadataPackage;
+use crate::cargo::metadata::CargoMetadataResolve;
+use crate::cargo::metadata::MAX_CARGO_EDGES;
+use crate::cargo::metadata::MAX_CARGO_PACKAGES;
+use crate::cargo::metadata::validate_cargo_metadata_limits;
+use crate::cargo::process::load_cargo_metadata;
+#[cfg(unix)]
+use crate::cargo::process::load_cargo_metadata_with_executable;
+use crate::cargo::validate_resolved_cargo_graph;
+use crate::components::manifests::MAX_MANIFEST_BYTES;
+use crate::components::manifests::read_toml_with_source;
+use crate::components::paths::validate_paths;
+use crate::components::validate_component_containers;
+use crate::components::validate_required_root_shapes;
+use crate::contract::AdapterContract;
+use crate::contract::CONTRACT_PROFILE;
+use crate::contract::CONTRACT_VERSION;
+use crate::contract::MAX_CONTRACT_BYTES;
+use crate::contract::MemberContract;
+use crate::contract::MemberKind;
+use crate::contract::WorkspaceContract;
+use crate::contract::load_contract;
+use crate::contract::validate_contract_identity;
+use crate::contract::validate_contract_paths;
+use crate::contract::validate_contract_unchanged;
+use crate::dependency_graph::InternalDependencyGraph;
+use crate::dependency_graph::allowed_layer_edge;
+use crate::dependency_graph::validate_dependency_graph;
+use crate::diagnostics::ValidationDiagnostics;
+use crate::diagnostics::validation_report;
+use crate::filesystem::portable_path_segment;
+use crate::filesystem::read::ControlledReadPolicy;
+#[cfg(unix)]
+use crate::filesystem::read::read_bounded_utf8;
+use crate::filesystem::read::read_bounded_utf8_with_expected_size;
+use crate::filesystem::read::read_bounded_utf8_with_hooks;
+use crate::filesystem::safe_relative_path;
+use crate::filesystem::scan::ScanLimits;
+use crate::filesystem::scan::ScanPolicy;
+use crate::filesystem::scan::ScanState;
+use crate::filesystem::scan::scan_path;
+use crate::filesystem::valid_id;
+use crate::validation::validate_workspace;
+use std::collections::{BTreeMap, BTreeSet};
+use std::error::Error;
+use std::fs;
+use std::path::{Path, PathBuf};
+#[cfg(windows)]
+use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+mod fixtures;
+mod graph_fixtures;
+use fixtures::*;
+use graph_fixtures::*;
+
+mod cargo_graph;
+mod cargo_process;
+mod controlled_read;
+mod paths;
+mod scan;
+
+mod permanent_phase_graph;

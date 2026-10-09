@@ -7,6 +7,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+serde_json.workspace = true
+sha2.workspace = true
 zryna-abi.workspace = true
 zryna-diagnostics = { path = "../zryna-diagnostics" }
 zryna-ir = { path = "../zryna-ir" }
@@ -14,9 +16,6 @@ zryna-layout = { path = "../zryna-layout" }
 zryna-ownership-runtime-abi.workspace = true
 zryna-source = { path = "../zryna-source" }
 zryna-syntax = { path = "../zryna-syntax" }
-
-[dev-dependencies]
-serde_json.workspace = true
 
 [lints]
 workspace = true

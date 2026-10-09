@@ -136,7 +136,8 @@ replaces, `zryna-architecture`: component registration, Cargo membership, allowe
 direction and complete filesystem safety remain that authority's obligations. No Rust module
 regex is used or claimed to prove compilation, reachability, `cfg`, inline modules or `#[path]`.
 
-All repository files ending in `.rs`, `.mjs`, `.js`, `.cjs`, `.ts`, `.sh`, `.ps1` or `.py`
+All repository files ending in `.rs`, `.mjs`, `.js`, `.cjs`, `.ts`, `.jsx`, `.tsx`, `.mts`, `.cts`,
+`.c`, `.h`, `.cc`, `.cpp`, `.hpp`, `.sh`, `.ps1` or `.py`
 (case-insensitively) default to production, including adapter and executable verification scripts.
 Exact test, fixture and generated classifications live in `scripts/repository-structure-policy.json`
 with an owner, reason and review reference. Directory names, generated comments and `.gitignore`
@@ -145,25 +146,44 @@ dependency/build outputs (`.git`, root `target`/`node_modules`, adapter `node_mo
 `.zryna/cache` and `.zryna/out`) are excluded from traversal. Source paths are portable and
 case-unique; links, special files and stale current classification/exception paths reject.
 
-Counting uses LF terminators: CRLF has the same count as LF, every blank/comment line counts,
-empty content is zero lines, and a nonempty unterminated final line counts once. A lone CR is
-content, not a terminator. New production source must be at most 500 lines. Sizes 350–500 warn
-without failing. Existing production over 500 cannot exceed the smaller of its original inventory
-count and trusted-base content count. After reaching 500 or fewer in the trusted base it uses the
-ordinary ceiling. The immutable historical inventory records exact source paths/counts at
-`885bb4d863ad112566add72fab6d2931587b71b1`, including separately classified test sources and a frozen
-initial `production` eligibility bit; initial test records never grant grandfathering, even after
-later reclassification. Before initial adoption the checker reproduces the complete inventory
-from Git objects. Once an independently selected trusted base contains the policy, its anchor and
-baseline must equal both the working policy and the original reachable policy adoption. This
-preserves the reviewed inventory even when a squash merge omits the pre-adoption commit object;
-it does not replace that identity or regenerate any allowance. Adoption source sizes can only
-lower the frozen ceilings. Self-raised counts, eligibility changes and substituted anchors reject.
+Counting physical lines uses LF terminators: CRLF has the same count as LF, every blank/comment
+line counts, empty content is zero lines, and a nonempty unterminated final line counts once.
+A lone CR is content, not a terminator. For JS/TS sources, **module lines** are the maximum of
+physical lines, lines emitted by the existing pinned TypeScript 6.0.3 AST printer (LF, comments
+retained), and a meaningful AST count: statements excluding blocks and variable-statement
+wrappers, named variable/destructuring bindings, and comma operators each count once. This
+prevents both statement minification and comma chains from hiding oversized modules. Syntax
+that cannot be normalized fails with its path and parser reason. Other covered languages use
+physical lines. Existing canonical formatting gates, including `cargo fmt --all -- --check`,
+remain required; normalization never rewrites source. Install frozen dependencies before checking.
+
+**New production modules must be at most 300 module lines.** This is repository maintainability
+policy; it imposes no 300-line limit on user-authored `.zry` programs. Mixed production/test files
+count in full. Exclusions require exact test, fixture or generated records, never directory guesses.
+Diagnostics identify the path, actual module/physical size, ceiling and cohesive splitting action.
+
+Policy version 2 preserves the immutable historical v1 inventory at
+`885bb4d863ad112566add72fab6d2931587b71b1`, including its original extension set, physical counts
+above 500 and frozen initial production eligibility. Its authenticated physical ceilings remain
+independently enforced. The additional `modules` inventory records all covered files above 300
+module lines at reviewed migration commit `0635c19f922f7af61fa1e05b1a632b1013e908e7`.
+Eligibility is taken from that commit's classifications; test records never grant grandfathering
+when later reclassified. Each legacy production module may use only the smaller of its frozen
+module count, its first v2 adoption count and its trusted comparison count. Once an accepted base
+reaches 300 or fewer, the ordinary 300 ceiling applies. Copies receive no inherited allowance.
+
+Before v2 adoption, the checker reconstructs the exact migration inventory from pinned Git
+objects. After adoption it authenticates the migration against both the trusted-base policy and
+the original reachable v2 adoption, including squash histories. Later anchor/count/eligibility
+changes, omissions, deletion/downgrade and shallow or unavailable authority fail closed. Historical
+inventory records remain after deletion; current classifications and navigation must be updated.
+Neither checker nor CI regenerates allowances. Reductions ratchet at accepted comparison
+revisions, not intermediate editor states.
 
 Local working trees, including linked Git worktrees, compare all current bytes (staged and
 unstaged) to `HEAD`. To check a complete branch, set `ZRYNA_STRUCTURE_BASE` to a full trusted
-ancestor commit SHA. CI must set that variable: PRs use the event's base SHA; main pushes use
-the event's previous SHA. Full checkout history supplies comparison and policy-adoption history;
+ancestor commit SHA. CI must set that variable: PRs use the event's base SHA; manual runs use
+the required `structure_base` input. Full checkout history supplies comparison and policy-adoption history;
 the initial anchor object is required only before a trusted policy has been adopted. The checker
 never fetches. Missing, zero, ambiguous or unrelated authority fails with
 an actionable error. During initial adoption only, when the trusted base predates the reviewed
@@ -176,7 +196,7 @@ uncommitted intermediate editor states.
 
 Git's deterministic 50%-similarity rename detection carries the old ceiling and trusted reduction
 to a new path; classification and exception paths must be updated explicitly. Stage a rename so
-Git can identify its destination. An unrecognized rename is treated as new production (500),
+Git can identify its destination. An unrecognized rename is treated as new production (300),
 never given a larger allowance. Deleted source remains in the immutable historical inventory but
 must leave no stale current policy entry or navigation link. Copying a large module does not
 inherit its allowance.
@@ -184,8 +204,9 @@ inherit its allowance.
 Exceptions contain exactly `path`, `owner`, `reason`, numeric `ceiling` (>500), `review`, and
 `expires` (`YYYY-MM-DD`). Expiry is exclusive at 00:00 UTC on that date. Invalid dates, duplicate
 or wildcard paths, missing metadata, expired entries, and exceptions for absent, test-classified
-or ordinary-sized files reject. Exceptions do not weaken architecture/compiler checks. Policy
-edits are displayed in CI as requiring explicit maintainer review; successful parsing is not
+or ordinary-sized files reject. Historical physical-size exceptions do not override the 300-line
+module contract or raise its legacy ceilings; no new production module can acquire an oversized allowance through exceptions.
+Exceptions do not weaken architecture/compiler checks. Policy edits are displayed in CI as requiring explicit maintainer review; successful parsing is not
 human approval. Neither the checker nor CI regenerates allowances or modifies inputs.
 
 The navigation check accepts the existing plain relative Markdown file-link grammar in
@@ -193,6 +214,17 @@ The navigation check accepts the existing plain relative Markdown file-link gram
 It does not require a private-helper inventory or duplicate the component registry. The independent
 `tests/repository-structure.test.mjs` suite covers count/ratchet/exception boundaries, renames,
 deletion, worktrees, shallow history, unsafe paths, deterministic rejection and recovery.
+
+`pnpm build` runs the same structure checker and Rust formatting gate, prepares cross-platform
+dependencies with `cargo fetch --locked`, then runs the authoritative `zryna architecture check`
+before `cargo build --locked --workspace`. Dependency preparation neither compiles code nor updates
+the lockfile; architecture metadata remains frozen. Standalone preflight/M0 require the same locked
+dependency preparation, as CI already performs. `pnpm preflight` runs the
+structure checker first and architecture validation before phase tests. CI runs the frozen
+preflight partitions and the same M0 gates on Linux and Windows; it retains all existing dependency,
+security and formatting checks. Bare `cargo build` compiles Rust and does not enforce repository-wide
+JS/TS/script sizes or execute the architecture engine. Use `pnpm build` or `pnpm preflight` for
+normal repository development. There is no compile-time hook or gate-skipping build option.
 
 ## Stable architecture diagnostics
 

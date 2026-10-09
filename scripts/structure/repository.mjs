@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import { join, posix } from 'node:path';
-import { fail, portablePath, SOURCE_EXTENSIONS } from './policy.mjs';
+import { fail, portablePath, LEGACY_SOURCE_EXTENSIONS, SOURCE_EXTENSIONS } from './policy.mjs';
 
 export function git(root, args, input) {
   const result = spawnSync('git', args, { cwd: root, input, encoding: 'utf8',
@@ -50,6 +50,7 @@ export function blobs(root, entries) {
 }
 
 export function source(path) { return SOURCE_EXTENSIONS.some(extension => path.toLowerCase().endsWith(extension)); }
+export function legacySource(path) { return LEGACY_SOURCE_EXTENSIONS.some(extension => path.toLowerCase().endsWith(extension)); }
 
 export function readSafe(root, path, missing = false) {
   portablePath(path);

@@ -46,6 +46,70 @@ future universal profile implemented consistently by every active backend.
 
 This crate owns language meaning and must never depend on a replaceable frontend provider.
 
+## Isolated native C source, declaration and body boundaries
+
+`native_c_v0::verify` consumes the bounded raw sidecar wire, the original immutable
+`SourceMap`, separately authenticated restricted foreign syntax and explicit
+captured library header/policy bytes. It independently computes source, header,
+policy and domain-separated declaration SHA-256, compares exact canonical
+policy projections, checks identities/signatures/allocator/status relations and
+replays every parsed intrinsic and export binding. It returns an opaque
+declaration-only set, retaining distinct C-int and C-i32 spellings. Temporary
+scalar ABI projections reuse defensive export-name validation only.
+
+The separate `native_c_v0::body::verify_bodies` consumes that opaque declaration
+authority and its exact original map. It checks every retained complete function,
+source type and local binding; tracks immutable status aliases to the exact call;
+checks status-zero output dominance, paired takes, nominal allocator/release
+identity and linear owner moves; and rejects foreign tokens across even private
+function boundaries. Its opaque `VerifiedForeignBodies` retains the original
+declaration/material authority and complete source occupants alongside read-only
+typed expressions and conditional foreign flow steps. Views cannot construct a
+body authority. Scalar exports stay total, with wrapping i32 addition.
+
+Each call records a pre-effect reservation against the execution-instance limit
+of 64 live/reserved obligations, rather than rejecting 65 lifetime acquisitions
+statically. Successful non-null acquisitions belong to the exact call and resource
+group before validation or take; untaken outputs remain in conditional reverse
+cleanup. Unknown statuses and malformed outputs require host/ABI failure, while
+release failure overrides completion with unresolved cleanup and no retry. Safe
+empty-byte release skips C entry while still consuming its token.
+
+These steps require future runtime length/range/UTF-8/count/Boolean checks,
+freshness/output validation, shared acquisition accounting, exact private M3
+preparation failure identities and physical cleanup. They do not demonstrate
+those actions occurred. Library pointer/freshness/failure promises remain trusted
+C contracts. IR/MIR construction, object inspection, linking and public activation
+remain separate requirements; existing M3 authorities accept none of these foreign
+forms. See the [source/declaration captures](../../tests/native-c-auth-v0/README.md)
+and [body entry and tests](src/native_c_v0/body/mod.rs).
+
+The isolated `native_c_v0::body::compose_private_boundaries` consumes only those
+complete opaque bodies and their original map. Existing independent Linear32 and
+Linux x86-64 layout verification, followed by mandatory ownership-runtime ABI
+verification, issues its retained private layout and status/trap declarations.
+Its internal candidate replay checks complete source origins, private moves,
+scoped retention, preparation stages and mixed reverse completion order. Cloned
+requirement records cannot construct `VerifiedPrivateBoundaries`.
+
+`Vec<i32>` loans require length/range checks and separate one-byte packed scratch,
+with exact private Allocate/Release requirements; String loans retain initialized
+UTF-8 storage without inventing an allocation. Returned foreign bytes require a
+distinct private Vec allocation, checked four-byte element capacity, unsigned byte
+expansion, initialized-prefix completion and length commit. Allocation/capacity
+faults retain issued private traps and every prior owner. Private allocations do
+not charge the unchanged global foreign budget of 64 live/reserved owners.
+
+Every exit ends its scoped loans before conditional reverse drops. A prepared
+result remains protected until all required releases confirm success; a release
+defect overrides return/error/trap without retry and leaves the result plus the
+remaining obligations unresolved. Process failure promises no physical cleanup.
+This boundary authenticates static requirements, including private entry storage
+obligations; it does not execute conversions, allocate memory, validate an actual
+caller entry, or extend legacy protocol-v4/M3/IR/MIR/backend/driver/public seals.
+See the [private composer](src/native_c_v0/body/private_boundary/mod.rs) and
+[independent private boundary tests](src/native_c_v0/body/tests/private_boundary/mod.rs).
+
 ## Internal M2 semantics boundary
 
 The separate `control_flow_v1` module consumes only an exact source-map-bound verified

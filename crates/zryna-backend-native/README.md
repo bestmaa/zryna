@@ -77,3 +77,83 @@ The named evidence is:
 This remains an internal candidate capability. Public `--profile data-ownership-v1`, manifest v3,
 multi-target transactions, non-Linux execution, dynamic libraries, general FFI, raw pointers,
 custom linkers, performance claims, and three-target M3 conformance remain outside this boundary.
+
+## Internal native C scalar exports
+
+`native_c_v0::emit_scalar_exports` accepts only the independently verified native C MIR and the
+existing exact Linux x86-64 target capability. It emits every admitted total public scalar export,
+retains the complete original program authority, and preserves distinct `c-i32`, `c-int` and
+`c-bool32` header spelling. Boolean carriers outside 0/1 terminate before the source body runs.
+The generated C11 header checks the target and carrier size/alignment. The independent audit
+requires readable, size-matched section payloads, the closed ELF section inventory, exact public
+symbol set, fixed file metadata,
+non-overlapping text definitions and no undefined symbols or relocations.
+
+This separate artifact emits no imported operation, private entry, foreign dispatcher, resource
+ledger or safe wrapper. Focused evidence is `cargo test --locked -p zryna-backend-native --lib
+native_c_v0`. Raw-to-verified MIR rejection remains independently tested by the MIR component.
+Driver linking and reverse C execution are a separate boundary. Neither this API nor its tests
+activate a public CLI profile or complete the #417 foreign-resource matrix.
+
+## Internal native C handle execution
+
+`native_c_v0::resources::emit_handle_entries` separately consumes the same immutable MIR seal.
+It selects exact private entry symbols and admits scalar inputs/results plus handle and i32 output
+slots. Private String/Vec storage, foreign byte copies and multi-owner creators reject before
+emission. Original unselected bodies and declaration/header/policy authorities remain retained.
+The finite aggregate emission inventory and existing 8 MiB object ceiling remain enforced.
+
+Generated entries execute original foreign calls, classify status before output reads, reserve
+capacity before C entry and share one 64-obligation compiler-private context. Successful non-null
+acquisitions register nominal owner/release identity before metadata exposure. Conditional reverse
+cleanup uses one checked same-library release body per operation; it marks a record as releasing
+before C entry and clears it only after confirmed return. Unknown or malformed outcomes poison
+the context and report unresolved live/reserved obligations. A process fault cannot produce a
+private outcome or establish cleanup. Private caller storage must be valid owned memory; pointer
+alignment and nominal checks do not make arbitrary in-process C memory corruption safe.
+
+An independent audit closes ELF sections, hidden entry/dispatcher definitions, local helper
+definitions, exact imported symbols and bounded non-overlapping relocation fields. Malformed
+ELF tests mutate sections, visibility, imports and relocations independently of the producer.
+Driver tests link the unchanged reviewed C observation fixture to generated bodies and check
+success, declared failures, reverse cleanup, 64/65 capacity, alias and release identity refusal,
+unknown status, null success and process-fault classification. Recoverable output snapshots detect
+changed bits; they cannot detect an identical-bit write or a missing write of zero. The captured
+library's reviewed initialization and failure-atomicity promises remain required.
+
+This artifact provides no foreign library acquisition, native recipe permission, OS containment,
+public CLI or Windows C target. The full #417 library and host proof matrix remains
+unfinished. Focus with `cargo test --locked -p zryna-backend-native --lib native_c_v0` and the
+driver's separate execution tests.
+
+
+## Internal native C byte execution
+
+`native_c_v0::resources::emit_byte_entries` is a separate private selection over the original MIR
+seal. The handle-only API and its header ABI remain closed. The byte channel has its own context
+magic and physical storage records; it accepts compiler-private owned String/Vec inputs and moves
+an owned result only after the current terminal edge's exact reverse cleanup succeeds. Structural
+input checks do not establish backing-memory provenance for arbitrary C callers.
+
+Rejected byte entries and invalid or unselected dispatcher ordinals share terminal framing.
+Only after nonnull, eight-byte-aligned context/outcome pointers and exact byte-context magic
+validate does rejection clear owned-result fields and report live, reserved and private unresolved
+obligations. It preserves caller inputs and context, makes no foreign call and guesses no cleanup.
+Byte inputs/outcomes require eight-byte alignment; handle-only inputs/outcomes retain four-byte
+alignment. Invalid context channels do not authorize access to byte extensions.
+
+Generated bodies execute the sealed preparation order: complete UTF-8 validation for String
+loans, bounded Vec length and 0..255 element checks before packed allocation, canonical empty
+loans, signed count checks and loan bounds before C entry. Foreign byte owners register in the
+shared 64-obligation ledger before metadata exposure. Captured null/count/maximum/expected-length
+and encoding policy governs validation and malformed cleanup. Successful copies allocate distinct
+private Vec storage, zero-extend bytes to i32 and commit length after initialization; foreign
+allocation is never adopted. Exact private runtime imports come from the retained runtime issuer.
+
+Private allocation traps retain their declared AllocationV1/CapacityV1 identity. Unknown statuses,
+changed failure outputs and failed releases report host failure with unresolved obligations;
+release is never retried and a prepared result is withheld. The ELF audit closes the added private
+imports and UTF-8 helper. Driver execution tests include empty and 4096/4097 lengths, invalid bytes,
+UTF-8 boundaries, failed allocation/release, malformed-policy branches and independent fault
+wrappers. Their manual disposal of deliberately unresolved test allocations is not generated
+recovery evidence. Multi-owner creators and creators taking an existing handle still reject.

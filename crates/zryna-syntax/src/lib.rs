@@ -4,6 +4,13 @@
 
 /// Source-bound requirements for the separate bounded command gate.
 pub mod command_h1_v1;
+
+/// Isolated untrusted native C v0 declaration wire; it grants no executable syntax authority.
+pub mod native_c_v0;
+
+/// Independently authenticated restricted foreign source syntax, without executable body proof.
+pub mod native_c_source_v0;
+
 /// Executable provider-neutral syntax protocol version 2.
 pub mod v2;
 pub mod v3;

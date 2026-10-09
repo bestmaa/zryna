@@ -31,7 +31,9 @@ zryna-backend-webassembly = { path = "../zryna-backend-webassembly" }
 zryna-diagnostics = { path = "../zryna-diagnostics" }
 zryna-frontend = { path = "../zryna-frontend" }
 zryna-ir = { path = "../zryna-ir" }
+zryna-native-c-ir = { path = "../zryna-native-c-ir" }
 zryna-native-mir = { path = "../zryna-native-mir" }
+zryna-ownership-runtime-abi = { path = "../zryna-ownership-runtime-abi" }
 zryna-package = { path = "../zryna-package" }
 zryna-process = { path = "../zryna-process" }
 zryna-semantics = { path = "../zryna-semantics" }

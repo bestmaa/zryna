@@ -1,0 +1,31 @@
+{
+  "kind": "tiny-fixture-prerequisite-evidence",
+  "reference_checkpoint": "42f8e8000d0a2afd3675fcefddadd526adc817e3",
+  "library_id": "fixture-c-v0@0",
+  "version": 0,
+  "production_approval": "not-granted",
+  "source_review": "Existing normative fixture policy and preserved PR533 test source; controlled hostile derivatives are evidence producers, not approved bodies.",
+  "real_library_proof": "Still requires an exact independently approved library source, ownership policy and artifact provenance.",
+  "materials": {
+    "library_body": {
+      "path": "crates/zryna-driver/src/native/native_c_v0/foreign_library/tests/library.c",
+      "bytes": 1492,
+      "sha256": "2c462f5ed3be40a5ef7fc7ad22c3e5ddf5fab7f828bb5592c754ca08ce77b960"
+    },
+    "header": {
+      "path": "tests/native-c-abi-v0/candidate.h",
+      "bytes": 751,
+      "sha256": "6631016fa53f7fa5e58d1b7b74b2c0fbba576feb84d8321e5cfba589583398c5"
+    },
+    "policy": {
+      "path": "tests/native-c-auth-v0/library-policy.json",
+      "bytes": 6837,
+      "sha256": "918edc899c9fff69bdc4b79d0cc8332af01f0e4b6b15f4778bf643809ce0dba8"
+    },
+    "private_runtime_template": {
+      "path": "runtime/native/ownership_runtime_v1.c",
+      "bytes": 17461,
+      "sha256": "94ce0a5f0d40458a7dcc234b93f98a2d18c985ff1f60e285c238516bea3d0e26"
+    }
+  }
+}

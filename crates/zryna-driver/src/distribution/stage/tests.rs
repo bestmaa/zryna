@@ -1,6 +1,7 @@
 //! Unit fixtures exercise stage copying and retention, not initial archive authentication.
 
-use super::{InstallationTree, InstalledCompiler, NEXT_STAGE, PROVIDERS, ProviderStage};
+use super::super::manifest::providers::{LEGACY_PROVIDERS, PROVIDERS};
+use super::{InstallationTree, InstalledCompiler, NEXT_STAGE, ProviderStage};
 use serde_json::json;
 use sha2::{Digest as _, Sha256};
 use std::{fs, path::PathBuf};
@@ -12,6 +13,10 @@ struct Case {
 
 impl Case {
     fn new() -> Self {
+        Self::with_providers("refs/heads/main", &PROVIDERS)
+    }
+
+    fn with_providers(source_ref: &str, providers: &[&str]) -> Self {
         let root = loop {
             let path = std::env::temp_dir().join(format!(
                 "zryna-provider-fixture-{}-{}",
@@ -25,7 +30,7 @@ impl Case {
             }
         };
         let mut files = Vec::new();
-        for path in PROVIDERS {
+        for &path in providers {
             let destination = root.join(path);
             fs::create_dir_all(destination.parent().expect("provider parent"))
                 .expect("provider directories");
@@ -36,12 +41,12 @@ impl Case {
                 "material": "source", "licenses": ["LICENSE"]}));
         }
         let mut tree = InstallationTree::capture(&root).expect("fixture root capture");
-        for path in PROVIDERS {
+        for &path in providers {
             tree.capture_file(path, 1024, true).expect("fixture file capture");
         }
         let distribution = serde_json::from_value(json!({
             "format": "zryna.distribution.v1", "version": env!("CARGO_PKG_VERSION"),
-            "source": {"repository": "https://github.com/zryna/zryna", "ref": "refs/tags/v0.2.1",
+            "source": {"repository": "https://github.com/zryna/zryna", "ref": source_ref,
                 "commit": "a".repeat(40), "tree": "b".repeat(40), "sourceDateEpoch": 0},
             "target": {"triple": "x86_64-unknown-linux-gnu", "archiveFormat": "tar-gzip",
                 "platformBaseline": {"os": "linux", "distribution": "ubuntu", "version": "24.04", "architecture": "x86_64"}},
@@ -64,10 +69,10 @@ impl Drop for Case {
 }
 
 #[test]
-fn stage_contains_exactly_nine_original_provider_files_and_cleans_up() {
+fn stage_contains_exactly_registered_provider_files_and_cleans_up() {
     let case = Case::new();
     let stage = ProviderStage::create(case.compiler()).expect("provider stage");
-    assert_eq!(stage.files.len(), 9);
+    assert_eq!(stage.files.len(), PROVIDERS.len());
     for path in PROVIDERS {
         let relative = path.strip_prefix("lib/zryna/bootstrap/").expect("provider prefix");
         assert_eq!(
@@ -84,7 +89,7 @@ fn stage_contains_exactly_nine_original_provider_files_and_cleans_up() {
 }
 
 #[test]
-fn each_of_the_nine_staged_files_rejects_mutation_or_prevents_the_write() {
+fn each_registered_staged_file_rejects_mutation_or_prevents_the_write() {
     let case = Case::new();
     for path in PROVIDERS {
         let stage = ProviderStage::create(case.compiler()).expect("provider stage");
@@ -116,4 +121,32 @@ fn an_added_stage_module_is_rejected_and_never_removed_by_failed_admission() {
         "failed admission does not delete unknown entries"
     );
     fs::remove_dir_all(path).expect("remove owned changed fixture stage");
+}
+
+#[test]
+fn tagged_release_keeps_the_original_nine_file_stage() {
+    let source_ref = format!("refs/tags/v{}", env!("CARGO_PKG_VERSION"));
+    let case = Case::with_providers(&source_ref, &LEGACY_PROVIDERS);
+    let stage = ProviderStage::create(case.compiler()).expect("legacy provider stage");
+    assert_eq!(stage.files.len(), 9);
+    assert!(!stage.path.join("v4").exists());
+    for path in LEGACY_PROVIDERS {
+        let relative = path.strip_prefix("lib/zryna/bootstrap/").expect("provider prefix");
+        assert_eq!(
+            fs::read(stage.path.join(relative)).expect("legacy bytes"),
+            case.compiler().tree.bytes(path).expect("original legacy bytes")
+        );
+    }
+    stage.revalidate().expect("legacy stage inventory");
+    let path = stage.path.clone();
+    drop(stage);
+    assert!(!path.exists(), "legacy stage cleanup");
+}
+
+#[test]
+fn unknown_or_mismatched_source_refs_never_select_a_stage() {
+    for source_ref in ["refs/heads/feature", "refs/tags/v0.2.2"] {
+        let case = Case::with_providers(source_ref, &LEGACY_PROVIDERS);
+        assert!(ProviderStage::create(case.compiler()).is_err(), "{source_ref}");
+    }
 }

@@ -111,6 +111,25 @@ impl fmt::Debug for Binding {
 type ProgramBinding = (Language, [u8; 32], [u8; 32]);
 
 impl Authorities {
+    pub(super) fn source_identities(
+        &self,
+    ) -> BTreeMap<String, Vec<zryna_source::SourceMapIdentity>> {
+        self.instances
+            .iter()
+            .map(|(id, authority)| {
+                let identities = authority
+                    .programs
+                    .iter()
+                    .map(|program| {
+                        let VerifiedLanguage::I32V1 { sources, .. } = program;
+                        sources.identity()
+                    })
+                    .collect();
+                (id.clone(), identities)
+            })
+            .collect()
+    }
+
     pub(super) fn binding(&self, expected: &BTreeSet<String>) -> Result<Binding, Vec<Diagnostic>> {
         if self.instances.keys().ne(expected.iter()) {
             return Err(vec![error(

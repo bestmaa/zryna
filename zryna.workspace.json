@@ -43,7 +43,7 @@
       "root": "crates/zryna-architecture",
       "kind": "foundation",
       "dependencies": ["zryna-diagnostics", "zryna-process"],
-      "allowedEntries": ["Cargo.toml", "README.md", "src"]
+      "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
     },
     {
       "id": "zryna-syntax",
@@ -102,17 +102,24 @@
       "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
     },
     {
+      "id": "zryna-native-c-ir",
+      "root": "crates/zryna-native-c-ir",
+      "kind": "compiler",
+      "dependencies": ["zryna-diagnostics", "zryna-ir", "zryna-layout", "zryna-ownership-runtime-abi", "zryna-semantics", "zryna-source", "zryna-syntax"],
+      "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
+    },
+    {
       "id": "zryna-native-mir",
       "root": "crates/zryna-native-mir",
       "kind": "compiler",
-      "dependencies": ["zryna-abi", "zryna-diagnostics", "zryna-ir", "zryna-layout", "zryna-ownership-runtime-abi", "zryna-semantics", "zryna-source", "zryna-syntax"],
+      "dependencies": ["zryna-abi", "zryna-diagnostics", "zryna-ir", "zryna-layout", "zryna-native-c-ir", "zryna-ownership-runtime-abi", "zryna-semantics", "zryna-source", "zryna-syntax"],
       "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
     },
     {
       "id": "zryna-backend-native",
       "root": "crates/zryna-backend-native",
       "kind": "backend",
-      "dependencies": ["zryna-abi", "zryna-diagnostics", "zryna-ir", "zryna-native-mir", "zryna-semantics", "zryna-source", "zryna-syntax"],
+      "dependencies": ["zryna-abi", "zryna-diagnostics", "zryna-ir", "zryna-native-c-ir", "zryna-native-mir", "zryna-ownership-runtime-abi", "zryna-semantics", "zryna-source", "zryna-syntax"],
       "allowedEntries": ["Cargo.toml", "README.md", "src", "tests"]
     },
     {
@@ -135,7 +142,9 @@
         "zryna-diagnostics",
         "zryna-frontend",
         "zryna-ir",
+        "zryna-native-c-ir",
         "zryna-native-mir",
+        "zryna-ownership-runtime-abi",
         "zryna-package",
         "zryna-process",
         "zryna-semantics",

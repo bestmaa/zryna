@@ -1,4 +1,5 @@
 import './native-provider-activation-workflow.test.mjs';
+import { registerPackageContracts } from './workflow-routing/package-contracts.mjs';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -282,51 +283,7 @@ test('classification failure runs all optional lanes and each matrix uses its ex
   }
 });
 
-test('consolidation preserves every prior contract command and pinned action', () => {
-  const commands = (id) => ci.jobs[id].steps.flatMap((step) => step.run ? [step.run] : []);
-  assert.deepEqual(commands('diagnostics-contract'), [
-    'pnpm install --frozen-lockfile',
-    'pnpm diagnostics:contract',
-    'cargo test --locked -p zryna-diagnostics',
-    'cargo clippy --locked -p zryna-diagnostics --all-targets -- -D warnings',
-    'cargo fmt --all -- --check',
-  ]);
-  assert.deepEqual(commands('distribution-release-contract'), [
-    'pnpm install --frozen-lockfile',
-    'pnpm release:contract',
-    'pnpm distribution:check',
-  ]);
-  assert.deepEqual(commands('package-release-contract'), [
-    'pnpm install --frozen-lockfile',
-    'pnpm package:contract',
-    'cargo test --locked -p zryna-package',
-  ]);
-  assert.deepEqual(commands('provider-conformance-v4'), [
-    'pnpm install --frozen-lockfile',
-    'pnpm provider:conformance:v4',
-    'node scripts/run-native-lexer-resource-tests.mjs',
-  ]);
-  assert.deepEqual(commands('wit-capability-contract'), [
-    'pnpm install --frozen-lockfile',
-    'pnpm wit:contract',
-  ]);
-  for (const id of [
-    'diagnostics-contract',
-    'distribution-release-contract',
-    'package-release-contract',
-    'provider-conformance-v4',
-    'wit-capability-contract',
-  ]) {
-    const uses = ci.jobs[id].steps.flatMap((step) => step.uses ? [step.uses] : []);
-    assert(uses.includes('actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'));
-    assert(uses.includes('actions/setup-node@820762786026740c76f36085b0efc47a31fe5020'));
-    assert(uses.includes('pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86'));
-    if (id === 'package-release-contract') {
-      assert(uses.includes('dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c'));
-    }
-    assert(!uses.some((use) => use.endsWith('@main')));
-  }
-});
+registerPackageContracts(ci);
 
 test('pull-request workflows stay inventoried and every superseded run cancels', () => {
   const names = readdirSync(resolve(root, '.github/workflows')).sort();

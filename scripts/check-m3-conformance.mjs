@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const scriptPath = fileURLToPath(import.meta.url);
 export const workspaceRoot = resolve(dirname(scriptPath), '..');
-const expectedDigest = '34cd29a5f146d77e7163b32d21e71e4f5a1fc5fd50f688d197de8bef9b38a508';
+const expectedDigest = '1d29f8d5c24cf1215d64f340576934f674f5cfb89a51d4f82a3882fe75cb36b9';
 export function digest(value) {
   return createHash('sha256').update(value).digest('hex');
 }

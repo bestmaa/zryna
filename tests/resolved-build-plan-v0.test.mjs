@@ -5,6 +5,7 @@ import path from 'node:path';
 import test from 'node:test';
 
 import { bindGraph, checksum, makeFixture, recordHash, wire } from './package-release-v1/builders.mjs';
+import { independentCacheKey, registerD2Cases } from './resolved-build-plan-v0/d2-cases.mjs';
 
 import {
   deriveCacheKey,
@@ -22,20 +23,6 @@ import {
 function withCache(document) {
   document.cacheKey = deriveCacheKey(document);
   return document;
-}
-
-function independentCacheKey(document) {
-  const material = {
-    format: document.format,
-    sourcePlan: document.sourcePlan,
-    status: document.status,
-    version: document.version,
-  };
-  if (document.nativeAppendix) material.nativeAppendix = document.nativeAppendix;
-  return createHash('sha256')
-    .update(Buffer.from('ZRYNA-RESOLVED-BUILD-PLAN-V0\0plan\0'))
-    .update(wire(material))
-    .digest('hex');
 }
 
 const SOURCE_ONLY_CACHE_KEY = '71e0a59c6c30dbb07e17c3f72ae1aa5a73bf273b27dfd7bc8a962d1887768d62';
@@ -84,7 +71,7 @@ function nativePlan(sourceOnly) {
       identity: 'zryna-native-c-interop-v0',
       version: '0',
       targetTriple: 'x86_64-unknown-linux-gnu',
-      callingConvention: 'system-v-amd64-c',
+      callingConvention: 'sysv-amd64-c-v0',
       carrierModel: 'native-c-interop-v0-carriers',
       ownershipModel: 'native-c-interop-v0-resources',
       runtime: { name: 'zryna-native-runtime', version: '1', sha256: '3'.repeat(64) },
@@ -355,6 +342,8 @@ test('accepted #357 profile and target rows do not widen or cross target axes', 
   assert.throws(() => validateBuildPlan(withCache(unresolvedAll), packageAuthority), /P361-SCHEMA/);
 });
 
+registerD2Cases({ withCache });
+
 test('cache miss, hit, wrong target and stale output have distinct deterministic outcomes', async () => {
   const { document } = await loadBuildPlan();
   assert.deepEqual(validateCacheEntry(document, 'javascript', undefined, new Map()), { outcome: 'miss' });
@@ -433,7 +422,7 @@ test('documentation keeps authority, exact identities and implementation stages 
     'Source-only v0 rejects every `host/build` occurrence rather than inventing an unauthenticated root.',
     '`zryna.cross-target-profiles.v1`',
     'The driver alone owns compilation orchestration, tool validation, linking, cache materialization, and output publication.',
-    'The native appendix is provisional pending the relevant accepted #364 ABI decisions.',
+    'The legacy native appendix stays `provisional-pending-364`.',
     'specified → implemented → conformance-passed → publicly supported',
   ]) assert.ok(normalized.includes(phrase), phrase);
 });
