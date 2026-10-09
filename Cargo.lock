@@ -1854,7 +1854,9 @@ dependencies = [
  "zryna-abi",
  "zryna-diagnostics",
  "zryna-ir",
+ "zryna-native-c-ir",
  "zryna-native-mir",
+ "zryna-ownership-runtime-abi",
  "zryna-semantics",
  "zryna-source",
  "zryna-syntax",
@@ -1915,7 +1917,9 @@ dependencies = [
  "zryna-diagnostics",
  "zryna-frontend",
  "zryna-ir",
+ "zryna-native-c-ir",
  "zryna-native-mir",
+ "zryna-ownership-runtime-abi",
  "zryna-package",
  "zryna-process",
  "zryna-semantics",
@@ -1973,13 +1977,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "zryna-native-c-ir"
+version = "0.2.3"
+dependencies = [
+ "serde_json",
+ "sha2",
+ "zryna-diagnostics",
+ "zryna-ir",
+ "zryna-layout",
+ "zryna-ownership-runtime-abi",
+ "zryna-semantics",
+ "zryna-source",
+ "zryna-syntax",
+]
+
+[[package]]
 name = "zryna-native-mir"
 version = "0.2.3"
 dependencies = [
+ "serde_json",
+ "sha2",
  "zryna-abi",
  "zryna-diagnostics",
  "zryna-ir",
  "zryna-layout",
+ "zryna-native-c-ir",
  "zryna-ownership-runtime-abi",
  "zryna-semantics",
  "zryna-source",
@@ -2015,6 +2037,7 @@ name = "zryna-semantics"
 version = "0.2.3"
 dependencies = [
  "serde_json",
+ "sha2",
  "zryna-abi",
  "zryna-diagnostics",
  "zryna-ir",
@@ -2038,6 +2061,7 @@ version = "0.2.3"
 dependencies = [
  "serde",
  "serde_json",
+ "sha2",
  "zryna-diagnostics",
  "zryna-source",
 ]

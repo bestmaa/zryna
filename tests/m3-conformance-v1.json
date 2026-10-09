@@ -340,7 +340,7 @@
       "id": "runtime-allocation",
       "phase": "runtime",
       "package": "zryna-driver",
-      "path": "crates/zryna-driver/src/ownership_runtime_v1.rs",
+      "path": "crates/zryna-driver/src/ownership_runtime_v1/tests.rs",
       "test": "ownership_runtime_v1::tests::allocation_failure_is_atomic_and_recoverable",
       "expected": "injected allocation failure leaves destination unchanged; recovery succeeds",
       "host": "linux-x86_64"
@@ -349,7 +349,7 @@
       "id": "runtime-transitions",
       "phase": "runtime",
       "package": "zryna-driver",
-      "path": "crates/zryna-driver/src/ownership_runtime_v1.rs",
+      "path": "crates/zryna-driver/src/ownership_runtime_v1/tests.rs",
       "test": "ownership_runtime_v1::tests::runtime_compiles_with_strict_c_and_executes_transitions",
       "expected": "fixed allocation/String/Vec/count statuses and unchanged failure state",
       "host": "linux-x86_64"
@@ -358,7 +358,7 @@
       "id": "runtime-capabilities",
       "phase": "runtime",
       "package": "zryna-driver",
-      "path": "crates/zryna-driver/src/ownership_runtime_v1.rs",
+      "path": "crates/zryna-driver/src/ownership_runtime_v1/tests.rs",
       "test": "ownership_runtime_v1::tests::compiled_runtime_has_exact_exports_and_ambient_imports",
       "expected": "exact sealed symbol inventory",
       "host": "linux-x86_64"
@@ -439,7 +439,7 @@
       "id": "native-scratch-ledger",
       "phase": "runtime",
       "package": "zryna-driver",
-      "path": "crates/zryna-driver/src/ownership_runtime_v1.rs",
+      "path": "crates/zryna-driver/src/ownership_runtime_v1/tests.rs",
       "test": "ownership_runtime_v1::tests::candidate_scratch_finalization_cannot_hide_owned_or_pending_control_leaks",
       "expected": "scratch reclaimed; owned payload and pending control leaks rejected; no double free",
       "host": "linux-x86_64"

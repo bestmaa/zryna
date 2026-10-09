@@ -10,6 +10,8 @@ mod authority;
 mod command_source;
 mod graph;
 mod model;
+#[allow(dead_code, reason = "private native composition precedes public activation")]
+mod native_c;
 mod policy;
 mod quota;
 mod verification;

@@ -2,8 +2,6 @@
 
 #![forbid(unsafe_code)]
 
-use std::fmt::Write;
-
 use cranelift_codegen::{
     Context,
     ir::{AbiParam, Function, InstBuilder, Signature, UserFuncName, types},
@@ -13,38 +11,31 @@ use cranelift_codegen::{
 use cranelift_frontend::{FunctionBuilder, FunctionBuilderContext};
 use cranelift_module::{Linkage, Module, default_libcall_names};
 use cranelift_object::{ObjectBuilder, ObjectModule};
-use object::{
-    BinaryFormat, Endianness, Object, ObjectKind, ObjectSection, ObjectSymbol, SectionFlags,
-    SectionKind,
-};
+#[cfg(test)]
+use object::{BinaryFormat, Endianness, Object, ObjectKind, ObjectSection, ObjectSymbol};
 use zryna_diagnostics::Diagnostic;
 use zryna_native_mir::{
     MirType, OperationView, ValueId, VerifiedCallingConvention, VerifiedMirFunction,
     VerifiedMirModule,
 };
 
+mod llvm;
+mod object_audit;
+
+use llvm::emit_function;
+use object_audit::audit_object;
+
 /// Internal M2 scalar control-flow object emission.
 pub mod control_flow_v1;
 /// Internal DataOwnershipV1 Linux x86-64 object emission.
 pub mod data_ownership_v1;
+/// Internal native C total-scalar export emission; imports and private entries remain separate.
+pub mod native_c_v0;
 
 /// The only native object target implemented by the M1 scalar profile.
 pub const NATIVE_OBJECT_TARGET: &str = "x86_64-unknown-linux-gnu";
 /// Maximum encoded object bytes accepted by the native object audit.
 pub const MAX_NATIVE_OBJECT_BYTES: usize = 8 * 1024 * 1024;
-const EMPTY_OBJECT_SECTIONS: [(&str, SectionKind, u64); 4] = [
-    (".note.GNU-stack", SectionKind::Other, 0),
-    (".symtab", SectionKind::Metadata, 0),
-    (".strtab", SectionKind::Metadata, 0),
-    (".shstrtab", SectionKind::Metadata, 0),
-];
-const FUNCTION_OBJECT_SECTIONS: [(&str, SectionKind, u64); 5] = [
-    (".text", SectionKind::Text, 6),
-    (".note.GNU-stack", SectionKind::Other, 0),
-    (".symtab", SectionKind::Metadata, 0),
-    (".strtab", SectionKind::Metadata, 0),
-    (".shstrtab", SectionKind::Metadata, 0),
-];
 
 /// Capability proving that an object request selected the exact supported target.
 ///
@@ -199,65 +190,6 @@ fn encoded_value(
         .ok_or_else(native_invariant_error)
 }
 
-fn audit_object(bytes: &[u8], module: &VerifiedMirModule) -> Result<(), Diagnostic> {
-    if bytes.len() > MAX_NATIVE_OBJECT_BYTES {
-        return Err(object_audit_error());
-    }
-    let file = object::File::parse(bytes).map_err(|_| object_audit_error())?;
-    if file.format() != BinaryFormat::Elf
-        || file.architecture() != object::Architecture::X86_64
-        || file.endianness() != Endianness::Little
-        || file.kind() != ObjectKind::Relocatable
-        || !file.is_64()
-    {
-        return Err(object_audit_error());
-    }
-    let expected_sections = if module.functions().len() == 0 {
-        &EMPTY_OBJECT_SECTIONS[..]
-    } else {
-        &FUNCTION_OBJECT_SECTIONS[..]
-    };
-    let sections = file.sections().collect::<Vec<_>>();
-    if sections.len() != expected_sections.len() {
-        return Err(object_audit_error());
-    }
-    for (section, (expected_name, expected_kind, expected_flags)) in
-        sections.into_iter().zip(expected_sections.iter().copied())
-    {
-        let SectionFlags::Elf { sh_flags } = section.flags() else {
-            return Err(object_audit_error());
-        };
-        if section.name().map_err(|_| object_audit_error())? != expected_name
-            || section.kind() != expected_kind
-            || sh_flags != expected_flags
-            || section.relocations().next().is_some()
-        {
-            return Err(object_audit_error());
-        }
-    }
-    let expected = module.functions().map(VerifiedMirFunction::symbol).collect::<Vec<_>>();
-    let mut observed = Vec::new();
-    for symbol in file.symbols() {
-        if symbol.is_undefined() {
-            return Err(object_audit_error());
-        }
-        if symbol.is_global() {
-            if symbol.kind() != object::SymbolKind::Text {
-                return Err(object_audit_error());
-            }
-            let name = symbol.name().map_err(|_| object_audit_error())?;
-            if symbol.size() == 0 {
-                return Err(object_audit_error());
-            }
-            observed.push(name);
-        }
-    }
-    if observed != expected {
-        return Err(object_audit_error());
-    }
-    Ok(())
-}
-
 fn native_invariant_error() -> Diagnostic {
     Diagnostic::error(
         "ZRYNA-N3002",
@@ -273,15 +205,6 @@ fn codegen_error(error: impl std::fmt::Display) -> Diagnostic {
         "ZRYNA-N3002",
         None,
         "native object code generation failed",
-        "report this compiler failure with the smallest reproducible source",
-    )
-}
-
-fn object_audit_error() -> Diagnostic {
-    Diagnostic::error(
-        "ZRYNA-N3003",
-        None,
-        "native object failed the closed Linux x86-64 ELF audit",
         "report this compiler failure with the smallest reproducible source",
     )
 }
@@ -314,60 +237,6 @@ pub fn emit_llvm_ir(module: &VerifiedMirModule) -> Result<LlvmIrArtifact, Diagno
     Ok(LlvmIrArtifact { source: output })
 }
 
-fn emit_function(function: VerifiedMirFunction<'_>, output: &mut String) -> Result<(), Diagnostic> {
-    match function.calling_convention() {
-        VerifiedCallingConvention::ScalarAbiV1LinuxX8664SystemV => {}
-    }
-    verify_codegen_type(function.result_type())?;
-    for ty in function.parameter_types() {
-        verify_codegen_type(*ty)?;
-    }
-    write!(output, "define i32 @{}(", function.symbol()).map_err(native_format_error)?;
-    for index in 0..function.parameter_types().len() {
-        if index > 0 {
-            output.push_str(", ");
-        }
-        write!(output, "i32 %p{index}").map_err(native_format_error)?;
-    }
-    output.push_str(") {\nentry:\n");
-    for value in function.values() {
-        verify_codegen_type(value.ty())?;
-        let id = value.id().index();
-        match value.operation() {
-            OperationView::Parameter { .. } => {}
-            OperationView::I32Literal { value } => {
-                writeln!(output, "  %v{id} = add i32 0, {value}").map_err(native_format_error)?;
-            }
-            OperationView::I32Add { lhs, rhs } => {
-                let left = llvm_value(function, lhs)?;
-                let right = llvm_value(function, rhs)?;
-                writeln!(output, "  %v{id} = add i32 {left}, {right}")
-                    .map_err(native_format_error)?;
-            }
-        }
-    }
-    let result = llvm_value(function, function.result())?;
-    write!(output, "  ret i32 {result}\n}}\n").map_err(native_format_error)?;
-    Ok(())
-}
-
-fn llvm_value(function: VerifiedMirFunction<'_>, id: ValueId) -> Result<String, Diagnostic> {
-    let value = function.value(id).ok_or_else(|| {
-        Diagnostic::error(
-            "ZRYNA-N2002",
-            None,
-            format!("verified native function '{}' references a missing value", function.symbol()),
-            "report this compiler invariant failure with the smallest reproducible source",
-        )
-    })?;
-    match value.operation() {
-        OperationView::Parameter { index } => Ok(format!("%p{index}")),
-        OperationView::I32Literal { .. } | OperationView::I32Add { .. } => {
-            Ok(format!("%v{}", id.index()))
-        }
-    }
-}
-
 fn verify_codegen_type(ty: MirType) -> Result<(), Diagnostic> {
     match ty {
         MirType::I32 => Ok(()),
@@ -378,15 +247,6 @@ fn verify_codegen_type(ty: MirType) -> Result<(), Diagnostic> {
             "report this compiler invariant failure with the smallest reproducible source",
         )),
     }
-}
-
-fn native_format_error(error: std::fmt::Error) -> Diagnostic {
-    Diagnostic::error(
-        "ZRYNA-N2003",
-        None,
-        format!("native IR formatting failed: {error}"),
-        "report this compiler failure with the smallest reproducible Zryna source",
-    )
 }
 
 #[cfg(test)]

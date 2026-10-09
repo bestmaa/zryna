@@ -1,0 +1,23 @@
+[package]
+name = "zryna-native-c-ir"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde_json.workspace = true
+zryna-diagnostics = { path = "../zryna-diagnostics" }
+zryna-ir = { path = "../zryna-ir" }
+zryna-layout = { path = "../zryna-layout" }
+zryna-ownership-runtime-abi.workspace = true
+zryna-semantics = { path = "../zryna-semantics" }
+zryna-source = { path = "../zryna-source" }
+zryna-syntax = { path = "../zryna-syntax" }
+
+[dev-dependencies]
+sha2.workspace = true
+
+[lints]
+workspace = true
