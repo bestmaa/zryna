@@ -27,15 +27,14 @@ pub struct Case {
     pub bundle: PathBuf,
     pub configuration: common::Input,
     pub approval: common::Input,
-    pub bytes: Vec<u8>,
 }
 impl Case {
     pub fn new(attempts: u16) -> Self {
         let config = json!({"listen":"127.0.0.1:0","attempts":attempts,"header_bytes":1024,
             "body_bytes":64,"request_ms":2000,"service_ms":5000});
-        Self::from_config(serde_json::to_vec(&config).expect("configuration"))
+        Self::from_config(&serde_json::to_vec(&config).expect("configuration"))
     }
-    pub fn from_config(bytes: Vec<u8>) -> Self {
+    pub fn from_config(bytes: &[u8]) -> Self {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
             .canonicalize()
@@ -43,13 +42,13 @@ impl Case {
         let stem =
             format!("wasi-server-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed));
         let bundle = root.join(".zryna/out").join(format!("{stem}.wasi-server-run"));
-        let configuration = common::Input::from_bytes(&bytes);
+        let configuration = common::Input::from_bytes(bytes);
         let approval = common::Input::from_bytes(
             &serde_json::to_vec(&json!({"schema":"zryna.wasi-server-listener-approval.v1",
-            "configuration_sha256":format!("{:x}",Sha256::digest(&bytes)),"allow_listen":true}))
+            "configuration_sha256":format!("{:x}",Sha256::digest(bytes)),"allow_listen":true}))
             .expect("approval"),
         );
-        Self { root, stem, bundle, configuration, approval, bytes }
+        Self { root, stem, bundle, configuration, approval }
     }
     pub fn command(&self, source: &str) -> Command {
         let mut command = Command::new(env!("CARGO_BIN_EXE_zryna"));

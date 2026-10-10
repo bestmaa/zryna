@@ -67,7 +67,7 @@ fn rejected_configuration_and_unapproved_listener_never_start_or_publish() {
     for config in [b"{}".to_vec(),vec![b' ';1025],
         br#"{"listen":"0.0.0.0:0","attempts":1,"header_bytes":1024,"body_bytes":64,"request_ms":1000,"service_ms":1000}"#.to_vec(),
         br#"{"listen":"127.0.0.1:0","attempts":65,"header_bytes":1024,"body_bytes":64,"request_ms":1000,"service_ms":1000}"#.to_vec()] {
-        let case=Case::from_config(config);let output=case.command("examples/wasi-server/status-200.zry").output().expect("reject config");
+        let case=Case::from_config(&config);let output=case.command("examples/wasi-server/status-200.zry").output().expect("reject config");
         assert_eq!(output.status.code(),Some(2));assert!(!case.bundle.exists());
         let response:Value=serde_json::from_slice(&output.stdout).expect("only final rejection");assert_eq!(response["diagnostics"][0]["code"],"ZRYNA-C4201");
     }
@@ -89,6 +89,7 @@ fn same_value_configuration_replacement_and_listener_revocation_suppress_record(
         let case = Case::new(1);
         let mut running = case.spawn("examples/wasi-server/status-200.zry");
         let path = if configuration { &case.configuration.path } else { &case.approval.path };
+        let original = fs::read(path).expect("original private input bytes");
         fs::remove_file(path).expect("replace retained identity");
         if configuration {
             let mut replacement = fs::OpenOptions::new()
@@ -97,7 +98,7 @@ fn same_value_configuration_replacement_and_listener_revocation_suppress_record(
                 .mode(0o600)
                 .open(path)
                 .expect("replacement");
-            replacement.write_all(&case.bytes).expect("same bytes, different identity");
+            replacement.write_all(&original).expect("same bytes, different identity");
         }
         let (exit, result) = running.finish();
         assert_eq!(exit.code(), Some(4), "{result}");
