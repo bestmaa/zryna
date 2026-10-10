@@ -7,7 +7,7 @@ export function registerWorkflowInventoryContracts({ workflow, root, ci, documen
   test('pull-request workflows stay inventoried and every superseded run cancels', () => {
     const names = readdirSync(resolve(root, '.github/workflows')).sort();
     assert.deepEqual(names, [
-      'ci.yml', 'documentation.yml', 'installed-command-h1.yml', 'native-provider-activation.yml', 'portable-setup.yml',
+      'browser-conformance.yml', 'ci.yml', 'documentation.yml', 'installed-command-h1.yml', 'native-provider-activation.yml', 'portable-setup.yml',
       'release-production-candidate.yml',
       'release-qualification.yml', 'release.yml',
     ]);
