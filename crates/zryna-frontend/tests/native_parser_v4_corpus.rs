@@ -35,7 +35,7 @@ fn checked_in_m3_sources_form_verifiable_native_candidates() {
         }
         checked += 1;
     }
-    assert_eq!(checked, 95, "complete M3 source corpus");
+    assert_eq!(checked, 97, "complete M3 source corpus");
     assert_eq!(verifier_hostile, 1, "expected the known invalid borrow operand");
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }

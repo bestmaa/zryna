@@ -1,0 +1,10 @@
+function copied(): Vec<String> {
+  const source: Vec<String> = Vec<String>(["one", "two",]);
+  const result: Vec<String> = clone(source);
+  return result;
+}
+function consumed(): bool {
+  const result: Vec<String> = copied();
+  return true;
+}
+export function main(): bool { return consumed(); }

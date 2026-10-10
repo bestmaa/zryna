@@ -1,5 +1,12 @@
 # WIT capability profiles v1
 
+The separate [bounded command implementation candidate](../../docs/WASI_COMMAND_GETTING_STARTED.md)
+uses this exact pinned command world and a narrower one-key environment grant; its
+[initial grant table](../../docs/WASI_COMMAND_GETTING_STARTED.md#one-explicit-environment-value)
+keeps every other category denied. It changes no registry bytes, WIT identity or eligible ceiling.
+Its five bounded [owner decisions are accepted](../../docs/WASI_COMMAND_H1_CONTRACT_DRAFT.md#recorded-bounded-owner-acceptance).
+Required independent review and public activation remain pending; registry eligibility is unchanged.
+
 This document specifies the contract-only M4 foundation tracked by Issue #167. It assigns stable
 WIT identities and bounded host-capability policies. It does not emit a component, generate a
 binding, instantiate a runtime, add a CLI selector, or publish a supported profile.

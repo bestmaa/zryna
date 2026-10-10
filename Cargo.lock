@@ -1870,6 +1870,7 @@ dependencies = [
  "sha2",
  "wasm-encoder 0.258.0",
  "wasmparser 0.258.0",
+ "wasmtime",
  "wit-component 0.258.0",
  "wit-parser 0.258.0",
  "zryna-diagnostics",
@@ -1953,6 +1954,7 @@ dependencies = [
  "zryna-diagnostics",
  "zryna-layout",
  "zryna-source",
+ "zryna-syntax",
 ]
 
 [[package]]

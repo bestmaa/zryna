@@ -2,6 +2,9 @@
 
 #![forbid(unsafe_code)]
 
+/// Source-bound requirements for the separate bounded command gate.
+pub mod command_h1_v1;
+
 /// Isolated untrusted native C v0 declaration wire; it grants no executable syntax authority.
 pub mod native_c_v0;
 

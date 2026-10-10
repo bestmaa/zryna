@@ -14,7 +14,7 @@ cap-fs-ext.workspace = true
 cap-primitives.workspace = true
 cap-std.workspace = true
 libc.workspace = true
-nix.workspace = true
+nix = { workspace = true, features = ["user"] }
 object.workspace = true
 process-wrap.workspace = true
 same-file.workspace = true
@@ -58,3 +58,7 @@ path = "src/native_activation_parity.rs"
 [[test]]
 name = "server_lifecycle"
 path = "src/server_lifecycle/harness.rs"
+
+[[test]]
+name = "server_runtime"
+path = "src/server_runtime/harness.rs"

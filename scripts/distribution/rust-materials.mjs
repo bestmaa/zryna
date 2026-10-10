@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bytes, parseCanonical, requireValue, sha256 } from './canonical.mjs';
+import { matchesCommandH1RustBinding } from './command-h1-rust-binding.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const LOCK = readFileSync(new URL('./materials-rust-v1.json', import.meta.url));
@@ -33,10 +34,15 @@ export function rustMaterials(target) {
   return RECORD.packages.filter(record => selected.has(`${record.name}-${record.version}`));
 }
 
-export function validateRustMaterials(entries, target, architectureReceipt, acceptedVersion = '0.2.3') {
+export function validateRustMaterials(entries, target, architectureReceipt, acceptedVersion = '0.2.3', {
+  productionCandidate = false, distribution,
+} = {}) {
   const lock = architectureReceipt.inputs.find(input => input.logicalPath === 'Cargo.lock');
-  requireValue(Object.hasOwn(CARGO_LOCKS, acceptedVersion)
-    && lock?.sha256 === CARGO_LOCKS[acceptedVersion], 'Rust material lockfile identity');
+  const releaseLock = Object.hasOwn(CARGO_LOCKS, acceptedVersion)
+    && lock?.sha256 === CARGO_LOCKS[acceptedVersion];
+  const commandCandidateLock = productionCandidate === true && acceptedVersion === '0.2.3'
+    && matchesCommandH1RustBinding(architectureReceipt, distribution, target, sha256(LOCK));
+  requireValue(releaseLock || commandCandidateLock, 'Rust material lockfile identity');
   const expected = rustMaterials(target).flatMap(record => record.files)
     .map(({ path, size, sha256: digest }) => ({ path, size, sha256: digest }))
     .sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);

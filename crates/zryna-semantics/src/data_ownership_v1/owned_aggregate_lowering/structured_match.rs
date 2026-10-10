@@ -1,7 +1,7 @@
 use zryna_ir::data_ownership_v1::raw;
 use zryna_layout::TypeCategory;
 use zryna_source::Span;
-use zryna_syntax::v4::{RawDataDeclarationKind, RawExpressionKind, RawMatchArm};
+use zryna_syntax::v4::{self as syntax, RawDataDeclarationKind, RawExpressionKind, RawMatchArm};
 
 use super::super::diagnostics::span;
 use super::structured_graph::StructuredGraph;
@@ -35,9 +35,18 @@ impl PrivateOwnedAggregateLowerer<'_, '_, '_> {
             return None;
         };
         let ty = self.node_types.get(declaration.node.0 as usize).copied().flatten()?;
-        let RawDataDeclarationKind::Enum { variants, .. } =
-            &self.file.data_declarations()[declaration.declaration].kind
-        else {
+        let variants = if self.input.command.is_some()
+            && declaration.declaration == self.file.data_declarations().len()
+            && declaration.name == "EnvLookupV1"
+        {
+            vec!["Found", "Missing"]
+        } else if let Some(syntax::RawDataDeclaration {
+            kind: RawDataDeclarationKind::Enum { variants, .. },
+            ..
+        }) = self.file.data_declarations().get(declaration.declaration)
+        {
+            variants.iter().map(|variant| variant.name.text.as_str()).collect()
+        } else {
             self.errors.at(
                 "ZRYNA-M3009",
                 at,
@@ -58,7 +67,7 @@ impl PrivateOwnedAggregateLowerer<'_, '_, '_> {
         let record = self.layouts.type_by_id(ty.layout)?;
         let mut ordered = vec![None; variants.len()];
         for arm in arms {
-            let ordinal = variants.iter().position(|variant| variant.name.text == arm.variant.text);
+            let ordinal = variants.iter().position(|variant| *variant == arm.variant.text);
             let valid = ordinal.is_some_and(|ordinal| ordered[ordinal].is_none())
                 && arm.type_name.text == declaration.name;
             if !valid {

@@ -14,6 +14,15 @@ and current name through child operations, commit, rollback, and cleanup. No pub
 an arbitrary file handle. The API accepts one bounded portable ASCII component, never an ambient
 path, and provides no path-based fallback or replacement mode.
 
+The command H1 candidate adds a separate read-only exact-file privacy proof for an explicitly
+opened grant input. It observes the caller token, regular-file identity, owner and DACL through
+the retained file handle. Only the exact caller owner and LocalSystem may receive effective allow
+rights; broad inherited grants, Administrators, null DACLs, unfamiliar ACEs and failed observations
+reject. A bounded safe parser checks the copied self-relative descriptor. The same handle and
+complete descriptor are rechecked after the driver's bounded capture. This candidate does not
+activate a public command profile or approve capability contents; the driver must retain no-reparse
+ancestors, exclude write/delete sharing, bound the read and dispose of the captured input.
+
 Windows requires every handle to a descendant file or directory to close before an ancestor can be
 renamed. This applies even when a descendant was opened with delete sharing. Callers therefore
 finish validation while child capabilities and file identities are live, consume those descendants

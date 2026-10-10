@@ -7,12 +7,16 @@ use zryna_abi::{AbiViolationKind, raw as raw_abi, verify_v1};
 use zryna_diagnostics::Diagnostic;
 use zryna_source::{SourceMap, Span};
 
+/// Separately admitted command source, environment effect and owned-body authority.
+pub mod command_h1_v1;
 /// Versioned structured control-flow IR for the planned M2 profile.
 pub mod control_flow_v1;
 /// Separately verified data, ownership, and cleanup IR for the planned M3 profile.
 pub mod data_ownership_v1;
 
 pub use zryna_abi::{LogicalExportName, VerifiedScalarExport};
+mod expression_order;
+use expression_order::{predecessor, verify_canonical_postorder};
 
 /// Maximum functions accepted in one Universal IR program.
 pub const MAX_IR_FUNCTIONS: usize = 16_384;
@@ -624,59 +628,6 @@ fn verify_expression(
                 );
             }
             (depths[left].max(depths[right]).saturating_add(1), true)
-        }
-    }
-}
-
-fn predecessor(id: ExprId, current: usize) -> Option<usize> {
-    usize::try_from(id.0).ok().filter(|index| *index < current)
-}
-
-fn verify_canonical_postorder(
-    function_index: usize,
-    function: &Function,
-    body_index: usize,
-    valid_spans: &[bool],
-    errors: &mut VerificationErrors,
-) {
-    let mut emitted = vec![false; function.expressions.len()];
-    let mut expected = 0_usize;
-    let mut stack = vec![(body_index, false)];
-    while let Some((index, exiting)) = stack.pop() {
-        if exiting {
-            if emitted[index] {
-                continue;
-            }
-            if index != expected {
-                push_expression_error(
-                    errors,
-                    valid_spans[index],
-                    function.expressions[index].span,
-                    "ZRYNA-I1008",
-                    format!(
-                        "function #{function_index} expression arena is not canonical postorder: expected #{expected}, found #{index}"
-                    ),
-                    "emit the one expression tree left-to-right in exact postorder",
-                );
-                return;
-            }
-            emitted[index] = true;
-            expected = expected.saturating_add(1);
-            continue;
-        }
-        if emitted[index] {
-            continue;
-        }
-        stack.push((index, true));
-        if let ExprKind::I32Add { lhs, rhs } = function.expressions[index].kind {
-            let Some(left) = predecessor(lhs, index) else {
-                return;
-            };
-            let Some(right) = predecessor(rhs, index) else {
-                return;
-            };
-            stack.push((right, false));
-            stack.push((left, false));
         }
     }
 }

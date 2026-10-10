@@ -1,0 +1,90 @@
+name: Installed H1 command candidate
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/installed-command-h1.yml
+      - apps/zryna/**
+      - crates/**
+      - adapters/typescript-6/**
+      - Cargo.lock
+      - rust-toolchain.toml
+      - scripts/distribution/**
+      - tests/installed-command-qualification/**
+      - examples/wasi-command/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: installed-h1-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    name: fresh installed H1 (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      CARGO_BUILD_JOBS: 2
+      RUST_TEST_THREADS: 2
+      CARGO_PROFILE_DEV_DEBUG: 0
+      CARGO_PROFILE_DEV_INCREMENTAL: false
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.22.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: 11.18.0
+      - run: pnpm install --frozen-lockfile
+      - run: cargo fetch --locked
+      - name: Acquire pinned ordinary Node material
+        shell: pwsh
+        run: |
+          $windows = $env:RUNNER_OS -eq 'Windows'
+          $name = if ($windows) { 'node-v22.22.1-win-x64.zip' } else { 'node-v22.22.1-linux-x64.tar.xz' }
+          $digest = if ($windows) { '877cb93829e14fffbbc7903e7d8037336c9a79f3ea43c5d0b8c2379b79da56de' } else { '9a6bc82f9b491279147219f6a18add1e18424dce90d41d2a5fcd69d4924ba3aa' }
+          $archive = Join-Path $env:RUNNER_TEMP $name
+          Invoke-WebRequest "https://nodejs.org/dist/v22.22.1/$name" -OutFile $archive
+          if ((Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant() -ne $digest) { throw 'Node archive identity differs' }
+          if ($windows) { Expand-Archive $archive $env:RUNNER_TEMP } else {
+            tar -xJf $archive -C $env:RUNNER_TEMP
+            if ($LASTEXITCODE -ne 0) { throw 'Pinned Node extraction failed' }
+          }
+          $directory = if ($windows) { 'node-v22.22.1-win-x64' } else { 'node-v22.22.1-linux-x64' }
+          "ZRYNA_QUALIFICATION_NODE_ROOT=$(Join-Path $env:RUNNER_TEMP $directory)" >> $env:GITHUB_ENV
+          "CARGO_TARGET_DIR=$(Join-Path $env:RUNNER_TEMP 'installed-h1-target')" >> $env:GITHUB_ENV
+      - name: Build, verify, relocate and invoke the installed candidate
+        shell: pwsh
+        env:
+          CARGO_NET_OFFLINE: true
+        run: |
+          node tests/installed-command-qualification/run.mjs "$env:RUNNER_TEMP/installed-h1-evidence"
+          if ($LASTEXITCODE -ne 0) { throw 'Installed command qualification failed' }
+      - name: Preserve candidate receipts and actual invocation logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: installed-h1-${{ matrix.os }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/installed-h1-evidence/qualification.json
+            ${{ runner.temp }}/installed-h1-evidence/candidate.json
+            ${{ runner.temp }}/installed-h1-evidence/architecture-receipt.json
+            ${{ runner.temp }}/installed-h1-evidence/invocations.json
+          if-no-files-found: error
+          retention-days: 7

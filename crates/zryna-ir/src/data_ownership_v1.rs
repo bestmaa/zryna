@@ -20,6 +20,8 @@ mod transient_edges;
 mod weak_upgrade_shape;
 pub use backend_view::*;
 use cleanup_references::{cleanup_references, instruction_cleanup};
+mod instruction_operands;
+use instruction_operands::{consuming_instruction_operands, instruction_operands};
 mod state_replay;
 pub use generic_clone::{
     VerifiedGenericClone, VerifiedGenericCloneFrontier, VerifiedGenericCloneSource,
@@ -92,6 +94,8 @@ pub enum RuntimeContractIdentity {
     /// The frozen ownership runtime ABI v1 contract. Issue #80 supplies a separate sealed,
     /// non-executable declaration authority.
     OwnershipRuntimeV1,
+    /// Command H1 v1, including its separate language/canonical memory partition.
+    CommandH1V1,
 }
 
 /// Untrusted `DataOwnershipV1` claims produced by future semantic lowering.
@@ -265,6 +269,10 @@ pub mod raw {
             variant: u32,
             payload: Option<ValueId>,
             cleanup: Option<CleanupPlanId>,
+        },
+        EnvironmentLookup {
+            key: String,
+            cleanup: CleanupPlanId,
         },
         FixedArrayConstruct {
             elements: Vec<ValueId>,
@@ -645,7 +653,7 @@ impl VerifiedProgram {
     }
     #[must_use]
     pub const fn runtime_contract(&self) -> RuntimeContractIdentity {
-        RuntimeContractIdentity::OwnershipRuntimeV1
+        self.program.authorities.runtime
     }
     #[must_use]
     pub const fn linear32_layouts(&self) -> &VerifiedLayouts {
@@ -990,6 +998,7 @@ pub enum VerifiedInstructionKind {
     DirectCall,
     StructConstruct,
     EnumConstruct,
+    EnvironmentLookup,
     FixedArrayConstruct,
     CopyFromPlace,
     MoveFromPlace,
@@ -1057,6 +1066,7 @@ impl<'a> VerifiedInstruction<'a> {
             I::DirectCall { .. } => VerifiedInstructionKind::DirectCall,
             I::StructConstruct { .. } => VerifiedInstructionKind::StructConstruct,
             I::EnumConstruct { .. } => VerifiedInstructionKind::EnumConstruct,
+            I::EnvironmentLookup { .. } => VerifiedInstructionKind::EnvironmentLookup,
             I::FixedArrayConstruct { .. } => VerifiedInstructionKind::FixedArrayConstruct,
             I::CopyFromPlace { .. } => VerifiedInstructionKind::CopyFromPlace,
             I::MoveFromPlace { .. } => VerifiedInstructionKind::MoveFromPlace,
@@ -1703,15 +1713,42 @@ pub fn verify(
     linear32: VerifiedLayouts,
     linux_x86_64: VerifiedLayouts,
 ) -> Result<VerifiedProgram, Vec<Diagnostic>> {
+    verify_owned(program, sources, expected_entry, linear32, linux_x86_64, None)
+}
+
+pub(crate) fn verify_owned(
+    program: raw::Program,
+    sources: &SourceMap,
+    expected_entry: FileId,
+    linear32: VerifiedLayouts,
+    linux_x86_64: VerifiedLayouts,
+    command: Option<&zryna_syntax::command_h1_v1::CommandSyntax>,
+) -> Result<VerifiedProgram, Vec<Diagnostic>> {
     let mut errors = Errors::default();
-    preflight(&program, &linear32, &mut errors);
+    let nominal_limit = MAX_NOMINAL_DECLARATIONS
+        + usize::from(
+            command.is_some_and(zryna_syntax::command_h1_v1::CommandSyntax::uses_outcome),
+        );
+    preflight_with_nominal_limit(&program, &linear32, nominal_limit, &mut errors);
     if !errors.is_empty() {
         return Err(errors.finish());
     }
-    verify_authorities(&program, sources, expected_entry, &linear32, &linux_x86_64, &mut errors);
+    let runtime = command.map_or(RuntimeContractIdentity::OwnershipRuntimeV1, |_| {
+        RuntimeContractIdentity::CommandH1V1
+    });
+    verify_authorities(
+        &program,
+        sources,
+        expected_entry,
+        &linear32,
+        &linux_x86_64,
+        runtime,
+        &mut errors,
+    );
     if !errors.is_empty() {
         return Err(errors.finish());
     }
+    crate::command_h1_v1::admit_body(&program, sources, &linear32, &linux_x86_64, command)?;
     let mut borrow_indices = Vec::new();
     verify_structure(&program, sources, &linear32, &mut borrow_indices, &mut errors);
     if !errors.is_empty() {
@@ -1745,8 +1782,18 @@ pub fn verify(
     })
 }
 
-#[allow(clippy::too_many_lines)]
+#[cfg(test)]
 fn preflight(program: &raw::Program, layouts: &VerifiedLayouts, errors: &mut Errors) {
+    preflight_with_nominal_limit(program, layouts, MAX_NOMINAL_DECLARATIONS, errors);
+}
+
+#[allow(clippy::too_many_lines)]
+fn preflight_with_nominal_limit(
+    program: &raw::Program,
+    layouts: &VerifiedLayouts,
+    nominal_limit: usize,
+    errors: &mut Errors,
+) {
     if program.modules.is_empty() || program.modules.len() > MAX_MODULES {
         errors.limit("module count", MAX_MODULES);
         return;
@@ -1771,8 +1818,8 @@ fn preflight(program: &raw::Program, layouts: &VerifiedLayouts, errors: &mut Err
             "nominal declaration count",
             errors,
         );
-        if nominals > MAX_NOMINAL_DECLARATIONS {
-            errors.limit("nominal declaration count", MAX_NOMINAL_DECLARATIONS);
+        if nominals > nominal_limit {
+            errors.limit("nominal declaration count", nominal_limit);
             return;
         }
         if module.functions.len() > MAX_FUNCTIONS_PER_MODULE {
@@ -1941,10 +1988,11 @@ fn verify_authorities(
     expected_entry: FileId,
     linear: &VerifiedLayouts,
     linux: &VerifiedLayouts,
+    runtime: RuntimeContractIdentity,
     errors: &mut Errors,
 ) {
     let claims = program.authorities;
-    if claims.runtime != RuntimeContractIdentity::OwnershipRuntimeV1
+    if claims.runtime != runtime
         || linear.source_map_identity() != sources.identity()
         || linux.source_map_identity() != sources.identity()
         || linear.target() != StorageTarget::Linear32V1
@@ -3229,32 +3277,6 @@ fn derive_value_owners(
         }
     }
     owners
-}
-
-fn consuming_instruction_operands(kind: &raw::InstructionKind) -> Vec<raw::ValueId> {
-    use raw::InstructionKind as I;
-    match kind {
-        I::DirectCall { arguments, .. } => arguments
-            .iter()
-            .filter_map(|argument| match argument {
-                raw::CallArgument::Value(value) => Some(*value),
-                raw::CallArgument::Borrow(_) => None,
-            })
-            .collect(),
-        I::StructConstruct { fields, .. } => fields.clone(),
-        I::EnumConstruct { payload, .. } => payload.iter().copied().collect(),
-        I::FixedArrayConstruct { elements, .. } | I::VecConstruct { elements, .. } => {
-            elements.clone()
-        }
-        I::InitializePlace { value, .. }
-        | I::ReplacePlace { value, .. }
-        | I::GenericReplacePlace { value, .. }
-        | I::VecPush { value, .. }
-        | I::SharedConstruct { value, .. }
-        | I::BorrowWrite { value, .. }
-        | I::BorrowReplace { value, .. } => vec![*value],
-        _ => vec![],
-    }
 }
 
 fn verify_reducible_loops(
@@ -5320,6 +5342,9 @@ fn verify_operation_types(
                         })
                 })
         }
+        I::EnvironmentLookup { .. } => {
+            result_type.is_some_and(|ty| crate::command_h1_v1::outcome_shape(layouts, ty).is_some())
+        }
         I::CopyFromPlace { place } | I::MoveFromPlace { place } => {
             place_type(*place) == result_type
         }
@@ -5576,47 +5601,6 @@ fn terminator_edges(kind: &raw::Terminator) -> Vec<&raw::Edge> {
     }
 }
 
-fn instruction_operands(kind: &raw::InstructionKind) -> Vec<raw::ValueId> {
-    use raw::InstructionKind as I;
-    match kind {
-        I::I32Add { lhs, rhs }
-        | I::I32Sub { lhs, rhs }
-        | I::I32Mul { lhs, rhs }
-        | I::Eq { lhs, rhs }
-        | I::Ne { lhs, rhs }
-        | I::I32LtS { lhs, rhs }
-        | I::I32LeS { lhs, rhs }
-        | I::I32GtS { lhs, rhs }
-        | I::I32GeS { lhs, rhs } => vec![*lhs, *rhs],
-        I::I32Neg { operand } => vec![*operand],
-        I::DirectCall { arguments, .. } => arguments
-            .iter()
-            .filter_map(|argument| match argument {
-                raw::CallArgument::Value(value) => Some(*value),
-                raw::CallArgument::Borrow(_) => None,
-            })
-            .collect(),
-        I::StructConstruct { fields, .. } => fields.clone(),
-        I::EnumConstruct { payload, .. } => payload.iter().copied().collect(),
-        I::FixedArrayConstruct { elements, .. } | I::VecConstruct { elements, .. } => {
-            elements.clone()
-        }
-        I::InitializePlace { value, .. }
-        | I::ReplacePlace { value, .. }
-        | I::GenericReplacePlace { value, .. }
-        | I::VecPush { value, .. }
-        | I::SharedConstruct { value, .. }
-        | I::BorrowWrite { value, .. }
-        | I::BorrowReplace { value, .. } => vec![*value],
-        I::FixedArrayIndexCopy { index, .. }
-        | I::VecIndexCopy { index, .. }
-        | I::BeginIndexedBorrow { index, .. }
-        | I::BeginIndexedAccess { index, .. }
-        | I::ProjectIndexedBorrow { index, .. } => vec![*index],
-        _ => vec![],
-    }
-}
-
 fn terminator_operands(kind: &raw::Terminator) -> Vec<raw::ValueId> {
     let mut values = terminator_edges(kind)
         .into_iter()
@@ -5697,6 +5681,7 @@ fn verify_instruction_shape(
         I::StringFromUtf8 { cleanup, .. }
         | I::DirectCall { cleanup, .. }
         | I::VecConstruct { cleanup, .. }
+        | I::EnvironmentLookup { cleanup, .. }
         | I::ProjectIndexedBorrow { cleanup, .. }
         | I::SharedConstruct { cleanup, .. } => !cleanup_valid(*cleanup),
         I::StringConcat { left, right, cleanup } => {

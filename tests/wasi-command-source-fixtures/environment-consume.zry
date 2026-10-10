@@ -1,0 +1,12 @@
+function consume(value: String): bool {
+  const copied: String = clone(value);
+  const joined: String = concat(copied, "!");
+  return true;
+}
+export function main(): bool {
+  const result: EnvLookupV1 = environmentLookup("MODE");
+  return match(result, {
+    "EnvLookupV1.Found": (value) => consume(value),
+    "EnvLookupV1.Missing": () => false,
+  });
+}

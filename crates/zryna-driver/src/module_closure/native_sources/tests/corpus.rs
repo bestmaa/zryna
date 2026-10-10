@@ -90,7 +90,7 @@ impl VerifiedFrontendProviderV4 for NativeCandidate {
 fn native_resolution_matches_all_admitted_m3_fixture_graphs_and_preserves_hostile_rejection() {
     let workspace = Workspace::new("complete-m3-corpus");
     let fixture_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/m3-fixtures");
-    let fixtures = copy_sources(&workspace, &fixture_root, 95);
+    let fixtures = copy_sources(&workspace, &fixture_root, 97);
     let registry: serde_json::Value = serde_json::from_str(include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/../../tests/m3-conformance-v1.json"
@@ -138,6 +138,6 @@ fn native_resolution_matches_all_admitted_m3_fixture_graphs_and_preserves_hostil
         native.revalidate().expect("original source closure retained throughout corpus comparison");
         accepted += 1;
     }
-    assert_eq!(accepted, 94);
+    assert_eq!(accepted, 96);
     assert_eq!(hostile, 1);
 }

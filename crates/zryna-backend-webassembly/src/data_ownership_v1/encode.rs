@@ -1,13 +1,16 @@
-use wasm_encoder::{
-    CodeSection, ConstExpr, ExportKind, ExportSection, Function, FunctionSection, GlobalSection,
-    GlobalType, Instruction, MemorySection, MemoryType, Module, TypeSection, ValType,
-};
-use zryna_ir::data_ownership_v1::{FunctionIdentity, VerifiedFunction, VerifiedProgram};
+use wasm_encoder::{Function, Instruction, ValType};
+use zryna_ir::data_ownership_v1::{FunctionIdentity, VerifiedFunction};
 
 use super::error;
 
+mod assembly;
+mod cleanup;
+mod clone_frontier;
+mod command_environment;
 mod control;
 mod failure;
+#[cfg(test)]
+mod legacy_frontier_tests;
 mod memory;
 mod observation;
 mod operations;
@@ -16,125 +19,16 @@ mod values;
 
 const MEMORY_PAGES: u64 = 256;
 
-#[allow(clippy::too_many_lines)]
-pub(super) fn module(program: &VerifiedProgram) -> Result<Vec<u8>, zryna_diagnostics::Diagnostic> {
-    let functions = program
-        .modules()
-        .flat_map(zryna_ir::data_ownership_v1::VerifiedModule::functions)
-        .collect::<Vec<_>>();
-    let layouts = program.linear32_layouts();
-    let type_count = u32::try_from(layouts.types().len()).map_err(|_| index_error())?;
-    let mut arities = vec![1_usize];
-    for function in &functions {
-        let arity = function.parameters().len() + function.borrow_parameters().len();
-        if !arities.contains(&arity) {
-            arities.push(arity);
-        }
-    }
-    let mut module = Module::new();
-    let mut types = TypeSection::new();
-    for arity in &arities {
-        types.ty().function(vec![ValType::I32; *arity], [ValType::I32]);
-    }
-    let drop_type = u32::try_from(arities.len()).map_err(|_| index_error())?;
-    types.ty().function([ValType::I32], []);
-    let copy_type = drop_type + 1;
-    types.ty().function([ValType::I32, ValType::I32, ValType::I32], []);
-    module.section(&types);
+pub(super) fn module(
+    program: &zryna_ir::data_ownership_v1::VerifiedProgram,
+) -> Result<Vec<u8>, zryna_diagnostics::Diagnostic> {
+    assembly::module(program)
+}
 
-    let mut declarations = FunctionSection::new();
-    declarations.function(0);
-    declarations.function(copy_type);
-    for _ in 0..type_count {
-        declarations.function(0);
-    }
-    for _ in 0..type_count {
-        declarations.function(drop_type);
-    }
-    for function in &functions {
-        let arity = function.parameters().len() + function.borrow_parameters().len();
-        declarations.function(
-            u32::try_from(arities.iter().position(|candidate| *candidate == arity).unwrap_or(0))
-                .map_err(|_| index_error())?,
-        );
-    }
-    for function in functions.iter().filter(|function| function.public_export().is_some()) {
-        let arity = function.parameters().len() + function.borrow_parameters().len();
-        declarations.function(
-            u32::try_from(arities.iter().position(|candidate| *candidate == arity).unwrap_or(0))
-                .map_err(|_| index_error())?,
-        );
-    }
-    declarations.function(0);
-    declarations.function(drop_type);
-    module.section(&declarations);
-
-    let mut memories = MemorySection::new();
-    memories.memory(MemoryType {
-        minimum: MEMORY_PAGES,
-        maximum: Some(MEMORY_PAGES),
-        memory64: false,
-        shared: false,
-        page_size_log2: None,
-    });
-    module.section(&memories);
-    let mut globals = GlobalSection::new();
-    globals.global(
-        GlobalType { val_type: ValType::I32, mutable: true, shared: false },
-        &ConstExpr::i32_const(observation::ARENA_START),
-    );
-    for _ in 0..5 {
-        globals.global(
-            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
-            &ConstExpr::i32_const(0),
-        );
-    }
-    module.section(&globals);
-
-    let mut exports = ExportSection::new();
-    let program_base = 2 + type_count * 2;
-    let mut wrapper_index =
-        program_base + u32::try_from(functions.len()).map_err(|_| index_error())?;
-    for function in &functions {
-        if let Some(export) = function.public_export() {
-            exports.export(export.webassembly_name().as_str(), ExportKind::Func, wrapper_index);
-            wrapper_index += 1;
-        }
-    }
-    exports.export("$zryna$observation", ExportKind::Func, wrapper_index);
-    module.section(&exports);
-
-    let context = Context {
-        functions: &functions,
-        layouts,
-        type_count,
-        program_base,
-        observation: wrapper_index,
-    };
-    let mut code = CodeSection::new();
-    code.function(&allocator());
-    code.function(&copy_memory());
-    for layout in layouts.types() {
-        code.function(&memory::clone_helper(layout, &context)?);
-    }
-    for layout in layouts.types() {
-        code.function(&memory::drop_helper(layout, &context)?);
-    }
-    for function in &functions {
-        code.function(&encode_function(*function, &context)?);
-    }
-    for (index, function) in functions.iter().enumerate() {
-        if function.public_export().is_some() {
-            code.function(&export_wrapper(
-                *function,
-                program_base + u32::try_from(index).map_err(|_| index_error())?,
-            )?);
-        }
-    }
-    code.function(&observation::getter());
-    code.function(&observation::recorder());
-    module.section(&code);
-    Ok(module.finish())
+pub(crate) fn command(
+    program: &zryna_ir::command_h1_v1::VerifiedProgram,
+) -> Result<Vec<u8>, zryna_diagnostics::Diagnostic> {
+    assembly::command(program)
 }
 
 fn allocator() -> Function {
@@ -183,6 +77,14 @@ pub(super) struct Context<'a> {
     type_count: u32,
     program_base: u32,
     observation: u32,
+    helper_base: u32,
+    command: Option<CommandContext<'a>>,
+    clone_frontier: bool,
+}
+
+struct CommandContext<'a> {
+    key: &'a str,
+    environment: u32,
 }
 
 impl Context<'_> {
@@ -198,18 +100,19 @@ impl Context<'_> {
             .ok_or_else(index_error)
     }
 
-    pub(super) const fn clone_index(ty: zryna_layout::TypeId) -> u32 {
-        2 + ty.index()
+    pub(super) const fn clone_index(&self, ty: zryna_layout::TypeId) -> u32 {
+        self.helper_base + ty.index()
     }
 
     pub(super) fn drop_index(&self, ty: zryna_layout::TypeId) -> u32 {
-        2 + self.type_count + ty.index()
+        self.helper_base + self.type_count + ty.index()
     }
 }
 
 fn export_wrapper(
     function: VerifiedFunction<'_>,
     target: u32,
+    clone_frontier: bool,
 ) -> Result<Function, zryna_diagnostics::Diagnostic> {
     let parameters = function.parameters().len() + function.borrow_parameters().len();
     let result = u32::try_from(parameters).map_err(|_| index_error())?;
@@ -220,6 +123,7 @@ fn export_wrapper(
     body.instruction(&Instruction::GlobalSet(2));
     body.instruction(&Instruction::I32Const(0));
     body.instruction(&Instruction::GlobalSet(5));
+    clone_frontier::clear(clone_frontier, &mut body);
     body.instruction(&Instruction::I32Const(observation::ARENA_START));
     body.instruction(&Instruction::GlobalSet(0));
     for index in 0..parameters {
@@ -227,6 +131,7 @@ fn export_wrapper(
     }
     body.instruction(&Instruction::Call(target));
     body.instruction(&Instruction::LocalSet(result));
+    clone_frontier::clear(clone_frontier, &mut body);
     body.instruction(&Instruction::I32Const(observation::ARENA_START));
     body.instruction(&Instruction::GlobalSet(0));
     body.instruction(&Instruction::LocalGet(result));

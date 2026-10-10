@@ -1,0 +1,10 @@
+interface Holder extends ZrynaStruct { text: String; }
+interface Tag extends ZrynaEnum { Found: String; Missing: ZrynaNone; }
+export function main(): bool {
+  const text: String = "on";
+  const item: Holder = Holder({ text, });
+  const vector: Vec<i32> = Vec<i32>([1, 2,]);
+  const array: FixedArray<i32, 2> = FixedArray<i32, 2>([1, 2,]);
+  const tag: Tag = Tag.Found("on");
+  return match(tag, { "Tag.Found": (value) => true, "Tag.Missing": () => false, });
+}

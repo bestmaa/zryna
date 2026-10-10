@@ -1,0 +1,39 @@
+# Ledger identity search requires both exact nonzero pointer and old allocation length.
+global.get 9
+if
+unreachable
+end
+i32.const 4096
+local.set 2
+block
+loop
+local.get 2
+i32.const 4288
+i32.ge_u
+br_if 1
+local.get 2
+i32.load 0
+local.get 0
+i32.eq
+local.get 2
+i32.load 4
+local.get 1
+i32.eq
+i32.and
+local.get 0
+i32.eqz
+i32.eqz
+i32.and
+if
+local.get 2
+return
+end
+local.get 2
+i32.const 12
+i32.add
+local.set 2
+br 0
+end
+end
+i32.const 0
+end

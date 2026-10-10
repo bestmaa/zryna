@@ -1,0 +1,5 @@
+function value(index: i32): i32 {
+  const items: Vec<i32> = Vec<i32>([7, 9]);
+  return items[index];
+}
+export function main(): bool { return value(2) === 7; }

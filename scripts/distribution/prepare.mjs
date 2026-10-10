@@ -56,7 +56,9 @@ export function prepare({ version, source, target, recipe, files }, capturedFile
   const sourceReceipt = validateSourceReceipt(
     capturedFiles.find(file => file.path === 'metadata/architecture-receipt.json').data, record,
   );
-  validateRustMaterials(files, target.triple, sourceReceipt, record.version);
+  validateRustMaterials(files, target.triple, sourceReceipt, record.version, {
+    productionCandidate: options?.productionCandidate === true, distribution: record,
+  });
   requireValue(capturedFiles.find(file => file.path === 'VERSION').data.equals(Buffer.from(`${version}\n`)),
     'VERSION does not match distribution');
   const distribution = bytes(record);

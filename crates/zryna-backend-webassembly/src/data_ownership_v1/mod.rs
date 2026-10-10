@@ -2,12 +2,12 @@ use wasmparser::{
     Encoding, ExternalKind, Operator, Parser, Payload, ValType, Validator, WasmFeatures,
 };
 use zryna_diagnostics::Diagnostic;
-use zryna_ir::data_ownership_v1::VerifiedProgram;
+use zryna_ir::data_ownership_v1::{VerifiedFunction, VerifiedProgram};
 use zryna_ownership_runtime_abi::VerifiedOwnershipRuntimeAbi;
 
 use crate::ValidatedWebAssemblyArtifact;
 
-mod encode;
+pub(crate) mod encode;
 
 const MAX_BYTES: usize = 32 * 1024 * 1024;
 
@@ -29,7 +29,7 @@ pub fn emit_data_ownership(
         ));
     }
     validate(&bytes)?;
-    audit(&bytes)?;
+    audit(&bytes, program)?;
     Ok(ValidatedWebAssemblyArtifact { bytes })
 }
 
@@ -58,7 +58,8 @@ fn validate(bytes: &[u8]) -> Result<(), Diagnostic> {
 }
 
 #[allow(clippy::too_many_lines)]
-fn audit(bytes: &[u8]) -> Result<(), Diagnostic> {
+fn audit(bytes: &[u8], program: &VerifiedProgram) -> Result<(), Diagnostic> {
+    let expected_globals = private_global_count(program);
     let mut memories = 0_u32;
     let mut globals = 0_u32;
     for payload in Parser::new(0).parse_all(bytes) {
@@ -100,7 +101,7 @@ fn audit(bytes: &[u8]) -> Result<(), Diagnostic> {
                         global.map_err(|failure| error("ZRYNA-W3002", failure.to_string()))?;
                     let mut init = global.init_expr.get_operators_reader();
                     let expected = if index == 0 { 65_536 } else { 0 };
-                    if index > 5
+                    if index >= expected_globals as usize
                         || global.ty.content_type != ValType::I32
                         || !global.ty.mutable
                         || global.ty.shared
@@ -110,12 +111,15 @@ fn audit(bytes: &[u8]) -> Result<(), Diagnostic> {
                     {
                         return Err(error(
                             "ZRYNA-W3004",
-                            "invalid private arena or observation global",
+                            "invalid private arena, observation or clone-frontier global",
                         ));
                     }
                 }
-                if globals != 6 {
-                    return Err(error("ZRYNA-W3004", "missing private observation global"));
+                if globals != expected_globals {
+                    return Err(error(
+                        "ZRYNA-W3004",
+                        "missing private observation or clone-frontier global",
+                    ));
                 }
             }
             Payload::ImportSection(_)
@@ -140,7 +144,7 @@ fn audit(bytes: &[u8]) -> Result<(), Diagnostic> {
     if memories != 1 {
         return Err(error("ZRYNA-W3004", "module is missing bounded linear memory"));
     }
-    if globals != 6 {
+    if globals != expected_globals {
         return Err(error("ZRYNA-W3004", "module is missing its private arena global"));
     }
     for payload in Parser::new(0).parse_all(bytes) {
@@ -179,7 +183,30 @@ fn audit(bytes: &[u8]) -> Result<(), Diagnostic> {
     Ok(())
 }
 
-fn approved_operator(operator: &Operator<'_>) -> bool {
+fn private_global_count(program: &VerifiedProgram) -> u32 {
+    use zryna_ir::data_ownership_v1::VerifiedInstructionKind as K;
+    let prefix = program
+        .modules()
+        .flat_map(zryna_ir::data_ownership_v1::VerifiedModule::functions)
+        .flat_map(VerifiedFunction::blocks)
+        .flat_map(zryna_ir::data_ownership_v1::VerifiedBlock::instructions)
+        .any(|instruction| match instruction.kind() {
+            K::VecClone => instruction.vec_clone_element_failure_drop_actions().next().is_some(),
+            K::ClonePlace => {
+                instruction.aggregate_clone_element_failure_drop_actions().next().is_some()
+            }
+            K::GenericClonePlace | K::GenericCloneBorrow => {
+                instruction.generic_clone_prefix_failure_drop_actions().next().is_some()
+            }
+            K::HandleAwareClonePlace | K::HandleAwareCloneBorrow => {
+                instruction.handle_aware_clone_prefix_failure_drop_actions().next().is_some()
+            }
+            _ => false,
+        });
+    if prefix { 10 } else { 6 }
+}
+
+pub(crate) fn approved_operator(operator: &Operator<'_>) -> bool {
     matches!(
         operator,
         Operator::Unreachable

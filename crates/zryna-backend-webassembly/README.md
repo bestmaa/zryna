@@ -9,6 +9,13 @@ await the required execution lanes. Public WASI target selection remains unactiv
 `src/scalar_audit.rs` owns the existing core-only sealing and I32V1 instruction audit;
 `src/component_command/` owns the distinct component artifact and final-byte audit.
 
+The separate `src/command_h1_v1/` [bounded command candidate](../../docs/WASI_COMMAND_H1_CONTRACT_DRAFT.md)
+emits only from its distinct verified command program and paired ownership ABI. Its opaque
+artifact retains exact issuing/source/WIT authorities and independent whole-storage,
+environment-bridge, language-call-role, Run and final-component audits. The fixed language and
+canonical memory regions do not change ordinary M3 allocation. Full runtime/platform acceptance
+and independent final review remain pending.
+
 `emit_scalar_component` is the public build-only Component Model boundary for the default scalar
 profile. It retains the exact audited M1 core module, canonically lifts the verified `i32`
 functions, and binds the artifact to the authenticated

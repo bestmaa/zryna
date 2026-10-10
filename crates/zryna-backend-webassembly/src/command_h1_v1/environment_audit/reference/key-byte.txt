@@ -1,0 +1,13 @@
+# One source-authorized UTF-8 key byte. Offset and byte are the only substitutions.
+local.get 1
+i32.load8_u memory=0 align=0 offset=@key_offset
+i32.const @key_byte
+i32.ne
+if
+i32.const 1
+i32.const 0
+i32.const 1
+call 3
+drop
+unreachable
+end

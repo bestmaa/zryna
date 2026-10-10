@@ -13,6 +13,8 @@ pub(super) enum CliProfile {
     ControlFlowV1,
     #[value(name = "data-ownership-v1")]
     DataOwnershipV1,
+    #[value(name = "command-h1-v1")]
+    CommandH1V1,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
@@ -22,18 +24,21 @@ pub(super) enum CliTarget {
     WebAssembly,
     Native,
     Component,
+    #[value(name = "wasi-command")]
+    WasiCommand,
     All,
 }
 
-impl From<CliTarget> for TargetSelection {
-    fn from(value: CliTarget) -> Self {
-        match value {
-            CliTarget::JavaScript => Self::JavaScript,
-            CliTarget::WebAssembly => Self::WebAssembly,
-            CliTarget::Native => Self::Native,
-            CliTarget::Component => Self::Component,
-            CliTarget::All => Self::All,
-        }
+impl CliTarget {
+    pub(super) fn ordinary(self) -> Result<TargetSelection, Diagnostic> {
+        Ok(match self {
+            Self::JavaScript => TargetSelection::JavaScript,
+            Self::WebAssembly => TargetSelection::WebAssembly,
+            Self::Native => TargetSelection::Native,
+            Self::Component => TargetSelection::Component,
+            Self::All => TargetSelection::All,
+            Self::WasiCommand => return Err(super::command_h1::configuration_error()),
+        })
     }
 }
 

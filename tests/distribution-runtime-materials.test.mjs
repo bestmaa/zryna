@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { gzipSync } from 'node:zlib';
 import { captureTarGzipMembers } from '../scripts/distribution/npm-materials.mjs';
@@ -181,4 +182,85 @@ test('qualification closure audit rejects an omitted normal registry dependency 
     stderr: '' });
   assert.throws(() => checkQualificationRustClosure({ spawn, materialRecords: () => [] }),
     /material identities/);
+});
+
+function commandCandidate(target = 'x86_64-unknown-linux-gnu') {
+  const binding = JSON.parse(readFileSync(new URL(
+    '../scripts/distribution/command-h1-rust-binding-v1.json', import.meta.url)));
+  const source = { repository: 'https://github.com/zryna/zryna',
+    commit: '1'.repeat(40), tree: '2'.repeat(40) };
+  return { entries: rustMaterials(target).flatMap(record => record.files)
+    .map(({ path, size, sha256: digest }) => ({ path, size, sha256: digest })),
+  target, receipt: { source, inputs: binding.inputs },
+  distribution: { version: '0.2.3', source: { ...source, ref: 'refs/heads/main' },
+    target: { triple: target }, recipe: { format: 'zryna.distribution-recipe.v1',
+      sha256: '0f522abd343ba4e3c07a38d93c778fa7a0e30aac2295abe1f075091f6b6d7db1' } } };
+}
+
+function validateCommandCandidate(value, options = {}) {
+  return validateRustMaterials(value.entries, value.target, value.receipt, '0.2.3',
+    { productionCandidate: true, distribution: value.distribution, ...options });
+}
+
+test('exact H1 source binding admits both candidate targets with unchanged material notices', () => {
+  for (const target of ['x86_64-unknown-linux-gnu', 'x86_64-pc-windows-msvc']) {
+    assert.doesNotThrow(() => validateCommandCandidate(commandCandidate(target)));
+  }
+});
+
+test('H1 source binding cannot replace tagged or predecessor release lock pins', () => {
+  assert.throws(() => validateCommandCandidate(commandCandidate(), { productionCandidate: false }),
+    /Rust material lockfile identity/);
+  assert.throws(() => validateCommandCandidate(commandCandidate(), { productionCandidate: 'true' }),
+    /Rust material lockfile identity/);
+  for (const version of ['0.2.1', '0.2.2', '0.2.3']) {
+    const value = commandCandidate();
+    value.distribution.source.ref = `refs/tags/v${version}`;
+    assert.throws(() => validateCommandCandidate(value), /Rust material lockfile identity/);
+    assert.throws(() => validateRustMaterials(value.entries, value.target, value.receipt, version,
+      { productionCandidate: true, distribution: value.distribution }), /Rust material lockfile identity/);
+  }
+});
+
+test('candidate material binding rejects source, recipe, version and target substitutions', () => {
+  for (const mutate of [
+    value => { value.distribution.source.repository = 'https://example.invalid/repository'; },
+    value => { value.distribution.source.ref = 'refs/heads/other'; },
+    value => { value.distribution.source.commit = '3'.repeat(40); },
+    value => { value.distribution.source.tree = '3'.repeat(40); },
+    value => { value.distribution.recipe.sha256 = '0'.repeat(64); },
+    value => { value.distribution.recipe.format = 'unreviewed'; },
+    value => { value.distribution.version = '0.2.4'; },
+    value => { value.distribution.target.triple = 'x86_64-pc-windows-msvc'; },
+  ]) {
+    const value = commandCandidate(); mutate(value);
+    assert.throws(() => validateCommandCandidate(value), /Rust material lockfile identity/);
+  }
+});
+
+test('candidate binding rejects drift in every exact source input and inventory shape', () => {
+  for (let index = 0; index < 4; index++) {
+    for (const field of ['size', 'sha256', 'logicalPath']) {
+      const value = commandCandidate();
+      value.receipt.inputs[index][field] = field === 'size' ? 1 : field === 'sha256'
+        ? '0'.repeat(64) : 'other';
+      assert.throws(() => validateCommandCandidate(value), /Rust material lockfile identity/);
+    }
+  }
+  for (const mutate of [
+    inputs => inputs.pop(), inputs => inputs.push({ ...inputs[0] }), inputs => inputs.reverse(),
+  ]) {
+    const value = commandCandidate(); mutate(value.receipt.inputs);
+    assert.throws(() => validateCommandCandidate(value), /Rust material lockfile identity/);
+  }
+});
+
+test('candidate binding retains exact notice hashes and full material coverage', () => {
+  for (const mutate of [
+    entries => entries.pop(), entries => { entries[0].sha256 = '0'.repeat(64); },
+    entries => entries.push({ ...entries[0] }),
+  ]) {
+    const value = commandCandidate(); mutate(value.entries);
+    assert.throws(() => validateCommandCandidate(value), /Rust notice inventory/);
+  }
 });

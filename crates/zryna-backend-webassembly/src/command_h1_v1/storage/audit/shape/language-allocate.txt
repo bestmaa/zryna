@@ -1,0 +1,49 @@
+# L allocation: checked status, eight-byte cursor alignment, exact exclusive C boundary.
+global.get 9
+if
+unreachable
+end
+global.get 1
+if
+i32.const 0
+return
+end
+local.get 0
+i32.const 2147483647
+i32.gt_u
+if
+i32.const 3
+global.set 1
+i32.const 0
+return
+end
+global.get 0
+local.tee 1
+local.get 0
+i32.add
+i32.const 7
+i32.add
+i32.const -8
+i32.and
+local.tee 2
+local.get 1
+i32.lt_u
+if
+i32.const 3
+global.set 1
+i32.const 0
+return
+end
+local.get 2
+i32.const 15728640
+i32.gt_u
+if
+i32.const 2
+global.set 1
+i32.const 0
+return
+end
+local.get 2
+global.set 0
+local.get 1
+end

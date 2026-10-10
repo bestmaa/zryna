@@ -35,15 +35,18 @@ use crate::{
 };
 
 mod artifacts;
+mod command_h1;
 mod control_flow;
 mod preparation;
 mod project;
 mod scalar;
+mod target;
 use artifacts::write_prepared_artifacts;
 pub(crate) use control_flow::execute_installed as execute_installed_control_flow;
 use preparation::{PreparedArtifacts, analyze, configured_frontend};
 pub(crate) use project::{build_project_request, run_project_request};
 pub(crate) use scalar::execute_installed as execute_installed_scalar;
+use target::ManifestTarget;
 
 const MANIFEST_NAME: &str = "zryna-manifest-v1.json";
 const MANIFEST_PROFILE: &str = "zryna-m1-cli-v1";
@@ -346,26 +349,6 @@ impl CommandSuccess {
     #[must_use]
     pub fn diagnostics(&self) -> &[Diagnostic] {
         &self.diagnostics
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(rename_all = "lowercase")]
-enum ManifestTarget {
-    JavaScript,
-    WebAssembly,
-    Native,
-    Component,
-}
-
-impl ManifestTarget {
-    const fn as_str(self) -> &'static str {
-        match self {
-            Self::JavaScript => "javascript",
-            Self::WebAssembly => "webassembly",
-            Self::Native => "native",
-            Self::Component => "component",
-        }
     }
 }
 
@@ -1632,6 +1615,7 @@ impl Transaction {
                 | BROWSER_MANIFEST_NAME
                 | CONTROL_FLOW_MANIFEST_NAME
                 | crate::OWNERSHIP_MANIFEST_NAME
+                | crate::COMMAND_H1_MANIFEST_NAME
         ) || self.manifest.borrow().is_some()
         {
             return Err(transaction_error("manifest name is not a closed unique version"));

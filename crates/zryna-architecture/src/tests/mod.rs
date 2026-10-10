@@ -67,3 +67,5 @@ mod cargo_process;
 mod controlled_read;
 mod paths;
 mod scan;
+
+mod permanent_phase_graph;
