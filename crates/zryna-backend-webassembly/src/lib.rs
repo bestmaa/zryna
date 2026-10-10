@@ -15,6 +15,12 @@ use zryna_ir::{ExprKind, Type, VerifiedFunction, VerifiedProgram};
 mod artifact;
 mod bounded_bytes;
 use bounded_bytes::BoundedBytes;
+mod emission_diagnostics;
+use emission_diagnostics::{
+    control_flow_audit_error, control_flow_budget_error, control_flow_index_error,
+    control_flow_profile_error, control_flow_validation_error, index_error,
+    profile_invariant_error,
+};
 mod scalar_audit;
 pub use artifact::ValidatedWebAssemblyArtifact;
 use scalar_audit::{audit_profile, seal};
@@ -32,6 +38,8 @@ pub use command_h1_v1::{
 mod command_world_types;
 mod component_command;
 pub use component_command::{ValidatedCommandComponent, emit_command_self_check};
+mod component_server;
+pub use component_server::{ServerOperation, ValidatedServerComponent, emit_server_response};
 mod scalar_component;
 pub use scalar_component::{ScalarExport, ValidatedScalarComponent, emit_scalar_component};
 const MAX_CONTROL_FLOW_WEBASSEMBLY_BYTES: usize = 32 * 1024 * 1024;
@@ -710,76 +718,6 @@ fn audit_control_flow_profile(
         return Err(control_flow_audit_error("a missing canonical M2 section or code body"));
     }
     Ok(())
-}
-
-fn profile_invariant_error(function: VerifiedFunction<'_>) -> Diagnostic {
-    Diagnostic::error(
-        "ZRYNA-W1001",
-        None,
-        format!(
-            "verified function '{}' contains a type or operation outside the WebAssembly I32V1 proof profile",
-            function.abi_export().webassembly_name().as_str()
-        ),
-        "report this compiler invariant failure with the smallest reproducible Zryna source",
-    )
-}
-
-fn index_error() -> Diagnostic {
-    Diagnostic::error(
-        "ZRYNA-W1002",
-        None,
-        "verified WebAssembly indexes exceeded the core binary index space",
-        "report this compiler invariant failure with the smallest reproducible Zryna source",
-    )
-}
-
-fn control_flow_profile_error(function: FunctionIdentity) -> Diagnostic {
-    Diagnostic::error(
-        "ZRYNA-W2001",
-        None,
-        format!(
-            "verified function {}:{} contains a type or identity outside the WebAssembly M2 proof profile",
-            function.module().index(),
-            function.declaration()
-        ),
-        "report this compiler invariant failure with the smallest reproducible Zryna source",
-    )
-}
-
-fn control_flow_index_error() -> Diagnostic {
-    Diagnostic::error(
-        "ZRYNA-W2002",
-        None,
-        "verified M2 WebAssembly indexes exceeded the core binary index space",
-        "report this compiler invariant failure with the smallest reproducible Zryna source",
-    )
-}
-
-fn control_flow_validation_error(error: impl std::fmt::Display) -> Diagnostic {
-    Diagnostic::error(
-        "ZRYNA-W2003",
-        None,
-        format!("emitted M2 core WebAssembly failed pinned WebAssembly 1.0 validation: {error}"),
-        "report this compiler failure with the smallest reproducible Zryna source",
-    )
-}
-
-fn control_flow_audit_error(observation: &str) -> Diagnostic {
-    Diagnostic::error(
-        "ZRYNA-W2004",
-        None,
-        format!("M2 core WebAssembly contains {observation}"),
-        "emit only the exact sealed type, function, export, code, local, and instruction inventory",
-    )
-}
-
-fn control_flow_budget_error(limit: usize) -> Diagnostic {
-    Diagnostic::error(
-        "ZRYNA-W2005",
-        None,
-        format!("deterministic M2 core WebAssembly exceeds its {limit} byte emission budget"),
-        "reduce the verified ControlFlowV1 program below the WebAssembly artifact budget",
-    )
 }
 
 #[cfg(test)]
