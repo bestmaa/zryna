@@ -29,6 +29,17 @@ export function requireExecutedProof(result, expected) {
   return { test: expected, passed: 1, failed: 0, ignored: 0 };
 }
 
+export function requireExactCandidate(identity, state, expected) {
+  for (const result of [identity, state]) {
+    if (result.error || result.signal || result.status !== 0) throw new Error('candidate identity inspection failed');
+  }
+  if (!/^[a-f0-9]{40}\s*$/.test(identity.stdout) || state.stdout.trim() ||
+      (expected && identity.stdout.trim() !== expected)) {
+    throw new Error('conformance requires an unchanged, clean exact candidate');
+  }
+  return identity.stdout.trim();
+}
+
 async function digestArchive(file) {
   const state = lstatSync(file);
   if (!state.isFile() || state.isSymbolicLink() || state.size > 256 * 1024 * 1024) {
@@ -78,14 +89,8 @@ async function main(evidence) {
       return result;
     }
     const identity = run('identity', 'git', ['rev-parse', 'HEAD'], 10_000);
-    if (identity.error || identity.signal || identity.status !== 0 || !/^[a-f0-9]{40}\s*$/.test(identity.stdout)) {
-      throw new Error('cannot identify exact candidate commit');
-    }
-    report.commit = identity.stdout.trim();
     const state = run('working-tree', 'git', ['status', '--porcelain'], 10_000);
-    if (state.error || state.signal || state.status !== 0 || state.stdout.trim()) {
-      throw new Error('conformance requires a clean candidate checkout');
-    }
+    report.commit = requireExactCandidate(identity, state);
     if (!existsSync(cache)) {
       const acquisition = run('acquisition', process.platform === 'win32' ? 'python' : 'python3',
         ['scripts/scalar-host/acquire-browser.py'], 130_000);
@@ -128,6 +133,8 @@ async function main(evidence) {
       console.log(`${label}: exactly one test executed and passed`);
     }
     await verifyBrowser(browserRoot);
+    requireExactCandidate(run('final-identity', 'git', ['rev-parse', 'HEAD'], 10_000),
+      run('final-working-tree', 'git', ['status', '--porcelain'], 10_000), report.commit);
     report.passed = true;
     record();
   } catch (error) {
