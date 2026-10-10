@@ -208,3 +208,7 @@ pub fn emit_verified(program: &VerifiedProgram) -> Result<DualTargetArtifacts, V
 
 #[cfg(test)]
 mod tests;
+
+/// Opt-in source-workspace native build preparation; defaults remain unchanged.
+#[cfg(feature = "native-provider-internal")]
+pub mod native_frontend;

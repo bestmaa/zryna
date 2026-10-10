@@ -25,7 +25,7 @@ use crate::{
 pub(super) fn finish(
     request: &ControlFlowBuildRequest,
     run: Option<&RunInvocation>,
-    node: &NodeRuntimeCapability,
+    node: Option<&NodeRuntimeCapability>,
     output_root: &ArtifactOutputRoot,
     final_bundle: &Path,
     closure: &VerifiedModuleClosure,
@@ -55,7 +55,15 @@ pub(super) fn finish(
             )
         })?;
     let mut prepared = compile_control_flow_selected(&scalar_source, request.targets, checkpoint)?;
-    node.revalidate().map_err(preparation_failure)?;
+    if let Some(node) = node {
+        node.revalidate().map_err(preparation_failure)?;
+    } else if run.is_some() {
+        return Err(request_error(
+            "ZRYNA-C1010",
+            "run requires a retained Node capability",
+            "use the existing run route",
+        ));
+    }
 
     if run.is_some() && request.targets.native() {
         checkpoint(ControlFlowPhase::NativeLink)?;
@@ -170,7 +178,7 @@ pub(crate) fn execute_installed(
     let result = finish(
         &request,
         invocation.as_ref(),
-        admission.execution().node()?,
+        Some(admission.execution().node()?),
         &output_root,
         &final_bundle,
         &closure,

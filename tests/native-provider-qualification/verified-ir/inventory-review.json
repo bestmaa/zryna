@@ -1,0 +1,39 @@
+{
+  "status": "matched",
+  "owner_source": "38521fe59fbe70f07157129d75a51a3ed6be877f",
+  "owner_baseline_sha256": "9b98b4f1593da700d747426445bf1ee25367af1c873830a37598a3af89799430",
+  "root_retained_H4_baseline_sha256": "87f65ad8140e6abc966c2551e464b33ab3b4d0ed2fef7084e843c63eec87e6d9",
+  "root_retained_H4_runner_sha256": "8928b63be528a8b669ad48b941118b4d42a541db90265ca98b8772a06c97393d",
+  "accepted_cases": 107,
+  "complete_case_source_contexts_graphs_and_H4_observation_provenance_equal": true,
+  "H4_observed_graphs": 85,
+  "H4_missing_graph_observations": 18,
+  "new_IR_observations_not_claimed": true,
+  "provider_compiler_invocations": 0,
+  "allowed_differences": [
+    "top-level baseline_raw_sha256",
+    "top-level baseline_canonical_json_sha256",
+    "per-case baseline_graph_observation.baseline_raw_sha256"
+  ],
+  "owner_original_runtime_receipts_transferred": false,
+  "scope": "independent inventory and historical-baseline source reconciliation; current IR execution qualification remains separate",
+  "source_head": "0a5f86b77a84c37e19e0dd59388c8a782d385131",
+  "counts": {
+    "accepted": 107,
+    "source_context_occurrences": 66,
+    "fixture_groups": 52,
+    "graph_applicable": 103
+  },
+  "canonical_handoff_projection_sha256": "9e88ad02c8531da0d8563ed920ab0f52423754559b2557c6ee88dcac3af18b5a",
+  "current_inventory_sha256": "cfaccec0894247682a00da04ff395404156304e64b1cc1078bf55af319a694fb",
+  "retained_baseline": {
+    "corpus_sha256": "87f65ad8140e6abc966c2551e464b33ab3b4d0ed2fef7084e843c63eec87e6d9",
+    "runner_sha256": "8928b63be528a8b669ad48b941118b4d42a541db90265ca98b8772a06c97393d",
+    "passed": 190,
+    "blocked": 30,
+    "failed": 0,
+    "source_evidence_inventory_sha256": "e19fb24d399a0ee8d17416efc805b408f6b0bbaa638d20d40f41e1b197969176",
+    "source_evidence_stop_sha256": "0ab722a985d186b3e03628be256a9689bccd0a06d20909e13866396e96211adc"
+  },
+  "mismatches": []
+}

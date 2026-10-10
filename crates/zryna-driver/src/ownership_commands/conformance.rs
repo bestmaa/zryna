@@ -17,6 +17,8 @@ use crate::{
 
 mod authority;
 mod faults;
+#[cfg(feature = "native-provider-internal")]
+mod native_provider_faults;
 
 const REGISTRY: &str = include_str!("../../../../tests/m3-conformance-v1.json");
 

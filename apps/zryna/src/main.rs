@@ -3,6 +3,10 @@
 #![forbid(unsafe_code)]
 
 mod installed;
+#[cfg(feature = "native-provider-internal")]
+mod native_frontend;
+#[cfg(all(test, not(feature = "native-provider-internal")))]
+mod native_frontend_disabled_tests;
 mod ownership;
 mod package;
 mod profile;
@@ -14,8 +18,10 @@ use render::{render_cli_failure, render_failure, render_success};
 
 use std::{ffi::OsString, path::PathBuf, process::ExitCode};
 
+#[cfg(not(feature = "native-provider-internal"))]
+use clap::FromArgMatches;
 use clap::error::ErrorKind;
-use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
 use profile::{CliProfile, CliTarget};
 use zryna_abi::ScalarValue;
 use zryna_diagnostics::Diagnostic;
@@ -29,6 +35,9 @@ use zryna_driver::{
 struct Cli {
     #[command(subcommand)]
     command: Command,
+    #[cfg(feature = "native-provider-internal")]
+    #[arg(skip)]
+    native_frontend: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -123,7 +132,13 @@ fn main() -> ExitCode {
         | Command::Doctor(options) => run_architecture_check(&options),
         Command::Package { command } => package::run(command),
         Command::New(options) => project::create(&options),
-        Command::Build(options) => run_build(options),
+        Command::Build(options) => {
+            #[cfg(feature = "native-provider-internal")]
+            if cli.native_frontend {
+                return native_frontend::run(options);
+            }
+            run_build(options)
+        }
         Command::Run(options) => run_command(options),
     }
 }
@@ -135,17 +150,27 @@ where
 {
     let arguments = arguments.into_iter().map(Into::into).collect::<Vec<_>>();
     let typed_scalars = profile::selects_typed_scalars(&arguments);
-    if !typed_scalars {
-        return Cli::try_parse_from(arguments);
-    }
     let mut command = Cli::command();
-    command = command.mut_subcommand("run", |run| {
-        run.mut_arg("arguments", |argument| {
-            argument.value_parser(profile::parse_control_flow_argument)
-        })
-    });
+    #[cfg(feature = "native-provider-internal")]
+    {
+        command = native_frontend::command(command);
+    }
+    if typed_scalars {
+        command = command.mut_subcommand("run", |run| {
+            run.mut_arg("arguments", |argument| {
+                argument.value_parser(profile::parse_control_flow_argument)
+            })
+        });
+    }
     let matches = command.try_get_matches_from(arguments)?;
-    Cli::from_arg_matches(&matches)
+    #[cfg(feature = "native-provider-internal")]
+    {
+        native_frontend::from_matches(&matches)
+    }
+    #[cfg(not(feature = "native-provider-internal"))]
+    {
+        Cli::from_arg_matches(&matches)
+    }
 }
 
 fn run_architecture_check(options: &ArchitectureOptions) -> ExitCode {

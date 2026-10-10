@@ -10,6 +10,9 @@ repository.workspace = true
 name = "zryna"
 path = "src/main.rs"
 
+[features]
+native-provider-internal = ["zryna-driver/native-provider-internal"]
+
 [dependencies]
 cap-fs-ext.workspace = true
 cap-std.workspace = true

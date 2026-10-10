@@ -7,6 +7,15 @@ on:
       - tests/native-provider-activation-ci/**
       - tests/native-provider-activation-workflow.test.mjs
       - tests/workflow-routing.test.mjs
+      - scripts/run-native-cli-smoke.py
+      - tests/native-cli-smoke/**
+      - tests/native-provider-qualification/**
+      - apps/zryna/src/**
+      - apps/zryna/Cargo.toml
+      - crates/**
+      - Cargo.toml
+      - Cargo.lock
+      - rust-toolchain.toml
   workflow_dispatch:
 
 concurrency:
@@ -90,5 +99,401 @@ jobs:
           path: |
             ${{ runner.temp }}/activation-frontend
             ${{ runner.temp }}/activation-retained
+          if-no-files-found: error
+          retention-days: 7
+
+  private-cli:
+    name: private native CLI (${{ matrix.os }})
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 60 || 40 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    env:
+      CLI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact current CLI source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CLI_SOURCE_SHA }}
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
+          components: rustfmt, clippy
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 22.22.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+        with:
+          version: 11.18.0
+      - run: pnpm install --frozen-lockfile
+      - name: Fetch locked current CLI dependencies
+        run: cargo fetch --locked
+      - name: Verify independent CLI receipt hostile cases
+        run: python -B tests/native-cli-smoke/verify_ci_receipts_test.py
+      - name: Build both current CLIs and run exact private smoke
+        shell: pwsh
+        run: |
+          $cargo = rustup which cargo
+          if ($LASTEXITCODE -ne 0) { throw 'Cargo resolution failed' }
+          $rustc = rustup which rustc
+          if ($LASTEXITCODE -ne 0) { throw 'Rustc resolution failed' }
+          $node = (Get-Command node).Source
+          python -B tests/native-cli-smoke/run_ci.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --target "$env:RUNNER_TEMP/private-cli-target" --output "$env:RUNNER_TEMP/private-cli-proof" --node "$node" --cargo "$cargo" --rustc "$rustc"
+          if ($LASTEXITCODE -ne 0) { throw 'Private CLI proof failed' }
+      - name: Require independently verified current CLI receipt
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-cli-smoke/verify_ci_receipts.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --output "$env:RUNNER_TEMP/private-cli-proof"
+          if ($LASTEXITCODE -ne 0) { throw 'Current CLI receipt admission failed' }
+      - name: Verify independent seven-source manifest controls
+        run: python -B tests/native-provider-qualification/production-manifests/verify_test.py
+      - name: Verify independent production archive controls
+        run: python -B tests/native-provider-qualification/production-manifests/archive_test.py
+      - name: Run seven accepted production manifest pairs
+        shell: pwsh
+        run: |
+          python -B tests/native-provider-qualification/production-manifests/run.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --cli-proof "$env:RUNNER_TEMP/private-cli-proof" --output "$env:RUNNER_TEMP/private-production-manifests"
+          if ($LASTEXITCODE -ne 0) { throw 'Production manifest pairs failed' }
+      - name: Require independent seven-source manifest admission
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/production-manifests/verify.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --output "$env:RUNNER_TEMP/private-production-manifests" --live
+          if ($LASTEXITCODE -ne 0) { throw 'Production manifest admission failed' }
+      - name: Package complete production manifest archive
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/production-manifests/archive.py pack --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --proof "$env:RUNNER_TEMP/private-production-manifests" --archive "$env:RUNNER_TEMP/private-production-manifests.zip"
+          if ($LASTEXITCODE -ne 0) { throw 'Production manifest archive failed' }
+      - name: Preserve seven accepted production manifest pairs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: private-production-manifests-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-production-manifests.zip
+          if-no-files-found: error
+          retention-days: 7
+      - name: Verify independent complete source corpus controls
+        run: python -B tests/native-provider-qualification/production-corpus/verify_test.py
+      - name: Verify independent complete corpus archive controls
+        run: python -B tests/native-provider-qualification/production-corpus/archive_test.py
+      - name: Run 33 BUILD and 36 rejection corpus pairs
+        shell: pwsh
+        run: |
+          python -B tests/native-provider-qualification/production-corpus/run.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --cli-proof "$env:RUNNER_TEMP/private-cli-proof" --output "$env:RUNNER_TEMP/private-production-corpus"
+          if ($LASTEXITCODE -ne 0) { throw 'Complete production corpus failed' }
+      - name: Require independent complete source corpus admission
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/production-corpus/verify.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --output "$env:RUNNER_TEMP/private-production-corpus" --live
+          if ($LASTEXITCODE -ne 0) { throw 'Complete production corpus admission failed' }
+      - name: Package complete source corpus archive
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/production-corpus/archive.py pack --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --proof "$env:RUNNER_TEMP/private-production-corpus" --archive "$env:RUNNER_TEMP/private-production-corpus.zip"
+          if ($LASTEXITCODE -ne 0) { throw 'Complete production corpus archive failed' }
+      - name: Preserve complete source corpus pairs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: private-production-corpus-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-production-corpus.zip
+          if-no-files-found: error
+          retention-days: 7
+      - name: Verify independent three-root M2 manifest controls
+        run: python -B tests/native-provider-qualification/production-m2-roots/verify_test.py
+      - name: Verify independent three-root M2 archive controls
+        run: python -B tests/native-provider-qualification/production-m2-roots/archive_test.py
+      - name: Run three accepted M2 production BUILD roots
+        shell: pwsh
+        run: |
+          python -B tests/native-provider-qualification/production-m2-roots/run.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --cli-proof "$env:RUNNER_TEMP/private-cli-proof" --output "$env:RUNNER_TEMP/private-production-m2-roots"
+          if ($LASTEXITCODE -ne 0) { throw 'Three M2 production roots failed' }
+      - name: Require independent three-root M2 manifest admission
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/production-m2-roots/verify.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --output "$env:RUNNER_TEMP/private-production-m2-roots" --live
+          if ($LASTEXITCODE -ne 0) { throw 'Three M2 production root admission failed' }
+      - name: Package complete three-root M2 archive
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/production-m2-roots/archive.py pack --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --proof "$env:RUNNER_TEMP/private-production-m2-roots" --archive "$env:RUNNER_TEMP/private-production-m2-roots.zip"
+          if ($LASTEXITCODE -ne 0) { throw 'Three M2 production root archive failed' }
+      - name: Preserve three accepted M2 production BUILD roots
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: private-production-m2-roots-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-production-m2-roots.zip
+          if-no-files-found: error
+          retention-days: 7
+      - name: Check private feature Clippy on current host
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/private-cli-target
+          CARGO_PROFILE_DEV_DEBUG: "0"
+          CARGO_PROFILE_TEST_DEBUG: "0"
+          CARGO_BUILD_JOBS: "2"
+        run: cargo clippy --locked --offline -p zryna-driver --all-targets --features native-provider-internal -- -D warnings
+      - name: Verify cold qualification hostile receipt controls
+        run: python -B tests/native-provider-qualification/verify_test.py
+      - name: Run current cold BUILD and retained Vec fault execution
+        shell: pwsh
+        run: |
+          python -B tests/native-provider-qualification/run.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --cli-proof "$env:RUNNER_TEMP/private-cli-proof" --target "$env:RUNNER_TEMP/private-cli-target" --output "$env:RUNNER_TEMP/private-cold-proof" --cold-root "$env:RUNNER_TEMP/private-cold-source"
+          if ($LASTEXITCODE -ne 0) { throw 'Cold retained qualification failed' }
+      - name: Require independent cold BUILD and frozen fault receipts
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/verify.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --output "$env:RUNNER_TEMP/private-cold-proof"
+          if ($LASTEXITCODE -ne 0) { throw 'Cold retained receipt admission failed' }
+      - name: Verify independent finite fault corpus controls
+        run: python -B tests/native-provider-qualification/corpus/verify_test.py
+      - name: Run remaining frozen M3 fault groups
+        shell: pwsh
+        run: |
+          $cargo = rustup which cargo
+          if ($LASTEXITCODE -ne 0) { throw 'Cargo resolution failed' }
+          $rustc = rustup which rustc
+          if ($LASTEXITCODE -ne 0) { throw 'Rustc resolution failed' }
+          $node = (Get-Command node).Source
+          python -B tests/native-provider-qualification/corpus/run.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --target "$env:RUNNER_TEMP/private-cli-target" --output "$env:RUNNER_TEMP/private-fault-corpus-proof" --cargo "$cargo" --rustc "$rustc" --node "$node"
+          if ($LASTEXITCODE -ne 0) { throw 'Finite retained fault corpus failed' }
+      - name: Require independent remaining frozen fault observations
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/corpus/verify.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --output "$env:RUNNER_TEMP/private-fault-corpus-proof"
+          if ($LASTEXITCODE -ne 0) { throw 'Finite retained fault corpus admission failed' }
+      - name: Verify independent physical allocation controls
+        if: matrix.os == 'ubuntu-latest'
+        run: python -B tests/native-provider-qualification/physical/handles_verify_test.py
+      - name: Run handles real physical allocation group
+        if: matrix.os == 'ubuntu-latest'
+        shell: pwsh
+        run: |
+          $cargo = rustup which cargo
+          if ($LASTEXITCODE -ne 0) { throw 'Cargo resolution failed' }
+          $rustc = rustup which rustc
+          if ($LASTEXITCODE -ne 0) { throw 'Rustc resolution failed' }
+          $node = (Get-Command node).Source
+          python -B tests/native-provider-qualification/physical/run.py --group handles --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --target "$env:RUNNER_TEMP/private-cli-target" --output "$env:RUNNER_TEMP/private-physical-proof" --cargo "$cargo" --rustc "$rustc" --node "$node"
+          if ($LASTEXITCODE -ne 0) { throw 'Real physical allocation corpus failed' }
+      - name: Require independent real physical allocation observations
+        if: matrix.os == 'ubuntu-latest'
+        shell: pwsh
+        run: |
+          python -B tests/native-provider-qualification/physical/verify.py --group handles --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform linux --output "$env:RUNNER_TEMP/private-physical-proof"
+          if ($LASTEXITCODE -ne 0) { throw 'Real physical allocation admission failed' }
+      - name: Preserve exact real physical allocation proof
+        if: always() && matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: private-native-physical-handles-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-physical-proof
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve exact current CLI proof
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: private-native-cli-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/private-cli-proof/*.json
+            ${{ runner.temp }}/private-cli-proof/*.stdout
+            ${{ runner.temp }}/private-cli-proof/*.stderr
+            ${{ runner.temp }}/private-cli-proof/smoke
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve exact cold BUILD and retained Vec proof
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: private-native-cold-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-cold-proof
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve exact remaining frozen fault corpus
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: private-native-fault-corpus-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-fault-corpus-proof
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve current CLI executables
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: private-native-cli-binaries-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/private-cli-proof/default-cli*
+            ${{ runner.temp }}/private-cli-proof/feature-cli*
+          if-no-files-found: error
+          retention-days: 7
+  private-ir:
+    name: private complete IR (${{ matrix.os }})
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 60 || 40 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    env:
+      CLI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact current IR source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CLI_SOURCE_SHA }}
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
+          components: rustfmt, clippy
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 22.22.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+        with:
+          version: 11.18.0
+      - run: pnpm install --frozen-lockfile
+      - name: Fetch locked current IR dependencies
+        run: cargo fetch --locked
+      - name: Verify current tool capability controls
+        run: python -B tests/native-provider-qualification/verified-ir/tool_capability_test.py
+      - name: Verify complete IR workflow and archive controls
+        shell: pwsh
+        run: |
+          node --test tests/native-provider-activation-workflow.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Complete IR workflow contract failed' }
+          python -B tests/native-provider-qualification/verified-ir/archive_test.py
+          if ($LASTEXITCODE -ne 0) { throw 'Complete IR archive controls failed' }
+      - name: Run complete sealed IR observations
+        shell: pwsh
+        run: |
+          $cargo = (Get-Command cargo).Source
+          $rustup = (Get-Command rustup).Source
+          $node = (Get-Command node).Source
+          python -B tests/native-provider-qualification/verified-ir/run.py --evidence-dir "$env:RUNNER_TEMP/private-verified-ir-proof" --baseline-dir "$env:GITHUB_WORKSPACE/tests/native-provider-qualification/verified-ir/baseline-H4" --cargo "$cargo" --rustup "$rustup" --node "$node" --target-dir "$env:RUNNER_TEMP/private-verified-ir-target"
+          if ($LASTEXITCODE -ne 0) { throw 'Complete sealed IR proof failed' }
+      - name: Verify current sealed IR admission controls
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/verified-ir/admission_test.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --proof "$env:RUNNER_TEMP/private-verified-ir-proof" --run-id "$env:GITHUB_RUN_ID" --run-attempt "$env:GITHUB_RUN_ATTEMPT"
+          if ($LASTEXITCODE -ne 0) { throw 'Complete sealed IR admission controls failed' }
+      - name: Verify current tool capability admission controls
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/verified-ir/tool_capability_admission_test.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --proof "$env:RUNNER_TEMP/private-verified-ir-proof" --run-id "$env:GITHUB_RUN_ID" --run-attempt "$env:GITHUB_RUN_ATTEMPT"
+          if ($LASTEXITCODE -ne 0) { throw 'Tool capability admission controls failed' }
+      - name: Require independent current sealed IR admission
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/verified-ir/admission.py --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --proof "$env:RUNNER_TEMP/private-verified-ir-proof" --live --run-id "$env:GITHUB_RUN_ID" --run-attempt "$env:GITHUB_RUN_ATTEMPT"
+          if ($LASTEXITCODE -ne 0) { throw 'Complete sealed IR admission failed' }
+      - name: Package complete sealed IR archive
+        shell: pwsh
+        run: |
+          $platform = if ($IsWindows) { 'win32' } else { 'linux' }
+          python -B tests/native-provider-qualification/verified-ir/archive.py pack --root "$env:GITHUB_WORKSPACE" --head "$env:CLI_SOURCE_SHA" --platform "$platform" --proof "$env:RUNNER_TEMP/private-verified-ir-proof" --archive "$env:RUNNER_TEMP/private-verified-ir-proof.zip"
+          if ($LASTEXITCODE -ne 0) { throw 'Complete sealed IR archive failed' }
+      - name: Preserve complete sealed IR observations
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: private-verified-ir-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/private-verified-ir-proof.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  tool-provenance:
+    name: unqualified tool path diagnostic (${{ matrix.os }})
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    env:
+      CLI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact diagnostic source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CLI_SOURCE_SHA }}
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
+          components: rustfmt, clippy
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 22.22.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+        with:
+          version: 11.18.0
+      - name: Verify exact tool diagnostic source and controls
+        shell: pwsh
+        run: >
+          python -c "import sys; assert sys.version_info >= (3, 11);
+          print(sys.version)"
+
+          if ($LASTEXITCODE -ne 0) { throw 'Python requirement failed' }
+
+          $actual = git rev-parse HEAD
+
+          if ($LASTEXITCODE -ne 0 -or $actual -ne $env:CLI_SOURCE_SHA) { throw
+          'Exact diagnostic checkout differs' }
+
+          $status = git status --porcelain
+
+          if ($LASTEXITCODE -ne 0 -or $status) { throw 'Diagnostic checkout is not
+          clean' }
+
+          python -B
+          tests/native-provider-qualification/verified-ir/tool_provenance_test.py
+
+          if ($LASTEXITCODE -ne 0) { throw 'Tool diagnostic controls failed' }
+      - name: Record unqualified original tool path provenance
+        shell: pwsh
+        run: >
+          $cargo = (Get-Command cargo).Source
+
+          $rustup = (Get-Command rustup).Source
+
+          $node = (Get-Command node).Source
+
+          python -B
+          tests/native-provider-qualification/verified-ir/tool_provenance.py
+          --cargo "$cargo" --rustup "$rustup" --node "$node" --output
+          "$env:RUNNER_TEMP/unqualified-tool-provenance.json"
+
+          if ($LASTEXITCODE -ne 0) { throw 'Tool provenance capture failed' }
+      - name: Preserve unqualified tool path diagnosis
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: unqualified-tool-provenance-${{ matrix.os }}-${{ env.CLI_SOURCE_SHA }}-${{
+            github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/unqualified-tool-provenance.json
           if-no-files-found: error
           retention-days: 7

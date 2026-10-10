@@ -1,0 +1,1965 @@
+{
+  "version": 1,
+  "profile": "data-ownership-v1",
+  "historical_classification_sha256": "bdd5cc4b0d624a130c4b6c9330855638b79c0afdab00ebb4bb64116829f6d229",
+  "counts": {
+    "accepted": 33,
+    "rejected": 36,
+    "diagnostics": 67
+  },
+  "fixtures": [
+    {
+      "id": "m3-borrow-call-owned-shape",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-call-owned-shape.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-call-owned-shape.zry",
+          "sha256": "8e4f681d5fea4a740cbe844c0351dfef2bbbd8daff922e35ba693f3cbbfbe2fd"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "call a private Copy-result function with at least one Borrow or BorrowMut parameter",
+          "message": "lexical borrow calls require a Copy signature with borrow authority",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 234,
+              "file": 0,
+              "start": 229
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-call-public-abi",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-call-public-abi.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-call-public-abi.zry",
+          "sha256": "c670649258ef392062ac5a4892bdc319bafdf0b1cec3af02349dcae1dfab75be"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "remove export because borrow authority cannot cross the public ABI",
+          "message": "borrow-parameter functions must remain private",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 6,
+              "file": 0,
+              "start": 0
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-call-repeated-exclusive",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-call-repeated-exclusive.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-call-repeated-exclusive.zry",
+          "sha256": "5206482b78b7646222fa1f545d70ab48d4ab0ddedddb3148539da7560e2565da"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "pass each active lexical alias at most once",
+          "message": "one lexical borrow authority cannot be repeated in a call",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 213,
+              "file": 0,
+              "start": 209
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-call-result-escape",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-call-result-escape.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-call-result-escape.zry",
+          "sha256": "acf1c64728ba1601ba3d62de175fd12d6898eb57ad2b7122e663a772b86b605a"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "return an exact Copy value read through the borrow instead",
+          "message": "borrow results are outside the nonescaping ownership profile",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 46,
+              "file": 0,
+              "start": 35
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-conflict-exclusive-exclusive",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-conflict-exclusive-exclusive.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-conflict-exclusive-exclusive.zry",
+          "sha256": "2d36dc1201f6ca4da198532594a0e12b065841fffdbf2ffd8c329b46060562a1"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "end the active alias before requesting incompatible authority",
+          "message": "borrow access conflicts with an active alias of the same root",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 149,
+              "file": 0,
+              "start": 102
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-conflict-exclusive-shared",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-conflict-exclusive-shared.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-conflict-exclusive-shared.zry",
+          "sha256": "a913ddc0e46121adbc73f90f0c4b28fdbb178dc9f04e6e36c21dc4bb7871958f"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "end the active alias before requesting incompatible authority",
+          "message": "borrow access conflicts with an active alias of the same root",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 157,
+              "file": 0,
+              "start": 111
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-conflict-shared-exclusive",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-conflict-shared-exclusive.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-conflict-shared-exclusive.zry",
+          "sha256": "ca46d3bc6248ab0056c2c3d4e83430f021ff1f038d5c5664004ced0751be501b"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "end the active alias before requesting incompatible authority",
+          "message": "borrow access conflicts with an active alias of the same root",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 157,
+              "file": 0,
+              "start": 102
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-exclusive-immutable-root",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-exclusive-immutable-root.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-exclusive-immutable-root.zry",
+          "sha256": "e93f2a4a983ef6d698183ac369d6c8eeba8089cdfd4ff38af479a942f05e57b7"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "declare the Copy root with let before borrowMut",
+          "message": "exclusive borrowing requires a mutable root local",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 97,
+              "file": 0,
+              "start": 93
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-exclusive-owner-read",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-exclusive-owner-read.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-exclusive-owner-read.zry",
+          "sha256": "d1f975ed82980f6d7437848619bebcc86fae1a85972c18ed8b93dc013cb4f044"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "read through BorrowMut or wait for lexical end",
+          "message": "owner reads are hidden while an exclusive alias is active",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 124,
+              "file": 0,
+              "start": 120
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-exclusive-root-write",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-exclusive-root-write.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-exclusive-root-write.zry",
+          "sha256": "7efdd093aef250ac93853ac30ff28cc67c3ac0a8214d2eaa2da5e7beb4454d0a"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "write only through one active BorrowMut alias",
+          "message": "borrow blocks cannot replace the root or an ordinary local",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 106,
+              "file": 0,
+              "start": 102
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-exclusive-wrong-write",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-exclusive-wrong-write.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-exclusive-wrong-write.zry",
+          "sha256": "807c7cefa3676a99241a9e3e5bc6398e0b388b697e4761f5a49ab4cdec3c0c29"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "assign one literal with the exact bool or i32 referent type",
+          "message": "exclusive-borrow writes require an exact referent-typed literal",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 114,
+              "file": 0,
+              "start": 110
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-forwarding-exclusive",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/borrow-forwarding-exclusive.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-forwarding-exclusive.zry",
+          "sha256": "88c940161a9812a697eeb571233e4d2be83c48d5ccec0c6ee3a879cb8a9afa47"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-borrow-forwarding-shared",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/borrow-forwarding-shared.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-forwarding-shared.zry",
+          "sha256": "fe03daa8af7cc43bd58fa14fbed9caa413ee85bfdb9931139b1da4cf3a02ddb4"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-borrow-parameter-mixed-order",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/borrow-parameter-mixed-order.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-parameter-mixed-order.zry",
+          "sha256": "01668387d692f63687f5026846ccbf5616df5b751d596b0585d1755aa5ce3490"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-borrow-reborrow-mut-from-shared",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-reborrow-mut-from-shared.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-reborrow-mut-from-shared.zry",
+          "sha256": "ff1188450c983505f58b86e02513d49b7b98b3901758ed7e0d8025f813224d23"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "reborrow an active Borrow alias with borrow, or borrow a static place directly",
+          "message": "only shared-from-shared reborrowing is admitted",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 143,
+              "file": 0,
+              "start": 137
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-reborrow-shared-from-exclusive",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-reborrow-shared-from-exclusive.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-reborrow-shared-from-exclusive.zry",
+          "sha256": "b48c8bf373f2dc5b190f939b3ca5fe6025d796be4b77e78c4d0a2b99caf7f2b6"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "reborrow an active Borrow alias with borrow, or borrow a static place directly",
+          "message": "only shared-from-shared reborrowing is admitted",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 143,
+              "file": 0,
+              "start": 137
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-borrow-shared-write",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/borrow-shared-write.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/borrow-shared-write.zry",
+          "sha256": "b32e654a9944d974520fe23044700d7100f424344d14c834d7b1df4876ff0eaf"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use a BorrowMut alias for an exact Copy write",
+          "message": "shared aliases do not grant write authority",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 103,
+              "file": 0,
+              "start": 98
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-candidate-modules-main",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/candidate-modules/main.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/candidate-modules/main.zry",
+          "sha256": "b7721c176f4421257ead1c4bc515295e38b5b72cc9e15f49efe8c415906f11b0"
+        },
+        {
+          "id": 1,
+          "path": "tests/m3-fixtures/candidate-modules/math.zry",
+          "sha256": "1769433d0167be7f80f0b7da2b934c82621df6beedfe497622b30ffa928dfe0a"
+        }
+      ],
+      "edges": [
+        {
+          "importer": "tests/m3-fixtures/candidate-modules/main.zry",
+          "target": "tests/m3-fixtures/candidate-modules/math.zry",
+          "specifier": "./math.zry",
+          "imported": "double",
+          "local": "double"
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-candidate-modules-math",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/candidate-modules/math.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/candidate-modules/math.zry",
+          "sha256": "1769433d0167be7f80f0b7da2b934c82621df6beedfe497622b30ffa928dfe0a"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-conditional-root-borrow-conflict",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/conditional-root-borrow-conflict.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow-conflict.zry",
+          "sha256": "9b96f7f4f96f32df1e11595ebf5d6a320804592c76ba0a9073d26367a0c6e248"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "end the active alias before requesting incompatible authority",
+          "message": "borrow access conflicts with an active alias of the same root",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 187,
+              "file": 0,
+              "start": 131
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-conditional-root-borrow-else-only",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/conditional-root-borrow-else-only.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow-else-only.zry",
+          "sha256": "4ad715858d72ebd43c263f3289a107b950fb71ee6b221eb08d2303d77f72c6ce"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-conditional-root-borrow-exclusions",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/conditional-root-borrow-exclusions.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow-exclusions.zry",
+          "sha256": "200658e4116764c2847330aa65ccad47f78fda4a84d0934e9f263c3d39d62f3f"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "discharge one complete lexical scope in both conditional arms",
+          "message": "conditional borrowing requires an explicit else arm",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 210,
+              "file": 0,
+              "start": 67
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "put one nested borrow block in each then and else arm",
+          "message": "conditional borrow arms require exactly one explicit lexical scope",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 422,
+              "file": 0,
+              "start": 316
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3008",
+          "guidance": "use local initialization, aggregate assignment, and one value return",
+          "message": "this statement form is outside deterministic aggregate M3",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 588,
+              "file": 0,
+              "start": 533
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "branch directly on the literal-initialized bool root",
+          "message": "conditional borrowing requires the exact bool root as its condition",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 695,
+              "file": 0,
+              "start": 690
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use the same bool root for the condition, arm-local borrows, and final return",
+          "message": "conditional borrowing requires one literal-initialized bool root",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 940,
+              "file": 0,
+              "start": 914
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "remove calls, control flow, effects, nested blocks, and ordinary assignment",
+          "message": "root-borrow blocks admit only const aliases, const Copy reads, and BorrowMut writes",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1269,
+              "file": 0,
+              "start": 1229
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use `const root`, then one nested borrow block, then return the root",
+          "message": "shared-root borrowing requires one root local, one lexical block, and one final return",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1765,
+              "file": 0,
+              "start": 1469
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "remove calls, control flow, effects, nested blocks, and ordinary assignment",
+          "message": "root-borrow blocks admit only const aliases, const Copy reads, and BorrowMut writes",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1879,
+              "file": 0,
+              "start": 1861
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-conditional-root-borrow-exclusive-arms",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/conditional-root-borrow-exclusive-arms.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow-exclusive-arms.zry",
+          "sha256": "5ef977f452a56dcacb45b5ca6b1633f241e5af8034265852d658ba601ee9cbd9"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-conditional-root-borrow-one-arm",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/conditional-root-borrow-one-arm.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow-one-arm.zry",
+          "sha256": "0e09d6714915f3f4842d440e69f3eb416e5ebaf3f5668b035447bf883a109850"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-conditional-root-borrow-owner-read",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/conditional-root-borrow-owner-read.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow-owner-read.zry",
+          "sha256": "3c5cec79fcf1fdacc7108e7919f2eb7c707c6ecb61f2d591e04e2a8c849a4953"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "read through BorrowMut or wait for lexical end",
+          "message": "owner reads are hidden while an exclusive alias is active",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 155,
+              "file": 0,
+              "start": 151
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-conditional-root-borrow",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/conditional-root-borrow.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/conditional-root-borrow.zry",
+          "sha256": "916e03df12da4e6076339fee167757f8940758d50edc952a63c547f871e43159"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-exclusive-root-borrow-bool",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/exclusive-root-borrow-bool.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/exclusive-root-borrow-bool.zry",
+          "sha256": "878fbd02168e80a007f60b796f41fd46a2cb5ca8b7e19c826283c65c4f5546a3"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-exclusive-root-borrow",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/exclusive-root-borrow.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/exclusive-root-borrow.zry",
+          "sha256": "d5f2a9d12b2189c53a1269624dbae4be2916142b75a29fd0d503d5fd29aa5c0c"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-finite-recursive-composition",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/finite-recursive-composition.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/finite-recursive-composition.zry",
+          "sha256": "c02fd655ec5db95a1c622f6516a3938408b1649271a9c83d3df9813a1f15719d"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-finite-recursive-projections",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/finite-recursive-projections.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/finite-recursive-projections.zry",
+          "sha256": "e5366332c53b8c92defeb106a3d93b1eec55b763464ebe79b062d2353b3fd6ee"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-fixed-array-subobject-assignment",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/fixed-array-subobject-assignment.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/fixed-array-subobject-assignment.zry",
+          "sha256": "94d5f6e1040f8b56a0a990d1f7e15958e4b466b2b15d87a99f235cf1b6033be1"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-fixed-array-subobject-clone-assignment",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/fixed-array-subobject-clone-assignment.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/fixed-array-subobject-clone-assignment.zry",
+          "sha256": "926e493feb82f0171e33a7995df15b2f48d653880512a9493e27a89a10847f0a"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-fixed-array-subobject-return",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/fixed-array-subobject-return.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/fixed-array-subobject-return.zry",
+          "sha256": "49a5fe0da46bee92dd7933ef103458361b0a2c43b3259cb8518e5ad135054c23"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-lexical-borrow-call-cfg",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/lexical-borrow-call-cfg.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-cfg.zry",
+          "sha256": "cd7a5791758fe5d9f39196d5ef1e674dc734868accb34430599334e84cad5127"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "keep the single borrow call in one straight-line lexical block",
+          "message": "lexical borrow calls cannot cross a control-flow edge",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 204,
+              "file": 0,
+              "start": 189
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-lexical-borrow-call-exclusive",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/lexical-borrow-call-exclusive.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-exclusive.zry",
+          "sha256": "9c836f6147f4fe2e68e095508e3fe1a04cf27a0ceceaf82b976d716f35ef5949"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-lexical-borrow-call-inactive",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/lexical-borrow-call-inactive.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-inactive.zry",
+          "sha256": "7dc15dec2f83cc29331111b088960115d5feb8dda6d596be9d2322a73feb908f"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "declare the lexical alias before the call and keep it in the same block",
+          "message": "borrow alias 'loan' is not active at this call",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 161,
+              "file": 0,
+              "start": 157
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-lexical-borrow-call-projected",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/lexical-borrow-call-projected.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-projected.zry",
+          "sha256": "8a00827336447c84c5d2d96f57364f7d05fd84f2f2c75af2b3565e8a5dc84c00"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "pass one whole-root lexical Borrow or BorrowMut alias",
+          "message": "projected lexical borrows cannot be passed to calls",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 229,
+              "file": 0,
+              "start": 225
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-lexical-borrow-call-repeated",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/lexical-borrow-call-repeated.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-repeated.zry",
+          "sha256": "273ee9b3acbd548eb46fcb643c7839ec3b23d8e91342f358e0ca8d5847ecc2c3"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "keep one bounded borrow call in the straight-line lexical block",
+          "message": "a lexical borrow block admits only one direct call",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 246,
+              "file": 0,
+              "start": 227
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-lexical-borrow-call-shared",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/lexical-borrow-call-shared.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-shared.zry",
+          "sha256": "9c32e727af98b87d18a30115a813ebd4a91ca0664c5df782efeadb1bdc8fd893"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-lexical-borrow-call-wrong-access",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/lexical-borrow-call-wrong-access.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-wrong-access.zry",
+          "sha256": "1f159491e902ba4887a7dc7b08402bb2d55db5c00a8ef8f43e81b68489b20462"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "pass exact referent and shared or exclusive authority",
+          "message": "lexical borrow argument does not match the callee referent and access",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 204,
+              "file": 0,
+              "start": 200
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-lexical-borrow-call-wrong-arity",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/lexical-borrow-call-wrong-arity.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-wrong-arity.zry",
+          "sha256": "647dd84ed95b8489a9c29e35314942c28320511708ed140bd6a80a6149dbe34e"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "pass one source argument for every exact declared parameter",
+          "message": "call to 'relay' has 2 arguments but its signature requires 3",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 202,
+              "file": 0,
+              "start": 187
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-lexical-borrow-call-wrong-borrow-kind",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/lexical-borrow-call-wrong-borrow-kind.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-wrong-borrow-kind.zry",
+          "sha256": "e322b04eefc2fd66785253cb867e1bc32ec283164f341b0d4f75c54e2011dc75"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "pass an exact in-scope Borrow or BorrowMut alias",
+          "message": "borrow call arguments must name one active lexical alias",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 199,
+              "file": 0,
+              "start": 197
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-lexical-borrow-call-wrong-referent",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/lexical-borrow-call-wrong-referent.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-wrong-referent.zry",
+          "sha256": "104ed569db20ba1991993de7d02f1b97f678833adcfaa4a37334a5d6d6009e51"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "pass exact referent and shared or exclusive authority",
+          "message": "lexical borrow argument does not match the callee referent and access",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 177,
+              "file": 0,
+              "start": 173
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-lexical-borrow-call-wrong-value-kind",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/lexical-borrow-call-wrong-value-kind.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/lexical-borrow-call-wrong-value-kind.zry",
+          "sha256": "3ea44fbe2e4dc799c75e9c208777b725f411ab5b75ae1f56512ef2441fe0a140"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "pass a direct Copy value for this parameter",
+          "message": "borrow authority cannot satisfy a by-value call parameter",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 197,
+              "file": 0,
+              "start": 193
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-loop-root-borrow-exclusions",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/loop-root-borrow-exclusions.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/loop-root-borrow-exclusions.zry",
+          "sha256": "ce7f710624da22ba5e3f7bac9d4d1f9de4ddb993b0f5a20f81bd30e3fa565b2d"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "keep the first shared-borrow checkpoint private and initialize its root locally",
+          "message": "shared-root borrowing requires one private parameter-free function",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 189,
+              "file": 0,
+              "start": 0
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "keep the first shared-borrow checkpoint private and initialize its root locally",
+          "message": "shared-root borrowing requires one private parameter-free function",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 387,
+              "file": 0,
+              "start": 191
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "remove calls, control flow, effects, nested blocks, and ordinary assignment",
+          "message": "root-borrow blocks admit only const aliases, const Copy reads, and BorrowMut writes",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 566,
+              "file": 0,
+              "start": 467
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "loop directly on the literal-initialized bool root",
+          "message": "loop borrowing requires the exact bool root as its condition",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 668,
+              "file": 0,
+              "start": 663
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "loop directly on the literal-initialized bool root",
+          "message": "loop borrowing requires the exact bool root as its condition",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 858,
+              "file": 0,
+              "start": 854
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use the same bool root for the loop condition, body borrows, and final return",
+          "message": "loop borrowing requires one literal-initialized bool root",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1024,
+              "file": 0,
+              "start": 1004
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "remove calls, control flow, effects, nested blocks, and ordinary assignment",
+          "message": "root-borrow blocks admit only const aliases, const Copy reads, and BorrowMut writes",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1341,
+              "file": 0,
+              "start": 1229
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use `const root`, then one nested borrow block, then return the root",
+          "message": "shared-root borrowing requires one root local, one lexical block, and one final return",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1649,
+              "file": 0,
+              "start": 1395
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "remove calls, control flow, effects, nested blocks, and ordinary assignment",
+          "message": "root-borrow blocks admit only const aliases, const Copy reads, and BorrowMut writes",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1833,
+              "file": 0,
+              "start": 1817
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "initialize the Copy local from one preceding Borrow or BorrowMut alias",
+          "message": "shared-borrow Copy locals must read one active alias",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 2082,
+              "file": 0,
+              "start": 2063
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use `const root`, then one nested borrow block, then return the root",
+          "message": "shared-root borrowing requires one root local, one lexical block, and one final return",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 2320,
+              "file": 0,
+              "start": 2138
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-loop-root-borrow",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/loop-root-borrow.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/loop-root-borrow.zry",
+          "sha256": "85041a0926588d7e74be8eef21238f58da57d2ef4fbf9f662b01804b9f86e210"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-loop-shared-root-borrow",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/loop-shared-root-borrow.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/loop-shared-root-borrow.zry",
+          "sha256": "c69306dee91a7387d6732a3d6d029d061369a2d5160c0a1a50ba34090e2484b5"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-nonindexed-borrow-nested-call-exclusive",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/nonindexed-borrow-nested-call-exclusive.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/nonindexed-borrow-nested-call-exclusive.zry",
+          "sha256": "3c347610120cd289d81473ec0027a8c4e4417bbfe9a7dfaea85a457e38c5c60a"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-nonindexed-borrow-nested-call",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/nonindexed-borrow-nested-call.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/nonindexed-borrow-nested-call.zry",
+          "sha256": "8e487f43542c2a9859727a41045fa96d9b2dcf8eaaf111b2c0ec19e5f2ce2848"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-owned-root-borrow-exclusions",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/owned-root-borrow-exclusions.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/owned-root-borrow-exclusions.zry",
+          "sha256": "c953e36631fc02a91c430e53b8ae2a853602580e187dac70a4cb27b1787fb16d"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "return the initialized bool, i32, Copy struct, or Copy fixed-array root",
+          "message": "root borrowing requires an exact recursively Copy result",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 242,
+              "file": 0,
+              "start": 59
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "return the initialized bool, i32, Copy struct, or Copy fixed-array root",
+          "message": "root borrowing requires an exact recursively Copy result",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 451,
+              "file": 0,
+              "start": 244
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use String clone/concat, exact Vec<bool/i32> indexing, or whole-root aggregate clone through the alias",
+          "message": "operation is outside whole owned-root shared reads",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 606,
+              "file": 0,
+              "start": 601
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "remove moves, writes, replacement, drops, calls, and nested control flow",
+          "message": "owned-root borrow blocks admit only const read results",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 779,
+              "file": 0,
+              "start": 758
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use String clone/concat, exact Vec<bool/i32> indexing, or whole-root aggregate clone through the alias",
+          "message": "operation is outside whole owned-root shared reads",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 988,
+              "file": 0,
+              "start": 980
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-owned-root-borrow-reads",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/owned-root-borrow-reads.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/owned-root-borrow-reads.zry",
+          "sha256": "4aef456b194ee1ec0f0c92869cf61148f505e54ef39522fff1c12654cd76d7f7"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-pair-score-v4",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/pair-score-v4.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/pair-score-v4.zry",
+          "sha256": "1b69b5dddac20f5469833fc94db1865ccc796645060114c10571deb083798f49"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-projected-borrow-exclusions",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/projected-borrow-exclusions.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/projected-borrow-exclusions.zry",
+          "sha256": "4f1c5cae4e4b3dd6e06776cff7f0b7a20a98aff39d371229fcd3eaed76aa8eeb"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "keep exclusive authority on disjoint static siblings or use shared access",
+          "message": "borrow access conflicts with an active alias of an overlapping place",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 535,
+              "file": 0,
+              "start": 477
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "keep exclusive authority on disjoint static siblings or use shared access",
+          "message": "borrow access conflicts with an active alias of an overlapping place",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 813,
+              "file": 0,
+              "start": 766
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "keep exclusive authority on disjoint static siblings or use shared access",
+          "message": "borrow access conflicts with an active alias of an overlapping place",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1093,
+              "file": 0,
+              "start": 1046
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "read a disjoint sibling, read through BorrowMut, or wait for lexical end",
+          "message": "owner reads are hidden by an overlapping exclusive alias",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1402,
+              "file": 0,
+              "start": 1391
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use one exact declared field name",
+          "message": "struct 'State' has no borrowable field 'missing'",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1618,
+              "file": 0,
+              "start": 1611
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use one constant index less than the exact fixed-array length",
+          "message": "borrow fixed-array index 2 is outside length 2",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 1868,
+              "file": 0,
+              "start": 1867
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "use one in-range nonnegative i32 literal index",
+          "message": "borrow fixed-array index is negative or outside u32",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 2118,
+              "file": 0,
+              "start": 2116
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "return the initialized bool, i32, Copy struct, or Copy fixed-array root",
+          "message": "root borrowing requires an exact recursively Copy result",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 2782,
+              "file": 0,
+              "start": 2611
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "return the initialized bool, i32, Copy struct, or Copy fixed-array root",
+          "message": "root borrowing requires an exact recursively Copy result",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 2999,
+              "file": 0,
+              "start": 2784
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "project one exact declared field from the Copy root",
+          "message": "borrow field projection does not have a Struct base",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 3202,
+              "file": 0,
+              "start": 3183
+            }
+          },
+          "severity": "error"
+        },
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "keep exclusive authority on disjoint static siblings or use shared access",
+          "message": "borrow access conflicts with an active alias of an overlapping place",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 3528,
+              "file": 0,
+              "start": 3475
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-projected-borrow-shared-overlap",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/projected-borrow-shared-overlap.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/projected-borrow-shared-overlap.zry",
+          "sha256": "e4c21898cfd467be58f264f3f2e866beb81e613cb1fce23a01bb04e29bd9efec"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-projected-borrow",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/projected-borrow.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/projected-borrow.zry",
+          "sha256": "795f534d8da977635cb54eb8579cca3fbbcd67f558779cc670034610fcee3ec6"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-projected-subobject-assignment",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/projected-subobject-assignment.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/projected-subobject-assignment.zry",
+          "sha256": "2a9ba3ec8267979e8fd77cee31c8f506a97556aea014d1df6857a5e0beaf6a65"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-projected-subobject-clone-after-move",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/projected-subobject-clone-after-move.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/projected-subobject-clone-after-move.zry",
+          "sha256": "42acd4372b7923c50c302a75bbc0e09278d8d45d6c7fca34011c9f30f7b9f7b1"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3014",
+          "guidance": "clone one initialized available static aggregate subobject",
+          "message": "projected aggregate clone assignment source subobject is moved or overlaps a moved projection",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 354,
+              "file": 0,
+              "start": 345
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-projected-subobject-clone-assignment",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/projected-subobject-clone-assignment.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/projected-subobject-clone-assignment.zry",
+          "sha256": "64a915d3b3fab2c0db0151fe71658fffad6fddfbc967dab4d64154b0d314f1b5"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-projected-subobject-clone-with-parameter",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/projected-subobject-clone-with-parameter.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/projected-subobject-clone-with-parameter.zry",
+          "sha256": "f2519480ea738514efd34bf4bec2d9a2ce5767c8810bfcd1c594d1e9c921abba"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3016",
+          "guidance": "clone one static aggregate subobject in a parameter-free private straight-line function",
+          "message": "projected aggregate clone assignment does not admit function parameters",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 332,
+              "file": 0,
+              "start": 316
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-shared-root-borrow-bool",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/shared-root-borrow-bool.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/shared-root-borrow-bool.zry",
+          "sha256": "03604f08db36192d9bed0c3d75cd728cac4e9d7ef36973ef3d08d0845efceed3"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-shared-root-borrow-escape",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/shared-root-borrow-escape.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/shared-root-borrow-escape.zry",
+          "sha256": "4cdc7db640b781089ca8eee1c0c98f2bfda02726cc0e111f1f4026f3f19b95d3"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "return the root only after all lexical aliases end",
+          "message": "a lexical borrow alias or block-local read cannot escape",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 142,
+              "file": 0,
+              "start": 137
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-shared-root-borrow-mutable",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/shared-root-borrow-mutable.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/shared-root-borrow-mutable.zry",
+          "sha256": "52e5a10dd301d7dd59067f038a4cc3e9fcd1464e07497ebb8434b0c223160389"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "declare the alias or Copy read with const",
+          "message": "borrow block bindings must be const",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 92,
+              "file": 0,
+              "start": 54
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-shared-root-borrow-replace",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/shared-root-borrow-replace.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/shared-root-borrow-replace.zry",
+          "sha256": "d387863a718c7ad16d63609708986536a66bf69059ef29b1b85b29bcefd2e58b"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "write only through one active BorrowMut alias",
+          "message": "borrow blocks cannot replace the root or an ordinary local",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 130,
+              "file": 0,
+              "start": 126
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-shared-root-borrow-unused",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/shared-root-borrow-unused.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/shared-root-borrow-unused.zry",
+          "sha256": "c9d42a4d1eaefe63393112d139fb768a70fcddb0134d2bc6369a5d78d1162265"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "read every Borrow alias and read or write every BorrowMut alias before block exit",
+          "message": "each lexical borrow alias must be used by an exact Copy read or write",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 98,
+              "file": 0,
+              "start": 48
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-shared-root-borrow-wrong-referent",
+      "disposition": "rejected",
+      "source": "tests/m3-fixtures/shared-root-borrow-wrong-referent.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/shared-root-borrow-wrong-referent.zry",
+          "sha256": "fbf0fdb966a91535ea33b3e3d2acaf2655cedc240993f9ae72eb88215773d691"
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "code": "ZRYNA-M3017",
+          "guidance": "declare Borrow or BorrowMut matching the bool or i32 root",
+          "message": "borrow alias referent does not match the root's exact scalar type",
+          "primary": {
+            "kind": "source",
+            "span": {
+              "end": 79,
+              "file": 0,
+              "start": 67
+            }
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "id": "m3-shared-root-borrow",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/shared-root-borrow.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/shared-root-borrow.zry",
+          "sha256": "df54692ff0bb21724fc2f8e8fba2e1cc916ed7899b98f98e8e7eea0503c92042"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-shared-root-owner-read",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/shared-root-owner-read.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/shared-root-owner-read.zry",
+          "sha256": "30a09d9e79376ced339422cc36b49a20e7a52a3f18de0b0edf2ba100f7beeb31"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-shared-root-reborrow",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/shared-root-reborrow.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/shared-root-reborrow.zry",
+          "sha256": "9920e84afc262440b2e7d77b3cef0d5ad00e3e48f031c2b681aa80a87e169884"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    },
+    {
+      "id": "m3-syntax-v4-shorthand",
+      "disposition": "accepted",
+      "source": "tests/m3-fixtures/syntax-v4-shorthand.zry",
+      "sources": [
+        {
+          "id": 0,
+          "path": "tests/m3-fixtures/syntax-v4-shorthand.zry",
+          "sha256": "8d1267de4decff8b9c21c65413562f3fd31fe5445f796b1a97c5bef348fbbfdf"
+        }
+      ],
+      "edges": [],
+      "diagnostics": []
+    }
+  ]
+}

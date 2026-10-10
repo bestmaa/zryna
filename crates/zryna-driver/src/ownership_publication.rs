@@ -89,7 +89,7 @@ impl PublishedOwnershipBundle {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum PublicationPhase {
+pub(crate) enum PublicationPhase {
     JavaScript,
     WebAssembly,
     Native,
@@ -141,7 +141,7 @@ pub(crate) fn publish_data_ownership_build(
     publish_with_checkpoint(success, &|_| Ok(()))
 }
 
-fn publish_with_checkpoint(
+pub(crate) fn publish_with_checkpoint(
     success: &DataOwnershipCandidateSuccess,
     checkpoint: Checkpoint<'_>,
 ) -> Result<PublishedOwnershipBundle, CommandFailure> {
@@ -159,6 +159,21 @@ where
     ) -> Result<Vec<OwnershipManifestResult>, CommandFailure>,
 {
     publish_with_runner(success, &|_| Ok(()), runner)
+}
+
+#[cfg(all(test, feature = "native-provider-internal"))]
+pub(crate) fn publish_after_staging_with_checkpoint_for_test<Runner>(
+    success: &DataOwnershipCandidateSuccess,
+    checkpoint: Checkpoint<'_>,
+    runner: Runner,
+) -> Result<PublishedOwnershipBundle, CommandFailure>
+where
+    Runner: FnOnce(
+        &Transaction,
+        &ArtifactOutputRoot,
+    ) -> Result<Vec<OwnershipManifestResult>, CommandFailure>,
+{
+    publish_with_runner(success, checkpoint, runner)
 }
 
 fn publish_with_runner<Runner>(

@@ -8,6 +8,7 @@ repository.workspace = true
 
 [features]
 diagnostic-test-support = []
+native-provider-internal = []
 
 [dependencies]
 cap-fs-ext.workspace = true

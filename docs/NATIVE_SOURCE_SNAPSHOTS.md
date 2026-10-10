@@ -87,6 +87,16 @@ Existing lexer, native parser and syntax-verifier diagnostics pass through uncha
 may retain verified error diagnostics, which stop semantic admission. V3/v4 unsupported source
 rejects atomically. Package/schema/graph failures keep the existing package diagnostic categories.
 
+The off-by-default `native-provider-internal` control-flow route selects M2 rejection presentation
+before capture through `native_frontend::capture_control_flow_sources`. An already rejected
+top-level bare import is identified by its exact bound lexer token and parser error span; it
+retains the bootstrap's global `ZRYNA-F1103` message and guidance. Cycles use canonical M2's
+deterministic traversal of the authenticated source-derived graph and report `ZRYNA-D3007`
+with the first remaining canonical path. The selected presentation stays with the retained
+snapshot during revalidation. It does not change source reads, graph serializers, map identity,
+limits, mandatory syntax verification or semantic admission. Generic workspace/package capture
+and the M3 route retain their existing parser diagnostics and `ZRYNA-D3301` cycle rejection.
+
 ## Verification and exclusions
 
 Focused driver tests live under `module_closure::native_sources::tests`. They use complete source
