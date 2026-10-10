@@ -390,5 +390,7 @@ The source-checkout `server-status-v1` route authenticates one no-argument i32 s
 runs a finite loopback service with empty guest grants. Separate private configuration and root
 listener approval retain their identities through admission, response publication and create-only
 server result commit. The [contract](WASI_SERVER_STATUS_V1.md) records limits and observations.
-This candidate does not expand immutable beta support or establish the remaining nonempty granted
-capability example, independent review, final hosted qualification or whole M4 closure.
+This candidate does not expand immutable beta support. Independent review, final hosted
+qualification and whole M4 closure remain required.
+
+The distinct [clock/status arrangement](WASI_SERVER_CLOCK_STATUS_V1.md) supplies the bounded nonempty guest example: a separately approved one-read clock import before the authenticated status export. Its v2 record reports actual clock reads and teardown. This is a review candidate; independent review, exact-candidate evidence and enclosing #400/#401/#402 acceptance remain required.

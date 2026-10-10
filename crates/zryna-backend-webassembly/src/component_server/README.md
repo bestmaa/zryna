@@ -17,8 +17,9 @@ the incoming request. An error discriminant from a supported host operation
 traps before successful completion.
 
 `Reply` invokes no external capability. `ClockRead` additionally invokes
-`wasi:clocks/monotonic-clock@0.2.12.now` once, as a fixed private host-policy
-proof arrangement. This is not source-level clock requirement admission. A
+`wasi:clocks/monotonic-clock@0.2.12.now` once in its fixed arrangement. Private
+probes and the driver's public clock/status composition use this arrangement.
+This does not implement source-level clock requirement admission. A
 driver must deny that call unless its separately authenticated policy grants
 it. The module contains no environment or filesystem arrangement.
 
@@ -64,3 +65,5 @@ destroy resources and the Store, and perform the lifecycle's final activity
 check before returning a response. External grant admission, cancellation,
 deadline interruption and supported-host execution evidence belong to that
 driver boundary.
+
+The driver owns public source-checkout admission for the status and separately approved one-read clock/status arrangements. Backend emission alone grants no listener or guest authority. ClockRead remains a fixed arrangement that discards the timestamp; it does not represent a source-language clock intrinsic.

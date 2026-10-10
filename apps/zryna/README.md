@@ -73,6 +73,8 @@ separate profile routes. Runtime-dependent cases require the pinned tools in the
 
 `serve --profile server-status-v1` adds the explicit source-checkout pure-status route with private
 configuration, separate identity-bound listener approval, finite loopback lifetime and create-only
-server records. It is separate from installed distributions and does not activate nonempty guest
-grants or whole M4 support. See the [profile contract](../../docs/WASI_SERVER_STATUS_V1.md) and
+server records. Its guest grants remain empty, and it does not activate whole M4 support or expand
+installed distributions. See the [profile contract](../../docs/WASI_SERVER_STATUS_V1.md) and
 `cargo test --locked -p zryna --test wasi_server` for real public-route evidence.
+
+The distinct `serve --profile server-clock-status-v1` adds exactly one separately approved guest clock read per request and a v2 observed result. Both private guest files are required; the timestamp is discarded and no source clock intrinsic is admitted. See [the clock contract](../../docs/WASI_SERVER_CLOCK_STATUS_V1.md) and retain original command/server/browser regressions.

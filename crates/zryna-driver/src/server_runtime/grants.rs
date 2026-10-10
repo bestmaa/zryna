@@ -41,12 +41,16 @@ impl Approval {
         Self { clock_reads: 0 }
     }
 
+    pub(crate) const fn one_monotonic_clock_read() -> Self {
+        Self { clock_reads: 1 }
+    }
+
     #[cfg(test)]
     pub(super) fn monotonic_clock_reads(reads: u32) -> Result<Self, Error> {
         if reads == 0 || reads > MAX_CLOCK_READS {
             return Err(Error::Grant);
         }
-        Ok(Self { clock_reads: reads })
+        Ok(if reads == 1 { Self::one_monotonic_clock_read() } else { Self { clock_reads: reads } })
     }
 }
 

@@ -8,14 +8,17 @@ use std::{
     process::ExitCode,
 };
 use zryna_diagnostics::Diagnostic;
-use zryna_driver::{ServerRunRequest, serve_workspace};
+use zryna_driver::{
+    ClockServerRunRequest, ServerReadiness, ServerRunRequest, serve_clock_workspace,
+    serve_workspace,
+};
 
 #[derive(Clone, Debug, Args)]
 pub(super) struct Options {
     /// One portable workspace-relative .zry source with a sole no-argument i32 export.
     entrypoint: String,
-    /// Exact bounded pure-source server selection.
-    #[arg(long, value_parser = ["server-status-v1"])]
+    /// Exact bounded server arrangement.
+    #[arg(long, value_parser = ["server-status-v1", "server-clock-status-v1"])]
     profile: String,
     /// Sole status export.
     #[arg(long)]
@@ -32,6 +35,12 @@ pub(super) struct Options {
     /// Absolute caller-private root approval bound to exact configuration bytes.
     #[arg(long)]
     listener_approval: PathBuf,
+    /// Absolute caller-private one-read request for the clock profile.
+    #[arg(long)]
+    guest_request: Option<PathBuf>,
+    /// Separate caller-private root approval for that exact guest request.
+    #[arg(long)]
+    guest_approval: Option<PathBuf>,
     /// Fresh portable output stem.
     #[arg(long)]
     name: String,
@@ -45,7 +54,7 @@ pub(super) fn run(options: &Options) -> ExitCode {
         let error = Diagnostic::error(
             "ZRYNA-C4201",
             None,
-            "Installed distributions do not advertise server-status-v1.",
+            "Installed distributions do not advertise bounded source-checkout server profiles.",
             "Use the source-checkout workflow with its explicit root and pinned Node.",
         );
         return rejected(options, &error);
@@ -64,33 +73,36 @@ pub(super) fn run(options: &Options) -> ExitCode {
             configuration: options.server_config.clone(),
             listener_approval: options.listener_approval.clone(),
         };
-        serve_workspace(&request, |ready| {
-            let message = if options.json {
-                json!({"version":1,"command":"serve","kind":"ready","profile":options.profile,
-                    "endpoint":ready.address().to_string()})
-                .to_string()
-            } else {
-                format!("server-status-v1 ready at {}", ready.address())
-            };
-            let mut output = io::stdout().lock();
-            writeln!(output, "{message}").and_then(|()| output.flush()).map_err(|_| {
-                Diagnostic::error(
-                    "ZRYNA-C4204",
-                    None,
-                    "Server readiness output failed.",
-                    "Keep the bounded output channel open.",
-                )
-            })
-        })
+        let ready = |ready| publish_readiness(options, &ready);
+        match (options.profile.as_str(), &options.guest_request, &options.guest_approval) {
+            ("server-status-v1", None, None) => serve_workspace(&request, ready),
+            ("server-clock-status-v1", Some(guest), Some(approval)) => serve_clock_workspace(
+                &ClockServerRunRequest {
+                    server: request,
+                    guest_request: guest.clone(),
+                    guest_approval: approval.clone(),
+                },
+                ready,
+            ),
+            _ => {
+                return rejected(
+                    options,
+                    &Diagnostic::error(
+                        "ZRYNA-C4201",
+                        None,
+                        "Guest input selection does not match the exact server profile.",
+                        "Use both private guest files only with server-clock-status-v1.",
+                    ),
+                );
+            }
+        }
     };
     match result {
         Ok(bundle) => {
             let execution = &bundle.manifest()["execution"];
             let ok = execution["outcome"] == "attempts_exhausted";
-            let manifest = format!(
-                ".zryna/out/{}.wasi-server-run/zryna-wasi-server-manifest-v1.json",
-                options.name
-            );
+            let manifest =
+                format!(".zryna/out/{}.wasi-server-run/{}", options.name, bundle.manifest_name());
             if options.json {
                 println!(
                     "{}",
@@ -99,7 +111,8 @@ pub(super) fn run(options: &Options) -> ExitCode {
                 );
             } else {
                 println!(
-                    "server-status-v1: {}",
+                    "{}: {}",
+                    options.profile,
                     execution["outcome"].as_str().unwrap_or("host_failure")
                 );
                 println!("{manifest}");
@@ -122,6 +135,25 @@ pub(super) fn run(options: &Options) -> ExitCode {
             ExitCode::from(exit)
         }
     }
+}
+
+fn publish_readiness(options: &Options, ready: &ServerReadiness) -> Result<(), Diagnostic> {
+    let message = if options.json {
+        json!({"version":1,"command":"serve","kind":"ready","profile":options.profile,
+            "endpoint":ready.address().to_string()})
+        .to_string()
+    } else {
+        format!("{} ready at {}", options.profile, ready.address())
+    };
+    let mut output = io::stdout().lock();
+    writeln!(output, "{message}").and_then(|()| output.flush()).map_err(|_| {
+        Diagnostic::error(
+            "ZRYNA-C4204",
+            None,
+            "Server readiness output failed.",
+            "Keep the bounded output channel open.",
+        )
+    })
 }
 
 fn rejected(options: &Options, error: &Diagnostic) -> ExitCode {
