@@ -8,10 +8,15 @@ on:
       - tests/scalar-host/**
       - tests/browser-component/**
       - tests/scalar-host-conformance.test.mjs
+      - spec/wit/**
+      - spec/abi/**
       - crates/**
       - apps/zryna/**
       - adapters/typescript-6/**
       - Cargo.lock
+      - Cargo.toml
+      - zryna.workspace.json
+      - workspace.yaml
       - rust-toolchain.toml
       - package.json
       - pnpm-lock.yaml
