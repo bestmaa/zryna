@@ -90,3 +90,5 @@ Run `cargo test --locked -p zryna --test wasi_server`, retain both private serve
 command/browser suites, complete local gates and exact-head Linux/Windows checks. This slice
 cannot waive granted guest execution or authorize M4 closure. See the
 [local example](../examples/wasi-server/README.md).
+
+The distinct [clock/status arrangement](WASI_SERVER_CLOCK_STATUS_V1.md) admits its own narrowly scoped guest clock request and separate root approval. It does not change the empty-grant status profile or admit a source-language clock intrinsic.

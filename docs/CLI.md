@@ -314,3 +314,5 @@ authenticated compiler documentation bundle tracked in Issue #21.
 Formatting is exposed through the separately built language server.
 See [the scalar formatter and editor installation contract](LANGUAGE_SERVER.md#scalar-format-v1)
 for exact source-build compatibility, supported syntax, range behavior and commands.
+
+The distinct `server-clock-status-v1` arrangement additionally requires private `--guest-request` and `--guest-approval` files for exactly one monotonic read per request. See its [contract](WASI_SERVER_CLOCK_STATUS_V1.md) and [denied/granted example](../examples/wasi-server/CLOCK_EXAMPLE.md). It adds no source-language clock intrinsic and remains a source-checkout review candidate.

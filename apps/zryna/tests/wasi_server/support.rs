@@ -51,13 +51,16 @@ impl Case {
         Self { root, stem, bundle, configuration, approval }
     }
     pub fn command(&self, source: &str) -> Command {
+        self.profile_command(source, "server-status-v1")
+    }
+    pub fn profile_command(&self, source: &str, profile: &str) -> Command {
         let mut command = Command::new(env!("CARGO_BIN_EXE_zryna"));
         command
             .args([
                 "serve",
                 source,
                 "--profile",
-                "server-status-v1",
+                profile,
                 "--export",
                 "status",
                 "--json",
@@ -84,6 +87,17 @@ impl Case {
     pub fn spawn(&self, source: &str) -> Running {
         Running::start(self.command(source))
     }
+    pub fn driver_request(&self, source: &str) -> zryna_driver::ServerRunRequest {
+        zryna_driver::ServerRunRequest {
+            workspace_root: self.root.clone(),
+            entrypoint: source.into(),
+            export: "status".into(),
+            artifact_stem: self.stem.clone(),
+            node_runtime: common::node(),
+            configuration: self.configuration.path.clone(),
+            listener_approval: self.approval.path.clone(),
+        }
+    }
 }
 impl Drop for Case {
     fn drop(&mut self) {
@@ -98,7 +112,7 @@ pub struct Running {
     pub address: SocketAddr,
 }
 impl Running {
-    fn start(mut command: Command) -> Self {
+    pub fn start(mut command: Command) -> Self {
         let mut child = command
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())

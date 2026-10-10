@@ -126,7 +126,8 @@ use server_lifecycle::{Input, Limits};
 #[cfg(test)]
 use server_runtime::test_support::{Resource, attach, input, limits};
 pub use server_workspace::{
-    PublishedServerBundle, ServerReadiness, ServerRunRequest, serve_workspace,
+    ClockServerRunRequest, PublishedServerBundle, ServerReadiness, ServerRunRequest,
+    serve_clock_workspace, serve_workspace,
 };
 pub use source_api::{DualTargetArtifacts, SourceToIrError, SourceToIrSuccess};
 pub use webassembly::{

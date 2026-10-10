@@ -19,13 +19,14 @@ there is no shared command/server identity allocator or cross-profile resource t
 
 Grant requests are strict bounded JSON with the exact server world. Host approval is a separate
 trusted token. Empty requests never acquire ambient authority, even if the host token allows
-clock reads. The only admitted authority in this slice is 1–16 explicitly approved monotonic
-reads. Timer/subscription requests and network/random grants remain unsupported and fail before
+clock reads. Private runtime probes admit 1–16 explicitly approved monotonic reads. The public
+clock/status composition admits exactly one read per Store. Timer/subscription requests and network/random grants remain unsupported and fail before
 engine construction. Environment/filesystem/command fields fail closed. Unused exact-world
 capability imports trap before any provider access. Legitimate owned HTTP resource destructors
 release objects under empty grants; response construction itself does not grant outgoing network.
-`ClockRead` is a fixed private host-policy probe, not source-level requirement analysis or #400's
-final reviewed grant interface.
+`ClockRead` is a fixed arrangement used by the private probes and public clock/status
+composition. It does not implement source-level requirement analysis or #400's final reviewed
+grant interface.
 
 Each admitted request receives one fresh Wasmtime Store with fuel, epoch interruption, a 64 KiB
 stack, one bounded 64 KiB memory, zero tables, three core instances, at most eight owned resource
@@ -65,8 +66,11 @@ The existing expiry owner may finish detached-entry bookkeeping just after guest
 quota remains reserved through that final bookkeeping, and shutdown waits for it as well.
 
 Whole #401 acceptance remains open: reviewed #400 interface composition, source/interface capability
-admission, shipped build/run selectors, granted/denied public local example, current supported-host
-evidence and public support documentation remain dependencies. The private loopback implementation
+admission, shipped build/run selectors, reviewed granted/denied public local example, current
+supported-host evidence and public support documentation remain dependencies. The private loopback implementation
 and fixed pure-source process corpus are independently implemented in the same dedicated target.
 Streaming bodies, outgoing HTTP and random providers are not requirements for the minimum interface.
-No public server activation or issue-completion claim is made by this slice.
+The source-checkout status and clock/status compositions remain review candidates; whole-issue
+completion and installed public support are separate gates.
+
+Production composition also selects the distinct one-read clock/status arrangement after exact caller-private guest request/root approval admission. Private multi-read/subscription/timer probes do not become public source requirements. The same Store-local accounting records actual clock reads in the separate public v2 record; empty-grant status behavior is unchanged.

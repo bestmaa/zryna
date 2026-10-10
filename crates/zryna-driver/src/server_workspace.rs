@@ -1,20 +1,23 @@
 //! Authenticated pure-source loopback service with separate create-only public records.
 
 mod approval;
+mod guest;
 mod record;
+mod selection;
 
 use crate::{
-    ArtifactOutputRoot, CommandFailure, CommandFailureKind, WorkspaceSourceRoot,
-    pipeline::Transaction, runtime::NodeRuntimeCapability, server_runtime, server_transport,
+    CommandFailure, CommandFailureKind, WorkspaceSourceRoot, pipeline::Transaction,
+    runtime::NodeRuntimeCapability, server_runtime, server_transport,
 };
 use approval::Inputs;
+use selection::{prepare_output, validate_selection};
 use std::{
     net::SocketAddr,
     path::{Path, PathBuf},
     sync::Arc,
 };
 use zryna_diagnostics::Diagnostic;
-use zryna_source::{NormalizedSourcePath, SourceFileInput, SourceMap};
+use zryna_source::{SourceFileInput, SourceMap};
 
 /// Explicit source-checkout selection; no installed-package or ambient guest authority.
 #[derive(Clone)]
@@ -33,6 +36,17 @@ pub struct ServerRunRequest {
     pub configuration: PathBuf,
     /// Separate absolute caller-private root listener approval.
     pub listener_approval: PathBuf,
+}
+
+/// The distinct one-read clock arrangement with a separate private guest request and approval.
+#[derive(Clone)]
+pub struct ClockServerRunRequest {
+    /// Existing authenticated source and configuration-bound listener selection.
+    pub server: ServerRunRequest,
+    /// Absolute caller-private exact one-read guest request document.
+    pub guest_request: PathBuf,
+    /// Absolute separate caller-private root approval bound to exact request bytes.
+    pub guest_approval: PathBuf,
 }
 
 /// Issued only after authenticated preparation and successful loopback binding.
@@ -57,6 +71,7 @@ impl ServerReadiness {
 pub struct PublishedServerBundle {
     path: PathBuf,
     manifest: serde_json::Value,
+    manifest_name: &'static str,
 }
 impl PublishedServerBundle {
     /// Create-only bundle directory.
@@ -69,6 +84,11 @@ impl PublishedServerBundle {
     pub const fn manifest(&self) -> &serde_json::Value {
         &self.manifest
     }
+    /// Closed record filename selected by the admitted public profile.
+    #[must_use]
+    pub const fn manifest_name(&self) -> &'static str {
+        self.manifest_name
+    }
 }
 
 /// Runs a finite pure-source server, calls readiness once, and commits a separate result record.
@@ -80,8 +100,27 @@ pub fn serve_workspace(
     request: &ServerRunRequest,
     ready: impl FnOnce(ServerReadiness) -> Result<(), Diagnostic>,
 ) -> Result<PublishedServerBundle, CommandFailure> {
+    serve(request, None, ready)
+}
+
+/// Runs the authenticated clock/status arrangement with precisely one approved read per request.
+///
+/// # Errors
+/// Rejects missing, malformed or revoked guest authority in addition to the common server checks.
+pub fn serve_clock_workspace(
+    request: &ClockServerRunRequest,
+    ready: impl FnOnce(ServerReadiness) -> Result<(), Diagnostic>,
+) -> Result<PublishedServerBundle, CommandFailure> {
+    serve(&request.server, Some((&request.guest_request, &request.guest_approval)), ready)
+}
+
+fn serve(
+    request: &ServerRunRequest,
+    guest: Option<(&Path, &Path)>,
+    ready: impl FnOnce(ServerReadiness) -> Result<(), Diagnostic>,
+) -> Result<PublishedServerBundle, CommandFailure> {
     let entry = validate_selection(request)?;
-    let inputs = Inputs::capture(&request.configuration, &request.listener_approval)?;
+    let inputs = Inputs::capture(&request.configuration, &request.listener_approval, guest)?;
     let (output, bundle) = prepare_output(request)?;
     let source_root = WorkspaceSourceRoot::capture(&request.workspace_root)
         .map_err(|_| failure("ZRYNA-C4202", "Server source root could not be retained."))?;
@@ -113,9 +152,9 @@ pub fn serve_workspace(
         sources,
         server_runtime::Preparation {
             export: &request.export,
-            operation: zryna_backend_webassembly::ServerOperation::Reply,
-            document: br#"{"world":"zryna:capability-profiles/server@0.1.0","requests":[]}"#,
-            approval: server_runtime::Approval::deny_all(),
+            operation: inputs.operation(),
+            document: inputs.document(),
+            approval: inputs.host_approval(),
             envelope: inputs.config.envelope(),
         },
         Arc::clone(&runtime),
@@ -139,7 +178,7 @@ pub fn serve_workspace(
     };
     revalidate()?;
     let mut transaction = Transaction::create(&output)?;
-    let operation = (|| {
+    let operation: Result<PublishedServerBundle, CommandFailure> = (|| {
         transaction.write_server_artifact(&request.artifact_stem, prepared.artifact().bytes())?;
         revalidate()?;
         let bound = server_transport::Bound::start(inputs.config, prepared, Arc::clone(&transport))
@@ -150,20 +189,21 @@ pub fn serve_workspace(
         let result =
             bound.run_guarded(&mut || revalidate().map_err(|_| server_transport::Error::Authority));
         revalidate()?;
-        let manifest = record::complete(material, address, result, &transport, &runtime)?;
-        let bytes = serde_json::to_vec_pretty(&manifest)
-            .map_err(|_| failure("ZRYNA-C4205", "Server result encoding failed."))?;
-        if bytes.len() > 65536 {
-            return Err(failure("ZRYNA-C4205", "Server result exceeds its byte bound."));
-        }
-        transaction
-            .write_manifest(record::NAME, &bytes)
-            .map_err(|_| failure("ZRYNA-C4205", "Server manifest publication failed."))?;
+        let manifest_name = inputs.manifest_name();
+        let manifest = record::stage(
+            material,
+            address,
+            result,
+            &transport,
+            &runtime,
+            &transaction,
+            manifest_name,
+        )?;
         revalidate()?;
         transaction
             .commit(&output, &bundle)
             .map_err(|_| failure("ZRYNA-C4205", "Create-only server record commit failed."))?;
-        Ok(PublishedServerBundle { path: bundle, manifest })
+        Ok(PublishedServerBundle { path: bundle, manifest, manifest_name })
     })();
     match operation {
         Ok(bundle) => Ok(bundle),
@@ -189,51 +229,7 @@ pub(crate) fn failure(code: &'static str, message: &'static str) -> CommandFailu
             code,
             None,
             message,
-            "Use the exact server-status-v1 source, private configuration and explicit loopback listener approval.",
+            "Use an exact bounded server profile with private configuration and separate root approvals.",
         )],
     }
-}
-
-fn validate_selection(request: &ServerRunRequest) -> Result<NormalizedSourcePath, CommandFailure> {
-    if !request.workspace_root.is_absolute()
-        || !request.node_runtime.is_absolute()
-        || !request.configuration.is_absolute()
-        || !request.listener_approval.is_absolute()
-        || request.export.is_empty()
-        || request.export.len() > 128
-        || !request.export.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
-    {
-        return Err(failure(
-            "ZRYNA-C4201",
-            "Server selection requires exact absolute authority paths.",
-        ));
-    }
-    crate::javascript::validate_artifact_stem(&request.artifact_stem).map_err(|diagnostic| {
-        CommandFailure { kind: CommandFailureKind::Request, diagnostics: vec![diagnostic] }
-    })?;
-    let entry = NormalizedSourcePath::new(request.entrypoint.clone()).map_err(|_| {
-        failure("ZRYNA-C4201", "Server source must be a portable workspace-relative file.")
-    })?;
-    let report = crate::check_workspace(&request.workspace_root);
-    if !report.is_valid() {
-        return Err(CommandFailure {
-            kind: CommandFailureKind::Architecture,
-            diagnostics: report.diagnostics,
-        });
-    }
-    Ok(entry)
-}
-
-fn prepare_output(
-    request: &ServerRunRequest,
-) -> Result<(ArtifactOutputRoot, PathBuf), CommandFailure> {
-    let output = ArtifactOutputRoot::prepare_for_workspace(&request.workspace_root)
-        .map_err(|_| failure("ZRYNA-C4205", "Server output root could not be retained."))?;
-    let bundle = output.path().join(format!("{}.wasi-server-run", request.artifact_stem));
-    match std::fs::symlink_metadata(&bundle) {
-        Ok(_) => return Err(failure("ZRYNA-C4205", "Server output already exists.")),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-        Err(_) => return Err(failure("ZRYNA-C4205", "Server output could not be inspected.")),
-    }
-    Ok((output, bundle))
 }

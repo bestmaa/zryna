@@ -500,8 +500,10 @@ gate change is included, and existing pinned WIT worlds remain unchanged.
 The first bounded public-server review candidate is implemented as the source-checkout
 `server-status-v1` route. It retains authenticated pure source, explicit identity-bound root
 listener approval, finite loopback limits, empty guest grants and separate teardown records.
-See the [contract](WASI_SERVER_STATUS_V1.md). Nonempty granted guest execution, independent
-review, exact-candidate hosted evidence and complete #401/#402 closure remain required.
+See the [contract](WASI_SERVER_STATUS_V1.md). Independent review, exact-candidate hosted
+evidence and complete #401/#402 closure remain required.
+
+A dependent `server-clock-status-v1` review candidate adds the explicit one-read guest arrangement with a separate private request/root approval and v2 execution observations. The [denied/granted example](../examples/wasi-server/CLOCK_EXAMPLE.md) does not add a source-language intrinsic or expand installed beta support. Whole M4 review, conformance and support gates remain open.
 
 Completion gate: components expose self-described interfaces and receive no filesystem, network, clock, randomness, or environment capability unless the selected profile declares it.
 

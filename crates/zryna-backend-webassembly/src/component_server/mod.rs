@@ -17,12 +17,12 @@ mod tests;
 
 const REVISION: &str = "zryna.server-empty-response.v1";
 
-/// Fixed private host arrangements; neither variant admits a public server profile.
+/// Fixed host arrangements; public profile admission and root approvals belong to the driver.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ServerOperation {
     /// Serve one empty response whose status is computed by the retained scalar core.
     Reply,
-    /// Additionally read the monotonic clock once as an internal host-policy proof.
+    /// Additionally read and discard the monotonic clock once in the fixed arrangement.
     /// This does not represent source-level clock requirement admission.
     ClockRead,
 }

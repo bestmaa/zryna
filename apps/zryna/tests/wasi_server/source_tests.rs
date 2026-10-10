@@ -1,7 +1,7 @@
 use super::{Case, guard};
 use std::{fs, io::Write as _};
 
-struct OwnedSource {
+pub(super) struct OwnedSource {
     path: std::path::PathBuf,
 }
 impl Drop for OwnedSource {
@@ -10,7 +10,7 @@ impl Drop for OwnedSource {
     }
 }
 
-fn source(case: &Case, text: &str) -> (OwnedSource, String) {
+pub(super) fn source(case: &Case, text: &str) -> (OwnedSource, String) {
     let logical = format!("examples/wasi-server/{}.zry", case.stem);
     let path = case.root.join(&logical);
     let mut file = fs::OpenOptions::new()

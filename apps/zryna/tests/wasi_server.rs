@@ -9,6 +9,9 @@ use support::{Case, exchange, frame, guard};
 #[path = "wasi_server/source_tests.rs"]
 mod source_tests;
 
+#[path = "wasi_server/clock_tests.rs"]
+mod clock_tests;
+
 #[test]
 fn actual_server_status_boundaries_malformed_attempts_and_repeated_start() {
     let _guard = guard();
@@ -160,15 +163,7 @@ fn exact_body_and_header_limits_accept_and_first_extra_requests_are_rejected() {
 fn readiness_cancellation_closes_actual_listener_and_commits_typed_teardown() {
     let _guard = guard();
     let case = Case::new(64);
-    let request = zryna_driver::ServerRunRequest {
-        workspace_root: case.root.clone(),
-        entrypoint: "examples/wasi-server/status-200.zry".into(),
-        export: "status".into(),
-        artifact_stem: case.stem.clone(),
-        node_runtime: support::common::node(),
-        configuration: case.configuration.path.clone(),
-        listener_approval: case.approval.path.clone(),
-    };
+    let request = case.driver_request("examples/wasi-server/status-200.zry");
     let mut endpoint = None;
     let result = zryna_driver::serve_workspace(&request, |ready| {
         endpoint = Some(ready.address());

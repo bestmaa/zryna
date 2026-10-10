@@ -48,3 +48,5 @@ the final record. Missing, false or mismatched root approval never starts a list
 Windows uses the same JSON with owner/SYSTEM-only protected ACLs, as required by the contract.
 The cross-platform fixture `apps/zryna/tests/fixtures/private_file.rs` creates those exact ACLs
 for real CLI tests. Installed beta packages do not advertise this candidate selector.
+
+The separate [clock/status example](CLOCK_EXAMPLE.md) shows denied and granted guest clock authority using the same status source and additional private guest files. Status-only guest grants remain empty.

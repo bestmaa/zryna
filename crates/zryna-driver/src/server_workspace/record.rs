@@ -10,6 +10,7 @@ use serde_json::{Value, json};
 use std::{net::SocketAddr, sync::atomic::Ordering};
 
 pub(super) const NAME: &str = "zryna-wasi-server-manifest-v1.json";
+pub(super) const CLOCK_NAME: &str = "zryna-wasi-server-manifest-v2.json";
 
 pub(super) fn material(
     prepared: &server_runtime::Prepared,
@@ -31,7 +32,7 @@ pub(super) fn material(
         .map(|source| json!({"path":source.path(), "sha256":digest(source.bytes())}))
         .collect::<Vec<_>>();
     let config = inputs.config;
-    Ok(json!({
+    let mut record = json!({
         "schema":"zryna.wasi-server-manifest.v1", "profile":"server-status-v1",
         "source":{"path":entrypoint,"sha256":digest(source)}, "export":export,
         "component":{"path":format!("component/{stem}.wasm"),"sha256":digest(artifact.bytes()),
@@ -44,7 +45,11 @@ pub(super) fn material(
             "header_bytes":config.header_bytes,"body_bytes":config.body_bytes,
             "request_ms":config.request_timeout.as_millis(),"service_ms":config.service_timeout.as_millis()},
         "runtime_limits":{"memory_bytes":65_536,"fuel":100_000,"resources":5,"callbacks":8,"concurrency":1}
-    }))
+    });
+    if let Some(guest) = &inputs.guest {
+        guest.add_record(&mut record)?;
+    }
+    Ok(record)
 }
 
 pub(super) fn complete(
@@ -80,10 +85,39 @@ pub(super) fn complete(
         "teardown":{"confirmed":true,"stores_created":count(&runtime.stores_created),
             "stores_destroyed":count(&runtime.stores_destroyed),"resources_created":count(&runtime.created),
             "resources_destroyed":count(&runtime.destroyed),"listeners":0,"socket_handles":0,"reserved_bytes":0}});
+    if material["profile"] == "server-clock-status-v1" {
+        let reads = count(&runtime.clock_reads);
+        if reads > count(&runtime.stores_created) {
+            return Err(failure("ZRYNA-C4204", "Observed guest clock reads exceeded their bound."));
+        }
+        material["execution"]["clock_reads"] = json!(reads);
+        material["execution"]["denied_callbacks"] = json!(count(&runtime.denials));
+    }
     let bytes = serde_json::to_vec(&material)
         .map_err(|_| failure("ZRYNA-C4205", "Server record encoding failed."))?;
     if bytes.len() > 65_536 {
         return Err(failure("ZRYNA-C4205", "Server record exceeded its bound."));
     }
     Ok(material)
+}
+
+pub(super) fn stage(
+    material: Value,
+    address: SocketAddr,
+    result: Result<server_transport::Completion, server_transport::Error>,
+    transport: &server_transport::Observation,
+    runtime: &server_runtime::Observation,
+    transaction: &crate::pipeline::Transaction,
+    name: &str,
+) -> Result<Value, CommandFailure> {
+    let manifest = complete(material, address, result, transport, runtime)?;
+    let bytes = serde_json::to_vec_pretty(&manifest)
+        .map_err(|_| failure("ZRYNA-C4205", "Server result encoding failed."))?;
+    if bytes.len() > 65_536 {
+        return Err(failure("ZRYNA-C4205", "Server result exceeds its byte bound."));
+    }
+    transaction
+        .write_manifest(name, &bytes)
+        .map_err(|_| failure("ZRYNA-C4205", "Server manifest publication failed."))?;
+    Ok(manifest)
 }
