@@ -42,6 +42,7 @@ fn actual_source_effects_wrong_signatures_extra_exports_and_dependencies_reject_
     }
 }
 
+#[cfg(unix)]
 #[test]
 fn source_replacement_after_readiness_suppresses_response_and_final_record() {
     let _guard = guard();
@@ -54,4 +55,21 @@ fn source_replacement_after_readiness_suppresses_response_and_final_record() {
     assert_eq!(exit.code(), Some(4), "{result}");
     assert_eq!(result["diagnostics"][0]["code"], "ZRYNA-C4202");
     assert!(!case.bundle.exists());
+}
+
+#[cfg(windows)]
+#[test]
+fn retained_source_blocks_write_and_replacement_then_serves_original_status() {
+    let _guard = guard();
+    let case = Case::new(1);
+    let (owned, logical) = source(&case, "export function status(): i32 { return 200; }");
+    let mut running = case.spawn(&logical);
+    assert!(fs::write(&owned.path, "export function status(): i32 { return 599; }").is_err());
+    assert!(fs::rename(&owned.path, owned.path.with_extension("replaced")).is_err());
+    let response = super::exchange(running.address, &super::frame(running.address, b""));
+    assert!(response.starts_with(b"HTTP/1.1 200 "));
+    let (exit, result) = running.finish();
+    assert!(exit.success(), "{result}");
+    assert_eq!(case.manifest()["execution"]["served"], 1);
+    assert_eq!(case.manifest()["execution"]["teardown"]["confirmed"], true);
 }
