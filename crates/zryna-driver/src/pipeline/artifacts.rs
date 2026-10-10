@@ -89,3 +89,15 @@ pub(super) fn write_prepared_artifacts(
     }
     Ok((artifacts, core_offset))
 }
+
+pub(super) fn manifest_name_is_supported(name: &str) -> bool {
+    matches!(
+        name,
+        super::MANIFEST_NAME
+            | super::BROWSER_MANIFEST_NAME
+            | super::CONTROL_FLOW_MANIFEST_NAME
+            | crate::OWNERSHIP_MANIFEST_NAME
+            | crate::COMMAND_H1_MANIFEST_NAME
+            | "zryna-wasi-server-manifest-v1.json"
+    )
+}

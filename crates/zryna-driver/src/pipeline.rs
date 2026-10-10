@@ -37,7 +37,7 @@ use crate::{
 mod artifacts;
 mod command_h1;
 mod control_flow;
-mod preparation;
+pub(crate) mod preparation;
 mod project;
 mod scalar;
 mod target;
@@ -1609,14 +1609,7 @@ impl Transaction {
         bytes: &[u8],
     ) -> Result<(), CommandFailure> {
         self.revalidate_stage()?;
-        if !matches!(
-            manifest_name,
-            MANIFEST_NAME
-                | BROWSER_MANIFEST_NAME
-                | CONTROL_FLOW_MANIFEST_NAME
-                | crate::OWNERSHIP_MANIFEST_NAME
-                | crate::COMMAND_H1_MANIFEST_NAME
-        ) || self.manifest.borrow().is_some()
+        if !artifacts::manifest_name_is_supported(manifest_name) || self.manifest.borrow().is_some()
         {
             return Err(transaction_error("manifest name is not a closed unique version"));
         }

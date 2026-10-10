@@ -300,3 +300,12 @@ declaration string/report boundary proofs, the transitive A→B→C mixed-select
 independent acceptance still need explicit evidence. Arbitrary foreign libraries and actual host
 authorization/containment retain their separate owning requirements. No CLI selector,
 executable publication or Windows native C target is added.
+
+## Bounded public server composition
+
+`serve_workspace` composes the existing lifecycle/runtime/transport with authenticated source,
+private identity-bound configuration/root listener approval and a separate create-only final
+record. The guest request set stays empty; private clock probes stay separate. The owning
+[contract](../../docs/WASI_SERVER_STATUS_V1.md) records the source-checkout scope and remaining
+review/support gates. `ServerReadiness` supports explicit cancellation, with final publication
+only after joined and observed teardown.

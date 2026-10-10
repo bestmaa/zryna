@@ -3,7 +3,7 @@
 mod capture;
 mod wire;
 
-pub(crate) use capture::CapturedRequest;
+pub(crate) use capture::{CapturedFile, CapturedRequest};
 
 #[cfg(test)]
 mod tests;

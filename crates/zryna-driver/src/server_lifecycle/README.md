@@ -1,10 +1,10 @@
 # Internal server lifecycle candidate (#401)
 
-This module is a lifecycle-only implementation candidate for the driver. It is loaded by the
-registered Cargo test target `server_lifecycle` and has no public selector or production runtime
-call site. It does not establish
-server component emission, a verified component identity, HTTP bindings, a capability grant,
-guest execution, or supported host evidence. Issue #401 remains open.
+This module owns bounded lifecycle leases and joined retirement. It is retained in the dedicated
+`server_lifecycle` target and is now composed by the authenticated source-checkout server route.
+Lifecycle success alone does not establish component identity, grants, executable host behavior or
+supported-host qualification. The public composition contract is
+[server-status-v1](../../../../docs/WASI_SERVER_STATUS_V1.md); #401 remains open.
 
 The unchanged pinned world is `zryna:capability-profiles/server@0.1.0`, exporting
 `wasi:http/incoming-handler@0.2.12`. Its explicit imports are monotonic clock, wall clock,

@@ -68,3 +68,11 @@ cargo test --locked -p zryna --test m3_public
 [CLI tests](tests/cli.rs) cover options, failure rendering and command transactions;
 [M2 conformance](tests/m2_conformance.rs) and [public M3 tests](tests/m3_public.rs) cover their
 separate profile routes. Runtime-dependent cases require the pinned tools in the root README.
+
+## Bounded server review candidate
+
+`serve --profile server-status-v1` adds the explicit source-checkout pure-status route with private
+configuration, separate identity-bound listener approval, finite loopback lifetime and create-only
+server records. It is separate from installed distributions and does not activate nonempty guest
+grants or whole M4 support. See the [profile contract](../../docs/WASI_SERVER_STATUS_V1.md) and
+`cargo test --locked -p zryna --test wasi_server` for real public-route evidence.

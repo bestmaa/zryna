@@ -497,6 +497,12 @@ implementation, conformance and activation. This is `specified-only`; #167 and t
 preserves explicit host-outcome, u64 and async implementation gates. No runtime, generator, selector, publication or M3
 gate change is included, and existing pinned WIT worlds remain unchanged.
 
+The first bounded public-server review candidate is implemented as the source-checkout
+`server-status-v1` route. It retains authenticated pure source, explicit identity-bound root
+listener approval, finite loopback limits, empty guest grants and separate teardown records.
+See the [contract](WASI_SERVER_STATUS_V1.md). Nonempty granted guest execution, independent
+review, exact-candidate hosted evidence and complete #401/#402 closure remain required.
+
 Completion gate: components expose self-described interfaces and receive no filesystem, network, clock, randomness, or environment capability unless the selected profile declares it.
 
 ## M5 — Packages and Reproducible Releases

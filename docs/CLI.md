@@ -1,5 +1,15 @@
 # Zryna CLI reference
 
+## Bounded server review candidate
+
+The source-checkout `serve ENTRY --profile server-status-v1 --export NAME --node PINNED
+--server-config PRIVATE --listener-approval PRIVATE --name FRESH` route authenticates one pure
+status source, serves finite loopback requests with empty guest grants, and commits a separate
+server result only after actual teardown. Its [contract](WASI_SERVER_STATUS_V1.md) specifies
+root listener permission, limits, records and remaining review/conformance gates. It is not an
+installed beta support expansion and does not satisfy the nonempty granted-guest example or M4
+closure by itself.
+
 ## Bounded command review candidate
 
 The source-checkout route `run ENTRY --target wasi-command --profile command-h1-v1

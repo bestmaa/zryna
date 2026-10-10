@@ -1,10 +1,11 @@
 # Private bounded loopback transport
 
-This module completes the independently implementable transport and pure-source portion of
-#401, in the existing `server_runtime` dedicated test target. It is not registered in the shipped
-driver library or CLI. The public selector, accepted #400 grant composition, granted/denied local
-example and reviewed supported-host evidence remain integration dependencies. No new public
-profile or grant approval is established here.
+This bounded transport retains its private `server_runtime` process corpus. The source-checkout
+`server-status-v1` route now composes it through `server_workspace`, adding retained source/root
+admission, private configuration and explicit listener approval, revocation guards and separate
+create-only records. The [public composition contract](../../../../docs/WASI_SERVER_STATUS_V1.md)
+keeps guest grants empty and leaves independent review, supported-host evidence and nonempty
+granted-guest execution open. The private stdin protocol remains unshipped.
 
 Preparation consumes one immutable `SourceMap` snapshot through the normal authenticated
 TypeScript worker, source-bound syntax verification, semantic lowering, verified IR and the
@@ -89,6 +90,6 @@ cargo test --locked -p zryna-driver --test server_lifecycle
 
 Both require the repository's frozen adapter dependencies and provisioned Node. Tests do not
 silently skip a missing frontend. Shipped CLI registration, trusted source capture/root approval
-and accepted current-grant/result-record composition must be coordinated with their owners before
-this private seam becomes a public server path. Streaming, outgoing HTTP and random providers
+and accepted current-grant/result-record composition must be coordinated with their owners for
+whole #401 acceptance beyond the bounded empty-guest public route. Streaming, outgoing HTTP and random providers
 are not necessary for this minimum request/response interface.

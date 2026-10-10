@@ -103,3 +103,26 @@ fn render_json_serialization_failure(command: CommandKind) -> ExitCode {
     );
     ExitCode::from(4)
 }
+
+pub(super) fn run_architecture_check(options: &super::ArchitectureOptions) -> ExitCode {
+    let root = match super::absolute_workspace_path(&options.root) {
+        Ok(root) => root,
+        Err(diagnostic) => {
+            return render_cli_failure(CommandKind::Build, options.json, 2, &[diagnostic]);
+        }
+    };
+    let report = zryna_driver::check_workspace(&root);
+    if options.json {
+        match serde_json::to_string_pretty(&report) {
+            Ok(output) => println!("{output}"),
+            Err(_) => return ExitCode::from(70),
+        }
+    } else if report.is_valid() {
+        println!("Zryna architecture check passed");
+    } else {
+        for diagnostic in &report.diagnostics {
+            eprintln!("{diagnostic}");
+        }
+    }
+    if report.is_valid() { ExitCode::SUCCESS } else { ExitCode::from(1) }
+}

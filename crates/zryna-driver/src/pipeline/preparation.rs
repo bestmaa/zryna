@@ -41,7 +41,7 @@ pub(super) fn analyze<Provider: VerifiedFrontendProvider + ?Sized>(
     crate::compile_to_verified_ir(frontend, sources).map_err(|error| source_failure(&error))
 }
 
-pub(super) fn configured_frontend(
+pub(crate) fn configured_frontend(
     compiler_root: &Path,
     node: &NodeRuntimeCapability,
 ) -> Result<WorkerFrontend, CommandFailure> {

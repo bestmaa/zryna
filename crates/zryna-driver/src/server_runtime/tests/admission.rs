@@ -160,3 +160,38 @@ fn malformed_expired_oversized_requests_create_no_store_and_valid_request_recove
     clean(&observation);
     server.shutdown().expect("joined");
 }
+
+#[test]
+fn public_status_preparation_rejects_extra_exports_and_retains_exact_component_binding() {
+    let prepared = Prepared::new_public(
+        &Candidate,
+        sources("200"),
+        Preparation {
+            export: "status",
+            operation: ServerOperation::Reply,
+            document: EMPTY,
+            approval: Approval::deny_all(),
+            envelope: envelope(),
+        },
+        Arc::new(Observation::default()),
+    )
+    .expect("sole authenticated status");
+    assert!(!prepared.artifact().bytes().is_empty());
+    assert_ne!(prepared.binding(), &[0; 32]);
+    let sources = SourceMap::build(vec![SourceFileInput {
+        path:"extra.zry".into(),text:"export function status(): i32 { return 200; } export function other(): i32 { return 201; }".into()
+    }]).expect("extra export fixture");
+    let result = Prepared::new_public(
+        &Candidate,
+        sources,
+        Preparation {
+            export: "status",
+            operation: ServerOperation::Reply,
+            document: EMPTY,
+            approval: Approval::deny_all(),
+            envelope: envelope(),
+        },
+        Arc::new(Observation::default()),
+    );
+    assert!(matches!(result, Err(Error::Artifact)));
+}

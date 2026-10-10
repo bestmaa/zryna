@@ -383,3 +383,12 @@ watch mode, incremental builds, or production readiness.
 - [Syntax protocol v4](SYNTAX_PROTOCOL_V4.md)
 - [Scalar ABI v1](../spec/abi/SCALAR_V1.md)
 - [Language overview](../spec/language/OVERVIEW.md)
+
+## Bounded WASI server review candidate
+
+The source-checkout `server-status-v1` route authenticates one no-argument i32 status function and
+runs a finite loopback service with empty guest grants. Separate private configuration and root
+listener approval retain their identities through admission, response publication and create-only
+server result commit. The [contract](WASI_SERVER_STATUS_V1.md) records limits and observations.
+This candidate does not expand immutable beta support or establish the remaining nonempty granted
+capability example, independent review, final hosted qualification or whole M4 closure.

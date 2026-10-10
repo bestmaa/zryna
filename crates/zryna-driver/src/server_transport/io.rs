@@ -14,23 +14,23 @@ use std::{
 type Cancel = Arc<dyn Fn() + Send + Sync>;
 
 #[derive(Default)]
-pub(super) struct Observation {
-    pub(super) listeners: AtomicUsize,
-    pub(super) socket_handles: AtomicUsize,
-    pub(super) reserved_bytes: AtomicUsize,
-    pub(super) accepted: AtomicUsize,
-    pub(super) served: AtomicUsize,
-    pub(super) rejected: AtomicUsize,
+pub(crate) struct Observation {
+    pub(crate) listeners: AtomicUsize,
+    pub(crate) socket_handles: AtomicUsize,
+    pub(crate) reserved_bytes: AtomicUsize,
+    pub(crate) accepted: AtomicUsize,
+    pub(crate) served: AtomicUsize,
+    pub(crate) rejected: AtomicUsize,
 }
 
 #[derive(Default)]
-pub(super) struct Control {
+pub(crate) struct Control {
     pub(super) stopped: AtomicBool,
     interrupt: Mutex<Option<TcpStream>>,
     cancellation: Mutex<Option<Cancel>>,
 }
 impl Control {
-    pub(super) fn stop(&self) {
+    pub(crate) fn stop(&self) {
         self.stopped.store(true, Ordering::SeqCst);
         if let Some(socket) = self.interrupt.lock().expect("interrupt mutex").as_ref() {
             let _ = socket.shutdown(Shutdown::Both);
