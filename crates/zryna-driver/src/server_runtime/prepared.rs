@@ -39,18 +39,41 @@ pub(crate) struct Preparation<'a> {
 }
 
 impl Prepared {
+    #[cfg(test)]
     pub(crate) fn new<Provider: VerifiedFrontendProvider>(
         provider: &Provider,
         sources: SourceMap,
         preparation: Preparation<'_>,
         observation: Arc<Observation>,
     ) -> Result<Self, Error> {
+        Self::prepare(provider, sources, preparation, observation, false)
+    }
+
+    pub(crate) fn new_public<Provider: VerifiedFrontendProvider>(
+        provider: &Provider,
+        sources: SourceMap,
+        preparation: Preparation<'_>,
+        observation: Arc<Observation>,
+    ) -> Result<Self, Error> {
+        Self::prepare(provider, sources, preparation, observation, true)
+    }
+
+    fn prepare<Provider: VerifiedFrontendProvider>(
+        provider: &Provider,
+        sources: SourceMap,
+        preparation: Preparation<'_>,
+        observation: Arc<Observation>,
+        public: bool,
+    ) -> Result<Self, Error> {
         // Reject untrusted grants and limits before frontend, WIT, engine or host construction.
         let grants = Grants::admit(preparation.document, preparation.approval)?;
         let envelope = preparation.envelope.validate()?;
-        let compiled = zryna_driver::compile_to_verified_ir(provider, &sources)
-            .map_err(|_| Error::Artifact)?;
+        let compiled =
+            crate::compile_to_verified_ir(provider, &sources).map_err(|_| Error::Artifact)?;
         let program = compiled.into_program();
+        if public && program.functions().count() != 1 {
+            return Err(Error::Artifact);
+        }
         let artifact = zryna_backend_webassembly::emit_server_response(
             &program,
             &pinned_wit_sources(),
@@ -81,6 +104,14 @@ impl Prepared {
             #[cfg(test)]
             stage_pause: None,
         })
+    }
+
+    pub(crate) fn artifact(&self) -> &ValidatedServerComponent {
+        &self.artifact
+    }
+
+    pub(crate) fn binding(&self) -> &[u8; 32] {
+        &self.seal
     }
 
     pub(super) fn revalidate(&self) -> Result<(), Error> {

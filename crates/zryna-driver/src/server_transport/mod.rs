@@ -1,5 +1,6 @@
-//! Private loopback implementation and process corpus; no public selector or grant activation.
+//! Bounded loopback transport; authenticated composition owns public source and listener approval.
 
+#[cfg(test)]
 mod cli;
 mod config;
 mod framing;
@@ -9,12 +10,22 @@ mod listener;
 mod process_fixture;
 #[cfg(test)]
 mod process_tests;
+#[cfg(test)]
 pub(super) mod source;
 #[cfg(test)]
 mod tests;
 
-use config::Config;
-use listener::Bound;
+pub(crate) use config::Config;
+pub(crate) type Control = io::Control;
+pub(crate) type Observation = io::Observation;
+pub(crate) use listener::Bound;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum Completion {
+    Attempts,
+    Deadline,
+    Cancelled,
+}
 use std::fmt;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -25,6 +36,7 @@ pub(super) enum Error {
     Deadline,
     Stopped,
     Io,
+    Authority,
     Runtime(crate::server_runtime::Error),
 }
 impl fmt::Display for Error {

@@ -1,9 +1,5 @@
-//! Internal #401 lifecycle contract, awaiting audited HTTP component/runtime integration.
-//!
-//! Loaded by the dedicated negative-test harness. No CLI route, component authority, grants,
-//! network listener, guest-memory enforcement or WASI execution is established by this module.
-//! The exact world remains `zryna:capability-profiles/server@0.1.0`; the future adapter must bind
-//! `wasi:http/incoming-handler@0.2.12` and the authenticated WIT closure before startup.
+//! Bounded server request leases, revocation and joined owned-resource retirement.
+//! The authenticated server composition supplies component, grant and transport authority.
 
 mod limits;
 mod registry;
@@ -74,9 +70,9 @@ impl Server {
         let entry = Entry {
             deadline: input.deadline,
             reservation,
-            method: input.method.to_owned(),
-            path: input.path.to_owned(),
-            body: input.body.to_vec(),
+            _method: input.method.to_owned(),
+            _path: input.path.to_owned(),
+            _body: input.body.to_vec(),
             authority: None,
         };
         state.entries.insert(id, entry);
@@ -89,6 +85,7 @@ impl Server {
     }
 
     /// Observe live reservations; this is not a teardown certificate for a guest store.
+    #[cfg(test)]
     pub(crate) fn usage(&self) -> Result<(usize, usize), Error> {
         let state = self.shared.lock()?;
         Ok((state.live, state.bytes))

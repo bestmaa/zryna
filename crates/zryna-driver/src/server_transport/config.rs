@@ -20,17 +20,17 @@ struct Document {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(super) struct Config {
-    pub(super) address: SocketAddr,
-    pub(super) attempts: u16,
-    pub(super) header_bytes: usize,
-    pub(super) body_bytes: usize,
-    pub(super) request_timeout: Duration,
-    pub(super) service_timeout: Duration,
+pub(crate) struct Config {
+    pub(crate) address: SocketAddr,
+    pub(crate) attempts: u16,
+    pub(crate) header_bytes: usize,
+    pub(crate) body_bytes: usize,
+    pub(crate) request_timeout: Duration,
+    pub(crate) service_timeout: Duration,
 }
 
 impl Config {
-    pub(super) fn parse(bytes: &[u8]) -> Result<Self, Error> {
+    pub(crate) fn parse(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.is_empty() || bytes.len() > 1024 {
             return Err(Error::Config);
         }
@@ -47,7 +47,7 @@ impl Config {
         .validate()
     }
 
-    pub(super) fn validate(self) -> Result<Self, Error> {
+    pub(crate) fn validate(self) -> Result<Self, Error> {
         if self.address.ip() != IpAddr::V4(Ipv4Addr::LOCALHOST)
             || !(1..=64).contains(&self.attempts)
             || !(64..=8192).contains(&self.header_bytes)
@@ -63,7 +63,7 @@ impl Config {
         Ok(self)
     }
 
-    pub(super) fn envelope(self) -> Envelope {
+    pub(crate) fn envelope(self) -> Envelope {
         Envelope {
             requests: Limits {
                 requests: 1,
@@ -81,7 +81,7 @@ impl Config {
         }
     }
 
-    pub(super) fn buffer_reservation(self) -> usize {
+    pub(crate) fn buffer_reservation(self) -> usize {
         // At most32 borrowed header-name slots (512 bytes),260 bytes decoded routing metadata,
         // and a fixed <100-byte response. No unbounded map or forwarded headers are retained.
         self.header_bytes + self.body_bytes + 1024

@@ -137,6 +137,7 @@ impl Pending {
         self.request.publish(status, || publish(status)).map_err(Error::from)
     }
 
+    #[cfg(test)]
     pub(crate) fn wait(self) -> Result<(u16, Vec<u8>), Error> {
         let status = self.completed_status()?;
         // The worker has already destroyed all actual guest state. finish orders publication

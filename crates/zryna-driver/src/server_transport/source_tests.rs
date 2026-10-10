@@ -241,7 +241,7 @@ fn production_snapshot_cannot_lower_against_another_source_identity() {
     }])
     .expect("identical bytes with independently allocated source authority");
     assert_ne!(captured.sources.identity(), other.identity());
-    let errors = zryna_driver::lower_verified_syntax(&snapshot, &other)
+    let errors = crate::lower_verified_syntax(&snapshot, &other)
         .expect_err("matching bytes cannot replace the authenticated source object");
     assert_eq!(errors.len(), 1);
     assert_eq!(errors[0].code(), "ZRYNA-D1001");

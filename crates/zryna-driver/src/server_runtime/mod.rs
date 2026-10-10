@@ -1,4 +1,4 @@
-//! Private executable server acceptance slice. No listener or public driver selector.
+//! Sealed server execution and actual Store/resource retirement; composition owns listener authority.
 
 mod envelope;
 mod execution;
@@ -12,6 +12,8 @@ mod resources;
 #[cfg(test)]
 mod startup;
 
+#[cfg(test)]
+pub(crate) mod test_support;
 #[cfg(test)]
 mod tests;
 
@@ -69,6 +71,7 @@ impl Server {
         execution::start(request, input, &self.prepared)
     }
 
+    #[cfg(test)]
     pub(crate) fn usage(&self) -> Result<(usize, usize), Error> {
         Ok(self.lifecycle.as_ref().ok_or(Error::Inactive)?.usage()?)
     }

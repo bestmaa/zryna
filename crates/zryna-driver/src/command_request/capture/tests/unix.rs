@@ -17,10 +17,10 @@ fn actual_private_file_retains_same_handle_and_recovers() -> io::Result<()> {
     let fixture = private()?;
     let path = fixture.path();
     let captured = CapturedRequest::capture(&path, Some("MODE")).expect("private capture");
-    let original = captured.file.file().metadata()?.ino();
+    let original = captured.input.file.file().metadata()?.ino();
     for _ in 0..3 {
         captured.revalidate().expect("unchanged retained input");
-        assert_eq!(captured.file.file().metadata()?.ino(), original);
+        assert_eq!(captured.input.file.file().metadata()?.ino(), original);
         assert!(matches!(captured.request().value(), Some("on")));
     }
     drop(captured);

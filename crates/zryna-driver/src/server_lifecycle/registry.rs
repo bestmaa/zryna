@@ -18,9 +18,9 @@ type StopHook = Box<dyn FnOnce() + Send>;
 pub(super) struct Entry {
     pub(super) deadline: Instant,
     pub(super) reservation: usize,
-    pub(super) method: String,
-    pub(super) path: String,
-    pub(super) body: Vec<u8>,
+    pub(super) _method: String,
+    pub(super) _path: String,
+    pub(super) _body: Vec<u8>,
     // Future adapters transfer ownership here; lifecycle handles cannot clone it back out.
     pub(super) authority: Option<Box<dyn Send>>,
 }

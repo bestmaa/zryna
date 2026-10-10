@@ -5,7 +5,8 @@ This dedicated test target connects the merged lifecycle lease to an authenticat
 WASI 0.2.12 interfaces, computes a status through compiler-produced verified scalar IR, constructs
 real HTTP response/body resources and finishes an empty body. This runtime owns the in-memory
 execution and bounded publication seam; its dedicated target also loads the private loopback
-transport described in `../server_transport/README.md`. There is no shipped CLI selector. Existing
+transport described in `../server_transport/README.md`. The source-checkout `server-status-v1` composition is documented in
+`../../../../docs/WASI_SERVER_STATUS_V1.md`; its guest grants remain empty. Existing
 runtime probes retain their verified private test provider; the transport exercises the normal
 authenticated production worker before the same driver lowering.
 

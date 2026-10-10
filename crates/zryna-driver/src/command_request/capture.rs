@@ -23,11 +23,17 @@ use platform::PrivateFile;
 /// Retains the original private file, captured bytes and admitted input together.
 /// This proves captured input only; root approval and capability authority stay separate.
 pub(crate) struct CapturedRequest {
+    input: CapturedFile,
+    request: CommandRequest,
+}
+
+/// Retains bounded caller-private bytes without granting any host capability.
+pub(crate) struct CapturedFile {
     binding: PathBinding,
     file: PrivateFile,
     state: Metadata,
     bytes: Vec<u8>,
-    request: CommandRequest,
+    limit: usize,
 }
 
 impl CapturedRequest {
@@ -52,31 +58,68 @@ impl CapturedRequest {
         if required_key.is_none() {
             return Err(rejection());
         }
-        let (binding, original) = PathBinding::open(path).map_err(|_| rejection())?;
-        let file = platform::retain(original).map_err(|_| rejection())?;
-        let state = Metadata::from_file(file.file()).map_err(|_| rejection())?;
-        platform::privacy(&file, &state).map_err(|_| rejection())?;
-        binding.revalidate(&state).map_err(|_| rejection())?;
-        let bytes = read(file.file())?;
-        after_read().map_err(|_| rejection())?;
-        validate(&binding, &file, &state)?;
-        let second = read(file.file())?;
-        validate(&binding, &file, &state)?;
-        if bytes != second {
-            return Err(rejection());
-        }
-        let request = admit(&bytes, required_key)?;
-        Ok(Self { binding, file, state, bytes, request })
+        let input = CapturedFile::capture_impl(path, MAX_REQUEST_BYTES, after_read)?;
+        let request = admit(input.bytes(), required_key)?;
+        Ok(Self { input, request })
     }
 
     pub(crate) fn request(&self) -> &CommandRequest {
         &self.request
     }
 
+    pub(crate) fn revalidate(&self) -> Result<(), Diagnostic> {
+        self.input.revalidate()
+    }
+}
+
+impl CapturedFile {
+    pub(crate) fn capture(path: &Path, limit: usize) -> Result<Self, Diagnostic> {
+        Self::capture_impl(path, limit, || Ok(()))
+    }
+
+    fn capture_impl(
+        path: &Path,
+        limit: usize,
+        after_read: impl FnOnce() -> std::io::Result<()>,
+    ) -> Result<Self, Diagnostic> {
+        if limit == 0 || limit > MAX_REQUEST_BYTES {
+            return Err(rejection());
+        }
+        let (binding, original) = PathBinding::open(path).map_err(|_| rejection())?;
+        let file = platform::retain(original).map_err(|_| rejection())?;
+        let state = Metadata::from_file(file.file()).map_err(|_| rejection())?;
+        platform::privacy(&file, &state).map_err(|_| rejection())?;
+        binding.revalidate(&state).map_err(|_| rejection())?;
+        let bytes = read(file.file(), limit)?;
+        after_read().map_err(|_| rejection())?;
+        validate(&binding, &file, &state)?;
+        let second = read(file.file(), limit)?;
+        validate(&binding, &file, &state)?;
+        if bytes != second {
+            return Err(rejection());
+        }
+        Ok(Self { binding, file, state, bytes, limit })
+    }
+
+    pub(crate) fn bytes(&self) -> &[u8] {
+        &self.bytes
+    }
+
+    pub(crate) fn identity(&self) -> Result<Vec<u8>, Diagnostic> {
+        self.revalidate()?;
+        let (volume, file) = platform::identity(&self.state).map_err(|_| rejection())?;
+        let mut identity = b"zryna.private-file-identity.v1\0".to_vec();
+        identity.extend(volume.to_le_bytes());
+        identity.extend(file.to_le_bytes());
+        identity.extend((self.bytes.len() as u64).to_le_bytes());
+        identity.extend(&self.bytes);
+        Ok(identity)
+    }
+
     /// Rechecks the exact retained handle and path bindings without selecting new input.
     pub(crate) fn revalidate(&self) -> Result<(), Diagnostic> {
         validate(&self.binding, &self.file, &self.state)?;
-        let current = read(self.file.file())?;
+        let current = read(self.file.file(), self.limit)?;
         validate(&self.binding, &self.file, &self.state)?;
         if current != self.bytes {
             return Err(rejection());
@@ -94,15 +137,15 @@ fn validate(binding: &PathBinding, file: &PrivateFile, state: &Metadata) -> Resu
     binding.revalidate(&current).map_err(|_| rejection())
 }
 
-fn read(mut file: &File) -> Result<Vec<u8>, Diagnostic> {
+fn read(mut file: &File, limit: usize) -> Result<Vec<u8>, Diagnostic> {
     let length = file.metadata().map_err(|_| rejection())?.len();
-    if length > MAX_REQUEST_BYTES as u64 {
+    if length > limit as u64 {
         return Err(rejection());
     }
     file.seek(SeekFrom::Start(0)).map_err(|_| rejection())?;
     let mut bytes = Vec::new();
-    file.take(MAX_REQUEST_BYTES as u64 + 1).read_to_end(&mut bytes).map_err(|_| rejection())?;
-    if bytes.len() > MAX_REQUEST_BYTES || bytes.len() as u64 != length {
+    file.take(limit as u64 + 1).read_to_end(&mut bytes).map_err(|_| rejection())?;
+    if bytes.len() > limit || bytes.len() as u64 != length {
         return Err(rejection());
     }
     Ok(bytes)

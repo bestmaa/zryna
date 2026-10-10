@@ -52,6 +52,10 @@ mod profile_composition;
 mod project;
 mod runtime;
 mod scalar_adapter_interface;
+mod server_lifecycle;
+mod server_runtime;
+mod server_transport;
+mod server_workspace;
 mod source_api;
 mod source_graph_identity;
 mod source_identity;
@@ -117,6 +121,13 @@ pub use pipeline::{
     run_control_flow_workspace, run_workspace,
 };
 pub use project::{ProjectBuildRequest, ProjectRunRequest, build_project, run_project};
+#[cfg(test)]
+use server_lifecycle::{Input, Limits};
+#[cfg(test)]
+use server_runtime::test_support::{Resource, attach, input, limits};
+pub use server_workspace::{
+    PublishedServerBundle, ServerReadiness, ServerRunRequest, serve_workspace,
+};
 pub use source_api::{DualTargetArtifacts, SourceToIrError, SourceToIrSuccess};
 pub use webassembly::{
     MAX_WEBASSEMBLY_ARTIFACT_STEM_BYTES, PublishedWebAssemblyArtifact,

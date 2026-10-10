@@ -41,6 +41,7 @@ impl Approval {
         Self { clock_reads: 0 }
     }
 
+    #[cfg(test)]
     pub(super) fn monotonic_clock_reads(reads: u32) -> Result<Self, Error> {
         if reads == 0 || reads > MAX_CLOCK_READS {
             return Err(Error::Grant);

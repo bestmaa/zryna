@@ -10,6 +10,7 @@ mod profile;
 mod project;
 mod project_filesystem;
 mod render;
+mod server;
 
 use render::{render_cli_failure, render_failure, render_success};
 
@@ -52,6 +53,8 @@ enum Command {
     Build(CompileOptions),
     /// Compile and invoke one scalar export, then commit one atomic target bundle.
     Run(RunOptions),
+    /// Run one finite pure-source loopback server and commit its teardown record.
+    Serve(server::Options),
 }
 
 #[derive(Debug, Subcommand)]
@@ -124,11 +127,12 @@ fn main() -> ExitCode {
     };
     match cli.command {
         Command::Architecture { command: ArchitectureCommand::Check(options) }
-        | Command::Doctor(options) => run_architecture_check(&options),
+        | Command::Doctor(options) => render::run_architecture_check(&options),
         Command::Package { command } => package::run(command),
         Command::New(options) => project::create(&options),
         Command::Build(options) => run_build(options),
         Command::Run(options) => run_command(options),
+        Command::Serve(options) => server::run(&options),
     }
 }
 
@@ -150,29 +154,6 @@ where
     });
     let matches = command.try_get_matches_from(arguments)?;
     Cli::from_arg_matches(&matches)
-}
-
-fn run_architecture_check(options: &ArchitectureOptions) -> ExitCode {
-    let root = match absolute_workspace_path(&options.root) {
-        Ok(root) => root,
-        Err(diagnostic) => {
-            return render_cli_failure(CommandKind::Build, options.json, 2, &[diagnostic]);
-        }
-    };
-    let report = zryna_driver::check_workspace(&root);
-    if options.json {
-        match serde_json::to_string_pretty(&report) {
-            Ok(output) => println!("{output}"),
-            Err(_) => return ExitCode::from(70),
-        }
-    } else if report.is_valid() {
-        println!("Zryna architecture check passed");
-    } else {
-        for diagnostic in &report.diagnostics {
-            eprintln!("{diagnostic}");
-        }
-    }
-    if report.is_valid() { ExitCode::SUCCESS } else { ExitCode::from(1) }
 }
 
 fn run_build(options: CompileOptions) -> ExitCode {
