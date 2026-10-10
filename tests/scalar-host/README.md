@@ -32,6 +32,13 @@ and the first extra input byte rejects before process launch. Its raw transport 
 substitute for source verification or browser conformance.
 
 The ordinary test command ignores the resource test and therefore supplies no browser proof.
+The dedicated `browser-conformance.yml` workflow executes the two actual-browser tests and the
+32 MiB transport test on Linux x64 and Windows x64. Its runner, `node
+scripts/scalar-host/run-conformance.mjs <absolute-new-evidence-directory>`, verifies the frozen
+archive hash, publisher receipt and complete inventory before execution, checks each cargo run
+executed exactly one passing non-ignored test, and retains exact-commit receipts and bounded logs.
+It keeps Chromium sandboxing enabled and uploads no browser binaries. A missing fixture,
+acquisition or sandbox failure fails the lane rather than skipping it.
 All commands above are required in the separately provisioned Linux x64 and Windows x64
 conformance/CI lanes before #387 acceptance. A missing fixture, unreviewed hash, timeout or cleanup
 failure fails that lane; it is never a successful skip. Keep the required frozen install,

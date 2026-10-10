@@ -1,0 +1,75 @@
+name: Pinned browser conformance
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/browser-conformance.yml
+      - scripts/scalar-host/**
+      - tests/scalar-host/**
+      - tests/browser-component/**
+      - tests/scalar-host-conformance.test.mjs
+      - crates/**
+      - apps/zryna/**
+      - adapters/typescript-6/**
+      - Cargo.lock
+      - rust-toolchain.toml
+      - package.json
+      - pnpm-lock.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pinned-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conformance:
+    name: pinned browser (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      CARGO_BUILD_JOBS: 2
+      CARGO_INCREMENTAL: 0
+      CARGO_PROFILE_DEV_DEBUG: 0
+      CARGO_PROFILE_TEST_DEBUG: 0
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.22.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: 11.18.0
+      - run: pnpm install --frozen-lockfile
+      - run: cargo fetch --locked
+      - name: Verify fail-closed proof accounting
+        run: node --test tests/scalar-host-conformance.test.mjs
+      - name: Execute pinned browser and full-ceiling transport proofs
+        shell: pwsh
+        run: |
+          node scripts/scalar-host/run-conformance.mjs "$env:RUNNER_TEMP/browser-conformance-evidence"
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned browser conformance failed' }
+      - name: Preserve exact-head receipts, inventory and execution logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pinned-browser-${{ matrix.os }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/browser-conformance-evidence/*.json
+            ${{ runner.temp }}/browser-conformance-evidence/*.log
+          if-no-files-found: error
+          retention-days: 7
